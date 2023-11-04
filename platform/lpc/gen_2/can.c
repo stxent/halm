@@ -11,6 +11,7 @@
 #include <halm/platform/lpc/gen_2/can_base.h>
 #include <halm/platform/lpc/gen_2/can_defs.h>
 #include <halm/pm.h>
+#include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_LPC_CAN_EXACT_RATE
 #define MAX_CLOCK_ERROR 0

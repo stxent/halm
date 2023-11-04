@@ -9,10 +9,11 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/irq.h>
 #include <halm/pin.h>
-#include <halm/timer.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Can;
+
+struct Timer;
 
 struct CanConfig
 {

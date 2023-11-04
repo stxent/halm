@@ -12,7 +12,6 @@
 /*----------------------------------------------------------------------------*/
 static inline uint32_t getMaxValue(const struct GpTimer *);
 static void interruptHandler(void *);
-static void setTimerFrequency(struct GpTimer *, uint32_t);
 
 #ifdef CONFIG_PLATFORM_STM32_GPTIMER_PM
 static void powerStateHandler(void *, enum PmState);
@@ -75,30 +74,10 @@ static void powerStateHandler(void *object, enum PmState state)
   if (state == PM_ACTIVE)
   {
     struct GpTimer * const timer = object;
-    setTimerFrequency(timer, timer->frequency);
+    gpTimerSetTimerFrequency(&timer->base, timer->frequency);
   }
 }
 #endif
-/*----------------------------------------------------------------------------*/
-static void setTimerFrequency(struct GpTimer *timer, uint32_t frequency)
-{
-  STM_TIM_Type * const reg = timer->base.reg;
-  uint32_t divisor;
-
-  if (frequency)
-  {
-    const uint32_t apbClock = gpTimerGetClock(&timer->base);
-    assert(frequency <= apbClock);
-
-    divisor = apbClock / frequency - 1;
-    assert(divisor <= MASK(timer->base.resolution));
-  }
-  else
-    divisor = 0;
-
-  reg->PSC = divisor;
-  reg->EGR = EGR_UG;
-}
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
@@ -138,7 +117,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   }
 
   timer->frequency = config->frequency;
-  setTimerFrequency(timer, timer->frequency);
+  gpTimerSetTimerFrequency(&timer->base, timer->frequency);
 
 //  reg->CR2 &= ~CR2_CCPC; // TODO Advanced timers
 
@@ -177,7 +156,6 @@ static void tmrEnable(void *object)
 
   /* Clear pending interrupt flags */
   reg->SR = 0;
-
   /* Start the timer */
   reg->CR1 |= CR1_CEN;
 }
@@ -238,7 +216,7 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
   struct GpTimer * const timer = object;
 
   timer->frequency = frequency;
-  setTimerFrequency(timer, timer->frequency);
+  gpTimerSetTimerFrequency(&timer->base, timer->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)

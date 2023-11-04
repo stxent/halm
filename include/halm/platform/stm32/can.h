@@ -7,12 +7,12 @@
 #ifndef HALM_PLATFORM_STM32_CAN_H_
 #define HALM_PLATFORM_STM32_CAN_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/irq.h>
-#include <halm/pin.h>
-#include <halm/timer.h>
+#include <halm/platform/stm32/bxcan_base.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Can;
+
+struct Timer;
 
 struct CanConfig
 {

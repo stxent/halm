@@ -41,15 +41,15 @@ struct Spi
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Desired baud rate */
-  uint32_t rate;
-
   /* DMA channel for data reception */
   struct Dma *rxDma;
   /* DMA channel for data transmission */
   struct Dma *txDma;
   /* Pointer to an input buffer for bidirectional transfers */
   uint8_t *sink;
+
+  /* Desired baud rate */
+  uint32_t rate;
 
   /*
    * Dummy frame to be sent over transmit line in the receive mode or

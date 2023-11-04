@@ -35,6 +35,7 @@ BEGIN_DECLS
 
 /* Common functions */
 void gpTimerConfigPin(uint8_t, PinNumber, enum PinPull);
+void gpTimerSetTimerFrequency(struct GpTimerBase *, uint32_t);
 
 /* Platform-specific functions */
 uint32_t gpTimerGetClock(const struct GpTimerBase *);

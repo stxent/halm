@@ -17,24 +17,39 @@ int gpTimerAllocateChannel(uint8_t mask)
   return pos;
 }
 /*----------------------------------------------------------------------------*/
-uint8_t gpTimerConfigCapturePin(uint8_t channel, PinNumber key,
+uint8_t gpTimerConfigInputPin(uint8_t channel, PinNumber key,
     enum PinPull pull)
 {
-  // TODO
-  (void)channel;
-  (void)key;
-  (void)pull;
-  return (uint8_t)-1;
-}
-/*----------------------------------------------------------------------------*/
-uint8_t gpTimerConfigComparePin(uint8_t channel, PinNumber key)
-{
-  const struct PinEntry *pinEntry;
   size_t index = 0;
 
   for (; index < CHANNEL_COUNT; ++index)
   {
-    pinEntry = pinFind(gpTimerPins, key, PACK_CHANNEL(channel, index));
+    const struct PinEntry * const pinEntry = pinFind(gpTimerPins, key,
+        PACK_CHANNEL(channel, index));
+
+    if (pinEntry != NULL)
+    {
+      const struct Pin pin = pinInit(key);
+
+      pinInput(pin);
+      pinSetPull(pin, pull);
+      pinSetFunction(pin, pinEntry->value);
+      break;
+    }
+  }
+
+  assert(index != CHANNEL_COUNT);
+  return index;
+}
+/*----------------------------------------------------------------------------*/
+uint8_t gpTimerConfigOutputPin(uint8_t channel, PinNumber key)
+{
+  size_t index = 0;
+
+  for (; index < CHANNEL_COUNT; ++index)
+  {
+    const struct PinEntry * const pinEntry = pinFind(gpTimerPins, key,
+        PACK_CHANNEL(channel, index));
 
     if (pinEntry != NULL)
     {
@@ -46,6 +61,26 @@ uint8_t gpTimerConfigComparePin(uint8_t channel, PinNumber key)
     }
   }
 
-  assert(pinEntry != NULL);
-  return UNPACK_CHANNEL(index) >> 1;
+  assert(index != CHANNEL_COUNT);
+  return index;
+}
+/*----------------------------------------------------------------------------*/
+void gpTimerSetTimerFrequency(struct GpTimerBase *timer, uint32_t frequency)
+{
+  STM_TIM_Type * const reg = timer->reg;
+  uint32_t divisor;
+
+  if (frequency)
+  {
+    const uint32_t apbClock = gpTimerGetClock(timer);
+    assert(frequency <= apbClock);
+
+    divisor = apbClock / frequency - 1;
+    assert(divisor <= 0xFFFF);
+  }
+  else
+    divisor = 0;
+
+  reg->PSC = divisor;
+  reg->EGR = EGR_UG;
 }

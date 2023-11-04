@@ -11,7 +11,6 @@
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static void setTimerFrequency(struct GpTimer *, uint32_t);
 
 #ifdef CONFIG_PLATFORM_NUMICRO_GPTIMER_PM
 static void powerStateHandler(void *, enum PmState);
@@ -69,29 +68,10 @@ static void powerStateHandler(void *object, enum PmState state)
   if (state == PM_ACTIVE)
   {
     struct GpTimer * const timer = object;
-    setTimerFrequency(timer, timer->frequency);
+    gpTimerSetTimerFrequency(&timer->base, timer->frequency);
   }
 }
 #endif
-/*----------------------------------------------------------------------------*/
-static void setTimerFrequency(struct GpTimer *timer, uint32_t frequency)
-{
-  NM_TIMER_Type * const reg = timer->base.reg;
-  uint32_t divisor;
-
-  if (frequency)
-  {
-    const uint32_t apbClock = gpTimerGetClock(&timer->base);
-    assert(frequency <= apbClock);
-
-    divisor = apbClock / frequency - 1;
-    assert(divisor <= MASK(CTL_PSC_WIDTH));
-  }
-  else
-    divisor = 0;
-
-  reg->CTL = (reg->CTL & ~CTL_PSC_MASK) | CTL_PSC(divisor);
-}
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
@@ -136,7 +116,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   reg->EINTSTS = EINTSTS_CAPIF;
 
   timer->frequency = config->frequency;
-  setTimerFrequency(timer, timer->frequency);
+  gpTimerSetTimerFrequency(&timer->base, timer->frequency);
 
 #ifdef CONFIG_PLATFORM_NUMICRO_GPTIMER_PM
   if ((res = pmRegister(powerStateHandler, timer)) != E_OK)
@@ -232,7 +212,7 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
   struct GpTimer * const timer = object;
 
   timer->frequency = frequency;
-  setTimerFrequency(timer, timer->frequency);
+  gpTimerSetTimerFrequency(&timer->base, timer->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)

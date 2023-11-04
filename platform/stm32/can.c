@@ -11,6 +11,7 @@
 #include <halm/platform/stm32/bxcan_defs.h>
 #include <halm/platform/stm32/can.h>
 #include <halm/pm.h>
+#include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_CAN_EXACT_RATE
 #define MAX_CLOCK_ERROR 0

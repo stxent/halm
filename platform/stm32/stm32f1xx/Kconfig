@@ -1,5 +1,24 @@
 menu "Enabled peripherals"
 
+menu "ADC"
+
+config PLATFORM_STM32_ADC1
+	bool "ADC1"
+	default y
+	depends on PLATFORM_STM32_ADC_BASE
+
+config PLATFORM_STM32_ADC2
+	bool "ADC2"
+	default y
+	depends on PLATFORM_STM32_ADC_BASE
+
+config PLATFORM_STM32_ADC3
+	bool "ADC3"
+	default y
+	depends on PLATFORM_STM32_ADC_BASE
+
+endmenu
+
 menu "bxCAN"
 
 config PLATFORM_STM32_CAN1

@@ -11,6 +11,7 @@
 #include <halm/platform/numicro/can_base.h>
 #include <halm/platform/numicro/can_defs.h>
 #include <halm/pm.h>
+#include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NUMICRO_CAN_EXACT_RATE
 #define MAX_CLOCK_ERROR 0
