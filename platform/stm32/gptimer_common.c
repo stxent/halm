@@ -24,6 +24,9 @@ uint8_t gpTimerConfigInputPin(uint8_t channel, PinNumber key,
 
   for (; index < CHANNEL_COUNT; ++index)
   {
+    if (!isInputChannel(index))
+      continue;
+
     const struct PinEntry * const pinEntry = pinFind(gpTimerPins, key,
         PACK_CHANNEL(channel, index));
 
@@ -48,6 +51,9 @@ uint8_t gpTimerConfigOutputPin(uint8_t channel, PinNumber key)
 
   for (; index < CHANNEL_COUNT; ++index)
   {
+    if (!isOutputChannel(index))
+      continue;
+
     const struct PinEntry * const pinEntry = pinFind(gpTimerPins, key,
         PACK_CHANNEL(channel, index));
 

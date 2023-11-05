@@ -8,6 +8,13 @@
 #define HALM_PLATFORM_LPC_GPPWM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/lpc/gptimer_defs.h>
+/*------------------Interrupt Register----------------------------------------*/
+#define PWM_IR_MATCH_INTERRUPT(channel) \
+    ((channel) < 4 ? BIT(channel) : BIT((channel) + 4))
+#define PWM_IR_MATCH_MASK \
+    (BIT_FIELD(MASK(4), 0) | BIT_FIELD(MASK(3), 8))
+#define PWM_IR_MATCH_VALUE(reg) \
+    FIELD_VALUE((reg), PWM_IR_MATCH_MASK, 0)
 /*------------------Timer Control Register------------------------------------*/
 #define TCR_PWM_ENABLE                  BIT(3)
 /*------------------PWM Control Register--------------------------------------*/

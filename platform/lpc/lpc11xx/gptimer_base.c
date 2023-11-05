@@ -16,7 +16,7 @@ struct TimerBlockDescriptor
 {
   LPC_TIMER_Type *reg;
   enum SysClockBranch clock;
-  uint8_t resolution;
+  uint8_t flags;
 };
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t, struct GpTimerBase *);
@@ -39,19 +39,19 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
     {
         .reg = LPC_CT16B0,
         .clock = CLK_CT16B0,
-        .resolution = 16
+        .flags = 0
     }, {
         .reg = LPC_CT16B1,
         .clock = CLK_CT16B1,
-        .resolution = 16
+        .flags = 0
     }, {
         .reg = LPC_CT32B0,
         .clock = CLK_CT32B0,
-        .resolution = 32
+        .flags = GPTIMER_FLAG_32_BIT
     }, {
         .reg = LPC_CT32B1,
         .clock = CLK_CT32B1,
-        .resolution = 32
+        .flags = GPTIMER_FLAG_32_BIT
     }
 };
 /*----------------------------------------------------------------------------*/
@@ -190,10 +190,10 @@ static enum Result tmrInit(void *object, const void *configBase)
   sysClockEnable(entry->clock);
 
   timer->channel = config->channel;
+  timer->flags = entry->flags;
   timer->handler = NULL;
   timer->irq = CT16B0_IRQ + config->channel;
   timer->reg = entry->reg;
-  timer->resolution = entry->resolution;
 
   return E_OK;
 }

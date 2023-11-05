@@ -10,7 +10,6 @@
 #include <halm/pm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(const struct GpTimer *);
 static void interruptHandler(void *);
 
 #ifdef CONFIG_PLATFORM_STM32_GPTIMER_PM
@@ -52,18 +51,13 @@ const struct TimerClass * const GpTimer = &(const struct TimerClass){
     .setValue = tmrSetValue
 };
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(const struct GpTimer *timer)
-{
-  return MASK(timer->base.resolution);
-}
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct GpTimer * const timer = object;
   STM_TIM_Type * const reg = timer->base.reg;
 
   /* Clear all pending interrupts */
-  reg->SR = ~SR_CCIF_MASK;
+  reg->SR = 0;
 
   timer->callback(timer->callbackArgument);
 }
@@ -83,6 +77,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->event <= TIM_EVENT_CC4);
 
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
@@ -90,36 +85,43 @@ static enum Result tmrInit(void *object, const void *configBase)
   struct GpTimer * const timer = object;
   enum Result res;
 
-  assert(config->event <= 4);
-
   /* Call base class constructor */
   if ((res = GpTimerBase->init(timer, &baseConfig)) != E_OK)
     return res;
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->event = config->event;
 
   /* Initialize peripheral block */
   STM_TIM_Type * const reg = timer->base.reg;
 
   reg->CR1 = CR1_CKD(CKD_CK_INT) | CR1_CMS(CMS_EDGE_ALIGNED_MODE);
-  reg->ARR = getMaxValue(timer);
+  reg->CR2 = CR2_MMS(MMS_UPDATE);
+  reg->ARR = getMaxValue(timer->base.flags);
 
-  if (config->event)
+  if (config->event != TIM_EVENT_DISABLED)
   {
-    timer->event = config->event - 1;
-    reg->DIER = DIER_CCDE(timer->event);
-  }
-  else
-  {
-    timer->event = 0;
-    reg->DIER = 0;
+    if (config->event != TIM_EVENT_UPDATE)
+    {
+      const unsigned int number = config->event - TIM_EVENT_CC1;
+      const unsigned int part = config->event > TIM_EVENT_CC2;
+
+      reg->CCMR[part] = CCMR_OCM(number, OCM_TOGGLE);
+      reg->CCER = CCER_CCE(number);
+      reg->DIER = DIER_CCDE(number);
+    }
+    else
+    {
+      reg->DIER = DIER_UDE;
+    }
   }
 
   timer->frequency = config->frequency;
   gpTimerSetTimerFrequency(&timer->base, timer->frequency);
 
-//  reg->CR2 &= ~CR2_CCPC; // TODO Advanced timers
+  if (timer->base.flags & TIMER_FLAG_INVERSE)
+    reg->BDTR |= BDTR_MOE;
 
 #ifdef CONFIG_PLATFORM_STM32_GPTIMER_PM
   if ((res = pmRegister(powerStateHandler, timer)) != E_OK)
@@ -192,13 +194,13 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   {
     /* Clear pending interrupt flags */
     reg->SR = 0;
-    /* Enable generation of an interrupt request */
-    reg->DIER |= DIER_CCIE(timer->event);
+    /* Enable interrupt request generation on the update event */
+    reg->DIER |= DIER_UIE;
   }
   else
   {
     /* Disable interrupt request generation */
-    reg->DIER &= ~DIER_CCIE_MASK;
+    reg->DIER &= ~DIER_UIE;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -232,9 +234,10 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   struct GpTimer * const timer = object;
   STM_TIM_Type * const reg = timer->base.reg;
 
-  assert(overflow <= getMaxValue(timer));
+  assert(overflow <= getMaxValue(timer->base.flags));
 
-  reg->CCR[timer->event] = overflow - 1;
+  if (timer->event > TIM_EVENT_UPDATE)
+    reg->CCR[timer->event - TIM_EVENT_CC1] = overflow - 1;
   reg->ARR = overflow - 1;
   reg->EGR = EGR_UG;
 }

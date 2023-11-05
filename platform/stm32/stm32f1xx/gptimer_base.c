@@ -20,8 +20,10 @@ struct TimerBlockDescriptor
   enum SysBlockReset reset;
   /* Interrupt identifier */
   IrqNumber irq;
-  /* Peripheral channel */
+  /* Peripheral channel number */
   uint8_t channel;
+  /* Peripheral channel flags */
+  uint8_t flags;
 };
 /*----------------------------------------------------------------------------*/
 static const struct TimerBlockDescriptor *findDescriptor(uint8_t);
@@ -48,7 +50,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM1,
         .reset = RST_TIM1,
         .irq = TIM1_UP_TIM16_IRQ,
-        .channel = TIM1
+        .channel = TIM1,
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_UPDOWN | TIMER_FLAG_INVERSE
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM2
@@ -57,7 +60,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM2,
         .reset = RST_TIM2,
         .irq = TIM2_IRQ,
-        .channel = TIM2
+        .channel = TIM2,
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_UPDOWN
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM3
@@ -66,7 +70,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM3,
         .reset = RST_TIM3,
         .irq = TIM3_IRQ,
-        .channel = TIM3
+        .channel = TIM3,
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_UPDOWN
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM4
@@ -75,7 +80,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM4,
         .reset = RST_TIM4,
         .irq = TIM4_IRQ,
-        .channel = TIM4
+        .channel = TIM4,
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_UPDOWN
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM5
@@ -84,7 +90,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM5,
         .reset = RST_TIM5,
         .irq = TIM5_IRQ,
-        .channel = TIM5
+        .channel = TIM5,
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_UPDOWN
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM6
@@ -93,7 +100,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM6,
         .reset = RST_TIM6,
         .irq = DAC_TIM6_IRQ,
-        .channel = TIM6
+        .channel = TIM6,
+        .flags = TIMER_FLAG_DMA
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM7
@@ -102,7 +110,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM7,
         .reset = RST_TIM7,
         .irq = TIM7_IRQ,
-        .channel = TIM7
+        .channel = TIM7,
+        .flags = TIMER_FLAG_DMA
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM8
@@ -111,7 +120,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM8,
         .reset = RST_TIM8,
         .irq = TIM8_UP_TIM13_IRQ,
-        .channel = TIM8
+        .channel = TIM8,
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_UPDOWN | TIMER_FLAG_INVERSE
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM9
@@ -120,7 +130,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM9,
         .reset = RST_TIM9,
         .irq = IRQ_RESERVED,
-        .channel = TIM9
+        .channel = TIM9,
+        .flags = 0
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM10
@@ -129,7 +140,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM10,
         .reset = RST_TIM10,
         .irq = IRQ_RESERVED,
-        .channel = TIM10
+        .channel = TIM10,
+        .flags = 0
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM11
@@ -138,7 +150,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM11,
         .reset = RST_TIM11,
         .irq = IRQ_RESERVED,
-        .channel = TIM11
+        .channel = TIM11,
+        .flags = 0
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM12
@@ -147,7 +160,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM12,
         .reset = RST_TIM12,
         .irq = TIM8_BRK_TIM12_IRQ,
-        .channel = TIM12
+        .channel = TIM12,
+        .flags = 0
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM13
@@ -156,7 +170,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM13,
         .reset = RST_TIM13,
         .irq = TIM8_UP_TIM13_IRQ,
-        .channel = TIM13
+        .channel = TIM13,
+        .flags = 0
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM14
@@ -165,7 +180,8 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .clock = CLK_TIM14,
         .reset = RST_TIM14,
         .irq = TIM8_TRG_COM_TIM14_IRQ,
-        .channel = TIM14
+        .channel = TIM14,
+        .flags = 0
     }
 #endif
 };
@@ -542,10 +558,10 @@ static enum Result tmrInit(void *object, const void *configBase)
   sysResetDisable(entry->reset);
 
   timer->channel = config->channel;
+  timer->flags = entry->flags;
   timer->handler = NULL;
   timer->irq = entry->irq;
   timer->reg = entry->reg;
-  timer->resolution = 16;
 
   return E_OK;
 }

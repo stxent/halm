@@ -18,6 +18,8 @@ struct SctPwmUnitConfig
   uint32_t frequency;
   /** Mandatory: cycle resolution. */
   uint32_t resolution;
+  /** Optional: timer interrupt priority. */
+  IrqPriority priority;
   /** Optional: clock input. */
   enum SctInput clock;
   /** Optional: timer part. */
@@ -31,6 +33,9 @@ struct SctPwmUnitConfig
 struct SctPwmUnit
 {
   struct SctBase base;
+
+  void (*callback)(void *);
+  void *callbackArgument;
 
   /* Desired timer frequency */
   uint32_t frequency;

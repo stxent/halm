@@ -8,11 +8,13 @@
 #include <halm/platform/lpc/sct_pwm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
+static void interruptHandler(void *);
 static void setUnitResolution(struct SctPwmUnit *, uint8_t, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *, const void *);
 static void unitEnable(void *);
 static void unitDisable(void *);
+static void unitSetCallback(void *, void (*)(void *), void *);
 static uint32_t unitGetFrequency(const void *);
 static void unitSetFrequency(void *, uint32_t);
 static uint32_t unitGetOverflow(const void *);
@@ -60,7 +62,7 @@ const struct TimerClass * const SctPwmUnit = &(const struct TimerClass){
     .enable = unitEnable,
     .disable = unitDisable,
     .setAutostop = NULL,
-    .setCallback = NULL,
+    .setCallback = unitSetCallback,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
     .getOverflow = unitGetOverflow,
@@ -113,6 +115,12 @@ const struct PwmClass * const SctUnifiedPwmDoubleEdge =
     .setDuration = doubleEdgeSetDurationUnified,
     .setEdges = doubleEdgeSetEdgesUnified
 };
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  struct SctPwmUnit * const unit = object;
+  unit->callback(unit->callbackArgument);
+}
 /*----------------------------------------------------------------------------*/
 static void setUnitResolution(struct SctPwmUnit *unit, uint8_t channel,
     uint32_t resolution)
@@ -167,6 +175,8 @@ static enum Result unitInit(void *object, const void *configBase)
   if (!sctAllocateEvent(&unit->base, &unit->event))
     return E_BUSY;
 
+  unit->base.handler = interruptHandler;
+  unit->callback = NULL;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
   unit->centered = config->centered;
@@ -203,6 +213,9 @@ static enum Result unitInit(void *object, const void *configBase)
   /* Enable timer clearing on allocated event */
   reg->LIMIT_PART[part] = eventMask;
 
+  /* Priority is same for both timer parts*/
+  irqSetPriority(unit->base.irq, config->priority);
+
   /* Timer is left in a disabled state */
   return E_OK;
 }
@@ -216,6 +229,7 @@ static void unitDeinit(void *object)
 
   /* Halt the timer */
   reg->CTRL_PART[part] = CTRL_HALT;
+  reg->EVEN &= ~(1 << unit->event);
   reg->LIMIT_PART[part] = 0;
 
   /* Disable allocated event */
@@ -226,6 +240,27 @@ static void unitDeinit(void *object)
   SctBase->deinit(unit);
 }
 #endif
+/*----------------------------------------------------------------------------*/
+static void unitSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct SctPwmUnit * const unit = object;
+  LPC_SCT_Type * const reg = unit->base.reg;
+  const uint16_t eventMask = 1 << unit->event;
+
+  unit->callbackArgument = argument;
+  unit->callback = callback;
+
+  if (unit->callback != NULL)
+  {
+    /* Clear pending requests */
+    reg->EVFLAG = eventMask;
+    /* Enable interrupt requests */
+    reg->EVEN |= eventMask;
+  }
+  else
+    reg->EVEN &= ~eventMask;
+}
 /*----------------------------------------------------------------------------*/
 static void unitEnable(void *object)
 {
@@ -530,13 +565,13 @@ static void doubleEdgeEnable(void *object)
 
   if (pwm->inversion)
   {
-    reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
-    reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
+    reg->OUT[pwm->channel].CLR = 1 << pwm->leadingEvent;
+    reg->OUT[pwm->channel].SET = 1 << pwm->trailingEvent;
   }
   else
   {
-    reg->OUT[pwm->channel].CLR = 1 << pwm->leadingEvent;
-    reg->OUT[pwm->channel].SET = 1 << pwm->trailingEvent;
+    reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
+    reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
   }
 }
 /*----------------------------------------------------------------------------*/

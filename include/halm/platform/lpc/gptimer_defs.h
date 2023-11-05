@@ -11,7 +11,7 @@
 /*------------------Interrupt Register----------------------------------------*/
 #define IR_MATCH_INTERRUPT(channel)     BIT(channel)
 #define IR_MATCH_MASK                   BIT_FIELD(MASK(4), 0)
-#define IR_MATCH_VALUE(reg)             FIELD_VALUE((reg), IR_MATCH_MASK, 4)
+#define IR_MATCH_VALUE(reg)             FIELD_VALUE((reg), IR_MATCH_MASK, 0)
 #define IR_CAPTURE_INTERRUPT(channel)   BIT((channel) + 4)
 #define IR_CAPTURE_MASK                 BIT_FIELD(MASK(4), 4)
 #define IR_CAPTURE_VALUE(reg)           FIELD_VALUE((reg), IR_CAPTURE_MASK, 4)

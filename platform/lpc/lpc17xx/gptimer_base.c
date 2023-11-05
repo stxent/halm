@@ -216,9 +216,9 @@ static enum Result tmrInit(void *object, const void *configBase)
   sysClockControl(entry->clock, DEFAULT_DIV);
 
   timer->channel = config->channel;
+  timer->flags = GPTIMER_FLAG_32_BIT;
   timer->handler = NULL;
   timer->irq = TIMER0_IRQ + config->channel;
-  timer->resolution = 32;
   timer->reg = entry->reg;
 
   return E_OK;

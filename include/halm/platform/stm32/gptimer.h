@@ -23,10 +23,12 @@ struct GpTimerConfig
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /**
-   * Optional: numbers from 1 to 4 set a compare channel that will be used
-   * for a DMA request generation. Zero disables the generation of the request.
+   * Optional: timer event for DMA request and internal request generation.
+   * Timer may support only a part of possible capture/compare events, timer
+   * capabilities should be checked in the datasheet.
+   * Zero disables the generation of the request.
    */
-  uint8_t event;
+  enum GpTimerEvent event;
 };
 
 struct GpTimer
@@ -38,8 +40,8 @@ struct GpTimer
 
   /* Desired timer frequency */
   uint32_t frequency;
-  /* Compare channel used for a DMA request generation */
-  uint8_t event;
+  /* Event used for a DMA request generation */
+  enum GpTimerEvent event;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_GPTIMER_H_ */

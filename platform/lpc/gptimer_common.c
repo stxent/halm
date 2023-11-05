@@ -63,7 +63,7 @@ void gpTimerSetFrequency(struct GpTimerBase *timer, uint32_t frequency)
     const uint32_t divisor = apbClock / frequency - 1;
 
     assert(frequency <= apbClock);
-    assert(divisor <= MASK(timer->resolution));
+    assert(divisor <= gpTimerGetMaxValue(timer));
 
     reg->PR = divisor;
   }

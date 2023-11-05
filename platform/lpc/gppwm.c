@@ -14,6 +14,7 @@
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
 static uint8_t configMatchPin(uint8_t channel, PinNumber key);
+static void interruptHandler(void *);
 static void setTimerFrequency(struct GpPwmUnit *, uint32_t);
 static bool unitAllocateChannel(struct GpPwmUnit *, uint8_t);
 
@@ -27,6 +28,7 @@ static void unitReleaseChannel(struct GpPwmUnit *, uint8_t);
 static enum Result unitInit(void *, const void *);
 static void unitEnable(void *);
 static void unitDisable(void *);
+static void unitSetCallback(void *, void (*)(void *), void *);
 static uint32_t unitGetFrequency(const void *);
 static void unitSetFrequency(void *, uint32_t);
 static uint32_t unitGetOverflow(const void *);
@@ -70,7 +72,7 @@ const struct TimerClass * const GpPwmUnit = &(const struct TimerClass){
     .enable = unitEnable,
     .disable = unitDisable,
     .setAutostop = NULL,
-    .setCallback = NULL,
+    .setCallback = unitSetCallback,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
     .getOverflow = unitGetOverflow,
@@ -125,6 +127,17 @@ static uint8_t configMatchPin(uint8_t channel, PinNumber key)
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
   return UNPACK_CHANNEL(pinEntry->value);
+}
+/*----------------------------------------------------------------------------*/
+static void interruptHandler(void *object)
+{
+  struct GpPwmUnit * const unit = object;
+  LPC_PWM_Type * const reg = unit->base.reg;
+
+  /* Clear pending Match 0 interrupt */
+  reg->IR = PWM_IR_MATCH_INTERRUPT(0);
+
+  unit->callback(unit->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_LPC_GPPWM_PM
@@ -191,6 +204,8 @@ static enum Result unitInit(void *object, const void *configBase)
   if ((res = GpPwmUnitBase->init(unit, &baseConfig)) != E_OK)
     return res;
 
+  unit->base.handler = interruptHandler;
+  unit->callback = NULL;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
 
@@ -217,6 +232,9 @@ static enum Result unitInit(void *object, const void *configBase)
     return res;
 #endif
 
+  irqSetPriority(unit->base.irq, config->priority);
+  irqEnable(unit->base.irq);
+
   /* Timer is left in a disabled state */
   return E_OK;
 }
@@ -227,6 +245,7 @@ static void unitDeinit(void *object)
   struct GpPwmUnit * const unit = object;
   LPC_PWM_Type * const reg = unit->base.reg;
 
+  irqDisable(unit->base.irq);
   reg->TCR = 0;
 
 #ifdef CONFIG_PLATFORM_LPC_GPPWM_PM
@@ -236,6 +255,24 @@ static void unitDeinit(void *object)
   GpPwmUnitBase->deinit(unit);
 }
 #endif
+/*----------------------------------------------------------------------------*/
+static void unitSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct GpPwmUnit * const unit = object;
+  LPC_PWM_Type * const reg = unit->base.reg;
+
+  unit->callbackArgument = argument;
+  unit->callback = callback;
+
+  if (unit->callback != NULL)
+  {
+    reg->IR = PWM_IR_MATCH_INTERRUPT(0);
+    reg->MCR |= MCR_INTERRUPT(0);
+  }
+  else
+    reg->MCR &= ~MCR_INTERRUPT(0);
+}
 /*----------------------------------------------------------------------------*/
 static void unitEnable(void *object)
 {

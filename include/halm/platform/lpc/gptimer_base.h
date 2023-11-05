@@ -25,6 +25,11 @@ enum GpTimerEvent
   GPTIMER_MATCH3,
   GPTIMER_EVENT_END
 } __attribute__((packed));
+
+enum GpTimerFlags
+{
+  GPTIMER_FLAG_32_BIT = 0x01
+};
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerBase;
 
@@ -46,8 +51,8 @@ struct GpTimerBase
   struct Pin input;
   /* Peripheral block identifier */
   uint8_t channel;
-  /* Timer resolution in exponential form */
-  uint8_t resolution;
+  /* Peripheral block capabilities */
+  uint8_t flags;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
@@ -60,6 +65,15 @@ void gpTimerSetFrequency(struct GpTimerBase *, uint32_t);
 
 /* Platform-specific functions */
 uint32_t gpTimerGetClock(const struct GpTimerBase *);
+
+END_DECLS
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+static inline uint32_t gpTimerGetMaxValue(const struct GpTimerBase *timer)
+{
+  return (timer->flags & GPTIMER_FLAG_32_BIT) ? 0xFFFFFFFFUL : 0xFFFFUL;
+}
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

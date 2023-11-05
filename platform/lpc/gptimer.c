@@ -9,7 +9,6 @@
 #include <halm/pm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(const struct GpTimer *);
 static void interruptHandler(void *);
 
 #ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
@@ -50,11 +49,6 @@ const struct TimerClass * const GpTimer = &(const struct TimerClass){
     .getValue = tmrGetValue,
     .setValue = tmrSetValue
 };
-/*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(const struct GpTimer *timer)
-{
-  return MASK(timer->base.resolution);
-}
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -116,7 +110,7 @@ static enum Result tmrInit(void *object, const void *configBase)
     reg->MR[i] = 0;
 
   /* Configure prescaler and default match value */
-  reg->MR[timer->event] = getMaxValue(timer);
+  reg->MR[timer->event] = gpTimerGetMaxValue(&timer->base);
   /* Reset the timer after reaching the match register value */
   reg->MCR = MCR_RESET(timer->event);
   /* Enable external match to generate signals to other peripherals */
@@ -237,9 +231,10 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
-  const uint32_t value = overflow ? overflow - 1 : getMaxValue(timer);
+  const uint32_t value = overflow ?
+      overflow - 1 : gpTimerGetMaxValue(&timer->base);
 
-  assert(value <= getMaxValue(timer));
+  assert(value <= gpTimerGetMaxValue(&timer->base));
   reg->MR[timer->event] = value;
 }
 /*----------------------------------------------------------------------------*/

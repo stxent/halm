@@ -11,7 +11,6 @@
 /*----------------------------------------------------------------------------*/
 #define MATCH_CHANNEL_OVERFLOW 0
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(const struct GpTimerCaptureUnit *);
 static void interruptHandler(void *);
 
 #ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
@@ -79,11 +78,6 @@ const struct CaptureClass * const GpTimerCapture =
     .setCallback = channelSetCallback,
     .getValue = channelGetValue
 };
-/*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(const struct GpTimerCaptureUnit *timer)
-{
-  return MASK(timer->base.resolution);
-}
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
@@ -168,7 +162,7 @@ static enum Result unitInit(void *object, const void *configBase)
   /* Reset the timer after reaching the match register value */
   reg->MCR = MCR_RESET(MATCH_CHANNEL_OVERFLOW);
   /* Configure default match value for update event */
-  reg->MR[MATCH_CHANNEL_OVERFLOW] = getMaxValue(unit);
+  reg->MR[MATCH_CHANNEL_OVERFLOW] = gpTimerGetMaxValue(&unit->base);
 
   unit->frequency = config->frequency;
   gpTimerSetFrequency(&unit->base, unit->frequency);
@@ -271,9 +265,10 @@ static void unitSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimerCaptureUnit * const unit = object;
   LPC_TIMER_Type * const reg = unit->base.reg;
-  const uint32_t value = overflow ? overflow - 1 : getMaxValue(unit);
+  const uint32_t value = overflow ?
+      overflow - 1 : gpTimerGetMaxValue(&unit->base);
 
-  assert(value <= getMaxValue(unit));
+  assert(value <= gpTimerGetMaxValue(&unit->base));
   reg->MR[MATCH_CHANNEL_OVERFLOW] = value;
 }
 /*----------------------------------------------------------------------------*/
@@ -290,7 +285,7 @@ static void unitSetValue(void *object, uint32_t value)
   struct GpTimerCaptureUnit * const unit = object;
   LPC_TIMER_Type * const reg = unit->base.reg;
 
-  assert(value <= getMaxValue(unit));
+  assert(value <= gpTimerGetMaxValue(&unit->base));
 
   reg->PC = 0;
   reg->TC = value;

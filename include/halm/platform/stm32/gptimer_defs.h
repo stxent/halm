@@ -8,20 +8,35 @@
 #define HALM_PLATFORM_STM32_GPTIMER_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
+#include <stdbool.h>
+#include <stdint.h>
 /*------------------Channel packing-------------------------------------------*/
-#define CHANNEL_COUNT                   10
-#define CHANNEL_CH1(channel)            ((channel) * CHANNEL_COUNT + 0)
-#define CHANNEL_CH1N(channel)           ((channel) * CHANNEL_COUNT + 1)
-#define CHANNEL_CH2(channel)            ((channel) * CHANNEL_COUNT + 2)
-#define CHANNEL_CH2N(channel)           ((channel) * CHANNEL_COUNT + 3)
-#define CHANNEL_CH3(channel)            ((channel) * CHANNEL_COUNT + 4)
-#define CHANNEL_CH3N(channel)           ((channel) * CHANNEL_COUNT + 5)
-#define CHANNEL_CH4(channel)            ((channel) * CHANNEL_COUNT + 6)
-#define CHANNEL_CH4N(channel)           ((channel) * CHANNEL_COUNT + 7)
-#define CHANNEL_ETR(channel)            ((channel) * CHANNEL_COUNT + 8)
-#define CHANNEL_BKIN(channel)           ((channel) * CHANNEL_COUNT + 9)
-#define PACK_CHANNEL(channel, index)    ((channel) * CHANNEL_COUNT + (index))
-#define UNPACK_CHANNEL(value)           ((value) & (CHANNEL_COUNT - 1))
+enum
+{
+  FUNC_CH1_POS,
+  FUNC_CH1_NEG,
+  FUNC_CH2_POS,
+  FUNC_CH2_NEG,
+  FUNC_CH3_POS,
+  FUNC_CH3_NEG,
+  FUNC_CH4_POS,
+  FUNC_ETR,
+  FUNC_BKIN,
+
+  CHANNEL_COUNT
+};
+
+#define CHANNEL_CH1(channel)          ((channel) * CHANNEL_COUNT + FUNC_CH1_POS)
+#define CHANNEL_CH1N(channel)         ((channel) * CHANNEL_COUNT + FUNC_CH1_NEG)
+#define CHANNEL_CH2(channel)          ((channel) * CHANNEL_COUNT + FUNC_CH2_POS)
+#define CHANNEL_CH2N(channel)         ((channel) * CHANNEL_COUNT + FUNC_CH2_NEG)
+#define CHANNEL_CH3(channel)          ((channel) * CHANNEL_COUNT + FUNC_CH3_POS)
+#define CHANNEL_CH3N(channel)         ((channel) * CHANNEL_COUNT + FUNC_CH3_NEG)
+#define CHANNEL_CH4(channel)          ((channel) * CHANNEL_COUNT + FUNC_CH4_POS)
+#define CHANNEL_ETR(channel)          ((channel) * CHANNEL_COUNT + FUNC_ETR)
+#define CHANNEL_BKIN(channel)         ((channel) * CHANNEL_COUNT + FUNC_BKIN)
+#define PACK_CHANNEL(channel, index)  ((channel) * CHANNEL_COUNT + (index))
+#define UNPACK_CHANNEL(value)         ((value) & (CHANNEL_COUNT - 1))
 /*------------------Timer channel identifiers---------------------------------*/
 enum TimerChannel
 {
@@ -49,6 +64,14 @@ enum TimerFilter
   FILTER_DTS_DIV_32_N_5   = 13,
   FILTER_DTS_DIV_32_N_6   = 14,
   FILTER_DTS_DIV_32_N_8   = 15
+};
+/*------------------Timer capabilities----------------------------------------*/
+enum TimerFlags
+{
+  TIMER_FLAG_32_BIT   = 0x01,
+  TIMER_FLAG_DMA      = 0x02,
+  TIMER_FLAG_UPDOWN   = 0x04,
+  TIMER_FLAG_INVERSE  = 0x08
 };
 /*------------------Control Register 1----------------------------------------*/
 /* Counter enable */
@@ -340,5 +363,22 @@ enum
 #define DCR_DBL(value)                  BIT_FIELD((value), 8)
 #define DCR_DBL_MASK                    BIT_FIELD(MASK(5), 8)
 #define DCR_DBL_VALUE(reg)              FIELD_VALUE((reg), DCR_DBL_MASK, 8)
+/*----------------------------------------------------------------------------*/
+static inline uint32_t getMaxValue(uint8_t flags)
+{
+  return (flags & TIMER_FLAG_32_BIT) ? 0xFFFFFFFFUL : 0xFFFFUL;
+}
+
+static inline bool isInputChannel(uint8_t channel)
+{
+  return channel != FUNC_CH1_NEG
+      && channel != FUNC_CH2_NEG
+      && channel != FUNC_CH3_NEG;
+}
+
+static inline bool isOutputChannel(uint8_t channel)
+{
+  return channel <= FUNC_CH4_POS;
+}
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_GPTIMER_DEFS_H_ */

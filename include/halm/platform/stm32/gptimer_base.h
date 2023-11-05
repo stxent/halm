@@ -18,6 +18,16 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerBase;
 
+enum GpTimerEvent
+{
+  TIM_EVENT_DISABLED,
+  TIM_EVENT_UPDATE,
+  TIM_EVENT_CC1,
+  TIM_EVENT_CC2,
+  TIM_EVENT_CC3,
+  TIM_EVENT_CC4
+} __attribute__((packed));
+
 struct GpTimerBaseConfig
 {
   /** Mandatory: peripheral identifier. */
@@ -34,8 +44,8 @@ struct GpTimerBase
 
   /* Peripheral block identifier */
   uint8_t channel;
-  /* Timer resolution in exponential form */
-  uint8_t resolution;
+  /* Peripheral block capabilities */
+  uint8_t flags;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS

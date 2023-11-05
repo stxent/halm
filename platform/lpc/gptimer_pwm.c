@@ -9,7 +9,7 @@
 #include <halm/pm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(const struct GpTimerPwmUnit *);
+static void interruptHandler(void *);
 static bool unitAllocateChannel(struct GpTimerPwmUnit *, uint8_t);
 static void unitUpdateResolution(struct GpTimerPwmUnit *, uint8_t);
 
@@ -23,6 +23,7 @@ static void unitReleaseChannel(struct GpTimerPwmUnit *, uint8_t);
 static enum Result unitInit(void *, const void *);
 static void unitEnable(void *);
 static void unitDisable(void *);
+static void unitSetCallback(void *, void (*)(void *), void *);
 static uint32_t unitGetFrequency(const void *);
 static void unitSetFrequency(void *, uint32_t);
 static uint32_t unitGetOverflow(const void *);
@@ -54,7 +55,7 @@ const struct TimerClass * const GpTimerPwmUnit = &(const struct TimerClass){
     .enable = unitEnable,
     .disable = unitDisable,
     .setAutostop = NULL,
-    .setCallback = NULL,
+    .setCallback = unitSetCallback,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
     .getOverflow = unitGetOverflow,
@@ -74,9 +75,15 @@ const struct PwmClass * const GpTimerPwm = &(const struct PwmClass){
     .setEdges = channelSetEdges
 };
 /*----------------------------------------------------------------------------*/
-static inline uint32_t getMaxValue(const struct GpTimerPwmUnit *unit)
+static void interruptHandler(void *object)
 {
-  return MASK(unit->base.resolution);
+  struct GpTimerPwmUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+
+  /* Clear all pending interrupts */
+  reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+
+  unit->callback(unit->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
@@ -146,8 +153,11 @@ static enum Result unitInit(void *object, const void *configBase)
   if ((res = GpTimerBase->init(unit, &baseConfig)) != E_OK)
     return res;
   /* Actual overflow value should be lower than a timer limit */
-  assert(config->resolution > 0 && config->resolution <= getMaxValue(unit));
+  assert(config->resolution > 0
+      && config->resolution <= gpTimerGetMaxValue(&unit->base));
 
+  unit->base.handler = interruptHandler;
+  unit->callback = NULL;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
 
@@ -173,6 +183,9 @@ static enum Result unitInit(void *object, const void *configBase)
     return res;
 #endif
 
+  irqSetPriority(unit->base.irq, config->priority);
+  irqEnable(unit->base.irq);
+
   /* Timer is left in a disabled state */
   return E_OK;
 }
@@ -183,6 +196,7 @@ static void unitDeinit(void *object)
   struct GpTimerPwmUnit * const unit = object;
   LPC_TIMER_Type * const reg = unit->base.reg;
 
+  irqDisable(unit->base.irq);
   reg->TCR = 0;
 
 #ifdef CONFIG_PLATFORM_LPC_GPTIMER_PM
@@ -192,6 +206,25 @@ static void unitDeinit(void *object)
   GpTimerBase->deinit(unit);
 }
 #endif
+/*----------------------------------------------------------------------------*/
+static void unitSetCallback(void *object, void (*callback)(void *),
+    void *argument)
+{
+  struct GpTimerPwmUnit * const unit = object;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+  const uint32_t mask = MCR_INTERRUPT(unit->limiter);
+
+  unit->callbackArgument = argument;
+  unit->callback = callback;
+
+  if (unit->callback != NULL)
+  {
+    reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
+    reg->MCR |= mask;
+  }
+  else
+    reg->MCR &= ~mask;
+}
 /*----------------------------------------------------------------------------*/
 static void unitEnable(void *object)
 {
@@ -238,7 +271,7 @@ static void unitSetOverflow(void *object, uint32_t overflow)
   struct GpTimerPwmUnit * const unit = object;
   LPC_TIMER_Type * const reg = unit->base.reg;
 
-  assert(overflow > 0 && overflow <= getMaxValue(unit));
+  assert(overflow > 0 && overflow <= gpTimerGetMaxValue(&unit->base));
   unit->resolution = overflow;
   reg->MR[unit->limiter] = unit->resolution - 1;
 }

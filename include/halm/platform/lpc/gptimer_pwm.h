@@ -18,6 +18,8 @@ struct GpTimerPwmUnitConfig
   uint32_t frequency;
   /** Mandatory: cycle resolution. */
   uint32_t resolution;
+  /** Optional: timer interrupt priority. */
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
@@ -25,6 +27,9 @@ struct GpTimerPwmUnitConfig
 struct GpTimerPwmUnit
 {
   struct GpTimerBase base;
+
+  void (*callback)(void *);
+  void *callbackArgument;
 
   /* Desired timer frequency */
   uint32_t frequency;
