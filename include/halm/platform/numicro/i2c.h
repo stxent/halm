@@ -38,10 +38,8 @@ struct I2C
   /* Desired baud rate */
   uint32_t rate;
 
-  /* Pointer to an input buffer */
-  uint8_t *rxBuffer;
-  /* Pointer to an output buffer */
-  const uint8_t *txBuffer;
+  /* Pointer to an input or output buffer */
+  uintptr_t buffer;
   /* Bytes to be received */
   uint16_t rxLeft;
   /* Bytes to be transmitted */

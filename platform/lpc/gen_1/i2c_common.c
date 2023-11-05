@@ -70,10 +70,29 @@ void i2cSetRate(struct I2CBase *interface, uint32_t rate)
 
   LPC_I2C_Type * const reg = interface->reg;
   const uint32_t clock = i2cGetClock(interface);
-  uint32_t divisor = ((clock + (rate - 1)) >> 1) / rate;
+  const uint32_t divisor = (clock + rate - 1) / rate;
+  uint32_t clockH;
+  uint32_t clockL;
 
-  if (divisor > 0xFFFF)
-    divisor = 0xFFFF;
+  if (rate > 100000)
+  {
+    /* Use 11/21 duty cycle for Fast Mode and Fast Mode+ */
+    clockH = (divisor * 11 + 31) >> 5;
+    clockL = (divisor * 21) >> 5;
+  }
+  else
+  {
+    /* Standard Mode with 1/1 duty cycle */
+    clockH = clockL = divisor >> 1;
+  }
 
-  reg->SCLL = reg->SCLH = divisor;
+  assert(clockH >= 4 && clockL >= 4);
+
+  if (clockH > 0xFFFF)
+    clockH = 0xFFFF;
+  if (clockL > 0xFFFF)
+    clockL = 0xFFFF;
+
+  reg->SCLH = clockH;
+  reg->SCLL = clockL;
 }

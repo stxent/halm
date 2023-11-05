@@ -74,8 +74,10 @@ static void interruptHandler(void *object)
 
     /* Slave address and write bit have been transmitted, ACK received */
     case STATUS_SLAVE_WRITE_ACK:
+      reg->DAT = *(const uint8_t *)interface->buffer;
+      ++interface->buffer;
       --interface->txLeft;
-      reg->DAT = *interface->txBuffer++;
+
       interface->state = STATE_TRANSMIT;
       break;
 
@@ -85,6 +87,7 @@ static void interruptHandler(void *object)
         reg->CONSET = CONSET_AA; /* Assert ACK after data is received */
       else
         reg->CONCLR = CONCLR_AAC; /* Assert NACK after data is received */
+
       interface->state = STATE_RECEIVE;
       break;
 
@@ -96,7 +99,8 @@ static void interruptHandler(void *object)
       /* Send next byte or stop transmission */
       if (interface->txLeft)
       {
-        reg->DAT = *interface->txBuffer++;
+        reg->DAT = *(const uint8_t *)interface->buffer;
+        ++interface->buffer;
         --interface->txLeft;
       }
       else
@@ -116,8 +120,9 @@ static void interruptHandler(void *object)
 
     /* Data has been received and ACK has been returned */
     case STATUS_MASTER_DATA_RECEIVED_ACK:
+      *(uint8_t *)interface->buffer = reg->DAT;
+      ++interface->buffer;
       --interface->rxLeft;
-      *interface->rxBuffer++ = reg->DAT;
 
       if (interface->rxLeft > 1)
         reg->CONSET = CONSET_AA;
@@ -130,8 +135,9 @@ static void interruptHandler(void *object)
       if (interface->state != STATE_RECEIVE)
         break;
 
+      *(uint8_t *)interface->buffer = reg->DAT;
+      ++interface->buffer;
       --interface->rxLeft;
-      *interface->rxBuffer++ = reg->DAT;
 
       reg->CONSET = CONSET_STO;
       interface->state = STATE_IDLE;
@@ -342,10 +348,9 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   if (length > USHRT_MAX)
     length = USHRT_MAX;
 
+  interface->buffer = (uintptr_t)buffer;
   interface->rxLeft = length;
   interface->txLeft = 0;
-  interface->rxBuffer = buffer;
-  interface->txBuffer = NULL;
 
   interface->state = STATE_ADDRESS;
   reg->CONSET = CONSET_STA;
@@ -378,10 +383,9 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   if (length > USHRT_MAX)
     length = USHRT_MAX;
 
+  interface->buffer = (uintptr_t)buffer;
   interface->rxLeft = 0;
   interface->txLeft = length;
-  interface->rxBuffer = NULL;
-  interface->txBuffer = buffer;
 
   /* Stop previous transmission when Repeated Start is enabled */
   if (reg->STAT == STATUS_MASTER_DATA_TRANSMITTED_ACK)

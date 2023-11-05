@@ -20,7 +20,13 @@ enum I2CParameter
    * Generate bus recovery sequence. Bus recovery is a blocking operation.
    * Data pointer should be set to zero.
    */
-  IF_I2C_BUS_RECOVERY
+  IF_I2C_BUS_RECOVERY,
+  /**
+   * Enable 10-bit device address mode. Parameter type is \a uint8_t. Possible
+   * values: 0 to disable 10-bit address mode and 1 to enable it. This mode
+   * is disabled by default.
+   */
+  IF_I2C_10BIT_ADDRESS
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_I2C_H_ */
