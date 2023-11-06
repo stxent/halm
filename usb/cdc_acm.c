@@ -471,13 +471,23 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
 
   switch ((enum SerialParameter)parameter)
   {
-    case IF_SERIAL_RTS:
-      *(uint8_t *)data = (cdcAcmBaseGetState(interface->driver) & CDC_RTS) != 0;
-      return E_OK;
+#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+    case IF_SERIAL_CTS:
+    {
+      const uint8_t state = cdcAcmBaseGetState(interface->driver);
 
-    case IF_SERIAL_DTR:
-      *(uint8_t *)data = (cdcAcmBaseGetState(interface->driver) & CDC_DTR) != 0;
+      *(uint8_t *)data = (state & CDC_LINE_CODING_RTS) != 0;
       return E_OK;
+    }
+
+    case IF_SERIAL_DSR:
+    {
+      const uint8_t state = cdcAcmBaseGetState(interface->driver);
+
+      *(uint8_t *)data = (state & CDC_LINE_CODING_DTR) != 0;
+      return E_OK;
+    }
+#endif
 
     default:
       break;

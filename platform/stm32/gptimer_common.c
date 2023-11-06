@@ -71,7 +71,7 @@ uint8_t gpTimerConfigOutputPin(uint8_t channel, PinNumber key)
   return index;
 }
 /*----------------------------------------------------------------------------*/
-void gpTimerSetTimerFrequency(struct GpTimerBase *timer, uint32_t frequency)
+void gpTimerSetFrequency(struct GpTimerBase *timer, uint32_t frequency)
 {
   STM_TIM_Type * const reg = timer->reg;
   uint32_t divisor;

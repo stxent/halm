@@ -128,12 +128,15 @@ enum
 #define DEFAULT_DEVICE_CONFIGURATION 1
 /*----------------------------------------------------------------------------*/
 #define REQUEST_DIRECTION_MASK          BIT_FIELD(MASK(1), 7)
+#define REQUEST_DIRECTION(value)        BIT_FIELD((value), 7)
 #define REQUEST_DIRECTION_VALUE(reg) \
     FIELD_VALUE((reg), REQUEST_DIRECTION_MASK, 7)
 #define REQUEST_TYPE_MASK               BIT_FIELD(MASK(2), 5)
+#define REQUEST_TYPE(value)             BIT_FIELD((value), 5)
 #define REQUEST_TYPE_VALUE(reg) \
     FIELD_VALUE((reg), REQUEST_TYPE_MASK, 5)
 #define REQUEST_RECIPIENT_MASK          BIT_FIELD(MASK(5), 0)
+#define REQUEST_RECIPIENT(value)        BIT_FIELD((value), 0)
 #define REQUEST_RECIPIENT_VALUE(reg) \
     FIELD_VALUE((reg), REQUEST_RECIPIENT_MASK, 0)
 /*----------------------------------------------------------------------------*/

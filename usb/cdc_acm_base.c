@@ -383,7 +383,8 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
 
     case CDC_SET_CONTROL_LINE_STATE:
     {
-      driver->state.controlLineState = packet->value & 0x03;
+      driver->state.controlLineState =
+          packet->value & (CDC_LINE_CODING_DTR | CDC_LINE_CODING_RTS);
       event = true;
 
       usbTrace("cdc_acm at %u: set control lines to %02X",
@@ -435,7 +436,7 @@ static enum Result driverInit(void *object, const void *configBase)
   driver->speed = USB_FS;
 
   driver->state.lineCoding = (struct CdcLineCoding){115200, 0, 0, 8};
-  driver->state.controlLineState = 0;
+  driver->state.controlLineState = CDC_LINE_CODING_DTR | CDC_LINE_CODING_RTS;
 
   driver->controlInterfaceIndex = usbDevGetInterface(driver->device);
   return usbDevBind(driver->device, driver);

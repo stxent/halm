@@ -68,7 +68,7 @@ static void powerStateHandler(void *object, enum PmState state)
   if (state == PM_ACTIVE)
   {
     struct GpTimer * const timer = object;
-    gpTimerSetTimerFrequency(&timer->base, timer->frequency);
+    gpTimerSetFrequency(&timer->base, timer->frequency);
   }
 }
 #endif
@@ -118,7 +118,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   }
 
   timer->frequency = config->frequency;
-  gpTimerSetTimerFrequency(&timer->base, timer->frequency);
+  gpTimerSetFrequency(&timer->base, timer->frequency);
 
   if (timer->base.flags & TIMER_FLAG_INVERSE)
     reg->BDTR |= BDTR_MOE;
@@ -218,7 +218,7 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
   struct GpTimer * const timer = object;
 
   timer->frequency = frequency;
-  gpTimerSetTimerFrequency(&timer->base, timer->frequency);
+  gpTimerSetFrequency(&timer->base, timer->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)

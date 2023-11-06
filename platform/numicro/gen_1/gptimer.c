@@ -68,7 +68,7 @@ static void powerStateHandler(void *object, enum PmState state)
   if (state == PM_ACTIVE)
   {
     struct GpTimer * const timer = object;
-    gpTimerSetTimerFrequency(&timer->base, timer->frequency);
+    gpTimerSetFrequency(&timer->base, timer->frequency);
   }
 }
 #endif
@@ -114,7 +114,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   reg->EINTSTS = EINTSTS_CAPIF;
 
   timer->frequency = config->frequency;
-  gpTimerSetTimerFrequency(&timer->base, timer->frequency);
+  gpTimerSetFrequency(&timer->base, timer->frequency);
 
 #ifdef CONFIG_PLATFORM_NUMICRO_GPTIMER_PM
   if ((res = pmRegister(powerStateHandler, timer)) != E_OK)
@@ -210,7 +210,7 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
   struct GpTimer * const timer = object;
 
   timer->frequency = frequency;
-  gpTimerSetTimerFrequency(&timer->base, timer->frequency);
+  gpTimerSetFrequency(&timer->base, timer->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)

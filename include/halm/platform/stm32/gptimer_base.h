@@ -54,7 +54,7 @@ BEGIN_DECLS
 int gpTimerAllocateChannel(uint8_t);
 uint8_t gpTimerConfigInputPin(uint8_t, PinNumber, enum PinPull);
 uint8_t gpTimerConfigOutputPin(uint8_t, PinNumber);
-void gpTimerSetTimerFrequency(struct GpTimerBase *, uint32_t);
+void gpTimerSetFrequency(struct GpTimerBase *, uint32_t);
 
 /* Platform-specific functions */
 uint32_t gpTimerGetClock(const struct GpTimerBase *);

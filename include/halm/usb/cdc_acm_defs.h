@@ -12,11 +12,15 @@
 #define CDC_CONTROL_EP_SIZE       64
 #define CDC_DATA_EP_SIZE          64
 #define CDC_DATA_EP_SIZE_HS       512
-#define CDC_NOTIFICATION_EP_SIZE  12
+#define CDC_NOTIFICATION_EP_SIZE  64
 
-#define CDC_DTR                   BIT(0)
-#define CDC_RTS                   BIT(1)
+#define CDC_LINE_CODING_DTR       BIT(0)
+#define CDC_LINE_CODING_RTS       BIT(1)
+
+#define CDC_SERIAL_STATE_DCD      BIT(0)
+#define CDC_SERIAL_STATE_DSR      BIT(1)
 /*----------------------------------------------------------------------------*/
+/* Class-Specific Request Codes */
 enum
 {
   CDC_SEND_ENCAPSULATED_COMMAND = 0x00,
@@ -28,6 +32,19 @@ enum
   CDC_GET_LINE_CODING           = 0x21,
   CDC_SET_CONTROL_LINE_STATE    = 0x22,
   CDC_SEND_BREAK                = 0x23
+};
+
+/* Class-Specific Notification Codes */
+enum
+{
+  CDC_NETWORK_CONNECTION        = 0x00,
+  CDC_RESPONSE_AVAILABLE        = 0x01,
+  CDC_AUX_JACK_HOOK_STATE       = 0x08,
+  CDC_RING_DETECT               = 0x09,
+  CDC_SERIAL_STATE              = 0x20,
+  CDC_CALL_STATE_CHANGE         = 0x28,
+  CDC_LINE_STATE_CHANGE         = 0x29,
+  CDC_CONNECTION_SPEED_CHANGE   = 0x2A
 };
 
 enum
@@ -78,6 +95,16 @@ struct CdcLineCoding
   uint8_t charFormat;
   uint8_t parityType;
   uint8_t dataBits;
+} __attribute__((packed));
+
+struct CdcSerialState
+{
+  uint8_t requestType;
+  uint8_t request;
+  uint16_t value;
+  uint16_t index;
+  uint16_t length;
+  uint16_t data;
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_CDC_ACM_DEFS_H_ */

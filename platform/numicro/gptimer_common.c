@@ -22,7 +22,7 @@ void gpTimerConfigPin(uint8_t channel, PinNumber key, enum PinPull pull)
   pinSetPull(pin, pull);
 }
 /*----------------------------------------------------------------------------*/
-void gpTimerSetTimerFrequency(struct GpTimerBase *timer, uint32_t frequency)
+void gpTimerSetFrequency(struct GpTimerBase *timer, uint32_t frequency)
 {
   NM_TIMER_Type * const reg = timer->reg;
   uint32_t divisor;
