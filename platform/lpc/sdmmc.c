@@ -12,6 +12,7 @@
 #include <halm/platform/lpc/sdmmc_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define DEFAULT_BLOCK_SIZE  512
 #define BUSY_READ_DELAY     100 /* Milliseconds */
@@ -76,7 +77,7 @@ static void execute(struct Sdmmc *interface)
   reg->INTMASK = waitStatus;
 
   /* Prepare command */
-  uint32_t command = code;
+  uint32_t command = CMD_INDEX(code);
 
   if (flags & SDIO_INITIALIZE)
     command |= CMD_SEND_INITIALIZATION;
@@ -505,6 +506,7 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t sdioWrite(void *object, const void *buffer, size_t length)
 {
+
   struct Sdmmc * const interface = object;
   LPC_SDMMC_Type * const reg = interface->base.reg;
 

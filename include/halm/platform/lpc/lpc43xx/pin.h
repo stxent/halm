@@ -12,7 +12,6 @@
 #define HALM_PLATFORM_LPC_LPC43XX_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
-#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/

@@ -362,6 +362,7 @@ static enum Result handleInterfaceRequest(const struct UsbSetupPacket *packet,
       break;
 
     case REQUEST_GET_INTERFACE:
+      /* Only one alternative interface is supported by default */
       response[0] = 0;
       *responseLength = 1;
       break;
@@ -369,7 +370,7 @@ static enum Result handleInterfaceRequest(const struct UsbSetupPacket *packet,
     case REQUEST_SET_INTERFACE:
       usbTrace("control: set interface %u", packet->value);
 
-      /* Only one interface is supported by default */
+      /* Only one alternative interface is supported by default */
       if (packet->value != 0)
         res = E_VALUE;
       break;

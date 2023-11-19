@@ -10,6 +10,7 @@
 #include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
 #include <xcore/accel.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
 /*----------------------------------------------------------------------------*/

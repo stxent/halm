@@ -8,6 +8,7 @@
 #include <halm/platform/lpc/spifi_base.h>
 #include <halm/platform/lpc/system.h>
 #include <xcore/bits.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SpifiBase *, const struct SpifiBaseConfig *);
 static bool setInstance(struct SpifiBase *);

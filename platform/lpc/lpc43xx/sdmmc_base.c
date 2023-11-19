@@ -8,6 +8,7 @@
 #include <halm/platform/lpc/sdmmc_base.h>
 #include <halm/platform/lpc/system.h>
 #include <xcore/bits.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define SDDELAY_SAMPLE(value) BIT_FIELD((value), 0)
 #define SDDELAY_DRV(value)    BIT_FIELD((value), 8)

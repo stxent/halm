@@ -8,6 +8,7 @@
 #include <halm/platform/lpc/spifi.h>
 #include <halm/platform/lpc/spifi_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 enum
 {

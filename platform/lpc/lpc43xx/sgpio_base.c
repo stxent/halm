@@ -9,6 +9,7 @@
 #include <halm/platform/lpc/sgpio_defs.h>
 #include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(function, number)  (((number) << 4) | (function))
 #define UNPACK_FUNCTION(value)        ((value) & 0x0F)

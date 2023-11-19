@@ -8,6 +8,7 @@
 #include <halm/platform/lpc/lpc43xx/ethernet.h>
 #include <halm/platform/lpc/lpc43xx/ethernet_defs.h>
 #include <halm/platform/lpc/lpc43xx/ethernet_mdio.h>
+#include <assert.h>
 #include <stdlib.h>
 /*----------------------------------------------------------------------------*/
 struct EthernetStreamConfig
