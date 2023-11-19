@@ -14,6 +14,20 @@ config PLATFORM_STM32_BDMA2
 
 endmenu
 
+menu "I2C"
+
+config PLATFORM_STM32_I2C1
+	bool "I2C1"
+	default y
+	depends on PLATFORM_STM32_I2C_BASE
+
+config PLATFORM_STM32_I2C2
+	bool "I2C2"
+	default y
+	depends on PLATFORM_STM32_I2C_BASE
+
+endmenu
+
 menu "General Purpose Timers"
 
 config PLATFORM_STM32_TIM1

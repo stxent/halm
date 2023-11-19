@@ -3,6 +3,11 @@ config GEN_ADC
 	default gen_1 if FAMILY_STM32F1XX || FAMILY_STM32F4XX
 	default gen_2 if FAMILY_STM32F0XX
 
+config GEN_I2C
+	string
+	default gen_1 if FAMILY_STM32F1XX
+	default gen_2 if FAMILY_STM32F0XX
+
 config GEN_PIN
 	string
 	default gen_2 if FAMILY_STM32F0XX
@@ -167,6 +172,25 @@ config PLATFORM_STM32_GPTIMER
 	bool "Common timer"
 	default y
 	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_I2C_BASE
+	bool "I2C"
+	default y
+
+config PLATFORM_STM32_I2C_NO_DEINIT
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
+	depends on PLATFORM_STM32_I2C_BASE
+
+config PLATFORM_STM32_I2C_PM
+	bool "Power management"
+	default n
+	depends on PM && PLATFORM_STM32_I2C_BASE
+
+config PLATFORM_STM32_I2C
+	bool "I2C Master with DMA"
+	default y
+	depends on PLATFORM_STM32_I2C_BASE && (PLATFORM_STM32_BDMA || PLATFORM_STM32_DMA)
 
 config PLATFORM_STM32_IWDG
 	bool "IWDG"
