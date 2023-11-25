@@ -263,7 +263,7 @@ static enum Result workQueueStart(void *object)
 
   while (WQ_RUNNING(wq))
   {
-#ifdef CONFIG_GENERIC_WQ_PM
+#if defined(CONFIG_GENERIC_WQ_PM) && !defined(CONFIG_GENERIC_WQ_LOAD)
     /*
      * Disable interrupts to avoid entering sleep mode when interrupt is fired
      * between size comparison and sleep instruction.

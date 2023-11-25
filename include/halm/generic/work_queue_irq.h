@@ -14,7 +14,7 @@ extern const struct WorkQueueClass * const WorkQueueIrq;
 
 struct WorkQueueIrqConfig
 {
-  /** Mandatory: number of pending tasks. */
+  /** Mandatory: number of queued tasks. */
   size_t size;
   /** Mandatory: number of an interrupt vector. */
   IrqNumber irq;

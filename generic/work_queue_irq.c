@@ -38,6 +38,7 @@ DEFINE_QUEUE(struct WqTask, WqTask, wqTask)
 struct WorkQueueIrq
 {
   struct WorkQueue base;
+
   WqTaskQueue tasks;
   IrqNumber irq;
 
