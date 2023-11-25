@@ -77,6 +77,12 @@ if(CONFIG_PLATFORM_STM32_IWDG)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/iwdg_base.c")
 endif()
 
+if(CONFIG_PLATFORM_STM32_SDIO)
+    list(APPEND SOURCE_FILES "sdio.c")
+    list(APPEND SOURCE_FILES "sdio_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/sdio_base.c")
+endif()
+
 if(CONFIG_PLATFORM_STM32_SPI_BASE)
     list(APPEND SOURCE_FILES "spi_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/spi_base.c")

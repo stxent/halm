@@ -50,43 +50,50 @@ struct SdioSpi
   /* Work queue for integrity checking tasks */
   struct WorkQueue *wq;
 
-  /* Pool for results of checksum computation */
-  uint16_t *crcPool;
-  /* Pool size */
-  size_t crcPoolSize;
+  struct
+  {
+    /* Pool for results of checksum computation */
+    uint16_t *pool;
+    /* Pool size */
+    size_t capacity;
+  } crc;
 
-  /* Pointer to an input buffer */
-  uint8_t *rxBuffer;
-  /* Pointer to an output buffer */
-  const uint8_t *txBuffer;
-  /* Block size of data transfers */
-  uint32_t blockSize;
-  /* Number of bytes left */
-  size_t left;
-  /* Total transfer size */
-  size_t length;
+  struct
+  {
+    /* Address of an input or output buffer */
+    uintptr_t buffer;
+    /* Number of bytes left */
+    size_t left;
+    /* Total transfer size */
+    size_t length;
+    /*
+     * Status of the high-level command, some commands may be split up into
+     * multiple low-level commands.
+     */
+    uint8_t status;
+  } transfer;
 
-  /* Argument for the most recent command */
-  uint32_t argument;
-  /* Interface command */
-  uint32_t command;
-  /* Command response */
-  uint32_t response[4];
-  /* Buffer for temporary data */
-  uint8_t buffer[18];
+  struct
+  {
+    /* Argument for the most recent command */
+    uint32_t argument;
+    /* Command configuration */
+    uint32_t code;
+    /* Command response */
+    uint32_t response[4];
+    /* Buffer for temporary data, address should be aligned */
+    uint8_t buffer[18];
 
-  /* Retries left */
+    /* Status of the last command */
+    uint8_t status;
+  } command;
+
+  /* Retries for a last command or transfer step */
   unsigned short retries;
-
+  /* Size of each block in multi-block data transfers */
+  uint16_t block;
   /* Current state of the FSM */
   uint8_t state;
-  /* Status of the last command */
-  uint8_t commandStatus;
-  /*
-   * Status of the high-level command, some commands may be split up into
-   * multiple low-level commands.
-   */
-  uint8_t transferStatus;
 
   /* Pin connected to the chip select signal of the device */
   struct Pin cs;

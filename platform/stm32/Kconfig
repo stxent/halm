@@ -196,6 +196,17 @@ config PLATFORM_STM32_IWDG
 	bool "IWDG"
 	default y
 
+config PLATFORM_STM32_SDIO
+	bool "SDIO interface"
+	default y
+	depends on FAMILY_STM32F1XX
+	select PLATFORM_STM32_EXTI
+
+config PLATFORM_STM32_SDIO_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_STM32_SDIO && PM
+
 config PLATFORM_STM32_SPI_BASE
 	bool "SPI"
 	default y

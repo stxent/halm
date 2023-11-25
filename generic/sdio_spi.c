@@ -183,8 +183,8 @@ const struct InterfaceClass * const SdioSpi = &(const struct InterfaceClass){
 /*----------------------------------------------------------------------------*/
 static void stateInitEnter(struct SdioSpi *interface)
 {
-  memset(interface->buffer, 0xFF, 10);
-  ifWrite(interface->bus, interface->buffer, 10);
+  memset(interface->command.buffer, 0xFF, 10);
+  ifWrite(interface->bus, interface->command.buffer, 10);
 }
 /*----------------------------------------------------------------------------*/
 static void stateSendCommandEnter(struct SdioSpi *interface)
@@ -192,22 +192,24 @@ static void stateSendCommandEnter(struct SdioSpi *interface)
   interface->retries = TOKEN_RETRIES;
 
   pinReset(interface->cs);
-  sendCommand(interface, interface->command, interface->argument);
+  sendCommand(interface, interface->command.code,
+      interface->command.argument);
 }
 /*----------------------------------------------------------------------------*/
 static void stateWaitRespEnter(struct SdioSpi *interface)
 {
   --interface->retries;
-  ifRead(interface->bus, interface->buffer, 1);
+  ifRead(interface->bus, interface->command.buffer, 1);
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateWaitRespAdvance(struct SdioSpi *interface)
 {
-  const enum Result res = parseResponseToken(interface, interface->buffer[0]);
+  const enum Result res = parseResponseToken(interface,
+      interface->command.buffer[0]);
 
   if (res == E_OK || res == E_IDLE)
   {
-    const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+    const uint16_t flags = COMMAND_FLAG_VALUE(interface->command.code);
 
     if (flags & SDIO_DATA_MODE)
     {
@@ -224,7 +226,7 @@ static enum State stateWaitRespAdvance(struct SdioSpi *interface)
       }
     }
 
-    switch (COMMAND_RESP_VALUE(interface->command))
+    switch (COMMAND_RESP_VALUE(interface->command.code))
     {
       case SDIO_RESPONSE_SHORT:
         return STATE_READ_SHORT;
@@ -234,7 +236,7 @@ static enum State stateWaitRespAdvance(struct SdioSpi *interface)
         return STATE_WAIT_LONG;
 
       default:
-        interface->commandStatus = resultToStatus(res);
+        interface->command.status = resultToStatus(res);
         return STATE_IDLE;
     }
   }
@@ -246,7 +248,7 @@ static enum State stateWaitRespAdvance(struct SdioSpi *interface)
   else
   {
     /* Error occurred, stop the transfer */
-    interface->commandStatus = resultToStatus(res);
+    interface->command.status = resultToStatus(res);
     return STATE_IDLE;
   }
 }
@@ -254,20 +256,21 @@ static enum State stateWaitRespAdvance(struct SdioSpi *interface)
 static void stateReadShortEnter(struct SdioSpi *interface)
 {
   /* Read 32-bit response into temporary buffer, command token is preserved */
-  ifRead(interface->bus, interface->buffer + 1, 4);
+  ifRead(interface->bus, interface->command.buffer + 1, 4);
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateReadShortAdvance(struct SdioSpi *interface)
 {
-  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command.code);
   uint32_t value;
 
   /* Command token is preserved in the first byte of data buffer */
-  memcpy(&value, interface->buffer + 1, sizeof(value));
-  interface->response[0] = fromBigEndian32(value);
+  memcpy(&value, interface->command.buffer + 1, sizeof(value));
+  interface->command.response[0] = fromBigEndian32(value);
 
-  const enum Result res = parseResponseToken(interface, interface->buffer[0]);
-  interface->commandStatus = resultToStatus(res);
+  const enum Result res = parseResponseToken(interface,
+      interface->command.buffer[0]);
+  interface->command.status = resultToStatus(res);
 
   if (flags & SDIO_STOP_TRANSFER)
   {
@@ -283,13 +286,13 @@ static enum State stateReadShortAdvance(struct SdioSpi *interface)
 static void stateRequestToken(struct SdioSpi *interface)
 {
   --interface->retries;
-  ifRead(interface->bus, interface->buffer, 1);
+  ifRead(interface->bus, interface->command.buffer, 1);
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateWaitLongAdvance(struct SdioSpi *interface)
 {
-  const enum Result res = parseDataToken(interface, interface->buffer[0],
-      TOKEN_START);
+  const enum Result res = parseDataToken(interface,
+      interface->command.buffer[0], TOKEN_START);
 
   if (res == E_OK)
   {
@@ -303,7 +306,7 @@ static enum State stateWaitLongAdvance(struct SdioSpi *interface)
   else
   {
     /* Error occurred, stop the transfer */
-    interface->commandStatus = resultToStatus(res);
+    interface->command.status = resultToStatus(res);
     return STATE_IDLE;
   }
 }
@@ -311,7 +314,7 @@ static enum State stateWaitLongAdvance(struct SdioSpi *interface)
 static void stateReadLongEnter(struct SdioSpi *interface)
 {
   /* Read 128-bit response and 16-bit checksum */
-  ifRead(interface->bus, interface->buffer, 18);
+  ifRead(interface->bus, interface->command.buffer, 18);
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateReadLongAdvance(struct SdioSpi *interface)
@@ -320,18 +323,19 @@ static enum State stateReadLongAdvance(struct SdioSpi *interface)
   {
     uint32_t word;
 
-    memcpy(&word, interface->buffer + index * sizeof(word), sizeof(word));
-    interface->response[3 - index] = fromBigEndian32(word);
+    memcpy(&word, interface->command.buffer + index * sizeof(word),
+        sizeof(word));
+    interface->command.response[3 - index] = fromBigEndian32(word);
   }
 
-  interface->commandStatus = STATUS_OK;
+  interface->command.status = STATUS_OK;
   return STATE_IDLE;
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateWaitReadAdvance(struct SdioSpi *interface)
 {
-  const enum Result res = parseDataToken(interface, interface->buffer[0],
-      TOKEN_START);
+  const enum Result res = parseDataToken(interface,
+      interface->command.buffer[0], TOKEN_START);
 
   if (res == E_OK)
   {
@@ -345,42 +349,44 @@ static enum State stateWaitReadAdvance(struct SdioSpi *interface)
   else
   {
     /* Error occurred, stop the transfer */
-    interface->commandStatus = resultToStatus(res);
+    interface->command.status = resultToStatus(res);
     return STATE_IDLE;
   }
 }
 /*----------------------------------------------------------------------------*/
 static void stateReadDataEnter(struct SdioSpi *interface)
 {
-  const size_t offset = interface->length - interface->left;
+  const size_t offset = interface->transfer.length - interface->transfer.left;
 
-  interface->left -= interface->blockSize;
-  ifRead(interface->bus, interface->rxBuffer + offset, interface->blockSize);
+  interface->transfer.left -= interface->block;
+  ifRead(interface->bus, (void *)(interface->transfer.buffer + offset),
+      interface->block);
 }
 /*----------------------------------------------------------------------------*/
 static void stateReadCrcEnter(struct SdioSpi *interface)
 {
-  ifRead(interface->bus, interface->buffer, 2);
+  ifRead(interface->bus, interface->command.buffer, 2);
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateReadCrcAdvance(struct SdioSpi *interface)
 {
-  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command.code);
 
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
   if (flags & SDIO_CHECK_CRC)
   {
-    const size_t blockIndex =
-        (interface->length - interface->left) / interface->blockSize - 1;
+    const size_t bytesReceived =
+        interface->transfer.length - interface->transfer.left;
+    const size_t blockIndex = bytesReceived / interface->block - 1;
     uint16_t checksum;
 
-    memcpy(&checksum, interface->buffer, sizeof(checksum));
+    memcpy(&checksum, interface->command.buffer, sizeof(checksum));
     checksum = fromBigEndian16(checksum);
-    interface->crcPool[blockIndex] = checksum;
+    interface->crc.pool[blockIndex] = checksum;
   }
 #endif
 
-  if (interface->left)
+  if (interface->transfer.left)
   {
     /* Continue to read data */
     interface->retries = BUSY_READ_RETRIES;
@@ -400,7 +406,7 @@ static enum State stateReadCrcAdvance(struct SdioSpi *interface)
     else
     {
       /* No more data required, stop the transfer */
-      interface->commandStatus = STATUS_OK;
+      interface->command.status = STATUS_OK;
       return STATE_IDLE;
     }
   }
@@ -419,33 +425,36 @@ static enum State stateReadDelayAdvance(struct SdioSpi *interface
 /*----------------------------------------------------------------------------*/
 static void stateWriteTokenEnter(struct SdioSpi *interface)
 {
-  interface->buffer[0] = interface->length / interface->blockSize > 1 ?
-      TOKEN_START_MULTIPLE : TOKEN_START;
+  interface->command.buffer[0] =
+      interface->transfer.length / interface->block > 1 ?
+          TOKEN_START_MULTIPLE : TOKEN_START;
 
   interface->retries = TOKEN_RETRIES;
-  ifWrite(interface->bus, interface->buffer, 1);
+  ifWrite(interface->bus, interface->command.buffer, 1);
 }
 /*----------------------------------------------------------------------------*/
 static void stateWriteDataEnter(struct SdioSpi *interface)
 {
-  const size_t offset = interface->length - interface->left;
+  const size_t offset = interface->transfer.length - interface->transfer.left;
 
-  interface->left -= interface->blockSize;
-  ifWrite(interface->bus, interface->txBuffer + offset, interface->blockSize);
+  interface->transfer.left -= interface->block;
+  ifWrite(interface->bus, (const void *)(interface->transfer.buffer + offset),
+      interface->block);
 }
 /*----------------------------------------------------------------------------*/
 static void stateWriteCrcEnter(struct SdioSpi *interface)
 {
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
-  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command.code);
   uint16_t checksum;
 
   if (flags & SDIO_CHECK_CRC)
   {
-    const size_t blockIndex =
-        (interface->length - interface->left) / interface->blockSize - 1;
+    const size_t bytesReceived =
+        interface->transfer.length - interface->transfer.left;
+    const size_t blockIndex = bytesReceived / interface->block - 1;
 
-    checksum = toBigEndian16(interface->crcPool[blockIndex]);
+    checksum = toBigEndian16(interface->crc.pool[blockIndex]);
   }
   else
     checksum = 0xFFFF;
@@ -453,13 +462,13 @@ static void stateWriteCrcEnter(struct SdioSpi *interface)
   const uint16_t checksum = 0xFFFF;
 #endif
 
-  memcpy(interface->buffer, &checksum, sizeof(checksum));
-  ifWrite(interface->bus, interface->buffer, sizeof(checksum));
+  memcpy(interface->command.buffer, &checksum, sizeof(checksum));
+  ifWrite(interface->bus, interface->command.buffer, sizeof(checksum));
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateWaitWriteAdvance(struct SdioSpi *interface)
 {
-  const uint8_t token = interface->buffer[0] & 0x1F;
+  const uint8_t token = interface->command.buffer[0] & 0x1F;
   const enum Result res = parseDataToken(interface, token, TOKEN_DATA_ACCEPTED);
 
   if (res == E_OK)
@@ -475,7 +484,7 @@ static enum State stateWaitWriteAdvance(struct SdioSpi *interface)
   else
   {
     /* Error occurred, stop the transfer */
-    interface->commandStatus = resultToStatus(res);
+    interface->command.status = resultToStatus(res);
     return STATE_IDLE;
   }
 }
@@ -488,12 +497,12 @@ static enum State stateWriteDelayAdvance(struct SdioSpi *interface
 /*----------------------------------------------------------------------------*/
 static enum State stateWriteBusyAdvance(struct SdioSpi *interface)
 {
-  if (interface->buffer[0] != 0xFF)
+  if (interface->command.buffer[0] != 0xFF)
   {
     if (!interface->retries)
     {
       /* Error occurred, stop the transfer */
-      interface->commandStatus = STATUS_ERROR_TIMEOUT;
+      interface->command.status = STATUS_ERROR_TIMEOUT;
       return STATE_IDLE;
     }
     else
@@ -501,21 +510,21 @@ static enum State stateWriteBusyAdvance(struct SdioSpi *interface)
   }
   else
   {
-    if (interface->left)
+    if (interface->transfer.left)
       return STATE_WRITE_TOKEN;
 
-    const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
-
-    if ((flags & SDIO_AUTO_STOP) && interface->txBuffer)
+    if (interface->transfer.buffer != 0
+        && interface->transfer.length > interface->block)
     {
-      interface->txBuffer = NULL;
+      /* Send Stop Tran token automatically */
+      interface->transfer.buffer = 0;
 
       interface->retries = BUSY_WRITE_RETRIES;
       return STATE_WRITE_STOP;
     }
     else
     {
-      interface->commandStatus = STATUS_OK;
+      interface->command.status = STATUS_OK;
       return STATE_IDLE;
     }
   }
@@ -523,8 +532,8 @@ static enum State stateWriteBusyAdvance(struct SdioSpi *interface)
 /*----------------------------------------------------------------------------*/
 static void stateWriteStopEnter(struct SdioSpi *interface)
 {
-  interface->buffer[0] = TOKEN_STOP;
-  ifWrite(interface->bus, interface->buffer, 1);
+  interface->command.buffer[0] = TOKEN_STOP;
+  ifWrite(interface->bus, interface->command.buffer, 1);
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
@@ -537,13 +546,13 @@ static void stateCrcEnter(struct SdioSpi *interface)
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
 static enum State stateComputeCrcAdvance(struct SdioSpi *interface)
 {
-  const size_t blockSize = interface->blockSize;
-  const size_t blockCount = interface->length / blockSize;
+  const size_t count = interface->transfer.length / interface->block;
 
-  for (size_t index = 0; index < blockCount; ++index)
+  for (size_t index = 0; index < count; ++index)
   {
-    interface->crcPool[index] = crc16CCITTUpdate(INITIAL_CRC16,
-        interface->txBuffer + index * blockSize, blockSize);
+    interface->crc.pool[index] = crc16CCITTUpdate(INITIAL_CRC16,
+        (const void *)(interface->transfer.buffer + index * interface->block),
+        interface->block);
   }
 
   return STATE_SEND_CMD;
@@ -553,24 +562,24 @@ static enum State stateComputeCrcAdvance(struct SdioSpi *interface)
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
 static enum State stateVerifyCrcAdvance(struct SdioSpi *interface)
 {
-  const size_t blockSize = interface->blockSize;
-  const size_t blockCount = interface->length / blockSize;
+  const size_t count = interface->transfer.length / interface->block;
   bool correct = true;
 
-  for (size_t index = 0; index < blockCount; ++index)
+  for (size_t index = 0; index < count; ++index)
   {
     const uint16_t checksum = crc16CCITTUpdate(INITIAL_CRC16,
-        interface->rxBuffer + index * blockSize, blockSize);
+        (const void *)(interface->transfer.buffer + index * interface->block),
+        interface->block);
 
-    if (checksum != interface->crcPool[index])
+    if (checksum != interface->crc.pool[index])
     {
       correct = false;
       break;
     }
   }
-  interface->transferStatus = correct ? STATUS_OK : STATUS_ERROR_CRC;
+  interface->transfer.status = correct ? STATUS_OK : STATUS_ERROR_CRC;
 
-  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command.code);
 
   if (flags & SDIO_AUTO_STOP)
   {
@@ -580,7 +589,7 @@ static enum State stateVerifyCrcAdvance(struct SdioSpi *interface)
   else
   {
     /* No more data required, stop the transfer */
-    interface->commandStatus = interface->transferStatus;
+    interface->command.status = interface->transfer.status;
     return STATE_IDLE;
   }
 }
@@ -594,11 +603,11 @@ static void autoStopTransmission(struct SdioSpi *interface)
    * interfere with interface response type because response parameters
    * are similar to ones in the original command.
    */
-  interface->commandStatus = STATUS_OK;
+  interface->command.status = STATUS_OK;
 
-  interface->command = SDIO_COMMAND(CMD_STOP_TRANSMISSION,
+  interface->command.code = SDIO_COMMAND(CMD_STOP_TRANSMISSION,
       SDIO_RESPONSE_NONE, 0);
-  interface->argument = 0;
+  interface->command.argument = 0;
   interface->retries = TOKEN_RETRIES;
 }
 /*----------------------------------------------------------------------------*/
@@ -611,9 +620,9 @@ static void execute(struct SdioSpi *interface)
   ifSetParam(interface->bus, IF_ZEROCOPY, NULL);
   ifSetCallback(interface->bus, interruptHandler, interface);
 
-  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command.code);
 
-  interface->commandStatus = interface->transferStatus = STATUS_BUSY;
+  interface->command.status = interface->transfer.status = STATUS_BUSY;
 
   if (flags & SDIO_INITIALIZE)
   {
@@ -646,14 +655,14 @@ static void interruptHandler(void *object)
   }
   else
   {
-    if (interface->transferStatus == STATUS_BUSY)
+    if (interface->transfer.status == STATUS_BUSY)
     {
       /*
        * Copy status of the last command when the global command status
        * is not changed. Global command status may be changed when
        * one of low-level commands has failed.
        */
-      interface->transferStatus = interface->commandStatus;
+      interface->transfer.status = interface->command.status;
     }
 
     /* Finalize the transfer */
@@ -729,15 +738,16 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
 {
   argument = toBigEndian32(argument);
 
-  interface->buffer[0] = 0xFF;
-  interface->buffer[1] = COMMAND_CODE_VALUE(command) | 0x40;
-  memcpy(interface->buffer + 2, &argument, sizeof(argument));
-  interface->buffer[6] = crc7Update(INITIAL_CRC7, interface->buffer + 1, 5);
+  interface->command.buffer[0] = 0xFF;
+  interface->command.buffer[1] = COMMAND_CODE_VALUE(command) | 0x40;
+  memcpy(interface->command.buffer + 2, &argument, sizeof(argument));
+  interface->command.buffer[6] = crc7Update(INITIAL_CRC7,
+      interface->command.buffer + 1, 5);
   /* Add end bit */
-  interface->buffer[6] = (interface->buffer[6] << 1) | 0x01;
-  interface->buffer[7] = 0xFF;
+  interface->command.buffer[6] = (interface->command.buffer[6] << 1) | 0x01;
+  interface->command.buffer[7] = 0xFF;
 
-  ifWrite(interface->bus, interface->buffer, 8);
+  ifWrite(interface->bus, interface->command.buffer, 8);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *object, const void *configBase)
@@ -767,41 +777,42 @@ static enum Result sdioInit(void *object, const void *configBase)
   else
     interface->timer = NULL;
 
+  interface->callback = NULL;
   interface->wq = config->wq != NULL ? config->wq : WQ_DEFAULT;
+  interface->retries = 0;
+  interface->block = BLOCK_SIZE_DEFAULT;
+  interface->state = STATE_IDLE;
 
   /* Data verification part */
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
   if (config->blocks)
   {
-    interface->crcPoolSize = config->blocks;
-    interface->crcPool = malloc(interface->crcPoolSize * sizeof(uint16_t));
-    if (interface->crcPool == NULL)
+    interface->crc.capacity = config->blocks;
+    interface->crc.pool = malloc(interface->crc.capacity * sizeof(uint16_t));
+    if (interface->crc.pool == NULL)
       return E_MEMORY;
   }
   else
   {
-    interface->crcPoolSize = 0;
-    interface->crcPool = NULL;
+    interface->crc.pool = NULL;
+    interface->crc.capacity = 0;
   }
 #else
   assert(config->blocks == 0);
-  interface->crcPool = NULL;
-  interface->crcPoolSize = 0;
+  interface->crc.pool = NULL;
+  interface->crc.capacity = 0;
 #endif
 
   /* Data transfer part */
-  interface->blockSize = BLOCK_SIZE_DEFAULT;
-  interface->left = 0;
-  interface->length = 0;
-  interface->rxBuffer = NULL;
-  interface->txBuffer = NULL;
+  interface->transfer.buffer = 0;
+  interface->transfer.left = 0;
+  interface->transfer.length = 0;
+  interface->transfer.status = STATUS_OK;
 
   /* Command execution part */
-  interface->argument = 0;
-  interface->callback = NULL;
-  interface->command = 0;
-  interface->state = STATE_IDLE;
-  interface->commandStatus = interface->transferStatus = STATUS_OK;
+  interface->command.argument = 0;
+  interface->command.code = 0;
+  interface->transfer.status = STATUS_OK;
 
   return E_OK;
 }
@@ -814,7 +825,7 @@ static void sdioDeinit(void *object __attribute__((unused)))
     timerSetCallback(interface->timer, NULL, NULL);
   ifSetCallback(interface->bus, NULL, NULL);
 
-  free(interface->crcPool);
+  free(interface->crc.pool);
 }
 /*----------------------------------------------------------------------------*/
 static void sdioSetCallback(void *object, void (*callback)(void *),
@@ -841,12 +852,13 @@ static enum Result sdioGetParam(void *object, int parameter, void *data)
 
     case IF_SDIO_RESPONSE:
     {
-      const enum SDIOResponse response = COMMAND_RESP_VALUE(interface->command);
+      const enum SDIOResponse response =
+          COMMAND_RESP_VALUE(interface->command.code);
       const uint8_t length = response == SDIO_RESPONSE_LONG ? 16 : 4;
 
       if (response != SDIO_RESPONSE_NONE)
       {
-        memcpy(data, interface->response, length);
+        memcpy(data, interface->command.response, length);
         return E_OK;
       }
       else
@@ -866,7 +878,7 @@ static enum Result sdioGetParam(void *object, int parameter, void *data)
     {
       if (interface->state == STATE_IDLE)
       {
-        switch ((enum Status)interface->transferStatus)
+        switch ((enum Status)interface->transfer.status)
         {
           case STATUS_OK:
             return E_OK;
@@ -904,25 +916,24 @@ static enum Result sdioSetParam(void *object, int parameter, const void *data)
   switch ((enum SDIOParameter)parameter)
   {
     case IF_SDIO_EXECUTE:
-      interface->left = 0;
-      interface->length = 0;
-      interface->rxBuffer = NULL;
-      interface->txBuffer = NULL;
+      interface->transfer.buffer = 0;
+      interface->transfer.left = 0;
+      interface->transfer.length = 0;
       execute(interface);
       return E_BUSY;
 
     case IF_SDIO_ARGUMENT:
-      interface->argument = *(const uint32_t *)data;
+      interface->command.argument = *(const uint32_t *)data;
       return E_OK;
 
     case IF_SDIO_COMMAND:
-      interface->command = *(const uint32_t *)data;
+      interface->command.code = *(const uint32_t *)data;
       return E_OK;
 
     case IF_SDIO_BLOCK_SIZE:
       if (*(const uint32_t *)data <= BLOCK_SIZE_MAX)
       {
-        interface->blockSize = *(const uint32_t *)data;
+        interface->block = *(const uint32_t *)data;
         return E_OK;
       }
       else
@@ -950,22 +961,21 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
   struct SdioSpi * const interface = object;
 
   /* Check buffer alignment and size */
-  assert((length & (interface->blockSize - 1)) == 0);
+  assert((length & (interface->block - 1)) == 0);
 
-  if (COMMAND_FLAG_VALUE(interface->command) & SDIO_CHECK_CRC)
-    assert(length / interface->blockSize <= interface->crcPoolSize);
+  if (COMMAND_FLAG_VALUE(interface->command.code) & SDIO_CHECK_CRC)
+    assert(length / interface->block <= interface->crc.capacity);
 
   /* Configure interface */
   ifSetParam(interface->bus, IF_ACQUIRE, NULL);
   ifSetParam(interface->bus, IF_ZEROCOPY, NULL);
   ifSetCallback(interface->bus, interruptHandler, interface);
 
-  interface->commandStatus = interface->transferStatus = STATUS_BUSY;
+  interface->command.status = interface->transfer.status = STATUS_BUSY;
 
-  interface->left = length;
-  interface->length = length;
-  interface->rxBuffer = buffer;
-  interface->txBuffer = NULL;
+  interface->transfer.buffer = (uintptr_t)buffer;
+  interface->transfer.left = length;
+  interface->transfer.length = length;
 
   /* Begin execution */
   interface->state = STATE_SEND_CMD;
@@ -977,25 +987,24 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
 static size_t sdioWrite(void *object, const void *buffer, size_t length)
 {
   struct SdioSpi * const interface = object;
-  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+  const uint16_t flags = COMMAND_FLAG_VALUE(interface->command.code);
 
   /* Check buffer alignment and size */
-  assert((length & (interface->blockSize - 1)) == 0);
+  assert((length & (interface->block - 1)) == 0);
 
   if (flags & SDIO_CHECK_CRC)
-    assert(length / interface->blockSize <= interface->crcPoolSize);
+    assert(length / interface->block <= interface->crc.capacity);
 
   /* Configure interface */
   ifSetParam(interface->bus, IF_ACQUIRE, NULL);
   ifSetParam(interface->bus, IF_ZEROCOPY, NULL);
   ifSetCallback(interface->bus, interruptHandler, interface);
 
-  interface->commandStatus = interface->transferStatus = STATUS_BUSY;
+  interface->command.status = interface->transfer.status = STATUS_BUSY;
 
-  interface->left = length;
-  interface->length = length;
-  interface->rxBuffer = NULL;
-  interface->txBuffer = buffer;
+  interface->transfer.buffer = (uintptr_t)buffer;
+  interface->transfer.left = length;
+  interface->transfer.length = length;
 
   /* Begin execution */
   if (flags & SDIO_CHECK_CRC)

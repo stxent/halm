@@ -76,6 +76,8 @@ struct MMCSD
     uint32_t command;
     /* Transfer state */
     uint8_t state;
+    /* Send stop command after current data transfer */
+    bool autostop;
   } transfer;
 };
 /*----------------------------------------------------------------------------*/

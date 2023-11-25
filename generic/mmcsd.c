@@ -104,9 +104,9 @@ static enum Result initStepMmcReadOCR(struct MMCSD *device)
           0, &ocr, true);
 
       if (res == E_OK)
-      {
         ocr = OCR_HCS | (ocr & OCR_VOLTAGE_MASK_2V7_3V6);
-      }
+      else
+        ocr = 0;
     }
 
     if (ocr)
@@ -136,9 +136,7 @@ static enum Result initStepMmcReadOCR(struct MMCSD *device)
           device->info.cardType = CARD_MMC;
         }
         else
-        {
           res = E_BUSY;
-        }
       }
     }
 
@@ -206,26 +204,37 @@ static enum Result initStepMmcSetHighSpeed(struct MMCSD *device,
 /*----------------------------------------------------------------------------*/
 static enum Result initStepReadCondition(struct MMCSD *device)
 {
-  uint32_t response;
-  const enum Result res = executeCommand(device,
-      SDIO_COMMAND(CMD8_SEND_IF_COND, MMCSD_RESPONSE_R7, 0),
-      CMD8_CONDITION_PATTERN, &response, true);
+  enum Result status = E_DEVICE;
 
-  if (res == E_OK || res == E_IDLE)
+  for (unsigned int counter = 10; counter; --counter)
   {
-    /* Response should be equal to the command argument */
-    if (response != CMD8_CONDITION_PATTERN)
-      return E_DEVICE;
+    uint32_t response;
+    const enum Result res = executeCommand(device,
+        SDIO_COMMAND(CMD8_SEND_IF_COND, MMCSD_RESPONSE_R7, 0),
+        CMD8_CONDITION_PATTERN, &response, true);
 
-    device->info.cardType = CARD_SD_2_0;
-  }
-  else if (res != E_INVALID && res != E_TIMEOUT)
-  {
-    /* Other error, it's not an unsupported command */
-    return res;
+    if (res == E_OK || res == E_IDLE)
+    {
+      /* Response should be equal to the command argument */
+      if (response == CMD8_CONDITION_PATTERN)
+      {
+        device->info.cardType = CARD_SD_2_0;
+
+        status = E_OK;
+        break;
+      }
+    }
+    else if (res != E_INVALID && res != E_TIMEOUT)
+    {
+      /* Other error, it's not an unsupported command */
+      status = res;
+      break;
+    }
+
+    udelay(CMD8_RETRY_DELAY);
   }
 
-  return E_OK;
+  return status;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepReadCID(struct MMCSD *device)
@@ -682,17 +691,22 @@ static void interruptHandler(void *object)
     {
       const enum Result res = ifGetParam(device->interface, IF_STATUS, NULL);
 
-      if (res != E_OK)
+      if (res == E_OK)
       {
-        device->transfer.state = STATE_HALT;
+        if (!device->transfer.autostop)
+        {
+          event = true;
+          device->transfer.state = STATE_IDLE;
+        }
+        else
+          device->transfer.state = STATE_STOP;
       }
       else
       {
-        event = true;
-        device->transfer.state = STATE_IDLE;
+        device->transfer.state = STATE_HALT;
       }
 
-      if (device->transfer.state == STATE_HALT)
+      if (device->transfer.state != STATE_IDLE)
       {
         if (terminateTransfer(device) != E_OK)
         {
@@ -920,6 +934,7 @@ static enum Result startTransferStateSetup(struct MMCSD *device)
 {
   const uint32_t address = device->info.cardAddress << 16;
   const uint32_t flags = SDIO_WAIT_DATA | SDIO_CHECK_CRC;
+
   const enum Result res = executeCommand(device,
       SDIO_COMMAND(CMD13_SEND_STATUS, MMCSD_RESPONSE_R1, flags),
       address, NULL, false);
@@ -1020,10 +1035,16 @@ static enum Result cardInit(void *object, const void *configBase)
   device->info.eraseGroupSize = 0;
   device->info.capacityType = CAPACITY_SC;
   device->info.cardType = CARD_SD;
+  device->blocking = true;
   device->crc = config->crc;
 
+  device->transfer.buffer = 0;
+  device->transfer.length = 0;
+  device->transfer.position = 0;
+  device->transfer.argument = 0;
+  device->transfer.command = 0;
   device->transfer.state = STATE_IDLE;
-  device->blocking = true;
+  device->transfer.autostop = false;
 
   return initializeCard(device);
 }
@@ -1198,10 +1219,9 @@ static size_t cardRead(void *object, void *buffer, size_t length)
 
   uint32_t flags = SDIO_DATA_MODE;
 
-  if (blocks > 1)
-    flags |= SDIO_AUTO_STOP;
   if (device->crc)
     flags |= SDIO_CHECK_CRC;
+  device->transfer.autostop = blocks > 1;
 
   const enum MMCSDCommand code = blocks == 1 ?
       CMD17_READ_SINGLE_BLOCK : CMD18_READ_MULTIPLE_BLOCK;
@@ -1229,10 +1249,9 @@ static size_t cardWrite(void *object, const void *buffer, size_t length)
 
   uint32_t flags = SDIO_DATA_MODE | SDIO_WRITE_MODE;
 
-  if (blocks > 1)
-    flags |= SDIO_AUTO_STOP;
   if (device->crc)
     flags |= SDIO_CHECK_CRC;
+  device->transfer.autostop = blocks > 1;
 
   /* TODO Protect position reading */
   const enum MMCSDCommand code = blocks == 1 ?

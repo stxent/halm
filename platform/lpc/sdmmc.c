@@ -14,9 +14,10 @@
 #include <halm/pm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_BLOCK_SIZE  512
-#define BUSY_READ_DELAY     100 /* Milliseconds */
-#define BUSY_WRITE_DELAY    500 /* Milliseconds */
+#define CMD_STOP_TRANSMISSION 12
+#define DEFAULT_BLOCK_SIZE    512
+#define BUSY_READ_DELAY       100 /* Milliseconds */
+#define BUSY_WRITE_DELAY      500 /* Milliseconds */
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdmmc *);
 static void executeCommand(struct Sdmmc *, uint32_t, uint32_t);
@@ -177,6 +178,7 @@ static void sdioInterruptHandler(void *object)
   }
   else
   {
+    const uint32_t code = COMMAND_CODE_VALUE(interface->command);
     const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
     bool completed;
 
@@ -191,25 +193,28 @@ static void sdioInterruptHandler(void *object)
 
     if (completed)
     {
-      if (!pinRead(interface->data0))
+      if ((flags & SDIO_DATA_MODE) || code == CMD_STOP_TRANSMISSION)
       {
-        interruptEnable(interface->finalizer);
-
-        if (pinRead(interface->data0))
+        if (!pinRead(interface->data0))
         {
-          interruptDisable(interface->finalizer);
-          interface->status = E_OK;
+          interruptEnable(interface->finalizer);
+
+          if (pinRead(interface->data0))
+          {
+            interruptDisable(interface->finalizer);
+            interface->status = E_OK;
+          }
+          else
+          {
+            /* Disable SDMMC interrupts, wait for high level on DATA0 */
+            irqDisable(interface->base.irq);
+          }
         }
         else
-        {
-          /* Disable SDMMC interrupts, wait for high level on DATA0 */
-          irqDisable(interface->base.irq);
-        }
+          interface->status = E_OK;
       }
       else
-      {
         interface->status = E_OK;
-      }
     }
   }
 
