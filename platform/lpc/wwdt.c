@@ -70,7 +70,6 @@ static enum Result wdtInit(void *object, const void *configBase)
 
   const uint64_t clock = (((1ULL << 32) + 3999) / 4000) * wdtGetClock(object);
   const uint32_t timeout = (clock * config->period) >> 32;
-  const uint32_t window = (clock * config->window) >> 32;
 
   if (timeout >= (1 << 24))
     return E_VALUE;
@@ -93,30 +92,40 @@ static enum Result wdtInit(void *object, const void *configBase)
   IrqState state;
 
   if (!config->disarmed)
-    mod |= MOD_WDRESET | MOD_WDPROTECT;
+    mod |= MOD_WDRESET | MOD_LOCK;
+
+  if (!config->disarmed && config->window)
+  {
+    const uint32_t window = (clock * config->window) >> 32;
+
+    LPC_WWDT->WINDOW = MIN(WINDOW_MAX, window);
+    LPC_WWDT->WARNINT = MIN(WARNINT_MAX, window);
+
+    mod |= MOD_WDPROTECT;
+  }
+  else
+  {
+    LPC_WWDT->WINDOW = WINDOW_MAX;
+    LPC_WWDT->WARNINT = 0;
+  }
 
   LPC_WWDT->TC = timeout;
   LPC_WWDT->MOD = mod;
 
-  if (config->disarmed)
-  {
-    LPC_WWDT->WINDOW = (1 << 24) - 1;
-    LPC_WWDT->WARNINT = 0;
-  }
-  else
-  {
-    LPC_WWDT->WINDOW = window;
-    LPC_WWDT->WARNINT = MIN((1 << 10) - 1, window);
-  }
-
-  state = irqSave();
   /* Enable the counter */
-  LPC_WWDT->FEED = FEED_FIRST;
-  LPC_WWDT->FEED = FEED_SECOND;
-  /* Reload the counter */
+  state = irqSave();
   LPC_WWDT->FEED = FEED_FIRST;
   LPC_WWDT->FEED = FEED_SECOND;
   irqRestore(state);
+
+  if (!config->window)
+  {
+    /* Reload the counter */
+    state = irqSave();
+    LPC_WWDT->FEED = FEED_FIRST;
+    LPC_WWDT->FEED = FEED_SECOND;
+    irqRestore(state);
+  }
 
   irqSetPriority(timer->base.irq, config->priority);
   irqEnable(timer->base.irq);

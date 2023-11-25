@@ -30,5 +30,9 @@
 #define CLKSEL_WDSEL(value)             BIT_FIELD((value), 0)
 #define CLKSEL_WDSEL_VALUE(reg)         FIELD_VALUE((reg), CLKSEL_WDSEL_MASK, 0)
 #define CLKSEL_LOCK                     BIT(31)
+/*------------------Timer Warning Interrupt register--------------------------*/
+#define WARNINT_MAX                     MASK(10)
+/*------------------Timer Window register-------------------------------------*/
+#define WINDOW_MAX                      MASK(24)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_WDT_DEFS_H_ */
