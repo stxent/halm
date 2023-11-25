@@ -267,10 +267,10 @@ static enum Result dacStreamEnqueue(void *object,
   struct DacDma * const interface = stream->parent;
 
   assert(request != NULL && request->callback != NULL);
-  /* Ensure the buffer has enough space and is aligned with the sample size */
+  /* Ensure the buffer has enough space and is aligned on the sample size */
   assert(request->capacity / sizeof(uint16_t) >= 2);
   assert(request->capacity % sizeof(uint16_t) == 0);
-  /* Output buffer should be aligned with the sample size */
+  /* Input buffer should be aligned on the sample size */
   assert((uintptr_t)request->buffer % sizeof(uint16_t) == 0);
 
   /* Prepare linked list of DMA descriptors */

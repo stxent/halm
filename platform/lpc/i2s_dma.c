@@ -580,11 +580,11 @@ static enum Result i2sRxStreamEnqueue(void *object,
   const size_t samples = request->capacity >> interface->sampleSize;
 
   assert(request != NULL && request->callback != NULL);
-  /* Ensure the buffer has enough space and is aligned with the sample size */
+  /* Ensure the buffer has enough space and is aligned on the sample size */
   assert(request->capacity >> interface->sampleSize >= 2);
   assert(request->capacity % (1 << interface->sampleSize) == 0);
-  /* Input buffer should be aligned with a size of the memory word */
-  assert((uintptr_t)request->buffer % 4 == 0);
+  /* Input buffer should be aligned on the burst size of DMA transfer */
+  assert((uintptr_t)request->buffer % 16 == 0);
 
   const size_t elements = (samples << interface->sampleSize) >> 2;
   const size_t parts[] = {elements / 2, elements - elements / 2};
@@ -636,11 +636,11 @@ static enum Result i2sTxStreamEnqueue(void *object,
   struct I2SDma * const interface = stream->parent;
 
   assert(request != NULL && request->callback != NULL);
-  /* Ensure the buffer has enough space and is aligned with the sample size */
+  /* Ensure the buffer has enough space and is aligned on the sample size */
   assert(request->capacity >> interface->sampleSize >= 2);
   assert(request->capacity % (1 << interface->sampleSize) == 0);
-  /* Output buffer should be aligned with a size of the memory word */
-  assert((uintptr_t)request->buffer % 4 == 0);
+  /* Input buffer should be aligned on the burst size of DMA transfer */
+  assert((uintptr_t)request->buffer % 16 == 0);
 
   const size_t words = request->length >> 2;
   const size_t parts[] = {words >> 1, words - (words >> 1)};

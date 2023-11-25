@@ -365,10 +365,10 @@ static enum Result adcHandlerEnqueue(void *object,
   struct AdcDmaStream * const interface = stream->parent;
 
   assert(request != NULL && request->callback != NULL);
-  /* Ensure the buffer has enough space and is aligned with the sample size */
+  /* Ensure the buffer has enough space and is aligned on the sample size */
   assert(request->capacity / (interface->count * sizeof(uint16_t)) >= 2);
   assert(request->capacity % (interface->count * sizeof(uint16_t)) == 0);
-  /* Output buffer should be aligned with the sample size */
+  /* Output buffer should be aligned on the sample size */
   assert((uintptr_t)request->buffer % sizeof(uint16_t) == 0);
 
   /* Prepare linked list of DMA descriptors */

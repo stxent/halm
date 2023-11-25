@@ -327,7 +327,7 @@ static size_t flashRead(void *object, void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  /* Address and length should be aligned along 4-byte boundary */
+  /* Address and length should be aligned on a 4-byte boundary */
   if ((interface->position & 0x3) || (length & 0x3))
     return 0;
 
@@ -362,7 +362,7 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
 {
   struct Flash * const interface = object;
 
-  /* Address and length should be aligned along 4-byte boundary */
+  /* Address and length should be aligned on a 4-byte boundary */
   if ((interface->position & 0x3) || (length & 0x3))
     return 0;
 

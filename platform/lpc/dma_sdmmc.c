@@ -78,7 +78,7 @@ static enum Result channelInit(void *object, const void *configBase)
 
   struct DmaSdmmc * const channel = object;
 
-  /* Memory chunks should be aligned along 4-byte boundary */
+  /* Memory chunks should be aligned on a 4-byte boundary */
   channel->list = memalign(4, sizeof(struct DmaSdmmcEntry) * config->number);
   if (channel->list == NULL)
     return E_MEMORY;
@@ -178,10 +178,6 @@ static void channelAppend(void *object, void *destination, const void *source,
 
   const uintptr_t address = destination != NULL ?
       (uintptr_t)destination : (uintptr_t)source;
-
-  /* Address and size must be aligned along 4-byte boundary */
-  assert(address % sizeof(uint32_t) == 0);
-  assert(size % sizeof(uint32_t) == 0);
 
   /* Reset DMA */
   reg->CTRL |= CTRL_DMA_RESET | CTRL_FIFO_RESET;

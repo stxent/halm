@@ -144,13 +144,13 @@ static size_t flashRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t flashWrite(void *object, const void *buffer, size_t length)
 {
-  /* Buffer length should be aligned along page boundary */
+  /* Buffer length should be aligned on the page boundary */
   if (length & (FLASH_PAGE_SIZE - 1))
     return 0;
 
   struct Flash * const interface = object;
 
-  /* Address should be aligned along page boundary */
+  /* Address should be aligned on the page boundary */
   if (interface->position & (FLASH_PAGE_SIZE - 1))
     return 0;
   /* Address should be inside the boundary */
