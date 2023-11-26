@@ -292,6 +292,7 @@ config PLATFORM_NUMICRO_SDH
 	bool "SDH"
 	default y
 	depends on FAMILY_M48X
+	select PLATFORM_NUMICRO_PININT
 	help
 	  This is the driver for the Secure Digital Host Controller.
 

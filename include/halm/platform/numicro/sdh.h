@@ -12,6 +12,8 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Sdh;
 
+struct Interrupt;
+
 struct SdhConfig
 {
   /** Mandatory: data rate. */
@@ -40,6 +42,9 @@ struct Sdh
 
   void (*callback)(void *);
   void *callbackArgument;
+
+  /* External interrupt on data line 0 */
+  struct Interrupt *finalizer;
 
   /* Argument for the most recent command */
   uint32_t argument;

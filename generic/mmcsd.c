@@ -689,7 +689,7 @@ static void interruptHandler(void *object)
 
     case STATE_TRANSFER:
     {
-      const enum Result res = ifGetParam(device->interface, IF_STATUS, NULL);
+      enum Result res = ifGetParam(device->interface, IF_STATUS, NULL);
 
       if (res == E_OK)
       {
@@ -708,7 +708,14 @@ static void interruptHandler(void *object)
 
       if (device->transfer.state != STATE_IDLE)
       {
-        if (terminateTransfer(device) != E_OK)
+        res = terminateTransfer(device);
+
+        if (res == E_OK)
+        {
+          event = true;
+          device->transfer.state = STATE_IDLE;
+        }
+        else if (res != E_BUSY)
         {
           event = true;
           device->transfer.state = STATE_ERROR;
@@ -954,15 +961,8 @@ static enum Result terminateTransfer(struct MMCSD *device)
   const uint32_t flags = SDIO_STOP_TRANSFER | SDIO_CHECK_CRC;
   const uint32_t command =
       SDIO_COMMAND(CMD12_STOP_TRANSMISSION, MMCSD_RESPONSE_R1B, flags);
-  const enum Result res = executeCommand(device, command, 0, NULL, false);
 
-  if (res != E_BUSY)
-  {
-    /* Operation must not be completed instantly */
-    return res == E_OK ? E_INVALID : res;
-  }
-  else
-    return E_OK;
+  return executeCommand(device, command, 0, NULL, false);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result transferBuffer(struct MMCSD *device,

@@ -18,7 +18,7 @@
 #define LIRC_FREQUENCY                10000
 #define RTC_FREQUENCY                 32768
 #define USB_FREQUENCY                 48000000
-#define TICK_RATE(frequency, latency) ((frequency) / (latency) / 1000)
+#define TICK_RATE(frequency)          ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 struct ApbClockClass
 {
@@ -853,7 +853,7 @@ static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
-uint32_t ticksPerSecond = TICK_RATE(HIRC_FREQUENCY, 3);
+uint32_t ticksPerSecond = TICK_RATE(HIRC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
 static uint32_t calcExtCrystalGain(uint32_t frequency)
 {
@@ -1441,6 +1441,7 @@ static enum Result extendedBranchEnable(const void *clockBase,
     frequency = frequency / (divisor + 1);
     sysFlashLatencyUpdate(frequency);
     sysPowerLevelUpdate(frequency);
+    ticksPerSecond = TICK_RATE(frequency);
   }
 
   return E_OK;

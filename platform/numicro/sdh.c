@@ -6,9 +6,11 @@
 
 #include <halm/generic/sdio.h>
 #include <halm/generic/sdio_defs.h>
+#include <halm/platform/numicro/pin_int.h>
 #include <halm/platform/numicro/sdh.h>
 #include <halm/platform/numicro/sdh_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <halm/pm.h>
 #include <xcore/memory.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -19,12 +21,13 @@
 /*----------------------------------------------------------------------------*/
 static void execute(struct Sdh *, uint32_t);
 static void executeCommand(struct Sdh *, uint32_t, uint32_t);
-// static void pinInterruptHandler(void *);
-// static void sdioInterruptHandler(void *);
-static void interruptHandler(void *);
+static void pinInterruptHandler(void *);
+static void sdioInterruptHandler(void *);
 static enum Result updateRate(struct Sdh *, uint32_t);
 
-// TODO Power Management
+#ifdef CONFIG_PLATFORM_NUMICRO_SDH_PM
+static void powerStateHandler(void *, enum PmState);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *, const void *);
 static void sdioDeinit(void *);
@@ -33,6 +36,12 @@ static enum Result sdioGetParam(void *, int, void *);
 static enum Result sdioSetParam(void *, int, const void *);
 static size_t sdioRead(void *, void *, size_t);
 static size_t sdioWrite(void *, const void *, size_t);
+
+#ifndef CONFIG_PLATFORM_NUMICRO_SDH_NO_DEINIT
+static void sdioDeinit(void *);
+#else
+#define sdioDeinit deletedDestructorTrap
+#endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Sdh = &(const struct InterfaceClass){
     .size = sizeof(struct Sdh),
@@ -55,19 +64,19 @@ static void execute(struct Sdh *interface, uint32_t blocks)
 
   /* Prepare interrupt mask */
   const uint32_t waitStatus = (flags & SDIO_DATA_MODE) ?
-      INTEN_BLKDIEN | INTEN_DITOIEN : 0;
+      (INTEN_BLKDIEN | INTEN_DITOIEN) : 0;
 
   /* Initialize interrupts */
-  reg->INTSTS = INTEN_BLKDIEN | INTEN_CRCIEN | INTEN_RTOIEN | INTEN_DITOIEN;
+  reg->INTSTS = INTSTS_BLKDIF | INTSTS_CRCIF | INTSTS_RTOIF | INTSTS_DITOIF;
   reg->INTEN = waitStatus;
 
   /* Prepare command */
-  uint32_t command = 0;
+  uint32_t command = CTL_COEN | CTL_CLKKEEP;
 
   if (flags & SDIO_INITIALIZE)
     command |= CTL_CLK74OEN;
   else
-    command |= CTL_COEN | CTL_CLKKEEP | CTL_CMDCODE(code);
+    command |= CTL_CMDCODE(code);
 
   switch (response)
   {
@@ -111,6 +120,22 @@ static void execute(struct Sdh *interface, uint32_t blocks)
   /* Disable interrupts when data phase is not used */
   if (interface->status != E_BUSY)
     irqDisable(interface->base.irq);
+
+  /* Wait for high level on DAT0 after CMD12 Stop Tran commands */
+  if (interface->status == E_OK && code == CMD_STOP_TRANSMISSION)
+  {
+    if (!(reg->INTSTS & INTSTS_DAT0STS))
+    {
+      interface->status = E_BUSY;
+      interruptEnable(interface->finalizer);
+
+      if (reg->INTSTS & INTSTS_DAT0STS)
+      {
+        interruptDisable(interface->finalizer);
+        interface->status = E_OK;
+      }
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void executeCommand(struct Sdh *interface, uint32_t command,
@@ -130,18 +155,19 @@ static void executeCommand(struct Sdh *interface, uint32_t command,
       {
         const uint32_t status = reg->INTSTS;
 
-        if (status & INTSTS_RTOIF)
+        if (interface->status == E_BUSY)
         {
-          /* Timeout error */
-          interface->status = E_TIMEOUT;
-          break;
-        }
+          if ((status & INTSTS_CRCIF) && (flags & SDIO_CHECK_CRC))
+          {
+            /* Integrity error */
+            interface->status = E_INTERFACE;
+          }
 
-        if ((status & INTSTS_CRCIF) && (flags & SDIO_CHECK_CRC))
-        {
-          /* Integrity error */
-          interface->status = E_INTERFACE;
-          break;
+          if (status & INTSTS_RTOIF)
+          {
+            /* Timeout error */
+            interface->status = E_TIMEOUT;
+          }
         }
       }
       while (reg->CTL & (CTL_RIEN | CTL_R2EN));
@@ -174,21 +200,20 @@ static void executeCommand(struct Sdh *interface, uint32_t command,
   }
 }
 /*----------------------------------------------------------------------------*/
-// static void pinInterruptHandler(void *object)
-// {
-//   struct Sdh * const interface = object;
+static void pinInterruptHandler(void *object)
+{
+  struct Sdh * const interface = object;
 
-//   /* Disable further DATA0 interrupts */
-//   interruptDisable(interface->finalizer);
+  /* Disable further DATA0 interrupts */
+  interruptDisable(interface->finalizer);
 
-//   interface->status = E_OK;
+  interface->status = E_OK;
 
-//   if (interface->callback != NULL)
-//     interface->callback(interface->callbackArgument);
-// }
+  if (interface->callback != NULL)
+    interface->callback(interface->callbackArgument);
+}
 /*----------------------------------------------------------------------------*/
-// static void sdioInterruptHandler(void *object)
-static void interruptHandler(void *object)
+static void sdioInterruptHandler(void *object)
 {
   struct Sdh * const interface = object;
   NM_SDH_Type * const reg = interface->base.reg;
@@ -196,8 +221,8 @@ static void interruptHandler(void *object)
   const uint32_t dmaStatus = reg->DMAINTSTS;
   const uint32_t intStatus = reg->INTSTS;
 
-  // /* Disable further DATA0 interrupts */
-  // interruptDisable(interface->finalizer);
+  /* Disable further DATA0 interrupts */
+  interruptDisable(interface->finalizer);
 
   /* Clear pending interrupts */
   reg->GINTSTS = ahbStatus;
@@ -225,45 +250,40 @@ static void interruptHandler(void *object)
   }
   else
   {
-    bool completed;
+    bool completed = true;
 
     if (flags & SDIO_DATA_MODE)
     {
       completed = (intStatus & INTSTS_BLKDIF) != 0;
     }
 
-    if (flags & SDIO_AUTO_STOP)
-    {
-      const uint32_t command = CTL_COEN | CTL_CLKKEEP
-          | CTL_CMDCODE(CMD_STOP_TRANSMISSION);
-
-      /* Inject Stop Transmission command */
-      executeCommand(interface, command, 0);
-    }
-
     if (completed)
     {
-      if (!(reg->INTSTS & INTSTS_DAT0STS))
+      if (flags & SDIO_DATA_MODE)
       {
-        interface->status = E_INVALID;
-  //       interruptEnable(interface->finalizer);
+        if (!(reg->INTSTS & INTSTS_DAT0STS))
+        {
+          interruptEnable(interface->finalizer);
 
-  //       if (pinRead(interface->data0))
-  //       {
-  //         interruptDisable(interface->finalizer);
-  //         interface->status = E_OK;
-  //       }
-  //       else
-  //       {
-  //         /* Disable SDMMC interrupts, wait for high level on DATA0 */
-  //         irqDisable(interface->base.irq);
-  //       }
+          if (reg->INTSTS & INTSTS_DAT0STS)
+          {
+            interruptDisable(interface->finalizer);
+            interface->status = E_OK;
+          }
+          else
+          {
+            /* Disable SDH interrupts, wait for high level on DATA0 */
+            irqDisable(interface->base.irq);
+          }
+        }
+        else
+          interface->status = E_OK;
       }
       else
-      {
         interface->status = E_OK;
-      }
     }
+    else
+      interface->status = E_OK;
   }
 
   if (interface->status != E_BUSY)
@@ -298,18 +318,29 @@ static enum Result updateRate(struct Sdh *interface, uint32_t rate)
     return E_VALUE;
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_NUMICRO_SDH_PM
+static void powerStateHandler(void *object, enum PmState state)
+{
+  if (state == PM_ACTIVE)
+  {
+    struct Sdh * const interface = object;
+    updateRate(interface, interface->rate);
+  }
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdhConfig * const config = configBase;
-  assert(config);
+  assert(config != NULL);
   assert(config->rate);
 
-  // const struct PinIntConfig finalizerConfig = {
-  //     .pin = config->dat0,
-  //     .event = PIN_RISING,
-  //     .pull = PIN_NOPULL,
-  //     .priority = config->priority
-  // };
+  const struct PinIntConfig finalizerConfig = {
+      .pin = config->dat0,
+      .priority = config->priority,
+      .event = INPUT_RISING,
+      .pull = PIN_NOPULL
+  };
   const struct SdhBaseConfig baseConfig = {
       .clk = config->clk,
       .cmd = config->cmd,
@@ -322,17 +353,16 @@ static enum Result sdioInit(void *object, const void *configBase)
   struct Sdh * const interface = object;
   enum Result res;
 
-  // interface->finalizer = init(PinInt, &finalizerConfig);
-  // if (!interface->finalizer)
-  //   return E_ERROR;
-  // interruptSetCallback(interface->finalizer, pinInterruptHandler, interface);
+  interface->finalizer = init(PinInt, &finalizerConfig);
+  if (interface->finalizer == NULL)
+    return E_ERROR;
+  interruptSetCallback(interface->finalizer, pinInterruptHandler, interface);
 
   /* Call base class constructor */
   if ((res = SdhBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  // interface->base.handler = sdioInterruptHandler;
-  interface->base.handler = interruptHandler;
+  interface->base.handler = sdioInterruptHandler;
   interface->argument = 0;
   interface->callback = NULL;
   interface->command = 0;
@@ -361,9 +391,15 @@ static enum Result sdioInit(void *object, const void *configBase)
   /* Set default clock rate */
   updateRate(interface, config->rate);
 
+#ifdef CONFIG_PLATFORM_NUMICRO_SDH_PM
+  if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
+    return res;
+#endif
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
+#ifndef CONFIG_PLATFORM_NUMICRO_SDH_NO_DEINIT
 static void sdioDeinit(void *object)
 {
   struct Sdh * const interface = object;
@@ -375,10 +411,14 @@ static void sdioDeinit(void *object)
   reg->GCTL = 0;
   reg->DMACTL = 0;
 
-  // deinit(interface->finalizer);
+#ifdef CONFIG_PLATFORM_NUMICRO_SDH_PM
+  pmUnregister(interface);
+#endif
 
+  deinit(interface->finalizer);
   SdhBase->deinit(interface);
 }
+#endif
 /*----------------------------------------------------------------------------*/
 static void sdioSetCallback(void *object, void (*callback)(void *),
     void *argument)
