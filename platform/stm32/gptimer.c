@@ -239,7 +239,6 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   if (timer->event > TIM_EVENT_UPDATE)
     reg->CCR[timer->event - TIM_EVENT_CC1] = overflow - 1;
   reg->ARR = overflow - 1;
-  reg->EGR = EGR_UG;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)

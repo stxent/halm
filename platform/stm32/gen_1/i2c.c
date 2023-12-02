@@ -170,15 +170,23 @@ static void interruptHandler(void *object)
       if (!(reg->SR2 & SR2_MSL))
         error = true;
     }
-    else if ((status & SR1_BTF) && interface->dataTransmitted)
+    else if (status & SR1_BTF)
     {
-      if (!interface->sendRepeatedStart)
-        reg->CR1 |= CR1_STOP;
+      if (interface->dataTransmitted)
+      {
+        if (!interface->sendRepeatedStart)
+          reg->CR1 |= CR1_STOP;
 
-      interface->dataTransmitted = false;
-      interface->sendRepeatedStart = false;
-      interface->status = STATUS_OK;
-      event = true;
+        interface->dataTransmitted = false;
+        interface->sendRepeatedStart = false;
+        interface->status = STATUS_OK;
+        event = true;
+      }
+      else
+      {
+        /* Clear BTF flag */
+        (void)reg->DR;
+      }
     }
   }
 
@@ -463,6 +471,9 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   if (length > USHRT_MAX)
     length = USHRT_MAX;
 
+  dmaDisable(interface->rxDma);
+  dmaDisable(interface->txDma);
+
   interface->buffer = (uintptr_t)buffer;
   interface->rxLeft = length;
   interface->txLeft = 0;
@@ -493,6 +504,9 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
     return 0;
   if (length > USHRT_MAX)
     length = USHRT_MAX;
+
+  dmaDisable(interface->rxDma);
+  dmaDisable(interface->txDma);
 
   interface->buffer = (uintptr_t)buffer;
   interface->rxLeft = 0;

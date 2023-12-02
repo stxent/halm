@@ -373,6 +373,9 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   if (length > UCHAR_MAX)
     length = UCHAR_MAX;
 
+  dmaDisable(interface->rxDma);
+  dmaDisable(interface->txDma);
+
   dmaAppend(interface->rxDma, buffer, (const void *)&reg->RXDR, length);
   if (dmaEnable(interface->rxDma) != E_OK)
   {
@@ -410,6 +413,9 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
     return 0;
   if (length > UCHAR_MAX)
     length = UCHAR_MAX;
+
+  dmaDisable(interface->rxDma);
+  dmaDisable(interface->txDma);
 
   dmaAppend(interface->txDma, (void *)&reg->TXDR, buffer, length);
   if (dmaEnable(interface->txDma) != E_OK)
