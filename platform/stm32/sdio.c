@@ -12,10 +12,10 @@
 #include <halm/platform/stm32/sdio_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
+#include <halm/timer.h>
 #include <xcore/accel.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-#define CMD_STOP_TRANSMISSION 12
 #define DEFAULT_BLOCK_SIZE    9   /* 512 bytes */
 #define BUSY_READ_DELAY       100 /* Milliseconds */
 #define BUSY_WRITE_DELAY      500 /* Milliseconds */
@@ -25,6 +25,7 @@ static void execute(struct Sdio *, uint32_t, uint32_t);
 static void dmaInterruptHandler(void *);
 static void pinInterruptHandler(void *);
 static void sdioInterruptHandler(void *);
+static void timerInterruptHandler(void *);
 static enum Result updateRate(struct Sdio *, uint32_t);
 
 #ifdef CONFIG_PLATFORM_STM32_SDIO_PM
@@ -143,6 +144,7 @@ static void execute(struct Sdio *interface, uint32_t command, uint32_t argument)
   }
 
   interface->cmdStatus = E_BUSY;
+  interface->dmaStatus = E_OK;
 
   /* Initialize interrupts */
   reg->ICR = ICR_MASK;
@@ -161,46 +163,51 @@ static void dmaInterruptHandler(void *object)
   struct Sdio * const interface = object;
   STM_SDIO_Type * const reg = interface->base.reg;
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
+  bool completed = false;
 
   if (flags & SDIO_WRITE_MODE)
   {
-    /* Disable SDIO interrupts */
+    /* Disable possible SDIO interrupts and wait for high level on DAT0 */
     reg->MASK = 0;
 
     interface->dmaStatus = dmaStatus(interface->txDma);
+    completed = true;
+  }
+  else
+  {
+    /* Wait for SDIO interrupts */
+    interface->dmaStatus = dmaStatus(interface->rxDma);
 
+    if (!reg->MASK)
+      completed = true;
+  }
+
+  if (completed)
+  {
+    /* Wait for high level on DATA0 */
     if (!pinRead(interface->data0))
     {
-      /* Wait for high level on DATA0 */
+      if (interface->timer != NULL)
+      {
+        timerSetValue(interface->timer, 0);
+        timerEnable(interface->timer);
+      }
       interruptEnable(interface->finalizer);
 
       if (pinRead(interface->data0))
       {
         interruptDisable(interface->finalizer);
+        if (interface->timer != NULL)
+          timerDisable(interface->timer);
         interface->cmdStatus = interface->dmaStatus;
       }
     }
     else
       interface->cmdStatus = interface->dmaStatus;
-
-    if (interface->cmdStatus != E_BUSY && interface->callback != NULL)
-      interface->callback(interface->callbackArgument);
   }
-  else
-  {
-    interface->dmaStatus = dmaStatus(interface->rxDma);
 
-    if (!reg->MASK)
-    {
-      if (interface->dmaStatus != E_OK)
-      {
-        interface->cmdStatus = interface->dmaStatus;
-
-        if (interface->callback != NULL)
-          interface->callback(interface->callbackArgument);
-      }
-    }
-  }
+  if (interface->cmdStatus != E_BUSY && interface->callback != NULL)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static void pinInterruptHandler(void *object)
@@ -210,7 +217,7 @@ static void pinInterruptHandler(void *object)
   /* Disable further DATA0 interrupts */
   interruptDisable(interface->finalizer);
 
-  interface->cmdStatus = E_OK;
+  interface->cmdStatus = interface->dmaStatus;
 
   if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
@@ -220,7 +227,6 @@ static void sdioInterruptHandler(void *object)
 {
   struct Sdio * const interface = object;
   STM_SDIO_Type * const reg = interface->base.reg;
-  const uint32_t code = COMMAND_CODE_VALUE(interface->command);
   const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
   const uint32_t intStatus = reg->STA;
 
@@ -259,25 +265,28 @@ static void sdioInterruptHandler(void *object)
   }
   else
   {
-    /* Data end interrupt, command sent or response received interrupts */
+    bool completed = false;
 
     if (intStatus & STA_DATAEND)
     {
-      assert(!(flags & SDIO_WRITE_MODE));
-
-      if (interface->dmaStatus == E_BUSY)
+      /* Data end interrupt */
+      if (interface->dmaStatus != E_BUSY)
       {
-        /* Disable SDIO interrupts, wait for DMA callback */
-        reg->MASK = 0;
+        /* DMA transfer is already completed, terminate the command execution */
+        completed = true;
       }
       else
-        interface->cmdStatus = interface->dmaStatus;
+      {
+        /* Disable further SDIO interrupts, wait for DMA callback */
+        reg->MASK = 0;
+      }
     }
     else
     {
+      /* Command sent or response received interrupts */
       if (flags & SDIO_DATA_MODE)
       {
-        /* Prepare data control value */
+        /* Start data transfer phase */
         uint32_t dataControl = DCTRL_DBLOCKSIZE(interface->block);
         enum Result res;
 
@@ -295,30 +304,37 @@ static void sdioInterruptHandler(void *object)
           res = dmaEnable(interface->rxDma);
 
         if (res != E_OK)
-          interface->cmdStatus = res;
-        else
-          interface->dmaStatus = E_BUSY;
+        {
+          interface->dmaStatus = res;
+          completed = true;
+        }
       }
       else
-      {
-        if (code == CMD_STOP_TRANSMISSION)
-        {
-          if (!pinRead(interface->data0))
-          {
-            interruptEnable(interface->finalizer);
+        completed = true;
+    }
 
-            if (pinRead(interface->data0))
-            {
-              interruptDisable(interface->finalizer);
-              interface->cmdStatus = E_OK;
-            }
-          }
-          else
-            interface->cmdStatus = E_OK;
+    if (completed)
+    {
+      /* Wait for high level on DAT0 after a completed command */
+      if (!pinRead(interface->data0))
+      {
+        if (interface->timer != NULL)
+        {
+          timerSetValue(interface->timer, 0);
+          timerEnable(interface->timer);
         }
-        else
-          interface->cmdStatus = E_OK;
+        interruptEnable(interface->finalizer);
+
+        if (pinRead(interface->data0))
+        {
+          interruptDisable(interface->finalizer);
+          if (interface->timer != NULL)
+            timerDisable(interface->timer);
+          interface->cmdStatus = interface->dmaStatus;
+        }
       }
+      else
+        interface->cmdStatus = interface->dmaStatus;
     }
   }
 
@@ -330,6 +346,19 @@ static void sdioInterruptHandler(void *object)
     if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
+}
+/*----------------------------------------------------------------------------*/
+static void timerInterruptHandler(void *argument)
+{
+  struct Sdio * const interface = argument;
+
+  /* Disable further DATA0 interrupts */
+  interruptDisable(interface->finalizer);
+
+  interface->cmdStatus = E_TIMEOUT;
+
+  if (interface->callback != NULL)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result updateRate(struct Sdio *interface, uint32_t rate)
@@ -409,6 +438,7 @@ static enum Result sdioInit(void *object, const void *configBase)
     return E_ERROR;
 
   interface->base.handler = sdioInterruptHandler;
+  interface->timer = config->timer;
   interface->argument = 0;
   interface->callback = NULL;
   interface->command = 0;
@@ -435,8 +465,9 @@ static enum Result sdioInit(void *object, const void *configBase)
   reg->DLEN = 0;
 
   /* Set bus width */
-  reg->CLKCR = interface->base.wide ?
-      CLKCR_WIDBUS(WIDBUS_4BIT) : CLKCR_WIDBUS(WIDBUS_1BIT);
+  reg->CLKCR = interface->base.width == 8 ?
+      CLKCR_WIDBUS(WIDBUS_8BIT) : (interface->base.width == 4 ?
+          CLKCR_WIDBUS(WIDBUS_4BIT) : CLKCR_WIDBUS(WIDBUS_1BIT));
 
   /* Set default clock rate and enable card clock */
   updateRate(interface, config->rate);
@@ -452,6 +483,17 @@ static enum Result sdioInit(void *object, const void *configBase)
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
     return res;
 #endif
+
+  if (interface->timer != NULL)
+  {
+    static const uint64_t timeout = BUSY_WRITE_DELAY * (1ULL << 32) / 1000;
+    const uint32_t frequency = timerGetFrequency(interface->timer);
+    const uint32_t overflow = (frequency * timeout + ((1ULL << 32) - 1)) >> 32;
+
+    timerSetAutostop(interface->timer, true);
+    timerSetCallback(interface->timer, timerInterruptHandler, interface);
+    timerSetOverflow(interface->timer, overflow);
+  }
 
   return E_OK;
 }
@@ -502,8 +544,16 @@ static enum Result sdioGetParam(void *object, int parameter, void *data)
   {
     case IF_SDIO_MODE:
     {
-      // TODO 8-bit mode
-      *(uint8_t *)data = interface->base.wide ? SDIO_4BIT : SDIO_1BIT;
+      uint8_t width;
+
+      if (interface->base.width == 8)
+        width = SDIO_8BIT;
+      else if (interface->base.width == 4)
+        width = SDIO_4BIT;
+      else
+        width = SDIO_1BIT;
+
+      *(uint8_t *)data = width;
       return E_OK;
     }
 
@@ -602,8 +652,8 @@ static enum Result sdioSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t sdioRead(void *object, void *buffer, size_t length)
 {
-  /* Buffer address must be aligned on the burst size of DMA transfer */
-  assert((uintptr_t)buffer % 16 == 0);
+  /* Buffer address must be aligned on a 4-byte boundary */
+  assert((uintptr_t)buffer % 4 == 0);
   /* Buffer size must be aligned on a 4-byte boundary */
   assert(length % 4 == 0);
 
@@ -619,8 +669,8 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t sdioWrite(void *object, const void *buffer, size_t length)
 {
-  /* Buffer address must be aligned on the burst size of DMA transfer */
-  assert((uintptr_t)buffer % 16 == 0);
+  /* Buffer address must be aligned on a 4-byte boundary */
+  assert((uintptr_t)buffer % 4 == 0);
   /* Buffer size must be aligned on a 4-byte boundary */
   assert(length % 4 == 0);
 

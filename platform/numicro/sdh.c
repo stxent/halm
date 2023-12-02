@@ -11,10 +11,10 @@
 #include <halm/platform/numicro/sdh_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
+#include <halm/timer.h>
 #include <xcore/memory.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-#define CMD_STOP_TRANSMISSION 12
 #define DEFAULT_BLOCK_SIZE    512
 #define BUSY_READ_DELAY       100 /* Milliseconds */
 #define BUSY_WRITE_DELAY      500 /* Milliseconds */
@@ -23,6 +23,7 @@ static void execute(struct Sdh *, uint32_t);
 static void executeCommand(struct Sdh *, uint32_t, uint32_t);
 static void pinInterruptHandler(void *);
 static void sdioInterruptHandler(void *);
+static void timerInterruptHandler(void *);
 static enum Result updateRate(struct Sdh *, uint32_t);
 
 #ifdef CONFIG_PLATFORM_NUMICRO_SDH_PM
@@ -121,17 +122,24 @@ static void execute(struct Sdh *interface, uint32_t blocks)
   if (interface->status != E_BUSY)
     irqDisable(interface->base.irq);
 
-  /* Wait for high level on DAT0 after CMD12 Stop Tran commands */
-  if (interface->status == E_OK && code == CMD_STOP_TRANSMISSION)
+  /* Wait for high level on DAT0 after a completed command */
+  if (interface->status == E_OK)
   {
     if (!(reg->INTSTS & INTSTS_DAT0STS))
     {
       interface->status = E_BUSY;
+      if (interface->timer != NULL)
+      {
+        timerSetValue(interface->timer, 0);
+        timerEnable(interface->timer);
+      }
       interruptEnable(interface->finalizer);
 
       if (reg->INTSTS & INTSTS_DAT0STS)
       {
         interruptDisable(interface->finalizer);
+        if (interface->timer != NULL)
+          timerDisable(interface->timer);
         interface->status = E_OK;
       }
     }
@@ -259,25 +267,27 @@ static void sdioInterruptHandler(void *object)
 
     if (completed)
     {
-      if (flags & SDIO_DATA_MODE)
+      if (!(reg->INTSTS & INTSTS_DAT0STS))
       {
-        if (!(reg->INTSTS & INTSTS_DAT0STS))
+        if (interface->timer != NULL)
         {
-          interruptEnable(interface->finalizer);
+          timerSetValue(interface->timer, 0);
+          timerEnable(interface->timer);
+        }
+        interruptEnable(interface->finalizer);
 
-          if (reg->INTSTS & INTSTS_DAT0STS)
-          {
-            interruptDisable(interface->finalizer);
-            interface->status = E_OK;
-          }
-          else
-          {
-            /* Disable SDH interrupts, wait for high level on DATA0 */
-            irqDisable(interface->base.irq);
-          }
+        if (reg->INTSTS & INTSTS_DAT0STS)
+        {
+          interruptDisable(interface->finalizer);
+          if (interface->timer != NULL)
+            timerDisable(interface->timer);
+          interface->status = E_OK;
         }
         else
-          interface->status = E_OK;
+        {
+          /* Disable SDH interrupts, wait for high level on DATA0 */
+          irqDisable(interface->base.irq);
+        }
       }
       else
         interface->status = E_OK;
@@ -294,6 +304,19 @@ static void sdioInterruptHandler(void *object)
     if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
+}
+/*----------------------------------------------------------------------------*/
+static void timerInterruptHandler(void *argument)
+{
+  struct Sdh * const interface = argument;
+
+  /* Disable further DATA0 interrupts */
+  interruptDisable(interface->finalizer);
+
+  interface->status = E_TIMEOUT;
+
+  if (interface->callback != NULL)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result updateRate(struct Sdh *interface, uint32_t rate)
@@ -363,6 +386,7 @@ static enum Result sdioInit(void *object, const void *configBase)
     return res;
 
   interface->base.handler = sdioInterruptHandler;
+  interface->timer = config->timer;
   interface->argument = 0;
   interface->callback = NULL;
   interface->command = 0;
@@ -395,6 +419,17 @@ static enum Result sdioInit(void *object, const void *configBase)
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
     return res;
 #endif
+
+  if (interface->timer != NULL)
+  {
+    static const uint64_t timeout = BUSY_WRITE_DELAY * (1ULL << 32) / 1000;
+    const uint32_t frequency = timerGetFrequency(interface->timer);
+    const uint32_t overflow = (frequency * timeout + ((1ULL << 32) - 1)) >> 32;
+
+    timerSetAutostop(interface->timer, true);
+    timerSetCallback(interface->timer, timerInterruptHandler, interface);
+    timerSetOverflow(interface->timer, overflow);
+  }
 
   return E_OK;
 }
@@ -546,6 +581,11 @@ static enum Result sdioSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t sdioRead(void *object, void *buffer, size_t length)
 {
+  /* Buffer address must be aligned on a 4-byte boundary */
+  assert((uintptr_t)buffer % 4 == 0);
+  /* Buffer size must be aligned on a 4-byte boundary */
+  assert(length % 4 == 0);
+
   struct Sdh * const interface = object;
   NM_SDH_Type * const reg = interface->base.reg;
 
@@ -557,6 +597,11 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t sdioWrite(void *object, const void *buffer, size_t length)
 {
+  /* Buffer address must be aligned on a 4-byte boundary */
+  assert((uintptr_t)buffer % 4 == 0);
+  /* Buffer size must be aligned on a 4-byte boundary */
+  assert(length % 4 == 0);
+
   struct Sdh * const interface = object;
   NM_SDH_Type * const reg = interface->base.reg;
 

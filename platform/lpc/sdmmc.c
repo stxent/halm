@@ -12,9 +12,9 @@
 #include <halm/platform/lpc/sdmmc_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
+#include <halm/timer.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-#define CMD_STOP_TRANSMISSION 12
 #define DEFAULT_BLOCK_SIZE    512
 #define BUSY_READ_DELAY       100 /* Milliseconds */
 #define BUSY_WRITE_DELAY      500 /* Milliseconds */
@@ -23,6 +23,7 @@ static void execute(struct Sdmmc *);
 static void executeCommand(struct Sdmmc *, uint32_t, uint32_t);
 static void pinInterruptHandler(void *);
 static void sdioInterruptHandler(void *);
+static void timerInterruptHandler(void *);
 static enum Result updateRate(struct Sdmmc *, uint32_t);
 
 #ifdef CONFIG_PLATFORM_LPC_SDMMC_PM
@@ -178,7 +179,6 @@ static void sdioInterruptHandler(void *object)
   }
   else
   {
-    const uint32_t code = COMMAND_CODE_VALUE(interface->command);
     const uint16_t flags = COMMAND_FLAG_VALUE(interface->command);
     bool completed;
 
@@ -193,25 +193,27 @@ static void sdioInterruptHandler(void *object)
 
     if (completed)
     {
-      if ((flags & SDIO_DATA_MODE) || code == CMD_STOP_TRANSMISSION)
+      if (!pinRead(interface->data0))
       {
-        if (!pinRead(interface->data0))
+        if (interface->timer != NULL)
         {
-          interruptEnable(interface->finalizer);
+          timerSetValue(interface->timer, 0);
+          timerEnable(interface->timer);
+        }
+        interruptEnable(interface->finalizer);
 
-          if (pinRead(interface->data0))
-          {
-            interruptDisable(interface->finalizer);
-            interface->status = E_OK;
-          }
-          else
-          {
-            /* Disable SDMMC interrupts, wait for high level on DATA0 */
-            irqDisable(interface->base.irq);
-          }
+        if (pinRead(interface->data0))
+        {
+          interruptDisable(interface->finalizer);
+          if (interface->timer != NULL)
+            timerDisable(interface->timer);
+          interface->status = E_OK;
         }
         else
-          interface->status = E_OK;
+        {
+          /* Disable SDMMC interrupts, wait for high level on DATA0 */
+          irqDisable(interface->base.irq);
+        }
       }
       else
         interface->status = E_OK;
@@ -226,6 +228,19 @@ static void sdioInterruptHandler(void *object)
     if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
+}
+/*----------------------------------------------------------------------------*/
+static void timerInterruptHandler(void *argument)
+{
+  struct Sdmmc * const interface = argument;
+
+  /* Disable further DATA0 interrupts */
+  interruptDisable(interface->finalizer);
+
+  interface->status = E_TIMEOUT;
+
+  if (interface->callback != NULL)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result updateRate(struct Sdmmc *interface, uint32_t rate)
@@ -319,6 +334,7 @@ static enum Result sdioInit(void *object, const void *configBase)
     return res;
 
   interface->base.handler = sdioInterruptHandler;
+  interface->timer = config->timer;
   interface->argument = 0;
   interface->callback = NULL;
   interface->command = 0;
@@ -354,6 +370,17 @@ static enum Result sdioInit(void *object, const void *configBase)
   interface->dma = init(DmaSdmmc, &dmaConfig);
   if (interface->dma == NULL)
     return E_ERROR;
+
+  if (interface->timer != NULL)
+  {
+    static const uint64_t timeout = BUSY_WRITE_DELAY * (1ULL << 32) / 1000;
+    const uint32_t frequency = timerGetFrequency(interface->timer);
+    const uint32_t overflow = (frequency * timeout + ((1ULL << 32) - 1)) >> 32;
+
+    timerSetAutostop(interface->timer, true);
+    timerSetCallback(interface->timer, timerInterruptHandler, interface);
+    timerSetOverflow(interface->timer, overflow);
+  }
 
   return E_OK;
 }
@@ -489,8 +516,8 @@ static enum Result sdioSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t sdioRead(void *object, void *buffer, size_t length)
 {
-  /* Buffer address must be aligned on the burst size of DMA transfer */
-  assert((uintptr_t)buffer % 16 == 0);
+  /* Buffer address must be aligned on a 4-byte boundary */
+  assert((uintptr_t)buffer % 4 == 0);
   /* Buffer size must be aligned on a 4-byte boundary */
   assert(length % 4 == 0);
 
@@ -516,8 +543,8 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t sdioWrite(void *object, const void *buffer, size_t length)
 {
-  /* Buffer address must be aligned on the burst size of DMA transfer */
-  assert((uintptr_t)buffer % 16 == 0);
+  /* Buffer address must be aligned on a 4-byte boundary */
+  assert((uintptr_t)buffer % 4 == 0);
   /* Buffer size must be aligned on a 4-byte boundary */
   assert(length % 4 == 0);
 

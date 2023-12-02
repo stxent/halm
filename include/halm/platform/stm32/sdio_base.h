@@ -38,8 +38,8 @@ struct SdioBase
   void (*handler)(void *);
   IrqNumber irq;
 
-  /* 4-bit bus indicator */
-  bool wide;
+  /* Bus width */
+  uint8_t width;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS

@@ -1,6 +1,6 @@
 /*
  * mmcsd.c
- * Copyright (C) 2014, 2020 xent
+ * Copyright (C) 2014, 2020, 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
@@ -115,7 +115,7 @@ static enum Result initStepMmcReadOCR(struct MMCSD *device)
 
       res = executeCommand(device,
           SDIO_COMMAND(CMD1_SEND_OP_COND, MMCSD_RESPONSE_R3, 0),
-	        ocr, &response, true);
+          ocr, &response, true);
 
       if (res == E_OK)
       {

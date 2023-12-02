@@ -20,7 +20,7 @@ void sdioConfigPins(struct SdioBase *interface,
       config->dat2,
       config->dat3
   };
-  bool wide = true;
+  uint8_t width = 4;
 
   for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
@@ -29,7 +29,7 @@ void sdioConfigPins(struct SdioBase *interface,
       /* First three pins are mandatory */
       assert(index >= 3);
 
-      wide = false;
+      width = 1;
       continue;
     }
 
@@ -43,5 +43,5 @@ void sdioConfigPins(struct SdioBase *interface,
     pinSetFunction(pin, group->value);
   }
 
-  interface->wide = wide;
+  interface->width = width;
 }
