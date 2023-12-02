@@ -40,6 +40,10 @@ if(CONFIG_GENERIC_WQ_IRQ)
     list(APPEND SOURCE_FILES "work_queue_irq.c")
 endif()
 
+if(CONFIG_GENERIC_WQ_UNIQUE)
+    list(APPEND SOURCE_FILES "work_queue_unique.c")
+endif()
+
 if(SOURCE_FILES)
     add_library(halm_generic OBJECT ${SOURCE_FILES})
 endif()

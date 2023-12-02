@@ -84,4 +84,35 @@ config GENERIC_WQ_IRQ_PROFILE
 	  This enables support for profiling and statistics functions.
 	  Information about task execution times and latency will be available.
 
+config GENERIC_WQ_UNIQUE
+	bool "Unique Work Queue"
+	default y
+
+config GENERIC_WQ_UNIQUE_LOAD
+	bool "Gather performance data"
+	default n
+	depends on GENERIC_WQ_UNIQUE
+	help
+	  This enables calculation of the idle cycles of the work queue.
+	  The number of idle cycles depends on the processor load.
+	  Power management is disabled in this mode.
+
+config GENERIC_WQ_UNIQUE_NONSTOP
+	bool "Disable stop functions"
+	default n
+	depends on GENERIC_WQ_UNIQUE
+
+config GENERIC_WQ_UNIQUE_PM
+	bool "Enable power management"
+	default y
+	depends on GENERIC_WQ_UNIQUE
+
+config GENERIC_WQ_UNIQUE_PROFILE
+	bool "Enable profiling support"
+	default n
+	depends on GENERIC_WQ_UNIQUE
+	help
+	  This enables support for profiling and statistics functions.
+	  Information about task execution times and latency will be available.
+
 endmenu
