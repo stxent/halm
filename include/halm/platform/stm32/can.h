@@ -12,12 +12,10 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Can;
 
-struct Timer;
-
 struct CanConfig
 {
   /** Optional: timer for a message time stamp generation. */
-  struct Timer *timer;
+  void *timer;
   /** Mandatory: baud rate. */
   uint32_t rate;
   /** Optional: number of filtering rules. */
