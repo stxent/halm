@@ -233,15 +233,19 @@ static void resetDevice(struct UsbDevice *device)
   device->suspended = false;
   device->position = DESCRIPTOR_TABLE_SIZE;
 
-  for (size_t i = 0; i < 8; ++i)
+  for (size_t index = 0; index < ARRAY_SIZE(reg->EPR); ++index)
   {
-    const uint32_t epr = reg->EPR[i];
+    const uint32_t epr = reg->EPR[index];
 
-    reg->EPR[i] = eprMakeRxStat(epr, EPR_STAT_DISABLED)
+    reg->EPR[index] = eprMakeRxStat(epr, EPR_STAT_DISABLED)
         | eprMakeTxStat(epr, EPR_STAT_DISABLED);
   }
 
   devSetAddress(device, 0);
+
+  /* Reset all enabled endpoints except for Control Endpoints */
+  for (size_t index = 2; index < ARRAY_SIZE(device->endpoints); ++index)
+    device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
@@ -310,29 +314,24 @@ static void devDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static void *devCreateEndpoint(void *object, uint8_t address)
 {
-  struct UsbDevice * const device = object;
   const unsigned int index = EP_TO_INDEX(address);
+  struct UsbDevice * const device = object;
 
   assert(index < ARRAY_SIZE(device->endpoints));
 
-  struct UsbEndpoint *ep = NULL;
-  const IrqState state = irqSave();
+  const struct UsbEndpointConfig config = {
+      .parent = device,
+      .address = address
+  };
+  struct UsbEndpoint * const ep = init(UsbEndpoint, &config);
 
-  if (device->endpoints[index] == NULL)
+  if (index < 2)
   {
-    /* Initialization of endpoint is only available before the driver starts */
-    assert(!device->enabled);
-
-    const struct UsbEndpointConfig config = {
-        .parent = device,
-        .address = address
-    };
-
-    device->endpoints[index] = init(UsbEndpoint, &config);
+    /* Set Control Endpoints immediately after creation */
+    assert(device->endpoints[index] == NULL);
+    device->endpoints[index] = ep;
   }
-  ep = device->endpoints[index];
 
-  irqRestore(state);
   return ep;
 }
 /*----------------------------------------------------------------------------*/
@@ -889,14 +888,17 @@ static void epDeinit(void *object)
 {
   struct UsbEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
+  const unsigned int index = EP_TO_INDEX(ep->address);
 
   /* Disable interrupts and remove pending requests */
   epDisable(ep);
   epClear(ep);
 
-  const IrqState state = irqSave();
-  device->endpoints[EP_TO_INDEX(ep->address)] = NULL;
-  irqRestore(state);
+  if (index < 2)
+  {
+    assert(device->endpoints[index] == ep);
+    device->endpoints[index] = NULL;
+  }
 
   assert(pointerQueueEmpty(&ep->requests));
   pointerQueueDeinit(&ep->requests);
@@ -918,7 +920,8 @@ static void epClear(void *object)
 static void epDisable(void *object)
 {
   struct UsbEndpoint * const ep = object;
-  STM_USB_Type * const reg = ep->device->base.reg;
+  struct UsbDevice * const device = ep->device;
+  STM_USB_Type * const reg = device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
   uint32_t epr = reg->EPR[number] & (EPR_TOGGLE_MASK & ~EPR_EP_KIND);
 
@@ -928,11 +931,18 @@ static void epDisable(void *object)
     epr = eprMakeRxStat(epr, EPR_STAT_DISABLED);
 
   reg->EPR[number] = epr;
+
+  const unsigned int index = EP_TO_INDEX(ep->address);
+
+  if (index >= 2 && device->endpoints[index] == ep)
+    device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 static void epEnable(void *object, uint8_t type, uint16_t size)
 {
   struct UsbEndpoint * const ep = object;
+  struct UsbDevice * const device = ep->device;
+  const unsigned int index = EP_TO_INDEX(ep->address);
 
   switch (type)
   {
@@ -946,6 +956,12 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
     default:
       ep->subclass = SbUsbEndpoint;
       break;
+  }
+
+  if (index >= 2)
+  {
+    assert(device->endpoints[index] == NULL);
+    device->endpoints[index] = ep;
   }
 
   ep->subclass->enable(ep, type, size);

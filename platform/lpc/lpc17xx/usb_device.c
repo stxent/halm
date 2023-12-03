@@ -331,6 +331,10 @@ static void resetDevice(struct UsbDevice *device)
   reg->USBDevIntEn = USBDevInt_DEV_STAT | USBDevInt_EP_SLOW;
 
   devSetAddress(device, 0);
+
+  /* Reset all enabled endpoints except for Control Endpoints */
+  for (size_t index = 2; index < ARRAY_SIZE(device->endpoints); ++index)
+    device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 static void usbCommand(struct UsbDevice *device, uint8_t command)
@@ -465,24 +469,16 @@ static void devDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static void *devCreateEndpoint(void *object, uint8_t address)
 {
-  struct UsbDevice * const device = object;
   const unsigned int index = EP_TO_INDEX(address);
+  struct UsbDevice * const device = object;
 
   assert(index < ARRAY_SIZE(device->endpoints));
 
-  struct UsbEndpoint *ep = NULL;
-  const IrqState state = irqSave();
-
-  if (device->endpoints[index] == NULL)
-  {
-    /* Initialization of endpoint is only available before the driver starts */
-    assert(!device->enabled);
-
-    const struct UsbEndpointConfig config = {
-        .parent = device,
-        .address = address
-    };
-    const struct UsbEndpointClass *type;
+  const struct UsbEndpointConfig config = {
+      .parent = device,
+      .address = address
+  };
+  const struct UsbEndpointClass *type;
 
 #ifdef CONFIG_PLATFORM_USB_DMA
     type = index >= 2 ? UsbDmaEndpoint : UsbSieEndpoint;
@@ -490,11 +486,15 @@ static void *devCreateEndpoint(void *object, uint8_t address)
     type = UsbSieEndpoint;
 #endif
 
-    device->endpoints[index] = init(type, &config);
-  }
-  ep = device->endpoints[index];
+  struct UsbEndpoint * const ep = init(type, &config);
 
-  irqRestore(state);
+  if (index < 2)
+  {
+    /* Set Control Endpoints immediately after creation */
+    assert(device->endpoints[index] == NULL);
+    device->endpoints[index] = ep;
+  }
+
   return ep;
 }
 /*----------------------------------------------------------------------------*/
@@ -778,9 +778,11 @@ static void sieEpDeinit(void *object)
   sieEpDisable(ep);
   sieEpClear(ep);
 
-  const IrqState state = irqSave();
-  device->endpoints[index] = NULL;
-  irqRestore(state);
+  if (index < 2)
+  {
+    assert(device->endpoints[index] == (struct UsbEndpoint *)ep);
+    device->endpoints[index] = NULL;
+  }
 
   assert(pointerQueueEmpty(&ep->requests));
   pointerQueueDeinit(&ep->requests);
@@ -802,22 +804,34 @@ static void sieEpClear(void *object)
 static void sieEpDisable(void *object)
 {
   struct UsbSieEndpoint * const ep = object;
-  LPC_USB_Type * const reg = ep->device->base.reg;
+  struct UsbDevice * const device = ep->device;
+  LPC_USB_Type * const reg = device->base.reg;
   const unsigned int index = EP_TO_INDEX(ep->address);
   const uint32_t mask = 1UL << index;
 
   reg->USBEpIntEn &= ~mask;
 
-  usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index,
+  usbCommandWrite(device, USB_CMD_SET_ENDPOINT_STATUS | index,
       SET_ENDPOINT_STATUS_DA);
+
+  if (index >= 2 && device->endpoints[index] == (struct UsbEndpoint *)ep)
+    device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 static void sieEpEnable(void *object, uint8_t type __attribute__((unused)),
     uint16_t size)
 {
   struct UsbSieEndpoint * const ep = object;
-  LPC_USB_Type * const reg = ep->device->base.reg;
+  struct UsbDevice * const device = ep->device;
   const unsigned int index = EP_TO_INDEX(ep->address);
+
+  if (index >= 2)
+  {
+    assert(device->endpoints[index] == NULL);
+    device->endpoints[index] = (struct UsbEndpoint *)ep;
+  }
+
+  LPC_USB_Type * const reg = device->base.reg;
   const uint32_t mask = 1UL << index;
 
   /* Enable interrupt */
@@ -828,9 +842,9 @@ static void sieEpEnable(void *object, uint8_t type __attribute__((unused)),
   reg->USBReEp |= mask;
   reg->USBEpInd = index;
   reg->USBMaxPSize = size;
-  waitForInt(ep->device, USBDevInt_EP_RLZED);
+  waitForInt(device, USBDevInt_EP_RLZED);
 
-  usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
+  usbCommandWrite(device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result sieEpEnqueue(void *object, struct UsbRequest *request)
@@ -1108,16 +1122,8 @@ static enum Result dmaEpInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void dmaEpDeinit(void *object)
 {
-  struct UsbDmaEndpoint * const ep = object;
-  struct UsbDevice * const device = ep->device;
-  const unsigned int index = EP_TO_INDEX(ep->address);
-
   /* Remove pending requests */
-  dmaEpDisable(ep);
-
-  const IrqState state = irqSave();
-  device->endpoints[index] = NULL;
-  irqRestore(state);
+  dmaEpDisable(object);
 }
 /*----------------------------------------------------------------------------*/
 static void dmaEpClear(void *object)
@@ -1155,19 +1161,31 @@ static void dmaEpClear(void *object)
 static void dmaEpDisable(void *object)
 {
   struct UsbDmaEndpoint * const ep = object;
+  struct UsbDevice * const device = ep->device;
   const unsigned int index = EP_TO_INDEX(ep->address);
 
   dmaEpClear(ep);
 
-  usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index,
+  usbCommandWrite(device, USB_CMD_SET_ENDPOINT_STATUS | index,
       SET_ENDPOINT_STATUS_DA);
+
+  if (index >= 2 && device->endpoints[index] == (struct UsbEndpoint *)ep)
+    device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 static void dmaEpEnable(void *object, uint8_t type, uint16_t size)
 {
   struct UsbDmaEndpoint * const ep = object;
-  LPC_USB_Type * const reg = ep->device->base.reg;
+  struct UsbDevice * const device = ep->device;
   const unsigned int index = EP_TO_INDEX(ep->address);
+
+  if (index >= 2)
+  {
+    assert(device->endpoints[index] == NULL);
+    device->endpoints[index] = (struct UsbEndpoint *)ep;
+  }
+
+  LPC_USB_Type * const reg = device->base.reg;
   const uint32_t mask = 1UL << index;
 
   ep->type = type;
@@ -1182,9 +1200,9 @@ static void dmaEpEnable(void *object, uint8_t type, uint16_t size)
   reg->USBReEp |= mask;
   reg->USBEpInd = index;
   reg->USBMaxPSize = size;
-  waitForInt(ep->device, USBDevInt_EP_RLZED);
+  waitForInt(device, USBDevInt_EP_RLZED);
 
-  usbCommandWrite(ep->device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
+  usbCommandWrite(device, USB_CMD_SET_ENDPOINT_STATUS | index, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dmaEpEnqueue(void *object, struct UsbRequest *request)

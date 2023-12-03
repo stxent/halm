@@ -19,6 +19,16 @@
 #define CONTROL_OUT     0
 #define ENDPOINT_FIRST  2
 /*----------------------------------------------------------------------------*/
+struct UsbEndpointConfig
+{
+  /** Mandatory: hardware device. */
+  struct UsbDevice *parent;
+  /** Mandatory: logical address of the endpoint. */
+  uint8_t address;
+  /** Mandatory: physical address of the endpoint. */
+  uint8_t channel;
+};
+
 struct UsbEndpoint
 {
   struct UsbEndpointBase base;
@@ -209,6 +219,18 @@ static void resetDevice(struct UsbDevice *device)
   reg->STBUFSEG = 0;
 
   devSetAddress(device, 0);
+
+  /* Reset all enabled endpoints except for Control Endpoints */
+  for (size_t index = 2; index < CONFIG_PLATFORM_USB_DEVICE_EP_COUNT; ++index)
+  {
+    struct UsbEndpoint **ep = &device->endpoints[index];
+
+    if (*ep != NULL)
+    {
+      (*ep)->index = 0;
+      *ep = NULL;
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
@@ -239,6 +261,9 @@ static enum Result devInit(void *object, const void *configBase)
   device->configured = false;
   device->enabled = false;
 
+  for (size_t index = 0; index < CONFIG_PLATFORM_USB_DEVICE_EP_COUNT; ++index)
+    device->endpoints[index] = NULL;
+
   /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
   if (device->control == NULL)
@@ -256,10 +281,7 @@ static enum Result devInit(void *object, const void *configBase)
   reg->SE0 = SE0_SE0;
 
   for (size_t index = 0; index < CONFIG_PLATFORM_USB_DEVICE_EP_COUNT; ++index)
-  {
-    device->endpoints[index] = NULL;
     reg->EP[index].CFG = 0;
-  }
 
   irqSetPriority(device->base.irq, config->priority);
   irqEnable(device->base.irq);
@@ -282,54 +304,25 @@ static void devDeinit(void *object)
 static void *devCreateEndpoint(void *object, uint8_t address)
 {
   struct UsbDevice * const device = object;
-  struct UsbEndpoint *ep = NULL;
-  size_t channel;
+  size_t channel = 0;
 
-  /* Lock access to endpoint list */
-  const IrqState state = irqSave();
+  if (USB_EP_LOGICAL_ADDRESS(address) == 0)
+    channel = (address & USB_EP_DIRECTION_IN) ? CONTROL_IN : CONTROL_OUT;
+
+  const struct UsbEndpointConfig config = {
+      .parent = device,
+      .address = address,
+      .channel = channel
+  };
+  struct UsbEndpoint * const ep = init(UsbEndpoint, &config);
 
   if (USB_EP_LOGICAL_ADDRESS(address) == 0)
   {
-    channel = (address & USB_EP_DIRECTION_IN) ? CONTROL_IN : CONTROL_OUT;
-  }
-  else
-  {
-    /* Allocate free endpoint */
-    channel = ENDPOINT_FIRST;
-
-    while (channel < CONFIG_PLATFORM_USB_DEVICE_EP_COUNT)
-    {
-      struct UsbEndpoint * const current = device->endpoints[channel];
-
-      if (current == NULL)
-        break;
-
-      if (current->address == address)
-      {
-        ep = current;
-        break;
-      }
-
-      ++channel;
-    }
+    /* Set Control Endpoints immediately after creation */
+    assert(device->endpoints[ep->index] == NULL);
+    device->endpoints[ep->index] = ep;
   }
 
-  if (ep == NULL && channel != CONFIG_PLATFORM_USB_DEVICE_EP_COUNT)
-  {
-    /* Driver should be disabled during initialization */
-    assert(!device->enabled);
-
-    const struct UsbEndpointConfig config = {
-        .parent = device,
-        .address = address,
-        .index = channel
-    };
-
-    device->endpoints[channel] = init(UsbEndpoint, &config);
-    ep = device->endpoints[channel];
-  }
-
-  irqRestore(state);
   return ep;
 }
 /*----------------------------------------------------------------------------*/
@@ -504,7 +497,7 @@ static bool epReadData(struct UsbEndpoint *ep, uint8_t *buffer,
     size_t length, size_t *read)
 {
   const NM_USBD_Type * const reg = ep->device->base.reg;
-  const NM_USBD_EP_Type * const channel = &reg->EP[ep->index];
+  const NM_USBD_EP_Type * const channel = epGetChannel(ep);
   const uint32_t available = channel->MXPLD;
   const uint32_t offset = channel->BUFSEG & BUFSEG_ADDRESS_MASK;
 
@@ -563,7 +556,7 @@ static void epWriteData(struct UsbEndpoint *ep, const uint8_t *buffer,
     size_t length)
 {
   NM_USBD_Type * const reg = ep->device->base.reg;
-  NM_USBD_EP_Type * const channel = &reg->EP[ep->index];
+  NM_USBD_EP_Type * const channel = epGetChannel(ep);
   const uint32_t offset = channel->BUFSEG & BUFSEG_ADDRESS_MASK;
 
   epWritePacketMemory((void *)(reg->SRAM + offset), (const uint32_t *)buffer,
@@ -617,7 +610,7 @@ static enum Result epInit(void *object, const void *configBase)
   {
     ep->address = config->address;
     ep->device = config->parent;
-    ep->index = config->index;
+    ep->index = config->channel;
 
     return E_OK;
   }
@@ -628,15 +621,18 @@ static enum Result epInit(void *object, const void *configBase)
 static void epDeinit(void *object)
 {
   struct UsbEndpoint * const ep = object;
-  struct UsbDevice * const device = ep->device;
 
   /* Disable interrupts and remove pending requests */
   epDisable(ep);
   epClear(ep);
 
-  const IrqState state = irqSave();
-  device->endpoints[ep->index] = NULL;
-  irqRestore(state);
+  if (ep->index < 2)
+  {
+    struct UsbDevice * const device = ep->device;
+
+    assert(device->endpoints[ep->index] == ep);
+    device->endpoints[ep->index] = NULL;
+  }
 
   assert(pointerQueueEmpty(&ep->requests));
   pointerQueueDeinit(&ep->requests);
@@ -663,12 +659,46 @@ static void epDisable(void *object)
 
   cfg |= CFG_STATE(STATE_EP_DISABLED);
   channel->CFG = cfg;
+
+  if (ep->index >= 2)
+  {
+    struct UsbDevice * const device = ep->device;
+
+    assert(device->endpoints[ep->index] == ep);
+    device->endpoints[ep->index] = NULL;
+
+    ep->index = 0;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void epEnable(void *object, uint8_t type, uint16_t size)
 {
   struct UsbEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
+
+  if (USB_EP_LOGICAL_ADDRESS(ep->address) != 0)
+  {
+    const IrqState state = irqSave();
+
+    /* Allocate free endpoint */
+    assert(!ep->index);
+    ep->index = ENDPOINT_FIRST;
+
+    while (ep->index < CONFIG_PLATFORM_USB_DEVICE_EP_COUNT)
+    {
+      struct UsbEndpoint * const current = device->endpoints[ep->index];
+
+      if (current == NULL)
+        break;
+
+      ++ep->index;
+    }
+
+    assert(ep->index != CONFIG_PLATFORM_USB_DEVICE_EP_COUNT);
+    device->endpoints[ep->index] = ep;
+    irqRestore(state);
+  }
+
   NM_USBD_EP_Type * const channel = epGetChannel(ep);
 
   channel->BUFSEG = device->position & BUFSEG_ADDRESS_MASK;

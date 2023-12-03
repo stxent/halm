@@ -31,14 +31,4 @@ struct UsbDeviceConfig
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-struct UsbEndpointConfig
-{
-  /** Mandatory: hardware device. */
-  struct UsbDevice *parent;
-  /** Mandatory: logical address of the endpoint. */
-  uint8_t address;
-  /** Mandatory: physical address of the endpoint. */
-  uint8_t index;
-};
-/*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_USB_DEVICE_H_ */

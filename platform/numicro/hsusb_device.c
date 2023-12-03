@@ -37,6 +37,14 @@ struct ControlUsbEndpoint
   uint8_t address;
 };
 
+struct UsbEndpointConfig
+{
+  /** Mandatory: hardware device. */
+  struct UsbDevice *parent;
+  /** Mandatory: logical address of the endpoint. */
+  uint8_t address;
+};
+
 struct UsbEndpoint
 {
   struct UsbEndpointBase base;
@@ -289,6 +297,18 @@ static void resetDevice(struct UsbDevice *device)
   device->position = 0;
 
   devSetAddress(device, 0);
+
+  /* Reset all enabled endpoints except for Control Endpoints */
+  for (size_t index = 0; index < EP_COUNT; ++index)
+  {
+    struct UsbEndpoint **ep = &device->endpoints[index];
+
+    if (*ep != NULL)
+    {
+      (*ep)->index = 0;
+      *ep = NULL;
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
@@ -339,6 +359,9 @@ static enum Result devInit(void *object, const void *configBase)
   device->configured = false;
   device->enabled = false;
 
+  for (size_t index = 0; index < EP_COUNT; ++index)
+    device->endpoints[index] = NULL;
+
   /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
   if (device->control == NULL)
@@ -358,8 +381,6 @@ static enum Result devInit(void *object, const void *configBase)
 
   for (size_t index = 0; index < EP_COUNT; ++index)
   {
-    device->endpoints[index] = NULL;
-
     reg->EP[index].EPCFG = 0;
     reg->EP[index].EPINTEN = 0;
     reg->EP[index].EPRSPCTL = EPRSPCTL_FLUSH;
@@ -392,10 +413,7 @@ static void devDeinit(void *object)
 static void *devCreateEndpoint(void *object, uint8_t address)
 {
   struct UsbDevice * const device = object;
-  struct UsbEndpointBase *ep = NULL;
-
-  /* Lock access to endpoint list */
-  const IrqState state = irqSave();
+  struct UsbEndpointBase *ep;
 
   if (USB_EP_LOGICAL_ADDRESS(address) == 0)
   {
@@ -406,42 +424,14 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   }
   else
   {
-    /* Allocate free endpoint */
-    size_t channel = 0;
+    const struct UsbEndpointConfig config = {
+        .parent = device,
+        .address = address
+    };
 
-    while (channel < EP_COUNT)
-    {
-      struct UsbEndpoint * const current = device->endpoints[channel];
-
-      if (current == NULL)
-        break;
-
-      if (current->address == address)
-      {
-        ep = (struct UsbEndpointBase *)current;
-        break;
-      }
-
-      ++channel;
-    }
-
-    if (ep == NULL && channel != EP_COUNT)
-    {
-      /* Driver should be disabled during initialization */
-      assert(!device->enabled);
-
-      const struct UsbEndpointConfig config = {
-          .parent = device,
-          .address = address,
-          .index = channel
-      };
-
-      device->endpoints[channel] = init(DataUsbEndpoint, &config);
-      ep = (struct UsbEndpointBase *)device->endpoints[channel];
-    }
+    ep = init(DataUsbEndpoint, &config);
   }
 
-  irqRestore(state);
   return ep;
 }
 /*----------------------------------------------------------------------------*/
@@ -905,7 +895,7 @@ static enum Result dataEpInit(void *object, const void *configBase)
   {
     ep->address = config->address;
     ep->device = config->parent;
-    ep->index = config->index;
+    ep->index = 0;
     ep->manual = true;
 
     return E_OK;
@@ -917,15 +907,10 @@ static enum Result dataEpInit(void *object, const void *configBase)
 static void dataEpDeinit(void *object)
 {
   struct UsbEndpoint * const ep = object;
-  struct UsbDevice * const device = ep->device;
 
   /* Disable interrupts and remove pending requests */
   dataEpDisable(ep);
   dataEpClear(ep);
-
-  const IrqState state = irqSave();
-  device->endpoints[ep->index] = NULL;
-  irqRestore(state);
 
   assert(pointerQueueEmpty(&ep->requests));
   pointerQueueDeinit(&ep->requests);
@@ -947,16 +932,41 @@ static void dataEpClear(void *object)
 static void dataEpDisable(void *object)
 {
   struct UsbEndpoint * const ep = object;
+  struct UsbDevice * const device = ep->device;
   NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
 
   channel->EPCFG &= ~EPCFG_EPEN;
   channel->EPINTEN = 0;
+
+  assert(device->endpoints[ep->index] == ep);
+  device->endpoints[ep->index] = NULL;
+
+  ep->index = 0;
 }
 /*----------------------------------------------------------------------------*/
 static void dataEpEnable(void *object, uint8_t type, uint16_t size)
 {
   struct UsbEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
+  const IrqState state = irqSave();
+
+  /* Allocate free endpoint */
+  assert(!ep->index);
+
+  while (ep->index < EP_COUNT)
+  {
+    struct UsbEndpoint * const current = device->endpoints[ep->index];
+
+    if (current == NULL)
+      break;
+
+    ++ep->index;
+  }
+
+  assert(ep->index != EP_COUNT);
+  device->endpoints[ep->index] = ep;
+  irqRestore(state);
+
   NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
 
   channel->EPMPS = size;

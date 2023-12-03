@@ -282,6 +282,10 @@ static void resetDevice(struct UsbDevice *device)
       | USBSTS_D_URI | USBSTS_D_SLI;
 
   devSetAddress(device, 0);
+
+  /* Reset all enabled endpoints except for Control Endpoints */
+  for (size_t index = 2; index < device->base.numberOfEndpoints; ++index)
+    device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 static void resetQueueHeads(struct UsbDevice *device)
@@ -356,26 +360,24 @@ static void devDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static void *devCreateEndpoint(void *object, uint8_t address)
 {
-  struct UsbDevice * const device = object;
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(address);
+  struct UsbDevice * const device = object;
 
   assert(index < device->base.numberOfEndpoints);
 
-  struct UsbEndpoint *ep = NULL;
-  const IrqState state = irqSave();
+  const struct UsbEndpointConfig config = {
+      .parent = device,
+      .address = address
+  };
+  struct UsbEndpoint * const ep = init(UsbEndpoint, &config);
 
-  if (device->endpoints[index] == NULL)
+  if (index < 2)
   {
-    const struct UsbEndpointConfig config = {
-        .parent = device,
-        .address = address
-    };
-
-    device->endpoints[index] = init(UsbEndpoint, &config);
+    /* Set Control Endpoints immediately after creation */
+    assert(device->endpoints[index] == NULL);
+    device->endpoints[index] = ep;
   }
-  ep = device->endpoints[index];
 
-  irqRestore(state);
   return ep;
 }
 /*----------------------------------------------------------------------------*/
@@ -789,10 +791,11 @@ static void epDeinit(void *object)
   epDisable(ep);
   epClear(ep);
 
-  /* Protect endpoint array from simultaneous access */
-  const IrqState state = irqSave();
-  device->endpoints[index] = NULL;
-  irqRestore(state);
+  if (index < 2)
+  {
+    assert(device->endpoints[index] == ep);
+    device->endpoints[index] = NULL;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void epClear(void *object)
@@ -816,20 +819,34 @@ static void epClear(void *object)
 static void epDisable(void *object)
 {
   struct UsbEndpoint * const ep = object;
-  LPC_USB_Type * const reg = ep->device->base.reg;
+  struct UsbDevice * const device = ep->device;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  LPC_USB_Type * const reg = device->base.reg;
 
   reg->ENDPTCTRL[number] &= ep->address & USB_EP_DIRECTION_IN ?
       ~ENDPTCTRL_TXE : ~ENDPTCTRL_RXE;
+
+  const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
+
+  if (index >= 2 && device->endpoints[index] == ep)
+    device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
 static void epEnable(void *object, uint8_t type, uint16_t size)
 {
   struct UsbEndpoint * const ep = object;
-  LPC_USB_Type * const reg = ep->device->base.reg;
+  struct UsbDevice * const device = ep->device;
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
+
+  if (index >= 2)
+  {
+    assert(device->endpoints[index] == NULL);
+    device->endpoints[index] = ep;
+  }
+
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
-  struct QueueHead * const head = &ep->device->base.queueHeads[index];
+  struct QueueHead * const head = &device->base.queueHeads[index];
+  LPC_USB_Type * const reg = device->base.reg;
 
   /* TODO Different sequence for Control and Common endpoints */
   /* Set endpoint type */
