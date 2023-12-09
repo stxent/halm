@@ -13,26 +13,26 @@
 /*----------------------------------------------------------------------------*/
 #define CONFIG_TRACE_BUFFER_SIZE 80
 /*----------------------------------------------------------------------------*/
-static struct Interface *traceInterface = NULL;
+static struct Interface *traceSerial = NULL;
 static struct Timer *traceTimer = NULL;
 static char traceBuffer[CONFIG_TRACE_BUFFER_SIZE];
 /*----------------------------------------------------------------------------*/
-enum Result usbTraceInit(struct Interface *interface, struct Timer *timer)
+enum Result usbTraceInit(void *serial, void *timer)
 {
-  traceInterface = interface;
+  traceSerial = serial;
   traceTimer = timer;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 void usbTraceDeinit(void)
 {
-  traceInterface = NULL;
+  traceSerial = NULL;
   traceTimer = NULL;
 }
 /*----------------------------------------------------------------------------*/
 void usbTrace(const char *format, ...)
 {
-  if (traceInterface == NULL)
+  if (traceSerial == NULL)
     return;
 
   va_list arguments;
@@ -44,7 +44,7 @@ void usbTrace(const char *format, ...)
 
     length = sprintf(traceBuffer, "[%"PRIu32"] ", timerValue);
     assert(length >= 0);
-    ifWrite(traceInterface, traceBuffer, (size_t)length);
+    ifWrite(traceSerial, traceBuffer, (size_t)length);
   }
 
   va_start(arguments, format);
@@ -54,5 +54,5 @@ void usbTrace(const char *format, ...)
 
   assert(length >= 0);
   memcpy(traceBuffer + length, "\r\n", 2);
-  ifWrite(traceInterface, traceBuffer, (size_t)(length + 2));
+  ifWrite(traceSerial, traceBuffer, (size_t)(length + 2));
 }

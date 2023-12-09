@@ -12,7 +12,7 @@
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-enum Result usbTraceInit(struct Interface *, struct Timer *);
+enum Result usbTraceInit(void *, void *);
 void usbTraceDeinit(void);
 
 #ifdef CONFIG_USB_TRACE

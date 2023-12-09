@@ -19,7 +19,8 @@ enum Flags
 {
   FLAG_LOCKED     = 0x01,
   FLAG_READONLY   = 0x02,
-  FLAG_ATTENTION  = 0x04
+  FLAG_ATTENTION  = 0x04,
+  FLAG_FAILURE    = 0x08
 };
 
 enum State
@@ -438,6 +439,11 @@ static enum State stateReadWriteRun(struct Msc *driver)
         driver->lun[index].sense = SCSI_SK_MEDIUM_ERROR;
         driver->lun[index].asc = SCSI_ASC_ME_READERROR;
       }
+
+      driver->lun[index].flags |= FLAG_FAILURE;
+      if (driver->callback != NULL)
+        driver->callback(driver->callbackArgument);
+
       return STATE_FAILURE;
     }
   }
@@ -599,8 +605,15 @@ static enum State stateReadEnter(struct Msc *driver)
 
   if (!queued)
   {
-    driver->lun[driver->context.cbw.lun].sense = SCSI_SK_MEDIUM_ERROR;
-    driver->lun[driver->context.cbw.lun].asc = SCSI_ASC_ME_READERROR;
+    const size_t index = driver->context.cbw.lun;
+
+    driver->lun[index].sense = SCSI_SK_MEDIUM_ERROR;
+    driver->lun[index].asc = SCSI_ASC_ME_READERROR;
+
+    driver->lun[index].flags |= FLAG_FAILURE;
+    if (driver->callback != NULL)
+      driver->callback(driver->callbackArgument);
+
     return STATE_FAILURE;
   }
   else
@@ -728,8 +741,15 @@ static enum State stateWriteEnter(struct Msc *driver)
 
   if (!queued)
   {
-    driver->lun[driver->context.cbw.lun].sense = SCSI_SK_MEDIUM_ERROR;
-    driver->lun[driver->context.cbw.lun].asc = SCSI_ASC_ME_WRITEFAULT;
+    const size_t index = driver->context.cbw.lun;
+
+    driver->lun[index].sense = SCSI_SK_MEDIUM_ERROR;
+    driver->lun[index].asc = SCSI_ASC_ME_WRITEFAULT;
+
+    driver->lun[index].flags |= FLAG_FAILURE;
+    if (driver->callback != NULL)
+      driver->callback(driver->callbackArgument);
+
     return STATE_FAILURE;
   }
   else
@@ -1186,6 +1206,12 @@ void mscDetachUnit(struct Msc *driver, uint8_t index)
   driver->lun[index].flags = 0;
 
   irqRestore(state);
+}
+/*----------------------------------------------------------------------------*/
+bool mscIsUnitFailed(const struct Msc *driver, uint8_t index)
+{
+  assert(index < ARRAY_SIZE(driver->lun));
+  return (driver->lun[index].flags & FLAG_FAILURE) != 0;
 }
 /*----------------------------------------------------------------------------*/
 bool mscIsUnitLocked(const struct Msc *driver, uint8_t index)

@@ -121,6 +121,7 @@ BEGIN_DECLS
 
 enum Result mscAttachUnit(struct Msc *, uint8_t, void *);
 void mscDetachUnit(struct Msc *, uint8_t);
+bool mscIsUnitFailed(const struct Msc *, uint8_t);
 bool mscIsUnitLocked(const struct Msc *, uint8_t);
 void mscSetCallback(struct Msc *, void (*)(void *), void *);
 
