@@ -16,6 +16,10 @@ if(CONFIG_GENERIC_MMCSD)
     list(APPEND SOURCE_FILES "mmcsd.c")
 endif()
 
+if(CONFIG_GENERIC_RAM_PROXY)
+    list(APPEND SOURCE_FILES "ram_proxy.c")
+endif()
+
 if(CONFIG_GENERIC_SDIO_SPI)
     list(APPEND SOURCE_FILES "sdio_spi.c")
 endif()

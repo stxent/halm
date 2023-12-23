@@ -4,7 +4,7 @@ config GENERIC_BUFFERING_PROXY
 	bool "Buffering proxy"
 	default y
 	help
-	  This enables building of a synchronous buffered interface, that wraps
+	  This enables building of a synchronous buffered interface that wraps
 	  an asynchronous interface with input and output streams.
 
 config GENERIC_GPIO_BUS
@@ -14,6 +14,14 @@ config GENERIC_GPIO_BUS
 config GENERIC_MMCSD
 	bool "MMC/SD cards"
 	default y
+
+config GENERIC_RAM_PROXY
+	bool "RAM proxy"
+	default y
+	help
+	  This enables building of an interface that implements read and write
+	  functions along with stubs for generic flash memory operation
+	  for a selected RAM region.
 
 config GENERIC_SDIO_SPI
 	bool "SDIO over SPI"
