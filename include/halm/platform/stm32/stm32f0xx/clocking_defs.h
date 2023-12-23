@@ -173,6 +173,14 @@ enum
 #define CFGR2_PREDIV_VALUE(reg) \
     FIELD_VALUE((reg), CFGR2_PREDIV_MASK, 0)
 /*------------------Clock Configuration Register 3----------------------------*/
+enum
+{
+  USARTSW_PCLK    = 0,
+  USARTSW_SYSCLK  = 1,
+  USARTSW_LSE     = 2,
+  USARTSW_HSI     = 3
+};
+
 #define CFGR3_USART1SW_MASK             BIT_FIELD(MASK(2), 0)
 #define CFGR3_USART1SW(value)           BIT_FIELD((value), 0)
 #define CFGR3_USART1SW_VALUE(reg) \
@@ -194,6 +202,11 @@ enum
 #define CFGR3_USART3SW(value)           BIT_FIELD((value), 18)
 #define CFGR3_USART3SW_VALUE(reg) \
     FIELD_VALUE((reg), CFGR3_USART3SW_MASK, 18)
+
+#define CFGR3_USARTSW_MASK(offset)      BIT_FIELD(MASK(2), (offset))
+#define CFGR3_USARTSW(value, offset)    BIT_FIELD((value), (offset))
+#define CFGR3_USARTSW_VALUE(reg, offset) \
+    FIELD_VALUE((reg), CFGR3_USARTSW_MASK(offset), (offset))
 /*------------------ADC Configuration Register 2------------------------------*/
 enum
 {

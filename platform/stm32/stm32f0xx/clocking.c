@@ -20,6 +20,12 @@
 #define LSI_OSC_FREQUENCY     40000
 #define TICK_RATE(frequency)  ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
+struct UsartClockClass
+{
+  struct ClockClass base;
+  uint8_t offset;
+};
+/*----------------------------------------------------------------------------*/
 static uint32_t ahbPrescalerToValue(uint32_t);
 static uint32_t apbPrescalerToValue(uint32_t);
 static inline void flashLatencyReset(void);
@@ -59,8 +65,14 @@ static enum Result systemPllEnable(const void *, const void *);
 static uint32_t systemPllFrequency(const void *);
 static bool systemPllReady(const void *);
 
+static enum Result i2cClockEnable(const void *, const void *);
+static uint32_t i2cClockFrequency(const void *);
+
 static enum Result systemClockEnable(const void *, const void *);
 static uint32_t systemClockFrequency(const void *);
+
+static enum Result usartClockEnable(const void *, const void *);
+static uint32_t usartClockFrequency(const void *);
 
 static enum Result adcClockEnable(const void *, const void *);
 static uint32_t adcClockFrequency(const void *);
@@ -105,11 +117,51 @@ const struct ClockClass * const InternalOsc48 = &(const struct ClockClass){
     .ready = intOsc48Ready
 };
 
+const struct ClockClass * const I2C1Clock = &(const struct ClockClass){
+    .disable = clockDisableStub,
+    .enable = i2cClockEnable,
+    .frequency = i2cClockFrequency,
+    .ready = clockReadyStub
+};
+
 const struct ClockClass * const SystemClock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = systemClockEnable,
     .frequency = systemClockFrequency,
     .ready = clockReadyStub
+};
+
+const struct ClockClass * const Usart1Clock =
+    (const struct ClockClass *)&(const struct UsartClockClass){
+    .base = {
+        .disable = clockDisableStub,
+        .enable = usartClockEnable,
+        .frequency = usartClockFrequency,
+        .ready = clockReadyStub
+    },
+    .offset = 0
+};
+
+const struct ClockClass * const Usart2Clock =
+    (const struct ClockClass *)&(const struct UsartClockClass){
+    .base = {
+        .disable = clockDisableStub,
+        .enable = usartClockEnable,
+        .frequency = usartClockFrequency,
+        .ready = clockReadyStub
+    },
+    .offset = 16
+};
+
+const struct ClockClass * const Usart3Clock =
+    (const struct ClockClass *)&(const struct UsartClockClass){
+    .base = {
+        .disable = clockDisableStub,
+        .enable = usartClockEnable,
+        .frequency = usartClockFrequency,
+        .ready = clockReadyStub
+    },
+    .offset = 18
 };
 
 const struct ClockClass * const SystemPll = &(const struct ClockClass){
@@ -383,10 +435,34 @@ static bool systemPllReady(const void *clockBase __attribute__((unused)))
   return (STM_RCC->CR & CR_PLLRDY) != 0;
 }
 /*----------------------------------------------------------------------------*/
+static enum Result i2cClockEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
+{
+  const struct GenericClockConfig * const config = configBase;
+  assert(config != NULL);
+  assert(config->source == CLOCK_INTERNAL || config->source == CLOCK_SYSTEM);
+
+  if (config->source == CLOCK_INTERNAL)
+    STM_RCC->CFGR3 &= ~CFGR3_I2C1SW;
+  else
+    STM_RCC->CFGR3 |= CFGR3_I2C1SW;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t i2cClockFrequency(const void *clockBase
+    __attribute__((unused)))
+{
+  const void * const clock = (STM_RCC->CFGR3 & CFGR3_I2C1SW) ?
+      SystemClock : InternalOsc;
+
+  return clockFrequency(clock);
+}
+/*----------------------------------------------------------------------------*/
 static enum Result systemClockEnable(const void *clockBase
     __attribute__((unused)), const void *configBase)
 {
-  const struct SystemClockConfig * const config = configBase;
+  const struct GenericClockConfig * const config = configBase;
   assert(config != NULL);
   assert(config->source == CLOCK_INTERNAL
       || config->source == CLOCK_INTERNAL_48
@@ -446,6 +522,67 @@ static uint32_t systemClockFrequency(const void *clockBase
   }
 
   return frequency;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result usartClockEnable(const void *clockBase,
+    const void *configBase)
+{
+  const struct GenericClockConfig * const config = configBase;
+  assert(config != NULL);
+  assert(config->source == CLOCK_INTERNAL
+      || config->source == CLOCK_RTC
+      || config->source == CLOCK_APB
+      || config->source == CLOCK_SYSTEM);
+
+  const struct UsartClockClass * const clock = clockBase;
+  uint32_t cfgr3 = STM_RCC->CFGR3;
+  uint32_t mux;
+
+  switch (config->source)
+  {
+    case CLOCK_INTERNAL:
+      mux = USARTSW_HSI;
+      break;
+
+    case CLOCK_RTC:
+      mux = USARTSW_LSE;
+      break;
+
+    case CLOCK_SYSTEM:
+      mux = USARTSW_SYSCLK;
+      break;
+
+    default:
+      mux = USARTSW_PCLK;
+      break;
+  }
+
+  cfgr3 &= ~CFGR3_USARTSW_MASK(clock->offset);
+  cfgr3 |= CFGR3_USARTSW(mux, clock->offset);
+
+  STM_RCC->CFGR3 = cfgr3;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t usartClockFrequency(const void *clockBase)
+{
+  const struct UsartClockClass * const clock = clockBase;
+  const uint32_t mux = CFGR3_USARTSW_VALUE(STM_RCC->CFGR3, clock->offset);
+
+  switch (mux)
+  {
+    case USARTSW_PCLK:
+      return apbClockFrequency(NULL);
+
+    case USARTSW_LSE:
+      return 0; // TODO RtcOsc
+
+    case USARTSW_HSI:
+      return intOscFrequency(NULL);
+
+    default:
+      return systemClockFrequency(NULL);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcClockEnable(const void *clockBase

@@ -533,9 +533,35 @@ void USART3_8_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
+uint32_t uartGetClock(const struct UartBase *interface)
 {
-  return clockFrequency(ApbClock);
+  const void *clock;
+
+  switch (interface->channel)
+  {
+#ifdef CONFIG_PLATFORM_STM32_USART1
+    case USART1:
+      clock = Usart1Clock;
+      break;
+#endif
+
+#ifdef CONFIG_PLATFORM_STM32_USART2
+    case USART2:
+      clock = Usart2Clock;
+      break;
+#endif
+
+#ifdef CONFIG_PLATFORM_STM32_USART3
+    case USART3:
+      clock = Usart3Clock;
+      break;
+#endif
+
+    default:
+      clock = ApbClock;
+  }
+
+  return clockFrequency(clock);
 }
 /*----------------------------------------------------------------------------*/
 void *uartMakeCircularDma(uint8_t channel __attribute__((unused)),

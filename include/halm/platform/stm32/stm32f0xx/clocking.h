@@ -28,6 +28,7 @@ enum ClockSource
   CLOCK_EXTERNAL,    /* HSE */
   CLOCK_PLL,
   CLOCK_RTC,         /* LSE */
+  CLOCK_APB,
   CLOCK_SYSTEM
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
@@ -98,21 +99,33 @@ struct SystemPllConfig
 /* Requires a SystemPllConfig structure */
 extern const struct ClockClass * const SystemPll;
 /*----------------------------------------------------------------------------*/
-struct SystemClockConfig
+struct GenericClockConfig
 {
   /**
-   * Mandatory: system clock source.
-   * @n Available sources are:
+   * Mandatory: clock source.
+   * @n Available sources for system clock are:
    *   - @b CLOCK_INTERNAL.
    *   - @b CLOCK_INTERNAL_48.
    *   - @b CLOCK_EXTERNAL.
    *   - @b CLOCK_PLL.
+   * @n Available sources for I2C1 interface are:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_SYSTEM.
+   * @n Available sources for USART1, USART2 and USART3 interfaces are:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_RTC.
+   *   - @b CLOCK_APB.
+   *   - @b CLOCK_SYSTEM.
    */
   enum ClockSource source;
 };
 
-/* Requires a SystemClockConfig structure */
+/* Requires a GenericClockConfig structure */
+extern const struct ClockClass * const I2C1Clock;
 extern const struct ClockClass * const SystemClock;
+extern const struct ClockClass * const Usart1Clock;
+extern const struct ClockClass * const Usart2Clock;
+extern const struct ClockClass * const Usart3Clock;
 /*----------------------------------------------------------------------------*/
 struct BusClockConfig
 {

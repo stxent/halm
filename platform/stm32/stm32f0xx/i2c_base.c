@@ -171,9 +171,16 @@ void I2C2_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetClock(const struct I2CBase *interface __attribute__((unused)))
+uint32_t i2cGetClock(const struct I2CBase *interface)
 {
-  return clockFrequency(ApbClock);
+  const void *clock;
+
+  if (interface->channel == 0)
+    clock = I2C1Clock;
+  else
+    clock = ApbClock;
+
+  return clockFrequency(clock);
 }
 /*----------------------------------------------------------------------------*/
 void *i2cMakeOneShotDma(uint8_t channel __attribute__((unused)), uint8_t stream,
