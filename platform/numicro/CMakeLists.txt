@@ -127,6 +127,11 @@ if(CONFIG_PLATFORM_NUMICRO_SPI_DMA)
     list(APPEND SOURCE_FILES "spi_dma.c")
 endif()
 
+if(CONFIG_PLATFORM_NUMICRO_SPIM)
+    list(APPEND SOURCE_FILES "spim.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/spim_base.c")
+endif()
+
 if(CONFIG_PLATFORM_NUMICRO_QSPI)
     list(APPEND SOURCE_FILES "qspi.c")
 endif()

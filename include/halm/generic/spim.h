@@ -37,6 +37,8 @@ enum SPIMParameter
   IF_SPIM_INDIRECT = IF_QSPI_PARAMETER_END,
   /** Enable memory-mapped mode. */
   IF_SPIM_MEMORY_MAPPED,
+  /** Get the memory-mapped address. Parameter type is \a uintptr_t. */
+  IF_SPIM_MEMORY_MAPPED_ADDRESS,
 
   /** Operation code. Parameter type is \a uint8_t. */
   IF_SPIM_COMMAND,

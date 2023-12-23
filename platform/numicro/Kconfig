@@ -337,6 +337,18 @@ config PLATFORM_NUMICRO_SPI_DMA
 	default y
 	depends on PLATFORM_NUMICRO_SPI_BASE && PLATFORM_NUMICRO_PDMA
 
+config PLATFORM_NUMICRO_SPIM
+	bool "SPIM"
+	default y
+	depends on FAMILY_M48X
+	help
+	  This is the driver for the SPI Master Controller.
+
+config PLATFORM_NUMICRO_SPIM_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_SPIM
+
 config PLATFORM_NUMICRO_QSPI_BASE
 	bool "QSPI"
 	default y

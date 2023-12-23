@@ -1509,4 +1509,10 @@ extern CRYPTO_DOMAIN_Type CRYPTO_DOMAIN;
 #define NM_CONFIG     (&CONFIG_DOMAIN.CONFIG)
 #define NM_CRYPTO     (&CRYPTO_DOMAIN.CRYPTO)
 /*----------------------------------------------------------------------------*/
+/* External memory regions */
+#define NM_SPIM_BASE    0x08000000UL
+#define NM_EBI_CS0_BASE 0x60000000UL
+#define NM_EBI_CS1_BASE 0x60100000UL
+#define NM_EBI_CS2_BASE 0x60200000UL
+/*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_M48X_PLATFORM_DEFS_H_ */

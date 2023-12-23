@@ -1,31 +1,49 @@
 /*
- * halm/platform/lpc/spifi.h
+ * halm/platform/numicro/spim.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_LPC_SPIFI_H_
-#define HALM_PLATFORM_LPC_SPIFI_H_
+#ifndef HALM_PLATFORM_NUMICRO_SPIM_H_
+#define HALM_PLATFORM_NUMICRO_SPIM_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/generic/spim.h>
-#include <halm/platform/lpc/spifi_base.h>
+#include <halm/platform/numicro/spim_base.h>
 #include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const Spifi;
+extern const struct InterfaceClass * const Spim;
 
-struct SpifiConfig
+struct Timer;
+
+struct SpimConfig
 {
+  /**
+   * Mandatory: timer for periodic polling of busy flag during
+   * erase and write operations.
+   */
+  void *timer;
   /**
    * Optional: minimum chip select high time before a next command,
    * measured in serial clock periods. In case of zero value a maximum possible
-   * delay will be used. When set, it should be in the range of 1 to 16.
+   * delay will be used. If set, it should be in the range of 1 to 16.
    */
   uint32_t delay;
   /**
+   * Optional: poll rate. If set to zero, a default poll rate of 100 Hz
+   * will be used. Poll rate can't be higher than timer tick rate.
+   */
+  uint32_t poll;
+  /**
+   * Mandatory: serial data rate. If set to zero, serial data rate will
+   * be the same as the AHB clock frequency. For DDR mode the serial data rate
+   * must be two times lower than the AHB clock frequency.
+   */
+  uint32_t rate;
+  /**
    * Optional: maximum chip select low time after a last memory access in
    * memory-mapped mode, measured in serial clock periods. In case of zero
-   * value a maximum possible timeout will be used. When set, it should be
-   * in the range of 1 to 65536.
+   * value a maximum possible timeout will be used. If set, it should be
+   * in the range of 1 to 32.
    */
   uint32_t timeout;
   /** Mandatory: chip select pin. */
@@ -50,28 +68,19 @@ struct SpifiConfig
   IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Mandatory: direct memory access channels. */
-  uint8_t dma;
-  /** Mandatory: mode number. */
-  uint8_t mode;
-  /**
-   * Optional: use large 128 MB memory-mapped region instead of 64 MB region
-   * with debug capabilites.
-   */
-  bool large;
+  /** Optional: disable cache function. */
+  bool uncached;
 };
 
-struct Spifi
+struct Spim
 {
-  struct SpifiBase base;
+  struct SpimBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* DMA descriptor for RX transfers */
-  struct Dma *rxDma;
-  /* DMA descriptor for TX transfers */
-  struct Dma *txDma;
+  /* Timer for periodic polling of busy flag during erase and write commands */
+  struct Timer *timer;
 
   struct
   {
@@ -114,7 +123,7 @@ struct Spifi
   struct
   {
     /* Number of data bytes */
-    uint16_t length;
+    uint32_t length;
     /* Command response */
     uint8_t response;
     /* Enable serial mode for data */
@@ -125,24 +134,26 @@ struct Spifi
   uint8_t status;
   /* Enables blocking mode instead of zero-copy mode */
   bool blocking;
-  /* Use large memory-mapped region instead of smaller debug-enabled region */
-  bool large;
+  /* Enables DDR mode */
+  bool ddr;
   /* Memory-mapping mode flag */
   bool memmap;
   /* Polling mode flag */
   bool poll;
-  /* Synchronization of SPIFI and DMA IRQ handlers */
-  bool sync;
+
+  /* Enable Quad I/O mode */
+  bool quad;
+  /* Disable cache function */
+  bool uncached;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline void *spifiGetAddress(const void *object)
+static inline void *spimGetAddress(const struct Spim *interface)
 {
-  const struct Spifi * const interface = object;
-  return spifiGetMemoryAddress(&interface->base, interface->large);
+  return spimGetMemoryAddress(&interface->base);
 }
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LPC_SPIFI_H_ */
+#endif /* HALM_PLATFORM_NUMICRO_SPIM_H_ */
