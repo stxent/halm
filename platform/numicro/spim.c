@@ -543,7 +543,7 @@ static void setSerialRate(struct Spim *interface, uint32_t rate)
   {
     divider = ((clock >> 1) + (rate - 1)) / rate;
 
-    if (divider & 1)
+    if (divider > 1 && (divider & 1))
       ++divider;
     if (divider > CTL1_DIVIDER_MAX)
       divider = CTL1_DIVIDER_MAX;
@@ -730,7 +730,7 @@ static enum Result spimGetParam(void *object, int parameter, void *data)
   {
     case IF_SPIM_MEMORY_MAPPED_ADDRESS:
       *(uintptr_t *)data = (uintptr_t)spimGetAddress(interface);
-      break;
+      return E_OK;
 
     case IF_SPIM_RESPONSE:
       *(uint32_t *)data = (uint32_t)interface->data.response;

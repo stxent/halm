@@ -149,8 +149,9 @@ struct Spim
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline void *spimGetAddress(const struct Spim *interface)
+static inline void *spimGetAddress(const void *object)
 {
+  const struct Spim * const interface = object;
   return spimGetMemoryAddress(&interface->base);
 }
 

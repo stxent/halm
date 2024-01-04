@@ -462,7 +462,7 @@ static enum Result spifiGetParam(void *object, int parameter, void *data)
   {
     case IF_SPIM_MEMORY_MAPPED_ADDRESS:
       *(uintptr_t *)data = (uintptr_t)spifiGetAddress(interface);
-      break;
+      return E_OK;
 
     case IF_SPIM_RESPONSE:
       *(uint32_t *)data = (uint32_t)interface->data.response;

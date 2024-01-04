@@ -928,7 +928,7 @@ static bool pll0ClockReady(const void *clockBase)
   const struct GenericPllClass * const clock = clockBase;
   const uint32_t frequency = pll0ClockFrequency(clock);
 
-  return frequency && calcPllReg(clock->channel)->STAT & PLL0_STAT_LOCK;
+  return frequency && (calcPllReg(clock->channel)->STAT & PLL0_STAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
 static void pll1ClockDisable(const void *clockBase __attribute__((unused)))

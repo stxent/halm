@@ -393,6 +393,12 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
   return length - left;
 }
 /*----------------------------------------------------------------------------*/
+void *flashGetAddress(const void *object)
+{
+  const struct Flash * const interface = object;
+  return (void *)positionToAddress(interface, 0);
+}
+/*----------------------------------------------------------------------------*/
 size_t flashGetGeometry(const void *object, struct FlashGeometry *geometry,
     size_t capacity)
 {
