@@ -10,6 +10,6 @@ if FAMILY_M03X || FAMILY_M48X
 	source "platform/numicro/Kconfig"
 endif
 
-if FAMILY_STM32F0XX || FAMILY_STM32F1XX
+if FAMILY_STM32F0XX || FAMILY_STM32F1XX || FAMILY_STM32F4XX
 	source "platform/stm32/Kconfig"
 endif

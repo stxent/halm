@@ -76,6 +76,10 @@ choice
 	config FAMILY_STM32F1XX
 		bool "ST STM32F1xx"
 		depends on CORE_CORTEX_M3
+
+	config FAMILY_STM32F4XX
+		bool "ST STM32F4xx"
+		depends on CORE_CORTEX_M4
 endchoice
 
 config FAMILY_LPC43XX

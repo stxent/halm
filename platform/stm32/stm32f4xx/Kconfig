@@ -1,0 +1,196 @@
+menu "Enabled peripherals"
+
+menu "ADC"
+
+config PLATFORM_STM32_ADC1
+	bool "ADC1"
+	default y
+	depends on PLATFORM_STM32_ADC_BASE
+
+config PLATFORM_STM32_ADC2
+	bool "ADC2"
+	default y
+	depends on PLATFORM_STM32_ADC_BASE
+
+config PLATFORM_STM32_ADC3
+	bool "ADC3"
+	default y
+	depends on PLATFORM_STM32_ADC_BASE
+
+endmenu
+
+menu "bxCAN"
+
+config PLATFORM_STM32_CAN1
+	bool "CAN1"
+	default y
+	depends on PLATFORM_STM32_CAN
+
+config PLATFORM_STM32_CAN2
+	bool "CAN2"
+	default y
+	depends on PLATFORM_STM32_CAN
+
+endmenu
+
+menu "I2C"
+
+config PLATFORM_STM32_I2C1
+	bool "I2C1"
+	default y
+	depends on PLATFORM_STM32_I2C_BASE
+
+config PLATFORM_STM32_I2C2
+	bool "I2C2"
+	default y
+	depends on PLATFORM_STM32_I2C_BASE
+
+config PLATFORM_STM32_I2C3
+	bool "I2C3"
+	default y
+	depends on PLATFORM_STM32_I2C_BASE
+
+endmenu
+
+menu "General Purpose Timers"
+
+config PLATFORM_STM32_TIM1
+	bool "TIM1"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM2
+	bool "TIM2"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM3
+	bool "TIM3"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM4
+	bool "TIM4"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM5
+	bool "TIM5"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM6
+	bool "TIM6"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM7
+	bool "TIM7"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM8
+	bool "TIM8"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM9
+	bool "TIM9"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM10
+	bool "TIM10"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM11
+	bool "TIM11"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM12
+	bool "TIM12"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM13
+	bool "TIM13"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+config PLATFORM_STM32_TIM14
+	bool "TIM14"
+	default y
+	depends on PLATFORM_STM32_GPTIMER_BASE
+
+endmenu
+
+menu "SPI"
+
+config PLATFORM_STM32_SPI1
+	bool "SPI1"
+	default y
+	depends on PLATFORM_STM32_SPI_BASE
+
+config PLATFORM_STM32_SPI2
+	bool "SPI2"
+	default y
+	depends on PLATFORM_STM32_SPI_BASE
+
+config PLATFORM_STM32_SPI3
+	bool "SPI3"
+	default y
+	depends on PLATFORM_STM32_SPI_BASE
+
+endmenu
+
+menu "UART"
+
+config PLATFORM_STM32_USART1
+	bool "USART1"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_STM32_USART2
+	bool "USART2"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_STM32_USART3
+	bool "USART3"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_STM32_UART4
+	bool "UART4"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_STM32_UART5
+	bool "UART5"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+config PLATFORM_STM32_UART6
+	bool "USART6"
+	default y
+	depends on PLATFORM_STM32_UART_BASE
+
+endmenu
+
+menu "USB"
+
+config PLATFORM_STM32_USB_FS
+	bool "USB OTG FS"
+	default y
+	depends on PLATFORM_USB
+
+config PLATFORM_STM32_USB_HS
+	bool "USB OTG HS"
+	default y
+	depends on PLATFORM_USB
+
+endmenu
+
+endmenu

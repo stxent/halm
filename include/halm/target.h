@@ -150,6 +150,17 @@
 #  define PLATFORM        stm32f1xx
 #  define PLATFORM_TYPE   stm32
 
+#elif defined(STM32F4XX)
+
+#  define GEN_ADC         gen_1
+#  define GEN_I2C         gen_1
+#  define GEN_PIN         gen_2
+#  define GEN_UART        gen_1
+#  define GEN_USB         gen_2
+#  define NVIC_IRQ_BITS   4
+#  define PLATFORM        stm32f4xx
+#  define PLATFORM_TYPE   stm32
+
 #else
 
 #  define PLATFORM_TYPE   generic

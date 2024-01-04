@@ -5,22 +5,23 @@ config GEN_ADC
 
 config GEN_I2C
 	string
-	default gen_1 if FAMILY_STM32F1XX
+	default gen_1 if FAMILY_STM32F1XX || FAMILY_STM32F4XX
 	default gen_2 if FAMILY_STM32F0XX
 
 config GEN_PIN
 	string
-	default gen_2 if FAMILY_STM32F0XX
+	default gen_2 if FAMILY_STM32F0XX || FAMILY_STM32F4XX
 	default stm32f1xx if FAMILY_STM32F1XX
 
 config GEN_UART
 	string
-	default gen_1 if FAMILY_STM32F1XX
+	default gen_1 if FAMILY_STM32F1XX || FAMILY_STM32F4XX
 	default gen_2 if FAMILY_STM32F0XX
 
 config GEN_USB
 	string
 	default gen_1 if FAMILY_STM32F0XX || FAMILY_STM32F1XX
+	default gen_2 if FAMILY_STM32F4XX
 
 config PLATFORM_STM32_PIN_REMAP
 	bool
@@ -136,7 +137,8 @@ config PLATFORM_STM32_CAN_WATERMARK
 
 config PLATFORM_STM32_DMA
 	bool "DMA"
-	default n
+	default y
+	depends on FAMILY_STM32F4XX
 
 config PLATFORM_STM32_DMA_PRIORITY
 	int "DMA interrupts priority"
@@ -199,7 +201,7 @@ config PLATFORM_STM32_IWDG
 config PLATFORM_STM32_SDIO
 	bool "SDIO interface"
 	default y
-	depends on FAMILY_STM32F1XX
+	depends on FAMILY_STM32F1XX || FAMILY_STM32F4XX
 	select PLATFORM_STM32_EXTI
 
 config PLATFORM_STM32_SDIO_PM
@@ -270,12 +272,24 @@ config PLATFORM_STM32_SERIAL_DMA_PRIORITY
 config PLATFORM_USB
 	bool "USB"
 	default y
-	depends on FAMILY_STM32F0XX || FAMILY_STM32F1XX
+	depends on FAMILY_STM32F0XX || FAMILY_STM32F1XX || FAMILY_STM32F4XX
 
 config PLATFORM_USB_NO_DEINIT
 	bool
 	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_USB
+
+config PLATFORM_USB_DMA
+	bool "USB DMA"
+	default y
+	depends on PLATFORM_USB && FAMILY_STM32F4XX
+
+config PLATFORM_USB_HS
+	bool "USB HS"
+	default n
+	depends on PLATFORM_USB && FAMILY_STM32F4XX
+	help
+	  This enables support for USB High Speed mode.
 
 config PLATFORM_USB_DEVICE
 	bool "USB Device"
@@ -285,7 +299,17 @@ config PLATFORM_USB_DEVICE
 config PLATFORM_USB_DOUBLE_BUFFERING
 	bool "Double-buffered endpoints"
 	default y
-	depends on PLATFORM_USB && (FAMILY_STM32F0XX || FAMILY_STM32F1XX)
+	depends on PLATFORM_USB_DEVICE && (FAMILY_STM32F0XX || FAMILY_STM32F1XX)
+
+config PLATFORM_USB_IN_BUFFERS
+	int "IN endpoint buffers"
+	default 2
+	range 1 1023
+	depends on PLATFORM_USB_DEVICE && FAMILY_STM32F4XX
+	help
+	  Number of packets temporarily buffered in the FIFO memory for IN
+	  endpoints. Maximum number is 1023 for bulk, interrupt and isochronous
+	  endpoints.
 
 config PLATFORM_USB_DEVICE_EP_REQUESTS
 	int "Endpoint queue size"
@@ -300,4 +324,8 @@ endif
 
 if FAMILY_STM32F1XX
 	source "platform/stm32/stm32f1xx/Kconfig"
+endif
+
+if FAMILY_STM32F4XX
+	source "platform/stm32/stm32f4xx/Kconfig"
 endif
