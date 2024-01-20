@@ -27,6 +27,8 @@ struct SpiDmaConfig
   PinNumber mosi;
   /** Mandatory: serial clock output. */
   PinNumber sck;
+  /** Optional: interrupt priority. */
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: mode number. */
@@ -55,6 +57,8 @@ struct SpiDma
   /* Pointer to an input buffer for bidirectional transfers */
   uint8_t *sink;
 
+  /* Bytes to be received in interrupt mode */
+  uint8_t awaiting;
   /*
    * Dummy frame to be sent over transmit line in the receive mode or
    * to be received in the transmit mode. The peripheral descriptor structure

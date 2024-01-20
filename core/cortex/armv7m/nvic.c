@@ -51,4 +51,5 @@ void nvicResetCore(void)
 void nvicSetVectorTableOffset(uint32_t offset)
 {
   SCB->VTOR = offset;
+  __dsb();
 }

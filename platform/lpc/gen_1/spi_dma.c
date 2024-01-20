@@ -19,10 +19,17 @@ static void dmaSetupRx(struct Dma *, struct Dma *);
 static void dmaSetupRxTx(struct Dma *, struct Dma *);
 static void dmaSetupTx(struct Dma *, struct Dma *);
 static enum Result getStatus(const struct SpiDma *);
-static size_t transferData(struct SpiDma *, const void *, void *, size_t);
+static size_t transferDataDma(struct SpiDma *, const void *, void *, size_t);
 
 #ifdef CONFIG_PLATFORM_LPC_SSP_PM
 static void powerStateHandler(void *, enum PmState);
+#endif
+
+#if CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD > 0
+static void interruptHandler(void *);
+static size_t transferData(struct SpiDma *, const uint8_t *, size_t);
+#else
+#define interruptHandler NULL
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *, const void *);
@@ -220,6 +227,57 @@ static enum Result getStatus(const struct SpiDma *interface)
   return res;
 }
 /*----------------------------------------------------------------------------*/
+#if CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD > 0
+static void interruptHandler(void *object)
+{
+  struct SpiDma * const interface = object;
+  LPC_SSP_Type * const reg = interface->base.reg;
+
+  /* Handle reception */
+  size_t received = 0;
+
+  if (interface->sink != NULL)
+  {
+    while (reg->SR & SR_RNE)
+    {
+      *interface->sink++ = reg->DR;
+      ++received;
+    }
+  }
+  else
+  {
+    while (reg->SR & SR_RNE)
+    {
+      (void)reg->DR;
+      ++received;
+    }
+  }
+
+  interface->awaiting -= received;
+
+  /* Stop the transfer when all frames have been received */
+  if (!interface->awaiting)
+  {
+    /* Disable RTIM and RXIM interrupts */
+    reg->IMSC = 0;
+    __dsb();
+
+    /*
+     * Clear pending interrupt flag in NVIC. The ISR handler will be called
+     * twice if the RTIM interrupt occurred after the RXIM interrupt
+     * but before the RTIM interrupt was disabled.
+     */
+    irqClearPending(interface->base.irq);
+
+    /* Reset the pointer to an input buffer */
+    interface->sink = NULL;
+
+    if (interface->callback != NULL)
+      interface->callback(interface->callbackArgument);
+  }
+}
+#endif
+/*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_LPC_SSP_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
@@ -231,13 +289,51 @@ static void powerStateHandler(void *object, enum PmState state)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static size_t transferData(struct SpiDma *interface, const void *source,
+#if CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD > 0
+static size_t transferData(struct SpiDma *interface, const uint8_t *source,
+    size_t length)
+{
+  LPC_SSP_Type * const reg = interface->base.reg;
+
+  interface->awaiting = length;
+
+  /* Disable DMA requests */
+  reg->DMACR = 0;
+  /* Clear interrupt flags */
+  reg->ICR = ICR_RORIC | ICR_RTIC;
+
+  if (source != NULL)
+  {
+    while (length--)
+      reg->DR = *source++;
+  }
+  else
+  {
+    while (length--)
+      reg->DR = DUMMY_FRAME;
+  }
+
+  /* Enable interrupts */
+  reg->IMSC = IMSC_RXIM | IMSC_RTIM;
+
+  if (interface->blocking)
+  {
+    while (interface->awaiting)
+      barrier();
+  }
+
+  return length;
+}
+#endif
+/*----------------------------------------------------------------------------*/
+static size_t transferDataDma(struct SpiDma *interface, const void *source,
     void *sink, size_t length)
 {
   LPC_SSP_Type * const reg = interface->base.reg;
 
   /* Clear DMA requests */
   reg->DMACR = 0;
+  /* Enable RX and TX DMA requests */
   reg->DMACR = DMACR_RXDMAE | DMACR_TXDMAE;
 
   interface->invoked = false;
@@ -314,6 +410,7 @@ static enum Result spiInit(void *object, const void *configBase)
   if (!dmaSetup(interface, rxChannel, txChannel))
     return E_ERROR;
 
+  interface->base.handler = interruptHandler;
   interface->callback = NULL;
   interface->rate = config->rate;
   interface->sink = NULL;
@@ -324,8 +421,6 @@ static enum Result spiInit(void *object, const void *configBase)
 
   /* Set frame size */
   reg->CR0 = CR0_DSS(8);
-  /* Disable all interrupts */
-  reg->IMSC = 0;
 
   /* Set SPI mode */
   sspSetMode(&interface->base, config->mode);
@@ -340,6 +435,9 @@ static enum Result spiInit(void *object, const void *configBase)
   /* Enable the peripheral */
   reg->CR1 = CR1_SSE;
 
+  irqSetPriority(interface->base.irq, config->priority);
+  irqEnable(interface->base.irq);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -350,6 +448,7 @@ static void spiDeinit(void *object)
   LPC_SSP_Type * const reg = interface->base.reg;
 
   /* Disable the peripheral */
+  irqDisable(interface->base.irq);
   reg->CR1 = 0;
 
 #ifdef CONFIG_PLATFORM_LPC_SSP_PM
@@ -476,9 +575,17 @@ static size_t spiRead(void *object, void *buffer, size_t length)
 
   if (interface->unidir)
   {
+#if CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD > 0
+    if (length <= CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD)
+    {
+      interface->sink = buffer;
+      return transferData(interface, NULL, length);
+    }
+#endif
+
     interface->dummy = DUMMY_FRAME;
     dmaSetupRx(interface->rxDma, interface->txDma);
-    return transferData(interface, &interface->dummy, buffer, length);
+    return transferDataDma(interface, &interface->dummy, buffer, length);
   }
   else
   {
@@ -496,14 +603,24 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
 
   if (interface->sink == NULL)
   {
+#if CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD > 0
+    if (length <= CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD)
+      return transferData(interface, buffer, length);
+#endif
+
     dmaSetupTx(interface->rxDma, interface->txDma);
-    return transferData(interface, buffer, &interface->dummy, length);
+    return transferDataDma(interface, buffer, &interface->dummy, length);
   }
   else
   {
     assert(!interface->unidir);
 
+#if CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD > 0
+    if (length <= CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD)
+      return transferData(interface, buffer, length);
+#endif
+
     dmaSetupRxTx(interface->rxDma, interface->txDma);
-    return transferData(interface, buffer, interface->sink, length);
+    return transferDataDma(interface, buffer, interface->sink, length);
   }
 }

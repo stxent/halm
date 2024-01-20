@@ -143,7 +143,7 @@ static size_t transferData(struct Spi *interface, size_t length)
 
   if (interface->blocking)
   {
-    while (interface->rxLeft || reg->SR & SR_BSY)
+    while (interface->rxLeft)
       barrier();
   }
 
@@ -180,8 +180,6 @@ static enum Result spiInit(void *object, const void *configBase)
 
   /* Set frame size */
   reg->CR0 = CR0_DSS(8);
-  /* Disable all interrupts */
-  reg->IMSC = 0;
 
   /* Set SPI mode */
   sspSetMode(&interface->base, config->mode);
@@ -260,7 +258,7 @@ static enum Result spiGetParam(void *object, int parameter, void *data)
     case IF_STATUS:
     {
       const LPC_SSP_Type * const reg = interface->base.reg;
-      return (interface->rxLeft || reg->SR & SR_BSY) ? E_BUSY : E_OK;
+      return (interface->rxLeft || (reg->SR & SR_BSY)) ? E_BUSY : E_OK;
     }
 
     default:

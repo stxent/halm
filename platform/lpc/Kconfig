@@ -546,6 +546,15 @@ config PLATFORM_LPC_SPI_DMA_CHAIN
 	range 1 65536
 	depends on PLATFORM_LPC_SPI_DMA
 
+config PLATFORM_LPC_SPI_DMA_THRESHOLD
+	int "DMA size threshold"
+	default 8
+	range 1 8
+	depends on PLATFORM_LPC_SPI_DMA
+	help
+	  Small DMA transfers will be performed using interrupts. This is a
+	  threshold value to switch from interrupt to DMA logic.
+
 config PLATFORM_LPC_ONE_WIRE_SSP
 	bool "1-Wire using SSP peripheral"
 	default y
