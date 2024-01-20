@@ -2,38 +2,31 @@
 # Project is distributed under the terms of the MIT License
 
 cmake_minimum_required(VERSION 3.21)
-cmake_policy(SET CMP0054 NEW)
-cmake_policy(SET CMP0069 NEW)
-cmake_policy(SET CMP0079 NEW)
 project(halm C)
-
-option(USE_LTO "Enable Link Time Optimization." OFF)
-set(HALM_CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE STRING "Path to the config file.")
-
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${HALM_CONFIG_FILE}")
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-include(ParseConfig)
-parse_config("${HALM_CONFIG_FILE}" CONFIG_DEFS)
-
-# Default compiler flags
-
-set(FLAGS_DEFAULT "-fdata-sections -ffunction-sections")
-set(CMAKE_C_STANDARD 23)
-set(CMAKE_C_EXTENSIONS OFF)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_INIT} ${FLAGS_DEFAULT} ${FLAGS_CPU}")
-set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
 find_package(xcore QUIET)
 if(xcore_FOUND)
     message(STATUS "Found xcore package")
 endif()
 
-if(USE_LTO)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-    if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        set(CMAKE_C_COMPILE_OPTIONS_IPO -flto -ffat-lto-objects)
+# Library configuration
+
+set(HALM_CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE STRING "Path to the config file.")
+
+# Default compiler flags
+
+if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        set(CMAKE_C_COMPILE_OPTIONS_IPO -flto=auto -ffat-lto-objects)
     endif()
 endif()
+
+# Load library configuration file
+
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${HALM_CONFIG_FILE}")
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(ParseConfig)
+parse_config("${HALM_CONFIG_FILE}" CONFIG_DEFS)
 
 # Prepare compiler definitions for object libraries
 
@@ -54,17 +47,21 @@ foreach(ENTRY ${DIRECTORY_LIST})
     if(TARGET halm_${ENTRY})
         list(APPEND LIBRARY_TARGETS halm_${ENTRY})
         list(APPEND LIBRARY_OBJECTS $<TARGET_OBJECTS:halm_${ENTRY}>)
+
         target_compile_definitions(halm_${ENTRY}
                 PUBLIC ${PUBLIC_DEFS}
                 PRIVATE ${CONFIG_DEFS}
         )
+
         target_include_directories(halm_${ENTRY} PUBLIC
                 $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                 $<INSTALL_INTERFACE:include>
         )
+
         target_link_libraries(halm_${ENTRY}
                 PUBLIC xcore
         )
+
         install(TARGETS halm_${ENTRY} EXPORT halm-targets)
     endif()
 endforeach()
