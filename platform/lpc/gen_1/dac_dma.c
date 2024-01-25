@@ -45,8 +45,8 @@ static enum Result dacStreamEnqueue(void *, struct StreamRequest *);
 static void dacDeinit(void *);
 static void dacStreamDeinit(void *);
 #else
-#define dacDeinit deletedDestructorTrap
-#define dacStreamDeinit deletedDestructorTrap
+#  define dacDeinit deletedDestructorTrap
+#  define dacStreamDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const DacDma = &(const struct InterfaceClass){

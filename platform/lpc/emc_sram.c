@@ -15,7 +15,7 @@ static enum Result sramInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_LPC_EMC_NO_DEINIT
 static void sramDeinit(void *);
 #else
-#define sramDeinit deletedDestructorTrap
+#  define sramDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const EmcSram = &(const struct EntityClass){

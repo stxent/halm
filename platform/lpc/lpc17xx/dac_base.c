@@ -20,7 +20,7 @@ static enum Result dacInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_LPC_DAC_NO_DEINIT
 static void dacDeinit(void *);
 #else
-#define dacDeinit deletedDestructorTrap
+#  define dacDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const DacBase = &(const struct EntityClass){

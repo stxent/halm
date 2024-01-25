@@ -79,23 +79,23 @@ static enum Result workQueueStart(void *);
     || defined(CONFIG_GENERIC_WQ_UNIQUE_LOAD)
   static void workQueueStatistics(void *, struct WqInfo *);
 #else
-  #define workQueueStatistics NULL
+#  define workQueueStatistics NULL
 #endif
 
 #ifdef CONFIG_GENERIC_WQ_UNIQUE_PROFILE
   static void workQueueProfile(void *, WqProfileCallback, void *);
 #else
-  #define workQueueProfile NULL
+#  define workQueueProfile NULL
 #endif
 
 #ifndef CONFIG_GENERIC_WQ_UNIQUE_NONSTOP
   static void workQueueDeinit(void *);
   static void workQueueStop(void *);
-  #define WQ_RUNNING(object) ((object)->stop == false)
+#  define WQ_RUNNING(object) ((object)->stop == false)
 #else
-  #define workQueueDeinit deletedDestructorTrap
-  #define workQueueStop NULL
-  #define WQ_RUNNING(object) (true)
+#  define workQueueDeinit deletedDestructorTrap
+#  define workQueueStop NULL
+#  define WQ_RUNNING(object) (true)
 #endif
 /*----------------------------------------------------------------------------*/
 const struct WorkQueueClass * const WorkQueueUnique =

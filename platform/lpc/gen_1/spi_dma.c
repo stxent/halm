@@ -42,7 +42,7 @@ static size_t spiWrite(void *, const void *, size_t);
 #ifndef CONFIG_PLATFORM_LPC_SSP_NO_DEINIT
 static void spiDeinit(void *);
 #else
-#define spiDeinit deletedDestructorTrap
+#  define spiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const SpiDma = &(const struct InterfaceClass){

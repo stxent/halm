@@ -49,8 +49,8 @@ static enum Result adcHandlerEnqueue(void *, struct StreamRequest *);
 static void adcDeinit(void *);
 static void adcHandlerDeinit(void *);
 #else
-#define adcDeinit deletedDestructorTrap
-#define adcHandlerDeinit deletedDestructorTrap
+#  define adcDeinit deletedDestructorTrap
+#  define adcHandlerDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const AdcDmaStream =

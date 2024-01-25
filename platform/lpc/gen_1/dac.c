@@ -18,7 +18,7 @@ static size_t dacWrite(void *, const void *, size_t);
 #ifndef CONFIG_PLATFORM_LPC_DAC_NO_DEINIT
 static void dacDeinit(void *);
 #else
-#define dacDeinit deletedDestructorTrap
+#  define dacDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Dac = &(const struct InterfaceClass){

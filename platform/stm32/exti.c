@@ -18,7 +18,7 @@ static void extiSetCallback(void *, void (*)(void *), void *);
 #ifndef CONFIG_PLATFORM_STM32_EXTI_NO_DEINIT
 static void extiDeinit(void *);
 #else
-#define extiDeinit deletedDestructorTrap
+#  define extiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterruptClass * const Exti =

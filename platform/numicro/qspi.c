@@ -44,7 +44,7 @@ static size_t qspiWrite(void *, const void *, size_t);
 #ifndef CONFIG_PLATFORM_NUMICRO_QSPI_NO_DEINIT
 static void qspiDeinit(void *);
 #else
-#define qspiDeinit deletedDestructorTrap
+#  define qspiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Qspi = &(const struct InterfaceClass){

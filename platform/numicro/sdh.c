@@ -41,7 +41,7 @@ static size_t sdioWrite(void *, const void *, size_t);
 #ifndef CONFIG_PLATFORM_NUMICRO_SDH_NO_DEINIT
 static void sdioDeinit(void *);
 #else
-#define sdioDeinit deletedDestructorTrap
+#  define sdioDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Sdh = &(const struct InterfaceClass){

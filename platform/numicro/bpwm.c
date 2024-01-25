@@ -31,7 +31,7 @@ static void unitSetOverflow(void *, uint32_t);
 #ifndef CONFIG_PLATFORM_NUMICRO_BPWM_NO_DEINIT
 static void unitDeinit(void *);
 #else
-#define unitDeinit deletedDestructorTrap
+#  define unitDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result singleEdgeInit(void *, const void *);
@@ -43,7 +43,7 @@ static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
 #ifndef CONFIG_PLATFORM_NUMICRO_BPWM_NO_DEINIT
 static void singleEdgeDeinit(void *);
 #else
-#define singleEdgeDeinit deletedDestructorTrap
+#  define singleEdgeDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct TimerClass * const BpwmUnit = &(const struct TimerClass){

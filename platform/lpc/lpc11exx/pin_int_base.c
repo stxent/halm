@@ -16,7 +16,7 @@ static enum Result pinIntInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_LPC_PININT_NO_DEINIT
 static void pinIntDeinit(void *);
 #else
-#define pinIntDeinit deletedDestructorTrap
+#  define pinIntDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const PinIntBase = &(const struct EntityClass){

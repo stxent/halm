@@ -21,7 +21,7 @@ static enum Result unitInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_LPC_GPPWM_NO_DEINIT
 static void unitDeinit(void *);
 #else
-#define unitDeinit deletedDestructorTrap
+#  define unitDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const GpPwmUnitBase = &(const struct EntityClass){

@@ -20,7 +20,7 @@ static enum Result i2sInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_LPC_I2S_NO_DEINIT
 static void i2sDeinit(void *);
 #else
-#define i2sDeinit deletedDestructorTrap
+#  define i2sDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const I2SBase = &(const struct EntityClass){

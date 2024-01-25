@@ -25,7 +25,7 @@ static void tmrSetValue(void *, uint32_t);
 #ifndef CONFIG_CORE_CORTEX_SYSTICK_NO_DEINIT
 static void tmrDeinit(void *);
 #else
-#define tmrDeinit deletedDestructorTrap
+#  define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct TimerClass * const SysTick = &(const struct TimerClass){

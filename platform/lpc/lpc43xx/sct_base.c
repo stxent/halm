@@ -34,7 +34,7 @@ static enum Result tmrInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
 static void tmrDeinit(void *);
 #else
-#define tmrDeinit deletedDestructorTrap
+#  define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SctBase = &(const struct EntityClass){

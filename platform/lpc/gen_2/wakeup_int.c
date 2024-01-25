@@ -30,7 +30,7 @@ static void wakeupIntSetCallback(void *, void (*)(void *), void *);
 #ifndef CONFIG_PLATFORM_LPC_WAKEUPINT_NO_DEINIT
 static void wakeupIntDeinit(void *);
 #else
-#define wakeupIntDeinit deletedDestructorTrap
+#  define wakeupIntDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const StartLogicHandler =

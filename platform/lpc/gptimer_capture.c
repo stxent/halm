@@ -34,7 +34,7 @@ static void unitSetValue(void *, uint32_t);
 #ifndef CONFIG_PLATFORM_LPC_GPTIMER_NO_DEINIT
 static void unitDeinit(void *);
 #else
-#define unitDeinit deletedDestructorTrap
+#  define unitDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
@@ -46,7 +46,7 @@ static uint32_t channelGetValue(const void *);
 #ifndef CONFIG_PLATFORM_LPC_GPTIMER_NO_DEINIT
 static void channelDeinit(void *);
 #else
-#define channelDeinit deletedDestructorTrap
+#  define channelDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct TimerClass * const GpTimerCaptureUnit =

@@ -37,7 +37,7 @@ static void unitSetOverflow(void *, uint32_t);
 #ifndef CONFIG_PLATFORM_LPC_GPPWM_NO_DEINIT
 static void unitDeinit(void *);
 #else
-#define unitDeinit deletedDestructorTrap
+#  define unitDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result singleEdgeInit(void *, const void *);
@@ -49,7 +49,7 @@ static void singleEdgeSetEdges(void *, uint32_t, uint32_t);
 #ifndef CONFIG_PLATFORM_LPC_GPPWM_NO_DEINIT
 static void singleEdgeDeinit(void *);
 #else
-#define singleEdgeDeinit deletedDestructorTrap
+#  define singleEdgeDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result doubleEdgeInit(void *, const void *);
@@ -61,7 +61,7 @@ static void doubleEdgeSetEdges(void *, uint32_t, uint32_t);
 #ifndef CONFIG_PLATFORM_LPC_GPPWM_NO_DEINIT
 static void doubleEdgeDeinit(void *);
 #else
-#define doubleEdgeDeinit deletedDestructorTrap
+#  define doubleEdgeDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct TimerClass * const GpPwmUnit = &(const struct TimerClass){

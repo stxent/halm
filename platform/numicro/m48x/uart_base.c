@@ -28,7 +28,7 @@ static enum Result uartInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_NUMICRO_UART_NO_DEINIT
 static void uartDeinit(void *);
 #else
-#define uartDeinit deletedDestructorTrap
+#  define uartDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UartBase = &(const struct EntityClass){

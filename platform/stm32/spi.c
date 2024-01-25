@@ -33,7 +33,7 @@ static size_t spiWrite(void *, const void *, size_t);
 #ifndef CONFIG_PLATFORM_STM32_SPI_NO_DEINIT
 static void spiDeinit(void *);
 #else
-#define spiDeinit deletedDestructorTrap
+#  define spiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Spi = &(const struct InterfaceClass){

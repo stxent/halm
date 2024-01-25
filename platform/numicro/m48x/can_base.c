@@ -30,7 +30,7 @@ static enum Result canInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_NUMICRO_CAN_NO_DEINIT
 static void canDeinit(void *);
 #else
-#define canDeinit deletedDestructorTrap
+#  define canDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const CanBase = &(const struct EntityClass){

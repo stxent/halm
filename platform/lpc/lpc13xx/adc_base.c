@@ -24,7 +24,7 @@ static enum Result adcInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_LPC_ADC_NO_DEINIT
 static void adcDeinit(void *);
 #else
-#define adcDeinit deletedDestructorTrap
+#  define adcDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const AdcBase = &(const struct EntityClass){

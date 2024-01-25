@@ -21,7 +21,7 @@ static enum Result adcInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_NUMICRO_EADC_NO_DEINIT
 static void adcDeinit(void *);
 #else
-#define adcDeinit deletedDestructorTrap
+#  define adcDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const EadcBase = &(const struct EntityClass){

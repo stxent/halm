@@ -70,7 +70,7 @@ static void devStringErase(void *, struct UsbString);
 #ifndef CONFIG_PLATFORM_USB_NO_DEINIT
 static void devDeinit(void *);
 #else
-#define devDeinit deletedDestructorTrap
+#  define devDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct UsbDeviceClass * const UsbDevice =

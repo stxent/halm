@@ -31,7 +31,7 @@ static void tmrSetValue(void *, uint32_t);
 #ifndef CONFIG_PLATFORM_STM32_GPTIMER_NO_DEINIT
 static void tmrDeinit(void *);
 #else
-#define tmrDeinit deletedDestructorTrap
+#  define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct TimerClass * const GpTimer = &(const struct TimerClass){

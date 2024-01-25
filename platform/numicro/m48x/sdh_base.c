@@ -18,7 +18,7 @@ static enum Result sdioInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_NUMICRO_SDH_NO_DEINIT
 static void sdioDeinit(void *);
 #else
-#define sdioDeinit deletedDestructorTrap
+#  define sdioDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SdhBase = &(const struct EntityClass){

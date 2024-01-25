@@ -16,7 +16,7 @@ static enum Result qspiInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_NUMICRO_QSPI_NO_DEINIT
 static void qspiDeinit(void *);
 #else
-#define qspiDeinit deletedDestructorTrap
+#  define qspiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const QspiBase = &(const struct EntityClass){

@@ -28,7 +28,7 @@ static enum Result i2cInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_NUMICRO_I2C_NO_DEINIT
 static void i2cDeinit(void *);
 #else
-#define i2cDeinit deletedDestructorTrap
+#  define i2cDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const I2CBase = &(const struct EntityClass){

@@ -63,7 +63,7 @@ static size_t oneWireWrite(void *, const void *, size_t);
 #ifndef CONFIG_PLATFORM_LPC_SSP_NO_DEINIT
 static void oneWireDeinit(void *);
 #else
-#define oneWireDeinit deletedDestructorTrap
+#  define oneWireDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const OneWireSsp = &(const struct InterfaceClass){

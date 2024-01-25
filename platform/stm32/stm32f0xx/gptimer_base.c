@@ -33,7 +33,7 @@ static enum Result tmrInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_STM32_GPTIMER_NO_DEINIT
 static void tmrDeinit(void *);
 #else
-#define tmrDeinit deletedDestructorTrap
+#  define tmrDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const GpTimerBase = &(const struct EntityClass){

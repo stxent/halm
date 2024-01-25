@@ -20,7 +20,7 @@ static void bodSetCallback(void *, void (*)(void *), void *);
 #ifndef CONFIG_PLATFORM_NXP_BOD_NO_DEINIT
 static void bodDeinit(void *);
 #else
-#define bodDeinit deletedDestructorTrap
+#  define bodDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterruptClass * const Bod = &(const struct InterruptClass){

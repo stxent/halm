@@ -69,16 +69,16 @@ static enum Result workQueueStart(void *);
   static void workQueueProfile(void *, WqProfileCallback, void *);
   static void workQueueStatistics(void *, struct WqInfo *);
 #else
-  #define workQueueProfile NULL
-  #define workQueueStatistics NULL
+#  define workQueueProfile NULL
+#  define workQueueStatistics NULL
 #endif
 
 #ifndef CONFIG_GENERIC_WQ_IRQ_NONSTOP
   static void workQueueDeinit(void *);
   static void workQueueStop(void *);
 #else
-  #define workQueueDeinit deletedDestructorTrap
-  #define workQueueStop NULL
+#  define workQueueDeinit deletedDestructorTrap
+#  define workQueueStop NULL
 #endif
 /*----------------------------------------------------------------------------*/
 const struct WorkQueueClass * const WorkQueueIrq =

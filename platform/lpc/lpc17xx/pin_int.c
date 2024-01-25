@@ -39,7 +39,7 @@ static void pinIntSetCallback(void *, void (*)(void *), void *);
 #ifndef CONFIG_PLATFORM_LPC_PININT_NO_DEINIT
 static void pinIntDeinit(void *);
 #else
-#define pinIntDeinit deletedDestructorTrap
+#  define pinIntDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 static const struct EntityClass * const PinIntHandler =

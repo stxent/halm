@@ -36,7 +36,7 @@ static size_t i2cWrite(void *, const void *, size_t);
 #ifndef CONFIG_PLATFORM_NUMICRO_I2C_NO_DEINIT
 static void i2cDeinit(void *);
 #else
-#define i2cDeinit deletedDestructorTrap
+#  define i2cDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const I2C = &(const struct InterfaceClass){

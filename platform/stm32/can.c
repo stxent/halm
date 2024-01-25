@@ -93,7 +93,7 @@ static size_t canWrite(void *, const void *, size_t);
 #ifndef CONFIG_PLATFORM_STM32_CAN_NO_DEINIT
 static void canDeinit(void *);
 #else
-#define canDeinit deletedDestructorTrap
+#  define canDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const Can = &(const struct InterfaceClass){

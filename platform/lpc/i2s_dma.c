@@ -50,8 +50,8 @@ static enum Result i2sTxStreamEnqueue(void *, struct StreamRequest *);
 static void i2sDeinit(void *);
 static void i2sStreamDeinit(void *);
 #else
-#define i2sDeinit deletedDestructorTrap
-#define i2sStreamDeinit deletedDestructorTrap
+#  define i2sDeinit deletedDestructorTrap
+#  define i2sStreamDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const I2SDma = &(const struct InterfaceClass){

@@ -16,7 +16,7 @@ static enum Result clkInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_LPC_RTC_NO_DEINIT
 static void clkDeinit(void *);
 #else
-#define clkDeinit deletedDestructorTrap
+#  define clkDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const RtcBase = &(const struct EntityClass){

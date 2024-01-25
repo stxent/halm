@@ -22,7 +22,7 @@ static time64_t clkTime(void *);
 #ifndef CONFIG_PLATFORM_LPC_RTC_NO_DEINIT
 static void clkDeinit(void *);
 #else
-#define clkDeinit deletedDestructorTrap
+#  define clkDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct RtClockClass * const Rtc = &(const struct RtClockClass){

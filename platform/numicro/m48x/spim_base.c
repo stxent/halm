@@ -18,7 +18,7 @@ static enum Result spimInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_NUMICRO_SPIM_NO_DEINIT
 static void spimDeinit(void *);
 #else
-#define spimDeinit deletedDestructorTrap
+#  define spimDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SpimBase = &(const struct EntityClass){

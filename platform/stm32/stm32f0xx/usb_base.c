@@ -17,7 +17,7 @@ static enum Result devInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_USB_NO_DEINIT
 static void devDeinit(void *);
 #else
-#define devDeinit deletedDestructorTrap
+#  define devDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const UsbBase = &(const struct EntityClass){

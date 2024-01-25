@@ -33,7 +33,7 @@ static enum Result spiInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_STM32_SPI_NO_DEINIT
 static void spiDeinit(void *);
 #else
-#define spiDeinit deletedDestructorTrap
+#  define spiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SpiBase = &(const struct EntityClass){

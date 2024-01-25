@@ -26,7 +26,7 @@ static size_t adcRead(void *, void *, size_t);
 #ifndef CONFIG_PLATFORM_LPC_ADC_NO_DEINIT
 static void adcDeinit(void *);
 #else
-#define adcDeinit deletedDestructorTrap
+#  define adcDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct InterfaceClass * const AdcDma = &(const struct InterfaceClass){

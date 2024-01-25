@@ -18,7 +18,7 @@ static enum Result sspInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_LPC_SSP_NO_DEINIT
 static void sspDeinit(void *);
 #else
-#define sspDeinit deletedDestructorTrap
+#  define sspDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const SspBase = &(const struct EntityClass){

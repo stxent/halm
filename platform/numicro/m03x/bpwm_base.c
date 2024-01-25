@@ -19,7 +19,7 @@ static enum Result unitInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_NUMICRO_BPWM_NO_DEINIT
 static void unitDeinit(void *);
 #else
-#define unitDeinit deletedDestructorTrap
+#  define unitDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const BpwmUnitBase = &(const struct EntityClass){

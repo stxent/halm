@@ -25,7 +25,7 @@ static enum Result extiInit(void *, const void *);
 #ifndef CONFIG_PLATFORM_STM32_EXTI_NO_DEINIT
 static void extiDeinit(void *);
 #else
-#define extiDeinit deletedDestructorTrap
+#  define extiDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const ExtiBase = &(const struct EntityClass){
