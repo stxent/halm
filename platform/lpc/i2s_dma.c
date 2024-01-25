@@ -538,7 +538,7 @@ static enum Result i2sSetParam(void *object, int parameter, const void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
-      return updateRate(interface, *(const uint32_t *)data) ? E_OK : E_ERROR;
+      return updateRate(interface, *(const uint32_t *)data) ? E_OK : E_VALUE;
 
     default:
       return E_INVALID;

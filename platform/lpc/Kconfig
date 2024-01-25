@@ -569,6 +569,7 @@ config PLATFORM_LPC_SPIFI
 	bool "SPIFI"
 	default y
 	depends on FAMILY_LPC43XX
+	select PLATFORM_LPC_GPDMA
 
 config PLATFORM_LPC_UART_BASE
 	bool "UART"

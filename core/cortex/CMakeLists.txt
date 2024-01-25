@@ -1,18 +1,22 @@
 # Copyright (C) 2017 xent
 # Project is distributed under the terms of the MIT License
 
-set(SOURCE_PATHS "")
+set(SOURCE_FILES "")
 string(REPLACE "cortex-" "" CORE_VERSION "${CMAKE_SYSTEM_PROCESSOR}")
 
-if(${CORE_VERSION} STREQUAL "m0")
-    set(SOURCE_PATHS ${SOURCE_PATHS} "armv6m/*.c")
-elseif(${CORE_VERSION} STREQUAL "m3")
-    set(SOURCE_PATHS ${SOURCE_PATHS} "armv7m/*.c")
-elseif(${CORE_VERSION} MATCHES "m4|m7")
-    set(SOURCE_PATHS ${SOURCE_PATHS} "armv7m/*.c" "armv7em/*.c")
-endif()
+if(${CORE_VERSION} MATCHES "m0|m0\+")
+    list(APPEND SOURCE_FILES "armv6m/irq.c")
+    list(APPEND SOURCE_FILES "armv6m/nvic.c")
+    list(APPEND SOURCE_FILES "armv6m/spinlock.c")
+elseif(${CORE_VERSION} MATCHES "m3|m4|m7")
+    list(APPEND SOURCE_FILES "armv7m/irq.c")
+    list(APPEND SOURCE_FILES "armv7m/nvic.c")
+    list(APPEND SOURCE_FILES "armv7m/spinlock.c")
 
-file(GLOB SOURCE_FILES ${SOURCE_PATHS})
+    if(CONFIG_CORE_CORTEX_FPU)
+        list(APPEND SOURCE_FILES "armv7em/fpu.c")
+    endif()
+endif()
 
 if(CONFIG_PM)
     list(APPEND SOURCE_FILES "pm.c")

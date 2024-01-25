@@ -36,6 +36,16 @@ bool sysClockStatus(enum SysClockBranch branch)
   return (calcBranchReg(branch)->STAT & STAT_RUN) != 0;
 }
 /*----------------------------------------------------------------------------*/
+void sysCoreM0AppRemap(uintptr_t address)
+{
+  LPC_CREG->M0APPMEMMAP = address;
+}
+/*----------------------------------------------------------------------------*/
+void sysCoreM0SubRemap(uintptr_t address)
+{
+  LPC_CREG->M0SUBMEMMAP = address;
+}
+/*----------------------------------------------------------------------------*/
 void sysFlashEnable(unsigned int bank)
 {
   /* Flash bank A or B */

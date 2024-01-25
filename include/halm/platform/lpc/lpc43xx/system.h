@@ -145,6 +145,8 @@ BEGIN_DECLS
 void sysClockDisable(enum SysClockBranch);
 void sysClockEnable(enum SysClockBranch);
 bool sysClockStatus(enum SysClockBranch);
+void sysCoreM0AppRemap(uintptr_t);
+void sysCoreM0SubRemap(uintptr_t);
 void sysFlashDisable(unsigned int);
 void sysFlashEnable(unsigned int);
 unsigned int sysFlashLatency(void);
