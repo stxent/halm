@@ -405,6 +405,11 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
   return res;
 }
 /*----------------------------------------------------------------------------*/
+uint8_t cdcAcmBaseGetInterfaceIndex(const struct CdcAcmBase *driver)
+{
+  return driver->controlInterfaceIndex;
+}
+/*----------------------------------------------------------------------------*/
 uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *driver)
 {
   return driver->state.lineCoding.dteRate;

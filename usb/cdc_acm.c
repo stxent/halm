@@ -13,6 +13,7 @@
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
+#include <xcore/memory.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,9 +60,16 @@ static void cdcDataReceived(void *, struct UsbRequest *, enum UsbRequestStatus);
 static void cdcDataSent(void *, struct UsbRequest *, enum UsbRequestStatus);
 static inline size_t getMaxPacketSize(void);
 static inline size_t getPacketSize(const struct CdcAcm *);
+static inline bool isTxPoolEmpty(const struct CdcAcm *);
 static bool resetEndpoints(struct CdcAcm *);
 static void updateRxWatermark(struct CdcAcm *, size_t);
 static void updateTxWatermark(struct CdcAcm *, size_t);
+
+#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+static void cdcNotificationSent(void *, struct UsbRequest *,
+    enum UsbRequestStatus);
+static void sendStateNotification(struct CdcAcm *, uint16_t);
+#endif
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *, const void *);
 static void interfaceDeinit(void *);
@@ -165,6 +173,23 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   }
 }
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+static void cdcNotificationSent(void *argument, struct UsbRequest *request,
+    enum UsbRequestStatus status)
+{
+  struct CdcAcm * const interface = argument;
+
+  request->callback = cdcDataSent;
+  pointerArrayPushBack(&interface->txRequestPool, request);
+
+  if (status != USB_REQUEST_COMPLETED)
+  {
+    interface->suspended = true;
+    usbTrace("cdc_acm: suspended in notify callback");
+  }
+}
+#endif
+/*----------------------------------------------------------------------------*/
 static inline size_t getMaxPacketSize(void)
 {
 #ifdef CONFIG_USB_DEVICE_HS
@@ -178,6 +203,15 @@ static inline size_t getPacketSize(const struct CdcAcm *interface)
 {
   return cdcAcmBaseGetUsbSpeed(interface->driver) == USB_HS ?
       CDC_DATA_EP_SIZE_HS : CDC_DATA_EP_SIZE;
+}
+/*----------------------------------------------------------------------------*/
+static inline bool isTxPoolEmpty(const struct CdcAcm *interface)
+{
+#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+  return pointerArraySize(&interface->txRequestPool) <= 1;
+#else
+  return pointerArrayEmpty(&interface->txRequestPool);
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static bool resetEndpoints(struct CdcAcm *interface)
@@ -220,6 +254,46 @@ static bool resetEndpoints(struct CdcAcm *interface)
 
   return completed;
 }
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+static void sendStateNotification(struct CdcAcm *interface, uint16_t data)
+{
+  const struct CdcSerialState packet = {
+      .requestType = REQUEST_RECIPIENT(REQUEST_RECIPIENT_INTERFACE)
+          | REQUEST_TYPE(REQUEST_TYPE_CLASS)
+          | REQUEST_DIRECTION(REQUEST_DIRECTION_TO_HOST),
+      .request = CDC_SERIAL_STATE,
+      .value = 0,
+      .index = toLittleEndian16(cdcAcmBaseGetInterfaceIndex(interface->driver)),
+      .length = TO_LITTLE_ENDIAN_16(2),
+      .data = toLittleEndian16(data)
+  };
+  struct UsbRequest *request;
+  IrqState state;
+
+  /* Critical section */
+  state = irqSave();
+  request = pointerArrayBack(&interface->txRequestPool);
+  pointerArrayPopBack(&interface->txRequestPool);
+  irqRestore(state);
+
+  request->callback = cdcNotificationSent;
+  request->length = sizeof(packet);
+  memcpy(request->buffer, &packet, sizeof(packet));
+
+  if (usbEpEnqueue(interface->notificationEp, request) != E_OK)
+  {
+    /* Hardware error occurred, suspend the interface and wait for reset */
+    interface->suspended = true;
+
+    state = irqSave();
+    pointerArrayPushBack(&interface->txRequestPool, request);
+    irqRestore(state);
+
+    usbTrace("cdc_acm: suspended in notify function");
+  }
+}
+#endif
 /*----------------------------------------------------------------------------*/
 static void updateRxWatermark(struct CdcAcm *interface, size_t level)
 {
@@ -525,11 +599,35 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result interfaceSetParam(void *object __attribute__((unused)),
-    int parameter __attribute__((unused)),
-    const void *data __attribute__((unused)))
+static enum Result interfaceSetParam(void *object, int parameter,
+    const void *data)
 {
-  return E_INVALID;
+  struct CdcAcm * const interface = object;
+
+#ifndef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+  (void)data;
+  (void)interface;
+#endif
+
+  switch ((enum SerialParameter)parameter)
+  {
+#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+    case IF_SERIAL_RTS:
+    case IF_SERIAL_DTR:
+    {
+      /* RTS signal is also used as a bTxCarrier flag */
+      const bool asserted = *(const uint8_t *)data != 0;
+      const uint8_t state = CDC_SERIAL_STATE_DCD
+          | (asserted ? CDC_SERIAL_STATE_DSR : 0);
+
+      sendStateNotification(interface, state);
+      return E_OK;
+    }
+#endif
+
+    default:
+      return E_INVALID;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static size_t interfaceRead(void *object, void *buffer, size_t length)
@@ -590,7 +688,7 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
   if (interface->suspended)
     return 0;
 
-  while (length && !pointerArrayEmpty(&interface->txRequestPool))
+  while (length && !isTxPoolEmpty(interface))
   {
     const size_t bytesToWrite = MIN(length, maxPacketSize);
     struct UsbRequest *request;

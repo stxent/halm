@@ -34,6 +34,7 @@ struct CdcAcmBaseConfig
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
+uint8_t cdcAcmBaseGetInterfaceIndex(const struct CdcAcmBase *);
 uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *);
 uint8_t cdcAcmBaseGetState(const struct CdcAcmBase *);
 uint8_t cdcAcmBaseGetUsbSpeed(const struct CdcAcmBase *);
