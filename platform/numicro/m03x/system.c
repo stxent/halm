@@ -7,12 +7,14 @@
 #include <halm/platform/numicro/flash_defs.h>
 #include <halm/platform/numicro/m03x/system_defs.h>
 #include <halm/platform/numicro/system.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcClockReg(enum SysClockBranch);
 static volatile uint32_t *calcResetReg(enum SysBlockReset);
-static unsigned int calcFlashLatency(uint32_t);
+static bool calcFlashLatency(uint32_t, unsigned int *, bool *);
 static inline bool isClockProtected(enum SysClockBranch);
 static inline bool isResetProtected(enum SysBlockReset);
+static void setFlashLatency(unsigned int);
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcClockReg(enum SysClockBranch branch)
 {
@@ -34,31 +36,53 @@ static volatile uint32_t *calcResetReg(enum SysBlockReset block)
     return &NM_SYS->IPRST2;
 }
 /*----------------------------------------------------------------------------*/
-static unsigned int calcFlashLatency(uint32_t frequency)
+static bool calcFlashLatency(uint32_t frequency, unsigned int *cycles,
+    bool *cache)
 {
   const size_t size = sysGetSizeAPROM();
+  assert(size);
 
-  if (!size)
-  {
-    /* Unknown part, use safe settings */
-    return 0;
-  }
   if (size <= 128 * 1024)
   {
+    *cache = false;
+
     /* Parts with 16/32/64/128 KiB Flash */
-    return frequency <= 24000000 ? 1 : 0;
+    if (frequency <= 24000000)
+    {
+      *cycles = 1;
+      return false;
+    }
+    else
+    {
+      *cycles = 2;
+      return true;
+    }
   }
   else
   {
+    *cache = true;
+
     /* Parts with 256/512 KiB Flash */
     if (frequency <= 12000000)
-      return 1;
+    {
+      *cycles = 1;
+      return false;
+    }
     else if (frequency <= 36000000)
-      return 2;
+    {
+      *cycles = 2;
+      return false;
+    }
     else if (frequency <= 60000000)
-      return 3;
+    {
+      *cycles = 3;
+      return false;
+    }
     else
-      return 0;
+    {
+      *cycles = 4;
+      return true;
+    }
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -70,6 +94,13 @@ static inline bool isClockProtected(enum SysClockBranch branch)
 static inline bool isResetProtected(enum SysBlockReset block)
 {
   return block <= RST_CRC;
+}
+/*----------------------------------------------------------------------------*/
+static void setFlashLatency(unsigned int value)
+{
+  sysUnlockReg();
+  NM_FMC->FTCTL = (NM_FMC->FTCTL & ~FTCTL_FOM_MASK) | FTCTL_FOM(value);
+  sysLockReg();
 }
 /*----------------------------------------------------------------------------*/
 void sysClockDisable(enum SysClockBranch branch)
@@ -151,18 +182,18 @@ size_t sysGetSizeAPROM(void)
 /*----------------------------------------------------------------------------*/
 void sysFlashLatencyReset(void)
 {
-  sysUnlockReg();
-  NM_FMC->FTCTL = (NM_FMC->FTCTL & ~FTCTL_FOM_MASK) | FTCTL_FOM(0);
-  sysLockReg();
+  setFlashLatency(0);
 }
 /*----------------------------------------------------------------------------*/
-void sysFlashLatencyUpdate(uint32_t frequency)
+unsigned int sysFlashLatencyUpdate(uint32_t frequency)
 {
-  const unsigned int latency = calcFlashLatency(frequency);
+  unsigned int cycles;
+  bool cache;
 
-  sysUnlockReg();
-  NM_FMC->FTCTL = (NM_FMC->FTCTL & ~FTCTL_FOM_MASK) | FTCTL_FOM(latency);
-  sysLockReg();
+  const bool safeLatencyValue = calcFlashLatency(frequency, &cycles, &cache);
+
+  setFlashLatency(safeLatencyValue ? 0 : cycles);
+  return cache ? 0 : cycles;
 }
 /*----------------------------------------------------------------------------*/
 void sysResetBlock(enum SysBlockReset block)

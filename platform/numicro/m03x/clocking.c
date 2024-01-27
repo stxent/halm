@@ -13,11 +13,11 @@
 #include <assert.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
-#define HIRC_FREQUENCY                48000000
-#define LIRC_FREQUENCY                38400
-#define RTC_FREQUENCY                 32768
-#define USB_FREQUENCY                 48000000
-#define TICK_RATE(frequency, latency) ((frequency) / (latency) / 1000)
+#define HIRC_FREQUENCY        48000000
+#define LIRC_FREQUENCY        38400
+#define RTC_FREQUENCY         32768
+#define USB_FREQUENCY         48000000
+#define TICK_RATE(frequency)  ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 struct ApbClockClass
 {
@@ -638,7 +638,7 @@ static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t pllFrequency = 0;
-uint32_t ticksPerSecond = TICK_RATE(HIRC_FREQUENCY, 3);
+uint32_t ticksPerSecond = TICK_RATE(HIRC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
 static uint32_t calcExtCrystalGain(uint32_t frequency)
 {
@@ -1168,9 +1168,17 @@ static enum Result extendedBranchEnable(const void *clockBase,
   if (clock->branch == BRANCH_HCLK)
   {
     uint32_t frequency = getClockFrequency(BRANCH_HCLK, BRANCH_GROUP_HCLK);
-
     frequency = frequency / (divisor + 1);
-    sysFlashLatencyUpdate(frequency);
+
+    const unsigned int cycles = sysFlashLatencyUpdate(frequency);
+
+    if (!cycles)
+    {
+      /* Parts with cache memory controller */
+      ticksPerSecond = TICK_RATE(frequency);
+    }
+    else
+      ticksPerSecond = TICK_RATE(frequency * 4 / (cycles + 4));
   }
 
   return E_OK;

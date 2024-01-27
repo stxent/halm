@@ -107,7 +107,7 @@ void sysClockEnable(enum SysClockBranch);
 bool sysClockStatus(enum SysClockBranch);
 size_t sysGetSizeAPROM(void);
 void sysFlashLatencyReset(void);
-void sysFlashLatencyUpdate(uint32_t);
+unsigned int sysFlashLatencyUpdate(uint32_t);
 void sysResetBlock(enum SysBlockReset);
 
 void sysLockReg(void);
