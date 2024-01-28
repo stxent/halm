@@ -297,8 +297,11 @@ static void interruptHandler(void *object)
     nddrIntStatus -= (1UL << 31) >> index;
     reg->USBNDDRIntClr = 1UL << index;
 
-    dmaEpHandler((struct UsbDmaEndpoint *)device->endpoints[index]);
-    dmaEpUpdateChain((struct UsbDmaEndpoint *)device->endpoints[index]);
+    struct UsbDmaEndpoint * const ep =
+        (struct UsbDmaEndpoint *)device->endpoints[index];
+
+    dmaEpHandler(ep);
+    dmaEpUpdateChain(ep);
   }
 
   /* DMA System Error interrupt */
@@ -1095,15 +1098,20 @@ static void epAppendDescriptor(struct UsbDmaEndpoint *ep,
 static enum Result epEnqueueRequest(struct UsbDmaEndpoint *ep,
     struct UsbRequest *request)
 {
-  struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request);
-
-  if (descriptor != NULL)
+  if (ep->device->configured)
   {
-    epAppendDescriptor(ep, descriptor);
-    return E_OK;
+    struct DmaDescriptor * const descriptor = epAllocDescriptor(ep, request);
+
+    if (descriptor != NULL)
+    {
+      epAppendDescriptor(ep, descriptor);
+      return E_OK;
+    }
+    else
+      return E_EMPTY;
   }
   else
-    return E_EMPTY;
+    return E_IDLE;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dmaEpInit(void *object, const void *configBase)
