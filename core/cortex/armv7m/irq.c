@@ -14,7 +14,7 @@ void irqSetPriority(IrqNumber irq, IrqPriority priority)
   const uint32_t value = IRQ_PRIORITY_TO_REG(priority) & 0xFF;
 
   if (irq < 0)
-    SCB->SHP[(irq & 0x0F) - 4] = value;
+    SCB->SHPR[(irq & 0x0F) - 4] = value;
   else
     NVIC->IPR[irq] = value;
 }
@@ -22,7 +22,7 @@ void irqSetPriority(IrqNumber irq, IrqPriority priority)
 IrqPriority irqGetPriority(IrqNumber irq)
 {
   if (irq < 0)
-    return IRQ_REG_TO_PRIORITY(SCB->SHP[(irq & 0x0F) - 4]);
+    return IRQ_REG_TO_PRIORITY(SCB->SHPR[(irq & 0x0F) - 4]);
   else
     return IRQ_REG_TO_PRIORITY(NVIC->IPR[irq]);
 }

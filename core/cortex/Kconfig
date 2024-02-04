@@ -1,11 +1,22 @@
+config CORE_CORTEX_HAS_SYSTICK
+	bool
+	default y if !FAMILY_LPC43XX_M0APP && !FAMILY_LPC43XX_M0SUB
+
 config CORE_CORTEX_NO_DEINIT
 	bool "Disable destructors"
 	default n
 
+config CORE_CORTEX_DCACHE_WT
+	bool "D-Cache Write-Through"
+	default n
+	depends on CORE_CORTEX_M7
+	help
+	  This enables Write-Through mode for the Data Cache.
+
 config CORE_CORTEX_FPU
 	bool "FPU"
 	default y
-	depends on CORE_CORTEX_M4
+	depends on CORE_CORTEX_M4 || CORE_CORTEX_M7
 	help
 	  This enables Floating Point Unit.
 
@@ -24,7 +35,7 @@ config CORE_CORTEX_MEMORY_PATTERN
 config CORE_CORTEX_SYSTICK
 	bool "SysTick"
 	default y
-	depends on CORE_CORTEX_M0 || CORE_CORTEX_M3 || CORE_CORTEX_M4
+	depends on CORE_CORTEX_HAS_SYSTICK
 	help
 	  This is the driver for the System Timer peripheral.
 

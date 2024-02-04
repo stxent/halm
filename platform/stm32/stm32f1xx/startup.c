@@ -5,7 +5,7 @@
  */
 
 #include <halm/core/core_defs.h>
-#include <halm/core/cortex/armv7m/scb_defs.h>
+#include <halm/core/cortex/scb_defs.h>
 #include <halm/platform/stm32/system.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/

@@ -15,14 +15,29 @@
 /*------------------System Control Block--------------------------------------*/
 typedef struct
 {
+  /* Offset 0xED00 */
   __ro__ uint32_t CPUID; /* CPU ID Base Register */
   __rw__ uint32_t ICSR; /* Interrupt Control State Register */
-  __ne__ uint32_t RESERVED0;
+
+  /* Offset 0xED08: Cortex-M0+ */
+  __ne__ uint32_t VTOR; /* Vector Table Offset Register */
+
+  /* Offset 0xED0C */
   __rw__ uint32_t AIRCR; /* Application Interrupt and Reset Control Register */
   __rw__ uint32_t SCR; /* System Control Register */
   __rw__ uint32_t CCR; /* Configuration Control Register */
   __ne__ uint32_t RESERVED1;
-  __rw__ uint8_t SHP[2]; /* System Handlers Priority Registers */
+
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t SHPR2; /* System Handler Priority Register 2 */
+      __rw__ uint32_t SHPR3; /* System Handler Priority Register 3 */
+    };
+
+    __rw__ uint32_t SHPR[8];
+  };
 } SCB_Type;
 /*------------------System Tick Timer-----------------------------------------*/
 typedef struct

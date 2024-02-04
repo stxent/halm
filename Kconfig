@@ -16,6 +16,9 @@ choice
 
 	config CORE_CORTEX_M4
 		bool "Cortex-M4"
+
+	config CORE_CORTEX_M7
+		bool "Cortex-M7"
 endchoice
 
 choice
