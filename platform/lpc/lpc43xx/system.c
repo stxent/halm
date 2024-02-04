@@ -4,10 +4,14 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/lpc/flash_defs.h>
+#include <halm/platform/lpc/iap.h>
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
 /*----------------------------------------------------------------------------*/
 static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch);
+static bool hasFlashBankB(void);
+static bool hasFlashMemory(void);
 /*----------------------------------------------------------------------------*/
 static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch branch)
 {
@@ -15,6 +19,20 @@ static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch branch)
     return &LPC_CCU1->BRANCH[branch];
   else
     return &LPC_CCU2->BRANCH[branch - 0x200];
+}
+/*----------------------------------------------------------------------------*/
+static bool hasFlashBankB(void)
+{
+  const uint32_t type = flashReadConfigId() & FLASH_SIZE_MASK;
+
+  return type == FLASH_SIZE_256_256
+      || type == FLASH_SIZE_384_384
+      || type == FLASH_SIZE_512_512;
+}
+/*----------------------------------------------------------------------------*/
+static bool hasFlashMemory(void)
+{
+  return (flashReadId() & FLASH_AVAILABLE) != 0;
 }
 /*----------------------------------------------------------------------------*/
 void sysClockEnable(enum SysClockBranch branch)
@@ -59,6 +77,9 @@ void sysFlashDisable(unsigned int bank)
 /*----------------------------------------------------------------------------*/
 unsigned int sysFlashLatency(void)
 {
+  if (!hasFlashMemory())
+    return 0;
+
   /* Return access time for one of the banks */
   return FLASHCFG_FLASHTIM_VALUE(LPC_CREG->FLASHCFGA) + 1;
 }
@@ -80,11 +101,17 @@ unsigned int sysFlashLatency(void)
  */
 void sysFlashLatencyUpdate(unsigned int value)
 {
-  const uint32_t data = FLASHCFG_FLASHTIM(value - 1);
+  if (hasFlashMemory())
+  {
+    LPC_CREG->FLASHCFGA = (LPC_CREG->FLASHCFGA & ~FLASHCFG_FLASHTIM_MASK)
+        | FLASHCFG_FLASHTIM(value - 1);
 
-  /* Update flash access time for all flash banks */
-  LPC_CREG->FLASHCFGA = (LPC_CREG->FLASHCFGA & ~FLASHCFG_FLASHTIM_MASK) | data;
-  LPC_CREG->FLASHCFGB = (LPC_CREG->FLASHCFGB & ~FLASHCFG_FLASHTIM_MASK) | data;
+    if (hasFlashBankB())
+    {
+      LPC_CREG->FLASHCFGB = (LPC_CREG->FLASHCFGB & ~FLASHCFG_FLASHTIM_MASK)
+          | FLASHCFG_FLASHTIM(value - 1);
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 void sysFlashLatencyReset(void)

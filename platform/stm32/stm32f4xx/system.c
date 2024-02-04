@@ -125,17 +125,16 @@ unsigned int sysFlashLatency(void)
  */
 void sysFlashLatencyUpdate(unsigned int value)
 {
-  uint32_t acr = STM_FLASH->ACR & ~(FLASH_ACR_LATENCY_MASK | FLASH_ACR_PRFTEN);
-
   /* Configure wait states */
-  acr |= FLASH_ACR_LATENCY(value - 1);
+  uint32_t acr = FLASH_ACR_LATENCY(value - 1);
 
   if (value > 1)
   {
-    /* Enable prefetch buffer when the number of wait states is not zero */
-    acr |= FLASH_ACR_PRFTEN;
-    /* Enable instruction and data caches */
-    acr |= FLASH_ACR_ICEN | FLASH_ACR_DCEN;
+    /* Clear instruction and data caches */
+    STM_FLASH->ACR = FLASH_ACR_ICRST | FLASH_ACR_DCRST;
+
+    /* Enable prefetch buffer, instruction and data caches */
+    acr |= FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN;
   }
 
   STM_FLASH->ACR = acr;
