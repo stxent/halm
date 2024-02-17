@@ -4,6 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <stddef.h>
+/*----------------------------------------------------------------------------*/
 void defaultHandler(void) __attribute__((weak));
 static void emptyHandler(void);
 /*----------------------------------------------------------------------------*/
@@ -73,16 +75,16 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     RESET_ISR,
     NMI_ISR,
     HARDFAULT_ISR,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     SVCALL_ISR,
-    0,
-    0,
+    NULL,
+    NULL,
     PENDSV_ISR,
     SYSTICK_ISR,
 

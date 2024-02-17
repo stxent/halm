@@ -4,6 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <stddef.h>
+/*----------------------------------------------------------------------------*/
 void defaultHandler(void) __attribute__((weak));
 /*----------------------------------------------------------------------------*/
 /* Core Cortex-M3 IRQ handlers */
@@ -51,13 +53,13 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     MEMMANAGE_ISR,
     BUSFAULT_ISR,
     USAGEFAULT_ISR,
-    0,
-    0,
-    0,
-    0,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     SVCALL_ISR,
     DEBUGMON_ISR,
-    0,
+    NULL,
     PENDSV_ISR,
     SYSTICK_ISR,
 

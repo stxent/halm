@@ -4,6 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <stddef.h>
+/*----------------------------------------------------------------------------*/
 void defaultHandler(void) __attribute__((weak));
 /*----------------------------------------------------------------------------*/
 /* Core Cortex-M0 IRQ handlers */
@@ -44,16 +46,16 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     RESET_ISR,
     NMI_ISR,
     HARDFAULT_ISR,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
     SVCALL_ISR,
-    0,
-    0,
+    NULL,
+    NULL,
     PENDSV_ISR,
     SYSTICK_ISR,
 
@@ -89,7 +91,7 @@ __attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
     ADC_ISR,
     WDT_ISR,
     BOD_ISR,
-    0,
+    NULL,
     PIO3_ISR,
     PIO2_ISR,
     PIO1_ISR,
