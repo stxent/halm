@@ -1,0 +1,138 @@
+[
+  {
+    "address": "0x40000000",
+    "name": "AIPS1_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x7C000", "name": "AIPSTZ1", "type": "IMX_AIPSTZ_Type"},
+      {"offset": "0x80000", "name": "DCDC", "type": "IMX_DCDC_Type"},
+      {"offset": "0x84000", "name": "PIT", "type": "IMX_PIT_Type"},
+      {"offset": "0x94000", "name": "ACMP", "type": "IMX_ACMP_Type"},
+      {"offset": "0xA4000", "name": "IOMUXC_SNVS_GPR", "type": "IMX_IOMUXC_SNVS_GPR_Type"},
+      {"offset": "0xA8000", "name": "IOMUXC_SNVS", "type": "IMX_IOMUXC_SNVS_Type"},
+      {"offset": "0xAC000", "name": "IOMUXC_GPR", "type": "IMX_IOMUXC_GPR_Type"},
+      {"offset": "0xB0000", "name": "FLEXRAM", "type": "IMX_FLEXRAM_Type"},
+      {"offset": "0xB4000", "name": "EWM", "type": "IMX_EWM_Type"},
+      {"offset": "0xB8000", "name": "WDOG1", "type": "IMX_WDOG_Type"},
+      {"offset": "0xBC000", "name": "WDOG3", "type": "IMX_RTWDOG_Type"},
+      {"offset": "0xC0000", "name": "GPIO5", "type": "IMX_GPIO_Type"},
+      {"offset": "0xC4000", "name": "ADC1", "type": "IMX_ADC_Type"},
+      {"offset": "0xC8000", "name": "ADC2", "type": "IMX_ADC_Type"},
+      {"offset": "0xCC000", "name": "TRNG", "type": "IMX_TRNG_Type"},
+      {"offset": "0xD0000", "name": "WDOG2", "type": "IMX_WDOG_Type"},
+      {"offset": "0xD4000", "name": "SNVS", "type": "IMX_SNVS_Type"},
+      {"offset": "0xD8000", "name": "ANALOG", "type": "IMX_ANALOG_Type"},
+      {"offset": "0xD9000", "name": "USBPHY1", "type": "IMX_USBPHY_Type"},
+      {"offset": "0xDA000", "name": "USBPHY2", "type": "IMX_USBPHY_Type"},
+      {"offset": "0xDC000", "name": "CSU", "type": "IMX_CSU_Type"},
+      {"offset": "0xE8000", "name": "EDMA", "type": "IMX_EDMA_Type"},
+      {"offset": "0xEC000", "name": "DMAMUX", "type": "IMX_DMAMUX_Type"},
+      {"offset": "0xF4000", "name": "GPC", "type": "IMX_GPC_Type"},
+      {"offset": "0xF8000", "name": "SRC", "type": "IMX_SRC_Type"},
+      {"offset": "0xFC000", "name": "CCM", "type": "IMX_CCM_Type"}
+    ]
+  },
+  {
+    "address": "0x40100000",
+    "name": "AIPS2_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x7C000", "name": "AIPSTZ2", "type": "IMX_AIPSTZ_Type"},
+      {"offset": "0x84000", "name": "LPUART1", "type": "IMX_LPUART_Type"},
+      {"offset": "0x88000", "name": "LPUART2", "type": "IMX_LPUART_Type"},
+      {"offset": "0x8C000", "name": "LPUART3", "type": "IMX_LPUART_Type"},
+      {"offset": "0x90000", "name": "LPUART4", "type": "IMX_LPUART_Type"},
+      {"offset": "0x94000", "name": "LPUART5", "type": "IMX_LPUART_Type"},
+      {"offset": "0x98000", "name": "LPUART6", "type": "IMX_LPUART_Type"},
+      {"offset": "0x9C000", "name": "LPUART7", "type": "IMX_LPUART_Type"},
+      {"offset": "0xA0000", "name": "LPUART8", "type": "IMX_LPUART_Type"},
+      {"offset": "0xAC000", "name": "FLEXIO1", "type": "IMX_FLEXIO_Type"},
+      {"offset": "0xB0000", "name": "FLEXIO2", "type": "IMX_FLEXIO_Type"},
+      {"offset": "0xB8000", "name": "GPIO1", "type": "IMX_GPIO_Type"},
+      {"offset": "0xBC000", "name": "GPIO2", "type": "IMX_GPIO_Type"},
+      {"offset": "0xC0000", "name": "GPIO3", "type": "IMX_GPIO_Type"},
+      {"offset": "0xC4000", "name": "GPIO4", "type": "IMX_GPIO_Type"},
+      {"offset": "0xD0000", "name": "FLEXCAN1", "type": "IMX_FLEXCAN_Type"},
+      {"offset": "0xD4000", "name": "FLEXCAN2", "type": "IMX_FLEXCAN_Type"},
+      {"offset": "0xD8000", "name": "FLEXCAN3", "type": "IMX_FDCAN_Type"},
+      {"offset": "0xDC000", "name": "TMR1", "type": "IMX_TMR_Type"},
+      {"offset": "0xE0000", "name": "TMR2", "type": "IMX_TMR_Type"},
+      {"offset": "0xE4000", "name": "TMR3", "type": "IMX_TMR_Type"},
+      {"offset": "0xE8000", "name": "TMR4", "type": "IMX_TMR_Type"},
+      {"offset": "0xEC000", "name": "GPT1", "type": "IMX_GPT_Type"},
+      {"offset": "0xF0000", "name": "GPT2", "type": "IMX_GPT_Type"},
+      {"offset": "0xF4000", "name": "OCOTP", "type": "IMX_OCOTP_Type"},
+      {"offset": "0xF8000", "name": "IOMUXC", "type": "IMX_IOMUXC_Type"},
+      {"offset": "0xFC000", "name": "KPP", "type": "IMX_KPP_Type"}
+    ]
+  },
+  {
+    "address": "0x40200000",
+    "name": "AIPS3_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x7C000", "name": "AIPSTZ3", "type": "IMX_AIPSTZ_Type"},
+      {"offset": "0xA4000", "name": "FLEXSPI1", "type": "IMX_FLEXSPI_Type"},
+      {"offset": "0xA8000", "name": "FLEXSPI2", "type": "IMX_FLEXSPI_Type"},
+      {"offset": "0xB4000", "name": "PXP", "type": "IMX_PXP_Type"},
+      {"offset": "0xB8000", "name": "LCDIF", "type": "IMX_LCDIF_Type"},
+      {"offset": "0xBC000", "name": "CSI", "type": "IMX_CSI_Type"},
+      {"offset": "0xC0000", "name": "USDHC1", "type": "IMX_USDHC_Type"},
+      {"offset": "0xC4000", "name": "USDHC2", "type": "IMX_USDHC_Type"},
+      {"offset": "0xD4000", "name": "ENET2", "type": "IMX_ENET_Type"},
+      {"offset": "0xD8000", "name": "ENET1", "type": "IMX_ENET_Type"},
+      {"offset": "0xE0000", "name": "USB1", "type": "IMX_USB_Type"},
+      {"offset": "0xE0200", "name": "USB2", "type": "IMX_USB_Type"},
+      {"offset": "0xE0800", "name": "USBNC", "type": "IMX_USBNC_Type"},
+      {"offset": "0xF0000", "name": "SEMC", "type": "IMX_SEMC_Type"},
+      {"offset": "0xFC000", "name": "DCP", "type": "IMX_DCP_Type"}
+    ]
+  },
+  {
+    "address": "0x40300000",
+    "name": "AIPS4_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x7C000", "name": "AIPSTZ4", "type": "IMX_AIPSTZ_Type"},
+      {"offset": "0x80000", "name": "SPDIF", "type": "IMX_SPDIF_Type"},
+      {"offset": "0x84000", "name": "SAI1", "type": "IMX_SAI_Type"},
+      {"offset": "0x88000", "name": "SAI2", "type": "IMX_SAI_Type"},
+      {"offset": "0x8C000", "name": "SAI3", "type": "IMX_SAI_Type"},
+      {"offset": "0x94000", "name": "LPSPI1", "type": "IMX_LPSPI_Type"},
+      {"offset": "0x98000", "name": "LPSPI2", "type": "IMX_LPSPI_Type"},
+      {"offset": "0x9C000", "name": "LPSPI3", "type": "IMX_LPSPI_Type"},
+      {"offset": "0xA0000", "name": "LPSPI4", "type": "IMX_LPSPI_Type"},
+      {"offset": "0xB0000", "name": "ADC_ETC", "type": "IMX_ADC_ETC_Type"},
+      {"offset": "0xB4000", "name": "AOI1", "type": "IMX_AOI_Type"},
+      {"offset": "0xB8000", "name": "AOI2", "type": "IMX_AOI_Type"},
+      {"offset": "0xBC000", "name": "XBAR1", "type": "IMX_XBARA_Type"},
+      {"offset": "0xC0000", "name": "XBAR2", "type": "IMX_XBARB_Type"},
+      {"offset": "0xC4000", "name": "XBAR3", "type": "IMX_XBARC_Type"},
+      {"offset": "0xC8000", "name": "ENC1", "type": "IMX_ENC_Type"},
+      {"offset": "0xCC000", "name": "ENC2", "type": "IMX_ENC_Type"},
+      {"offset": "0xD0000", "name": "ENC3", "type": "IMX_ENC_Type"},
+      {"offset": "0xD4000", "name": "ENC4", "type": "IMX_ENC_Type"},
+      {"offset": "0xDC000", "name": "FLEXPWM1", "type": "IMX_FLEXPWM_Type"},
+      {"offset": "0xE0000", "name": "FLEXPWM2", "type": "IMX_FLEXPWM_Type"},
+      {"offset": "0xE4000", "name": "FLEXPWM3", "type": "IMX_FLEXPWM_Type"},
+      {"offset": "0xE8000", "name": "FLEXPWM4", "type": "IMX_FLEXPWM_Type"},
+      {"offset": "0xEC000", "name": "BEE", "type": "IMX_BEE_Type"},
+      {"offset": "0xF0000", "name": "LPI2C1", "type": "IMX_LPI2C_Type"},
+      {"offset": "0xF4000", "name": "LPI2C2", "type": "IMX_LPI2C_Type"},
+      {"offset": "0xF8000", "name": "LPI2C3", "type": "IMX_LPI2C_Type"},
+      {"offset": "0xFC000", "name": "LPI2C4", "type": "IMX_LPI2C_Type"}
+    ]
+  },
+  {
+    "address": "0x42000000",
+    "name": "AIPS5_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x00000", "name": "GPIO6", "type": "IMX_GPIO_Type"},
+      {"offset": "0x04000", "name": "GPIO7", "type": "IMX_GPIO_Type"},
+      {"offset": "0x08000", "name": "GPIO8", "type": "IMX_GPIO_Type"},
+      {"offset": "0x0C000", "name": "GPIO9", "type": "IMX_GPIO_Type"},
+      {"offset": "0x20000", "name": "FLEXIO3", "type": "IMX_FLEXIO_Type"}
+    ]
+  }
+]

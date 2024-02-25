@@ -29,6 +29,10 @@ choice
 		bool "Generic POSIX"
 		depends on CORE_X86 || CORE_X86_64
 
+	config FAMILY_IMXRT106X
+		bool "NXP i.MX RT106x"
+		depends on CORE_CORTEX_M7
+
 	config FAMILY_LPC11XX
 		bool "NXP LPC11xx"
 		depends on CORE_CORTEX_M0

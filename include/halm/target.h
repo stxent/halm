@@ -9,7 +9,13 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/target.h>
 /*----------------------------------------------------------------------------*/
-#if defined(LPC11XX)
+#if defined(IMXRT106X)
+
+#  define NVIC_IRQ_BITS   4
+#  define PLATFORM        imxrt106x
+#  define PLATFORM_TYPE   imxrt
+
+#elif defined(LPC11XX)
 
 #  define GEN_ADC         gen_1
 #  define GEN_BOD         gen_1
