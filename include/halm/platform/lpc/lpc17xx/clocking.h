@@ -54,17 +54,17 @@ struct PllConfig
 {
   /**
    * Mandatory: PLL output divisor.
-   * @n System PLL accepts values in the range of 1 to 32.
+   * @n System PLL accepts values in the range from 1 to 32.
    * @n USB PLL accepts a limited set of values: 2, 4, 8, 16.
    */
   uint16_t divisor;
   /**
    * Mandatory: input clock multiplier.
-   * @n Oscillator of the System PLL operates in the range of 275 MHz
+   * @n Oscillator of the System PLL operates in the range from 275 MHz
    * to 550 MHz, multiplier range is 6 to 512. Input frequency range is
    * 32 kHz to 50 MHz. When 32 kHz clock is used, an additional set of values
    * is available.
-   * @n Oscillator of the USB PLL operates in the range of 156 MHz to 320 MHz.
+   * @n Oscillator of the USB PLL operates in the range from 156 MHz to 320 MHz.
    * Input frequency range is 10 MHz to 25 MHz.
    */
   uint16_t multiplier;
@@ -86,7 +86,7 @@ extern const struct ClockClass * const UsbPll;
 /*----------------------------------------------------------------------------*/
 struct ClockOutputConfig
 {
-  /** Optional: input clock divisor in the range of 1 to 16. */
+  /** Optional: input clock divisor in the range from 1 to 16. */
   uint16_t divisor;
   /** Mandatory: output pin. */
   PinNumber pin;

@@ -8,6 +8,7 @@
 #include <halm/platform/lpc/iap.h>
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
+#include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch);
 static bool hasFlashBankB(void);

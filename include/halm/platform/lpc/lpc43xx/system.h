@@ -6,7 +6,7 @@
 
 /**
  * @file
- * System configuration functions for LPC43xx chips.
+ * Clock and Reset control functions for LPC43xx chips.
  */
 
 #ifndef HALM_PLATFORM_LPC_SYSTEM_H_
@@ -16,9 +16,9 @@
 #ifndef HALM_PLATFORM_LPC_LPC43XX_SYSTEM_H_
 #define HALM_PLATFORM_LPC_LPC43XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/platform/platform_defs.h>
 #include <xcore/helpers.h>
 #include <stdbool.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals register */
 enum SysBlockReset

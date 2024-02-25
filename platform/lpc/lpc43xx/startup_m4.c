@@ -14,7 +14,7 @@
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
-  static const enum SysClockBranch clocksToDisable[] = {
+  static const enum SysClockBranch CLOCKS_TO_DISABLE[] = {
       CLK_APB3_I2C1,
       CLK_APB3_DAC,
       CLK_APB3_ADC0,
@@ -72,8 +72,8 @@ void platformStartup(void)
    *   - CLK_M4_SPIFI and CLK_SPIFI are used by SPIFI boot sequence.
    */
 
-  for (size_t index = 0; index < ARRAY_SIZE(clocksToDisable); ++index)
-    sysClockDisable(clocksToDisable[index]);
+  for (size_t index = 0; index < ARRAY_SIZE(CLOCKS_TO_DISABLE); ++index)
+    sysClockDisable(CLOCKS_TO_DISABLE[index]);
 
 #ifdef CONFIG_CORE_CORTEX_FPU
   fpuEnable();

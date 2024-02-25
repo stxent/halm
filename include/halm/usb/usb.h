@@ -114,7 +114,7 @@ static inline uint8_t usbDevGetInterface(const void *device)
 /**
  * Set the address of the device.
  * @param device Pointer to an UsbDevice object.
- * @param address Device address. Must be in the range of 0 to 127.
+ * @param address Device address. Must be in the range from 0 to 127.
  */
 static inline void usbDevSetAddress(void *device, uint8_t address)
 {

@@ -74,16 +74,16 @@ static void setTime(struct Rtc *clock, time64_t timestamp)
   struct RtDateTime dateTime;
   rtMakeTime(&dateTime, timestamp);
 
-  reg->SEC = dateTime.second; /* Seconds in the range of 0 to 59 */
-  reg->MIN = dateTime.minute; /* Minutes in the range of 0 to 59 */
-  reg->HOUR = dateTime.hour; /* Hours in the range of 0 to 23 */
-  reg->DOM = dateTime.day; /* Days in the range of 1 to 31 */
-  reg->MONTH = dateTime.month; /* Month value in the range of 1 to 12 */
-  reg->YEAR = dateTime.year; /* Year value in the range of 0 to 4095 */
+  reg->SEC = dateTime.second; /* Seconds in the range from 0 to 59 */
+  reg->MIN = dateTime.minute; /* Minutes in the range from 0 to 59 */
+  reg->HOUR = dateTime.hour; /* Hours in the range from 0 to 23 */
+  reg->DOM = dateTime.day; /* Days in the range from 1 to 31 */
+  reg->MONTH = dateTime.month; /* Month value in the range from 1 to 12 */
+  reg->YEAR = dateTime.year; /* Year value in the range from 0 to 4095 */
 
   /* Unused fields */
-  reg->DOW = 0; /* Day of week in the range of 0 to 6 */
-  reg->DOY = 0; /* Day of year in the range of 0 to 366 */
+  reg->DOW = 0; /* Day of week in the range from 0 to 6 */
+  reg->DOY = 0; /* Day of year in the range from 0 to 366 */
 
   /* Enable clock */
   reg->CCR = CCR_CLKEN;

@@ -18,14 +18,14 @@ struct SpifiConfig
   /**
    * Optional: minimum chip select high time before a next command,
    * measured in serial clock periods. In case of zero value a maximum possible
-   * delay will be used. When set, it should be in the range of 1 to 16.
+   * delay will be used. When set, it should be in the range from 1 to 16.
    */
   uint32_t delay;
   /**
    * Optional: maximum chip select low time after a last memory access in
    * memory-mapped mode, measured in serial clock periods. In case of zero
    * value a maximum possible timeout will be used. When set, it should be
-   * in the range of 1 to 65536.
+   * in the range from 1 to 65536.
    */
   uint32_t timeout;
   /** Mandatory: chip select pin. */

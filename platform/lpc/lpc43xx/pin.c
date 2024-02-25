@@ -368,7 +368,7 @@ struct Pin pinInit(PinNumber id)
 
   if (group != NULL)
   {
-    struct PinDescriptor begin = {
+    const struct PinDescriptor begin = {
         .number = PIN_TO_OFFSET(group->begin),
         .port = PIN_TO_PORT(group->begin)
     };

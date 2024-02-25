@@ -94,7 +94,7 @@ const struct ClockClass * const ClockOutput =
         .disable = branchDisable,
         .enable = clockOutputEnable,
         .frequency = branchFrequency,
-        .ready = branchReady,
+        .ready = branchReady
     },
     .branch = CLOCK_BRANCH_OUTPUT
 };
@@ -105,7 +105,7 @@ const struct ClockClass * const MainClock =
         .disable = branchDisable,
         .enable = branchEnable,
         .frequency = branchFrequency,
-        .ready = branchReady,
+        .ready = branchReady
     },
     .branch = CLOCK_BRANCH_MAIN
 };
@@ -116,7 +116,7 @@ const struct ClockClass * const WdtClock =
         .disable = branchDisable,
         .enable = branchEnable,
         .frequency = branchFrequency,
-        .ready = branchReady,
+        .ready = branchReady
     },
     .branch = CLOCK_BRANCH_WDT
 };

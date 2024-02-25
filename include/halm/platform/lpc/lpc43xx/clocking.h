@@ -68,9 +68,9 @@ struct GenericDividerConfig
 {
   /**
    * Mandatory: integer divider value.
-   * @n The divider value for the Divider A should be in the range of 1 to 4.
-   * @n Divider values for Dividers B, C, D should be in the range of 1 to 16.
-   * @n The divider value for the Divider E should be in the range of 1 to 256.
+   * @n The divider value for the Divider A should be in the range from 1 to 4.
+   * @n Divider values for Dividers B, C, D should be in the range from 1 to 16.
+   * @n The divider value for the Divider E should be in the range from 1 to 256.
    */
   uint16_t divisor;
   /** Mandatory: clock source. */
@@ -116,10 +116,10 @@ struct PllConfig
   uint16_t divisor;
   /**
    * Mandatory: input clock multiplier.
-   * @n Audio PLL and USB PLL operate in the range of 275 MHz to 550 MHz,
+   * @n Audio PLL and USB PLL operate in the range from 275 MHz to 550 MHz,
    * multiplier range is 1 to 32768. To get the best phase-noise and
    * jitter performance, the even value has to be used.
-   * @n System PLL operates in the range of 156 MHz to 320 MHz,
+   * @n System PLL operates in the range from 156 MHz to 320 MHz,
    * multiplier range is 1 to 256.
    */
   uint16_t multiplier;

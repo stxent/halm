@@ -61,7 +61,7 @@ struct PllConfig
    */
   uint16_t divisor;
   /**
-   * Mandatory: input clock multiplier, result should be in the range of
+   * Mandatory: input clock multiplier, result should be in the range from
    * 200 MHz to 500 MHz. Multiplier range is 2 to 513. Note that the input
    * frequency range is 4 to 24 MHz.
    */
@@ -111,13 +111,13 @@ struct GenericClockConfig
 
 struct DividedClockConfig
 {
-  /** Mandatory: input clock divisor in the range of 1 to 255. */
+  /** Mandatory: input clock divisor in the range from 1 to 255. */
   uint16_t divisor;
 };
 
 struct ExtendedClockConfig
 {
-  /** Mandatory: input clock divisor in the range of 1 to 255. */
+  /** Mandatory: input clock divisor in the range from 1 to 255. */
   uint16_t divisor;
   /** Mandatory: clock source. */
   enum ClockSource source;

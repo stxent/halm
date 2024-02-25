@@ -97,7 +97,7 @@ struct PllConfig
    */
   uint16_t divisor;
   /**
-   * Mandatory: input clock multiplier, result should be in the range of
+   * Mandatory: input clock multiplier, result should be in the range from
    * 156 MHz to 320 MHz. Multiplier range is 1 to 32. Note that the input
    * frequency range is 10 to 25 MHz.
    */
@@ -119,7 +119,7 @@ extern const struct ClockClass * const UsbPll;
 /*----------------------------------------------------------------------------*/
 struct ClockOutputConfig
 {
-  /** Optional: input clock divisor in the range of 1 to 255. */
+  /** Optional: input clock divisor in the range from 1 to 255. */
   uint16_t divisor;
   /** Mandatory: output pin. */
   PinNumber pin;
@@ -132,7 +132,7 @@ extern const struct ClockClass * const ClockOutput;
 /*----------------------------------------------------------------------------*/
 struct GenericClockConfig
 {
-  /** Optional: input clock divisor in the range of 1 to 255. */
+  /** Optional: input clock divisor in the range from 1 to 255. */
   uint16_t divisor;
   /** Mandatory: clock source. */
   enum ClockSource source;
