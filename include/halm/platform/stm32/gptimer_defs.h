@@ -71,7 +71,7 @@ enum TimerFlags
   TIMER_FLAG_32_BIT   = 0x01,
   TIMER_FLAG_DMA      = 0x02,
   TIMER_FLAG_UPDOWN   = 0x04,
-  TIMER_FLAG_INVERSE  = 0x08
+  TIMER_FLAG_CONTROL  = 0x08
 };
 /*------------------Control Register 1----------------------------------------*/
 /* Counter enable */

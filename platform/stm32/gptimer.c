@@ -120,7 +120,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   timer->frequency = config->frequency;
   gpTimerSetFrequency(&timer->base, timer->frequency);
 
-  if (timer->base.flags & TIMER_FLAG_INVERSE)
+  if (timer->base.flags & TIMER_FLAG_CONTROL)
     reg->BDTR |= BDTR_MOE;
 
 #ifdef CONFIG_PLATFORM_STM32_GPTIMER_PM

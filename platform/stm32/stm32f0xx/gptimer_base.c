@@ -50,7 +50,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reset = RST_TIM1,
         .irq = TIM1_BRK_UP_TRG_COM_IRQ,
         .channel = TIM1,
-        .flags = TIMER_FLAG_DMA | TIMER_FLAG_UPDOWN | TIMER_FLAG_INVERSE
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_UPDOWN | TIMER_FLAG_CONTROL
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM2
@@ -110,7 +110,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reset = RST_TIM15,
         .irq = TIM15_IRQ,
         .channel = TIM15,
-        .flags = TIMER_FLAG_DMA | TIMER_FLAG_INVERSE
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_CONTROL
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM16
@@ -120,7 +120,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reset = RST_TIM16,
         .irq = TIM16_IRQ,
         .channel = TIM16,
-        .flags = TIMER_FLAG_DMA | TIMER_FLAG_INVERSE
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_CONTROL
     },
 #endif
 #ifdef CONFIG_PLATFORM_STM32_TIM17
@@ -130,7 +130,7 @@ static const struct TimerBlockDescriptor timerBlockEntries[] = {
         .reset = RST_TIM17,
         .irq = TIM17_IRQ,
         .channel = TIM17,
-        .flags = TIMER_FLAG_DMA | TIMER_FLAG_INVERSE
+        .flags = TIMER_FLAG_DMA | TIMER_FLAG_CONTROL
     }
 #endif
 };

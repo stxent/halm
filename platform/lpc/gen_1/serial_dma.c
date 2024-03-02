@@ -544,10 +544,14 @@ static size_t serialRead(void *object, void *buffer, size_t length)
 {
   struct SerialDma * const interface = object;
   uint8_t *position = buffer;
+  IrqState state;
 
-  IrqState state = irqSave();
-  readResidue(interface);
-  irqRestore(state);
+  if (length > byteQueueSize(&interface->rxQueue))
+  {
+    state = irqSave();
+    readResidue(interface);
+    irqRestore(state);
+  }
 
   while (length && !byteQueueEmpty(&interface->rxQueue))
   {
