@@ -68,24 +68,23 @@ void spiSetMode(struct SpiBase *interface, uint8_t mode)
   reg->CTL = ctl;
 }
 /*----------------------------------------------------------------------------*/
-void spiSetRate(struct SpiBase *interface, uint32_t rate)
+bool spiSetRate(struct SpiBase *interface, uint32_t rate)
 {
   const uint32_t clock = spiGetClock(interface);
+
+  if (!rate || !clock)
+    return false;
+
   NM_SPI_Type * const reg = interface->reg;
+  uint32_t divisor = (clock + (rate - 1)) / rate - 1;
 
-  if (rate && clock)
-  {
-    uint32_t divisor = (clock + (rate - 1)) / rate - 1;
+  if (divisor > CLKDIV_DIVIDER_MASK)
+    return false;
 
-    if (divisor > CLKDIV_DIVIDER_MASK)
-      divisor = CLKDIV_DIVIDER_MASK;
-
-    /*
-    * The time interval must be larger than or equal 8 PCLK cycles between
-    * releasing SPI IP software reset and setting this clock divider register.
-    */
-    reg->CLKDIV = divisor;
-  }
-  else
-    reg->CLKDIV = 0;
+  /*
+  * The time interval must be larger than or equal 8 PCLK cycles between
+  * releasing SPI IP software reset and setting this clock divider register.
+  */
+  reg->CLKDIV = divisor;
+  return true;
 }

@@ -181,10 +181,11 @@ static enum Result spiInit(void *object, const void *configBase)
   /* Set frame size */
   reg->CR0 = CR0_DSS(8);
 
+  /* Set the desired data rate */
+  if (!sspSetRate(&interface->base, interface->rate))
+    return E_VALUE;
   /* Set SPI mode */
   sspSetMode(&interface->base, config->mode);
-  /* Set the desired data rate */
-  sspSetRate(&interface->base, interface->rate);
 
 #ifdef CONFIG_PLATFORM_LPC_SSP_PM
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
@@ -302,9 +303,17 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
 
 #ifdef CONFIG_PLATFORM_LPC_SSP_RC
     case IF_RATE:
-      interface->rate = *(const uint32_t *)data;
-      sspSetRate(&interface->base, interface->rate);
-      return E_OK;
+    {
+      const uint32_t rate = *(const uint32_t *)data;
+
+      if (sspSetRate(&interface->base, rate))
+      {
+        interface->rate = rate;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
+    }
 #endif
 
     case IF_ZEROCOPY:

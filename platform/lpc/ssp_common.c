@@ -69,32 +69,23 @@ void sspSetMode(struct SspBase *interface, uint8_t mode)
   reg->CR0 = cr0;
 }
 /*----------------------------------------------------------------------------*/
-void sspSetRate(struct SspBase *interface, uint32_t rate)
+bool sspSetRate(struct SspBase *interface, uint32_t rate)
 {
+  if (!rate)
+    return false;
+
+  const uint32_t clock = sspGetClock(interface);
+  const uint32_t divisor = (clock + (rate - 1)) / rate;
+  uint32_t prescaler0 = (divisor + 255) >> 8;
+
+  if (prescaler0 < 2 || prescaler0 > 254)
+    return false;
+  prescaler0 = (prescaler0 + 1) & 0xFE;
+
   LPC_SSP_Type * const reg = interface->reg;
-  uint32_t cpsr;
-  uint32_t cr0 = reg->CR0 & ~CR0_SCR_MASK;
+  const uint32_t prescaler1 = (divisor + (prescaler0 - 1)) / prescaler0;
 
-  if (rate)
-  {
-    const uint32_t clock = sspGetClock(interface);
-    const uint32_t divisor = (clock + (rate - 1)) / rate;
-    uint32_t prescaler0 = (divisor + 255) >> 8;
-
-    if (prescaler0 > 254)
-      prescaler0 = 254;
-    if (prescaler0 < 2)
-      prescaler0 = 2;
-    prescaler0 = (prescaler0 + 1) & 0xFE;
-
-    const uint32_t prescaler1 = (divisor + (prescaler0 - 1)) / prescaler0;
-
-    cpsr = prescaler0;
-    cr0 |= CR0_SCR(prescaler1 - 1);
-  }
-  else
-    cpsr = 0;
-
-  reg->CPSR = cpsr;
-  reg->CR0 = cr0;
+  reg->CPSR = prescaler0;
+  reg->CR0 = (reg->CR0 & ~CR0_SCR_MASK) | CR0_SCR(prescaler1 - 1);
+  return true;
 }

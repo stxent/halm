@@ -56,7 +56,7 @@ void qspiConfigPins(const struct QspiBaseConfig *);
 uint8_t qspiGetMode(const struct QspiBase *);
 uint32_t qspiGetRate(const struct QspiBase *);
 void qspiSetMode(struct QspiBase *, uint8_t);
-void qspiSetRate(struct QspiBase *, uint32_t);
+bool qspiSetRate(struct QspiBase *, uint32_t);
 
 /* Platform-specific functions */
 uint32_t qspiGetClock(const struct QspiBase *);

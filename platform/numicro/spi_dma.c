@@ -279,7 +279,8 @@ static enum Result spiInit(void *object, const void *configBase)
   reg->STATUS = STATUS_UNITIF | STATUS_RXOVIF | STATUS_RXTOIF;
 
   /* Set the desired data rate */
-  spiSetRate(&interface->base, interface->rate);
+  if (!spiSetRate(&interface->base, interface->rate))
+    return E_VALUE;
   /* Set SPI mode */
   spiSetMode(&interface->base, config->mode);
 
@@ -400,9 +401,17 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
 
 #ifdef CONFIG_PLATFORM_NUMICRO_SPI_RC
     case IF_RATE:
-      interface->rate = *(const uint32_t *)data;
-      spiSetRate(&interface->base, interface->rate);
-      return E_OK;
+    {
+      const uint32_t rate = *(const uint32_t *)data;
+
+      if (spiSetRate(&interface->base, rate))
+      {
+        interface->rate = rate;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
+    }
 #endif
 
     case IF_ZEROCOPY:

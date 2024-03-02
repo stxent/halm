@@ -53,7 +53,7 @@ void uartConfigPins(const struct UartBaseConfig *);
 enum SerialParity uartGetParity(const struct UartBase *);
 uint32_t uartGetRate(const struct UartBase *);
 void uartSetParity(struct UartBase *, enum SerialParity);
-void uartSetRate(struct UartBase *, uint32_t);
+bool uartSetRate(struct UartBase *, uint32_t);
 
 /* Platform-specific functions */
 uint32_t uartGetClock(const struct UartBase *);

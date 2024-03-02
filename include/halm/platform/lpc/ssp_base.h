@@ -55,7 +55,7 @@ void sspConfigPins(const struct SspBaseConfig *);
 uint8_t sspGetMode(const struct SspBase *);
 uint32_t sspGetRate(const struct SspBase *);
 void sspSetMode(struct SspBase *, uint8_t);
-void sspSetRate(struct SspBase *, uint32_t);
+bool sspSetRate(struct SspBase *, uint32_t);
 
 /* Platform-specific functions */
 uint32_t sspGetClock(const struct SspBase *);

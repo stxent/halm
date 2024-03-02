@@ -176,10 +176,10 @@ static enum Result oneWireInit(void *object, const void *configBase)
   if (!byteQueueInit(&interface->txQueue, TX_QUEUE_LENGTH))
     return E_MEMORY;
 
-  if ((res = uartCalcRate(object, RATE_DATA, &interface->dataRate)) != E_OK)
-    return res;
-  if ((res = uartCalcRate(object, RATE_RESET, &interface->resetRate)) != E_OK)
-    return res;
+  if (!uartCalcRate(&interface->base, RATE_DATA, &interface->dataRate))
+    return E_VALUE;
+  if (!uartCalcRate(&interface->base, RATE_RESET, &interface->resetRate))
+    return E_VALUE;
 
   interface->base.handler = interruptHandler;
 
@@ -198,7 +198,7 @@ static enum Result oneWireInit(void *object, const void *configBase)
   reg->IER = IER_RBRINTEN | IER_THREINTEN;
   /* Transmitter is enabled by default */
 
-  uartSetRate(object, interface->resetRate);
+  uartSetRate(&interface->base, interface->resetRate);
 
   irqSetPriority(interface->base.irq, config->priority);
   irqEnable(interface->base.irq);

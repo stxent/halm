@@ -66,18 +66,24 @@ void uartSetParity(struct UartBase *interface, enum SerialParity parity)
   reg->CR1 = value;
 }
 /*----------------------------------------------------------------------------*/
-void uartSetRate(struct UartBase *interface, uint32_t rate)
+bool uartSetRate(struct UartBase *interface, uint32_t rate)
 {
-  assert(rate > 0);
+  if (!rate)
+    return false;
 
   STM_USART_Type * const reg = interface->reg;
   const uint32_t clock = uartGetClock(interface);
   const uint32_t divisor = (clock + (rate >> 1)) / rate;
   const uint32_t enabled = reg->CR1 & CR1_UE;
 
-  assert(divisor <= BRR_DIV_MAX);
+  if (divisor <= BRR_DIV_MAX)
+  {
+    reg->CR1 &= ~CR1_UE;
+    reg->BRR = BRR_DIV(divisor);
+    reg->CR1 |= enabled;
 
-  reg->CR1 &= ~CR1_UE;
-  reg->BRR = BRR_DIV(divisor);
-  reg->CR1 |= enabled;
+    return true;
+  }
+  else
+    return false;
 }

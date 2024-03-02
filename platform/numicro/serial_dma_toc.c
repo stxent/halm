@@ -351,8 +351,9 @@ static enum Result serialInit(void *object, const void *configBase)
   reg->FIFO = FIFO_RXRST | FIFO_TXRST;
   reg->TOUT = 0;
 
-  uartSetRate(object, config->rate);
-  uartSetParity(object, config->parity);
+  if (!uartSetRate(&interface->base, config->rate))
+    return E_VALUE;
+  uartSetParity(&interface->base, config->parity);
 
   reg->FUNCSEL = FUNCSEL_FUNCSEL(FUNCSEL_UART);
   reg->INTEN = INTEN_TXPDMAEN | INTEN_RXPDMAEN;
@@ -489,12 +490,16 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
     {
       const uint32_t rate = *(const uint32_t *)data;
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_PM
-      interface->rate = rate;
-#endif /* CONFIG_PLATFORM_NUMICRO_UART_PM */
+      if (uartSetRate(&interface->base, rate))
+      {
+#  ifdef CONFIG_PLATFORM_NUMICRO_UART_PM
+        interface->rate = rate;
+#  endif /* CONFIG_PLATFORM_NUMICRO_UART_PM */
 
-      uartSetRate(&interface->base, rate);
-      return E_OK;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
     }
 
     default:

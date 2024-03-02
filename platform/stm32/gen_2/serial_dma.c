@@ -332,8 +332,9 @@ static enum Result serialInit(void *object, const void *configBase)
   /* Disable the peripheral */
   reg->CR1 = 0;
 
-  uartSetRate(object, config->rate);
-  uartSetParity(object, config->parity);
+  if (!uartSetRate(&interface->base, config->rate))
+    return E_VALUE;
+  uartSetParity(&interface->base, config->parity);
 
   /* Enable DMA mode for transmission and reception */
   reg->CR3 = CR3_DMAR | CR3_DMAT;
@@ -474,12 +475,16 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
     {
       const uint32_t rate = *(const uint32_t *)data;
 
+      if (uartSetRate(&interface->base, rate))
+      {
 #  ifdef CONFIG_PLATFORM_STM32_UART_PM
-      interface->rate = rate;
+        interface->rate = rate;
 #  endif /* CONFIG_PLATFORM_STM32_UART_PM */
 
-      uartSetRate(&interface->base, rate);
-      return E_OK;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
     }
 
     default:

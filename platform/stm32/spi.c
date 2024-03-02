@@ -266,10 +266,11 @@ static enum Result spiInit(void *object, const void *configBase)
   /* Set master mode */
   reg->CR1 = CR1_MSTR;
 
+  /* Set the desired data rate */
+  if (!spiSetRate(&interface->base, interface->rate))
+    return E_VALUE;
   /* Set SPI mode */
   spiSetMode(&interface->base, config->mode);
-  /* Set desired baud rate */
-  spiSetRate(object, interface->rate);
 
 #ifdef CONFIG_PLATFORM_STM32_SPI_PM
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
@@ -386,9 +387,17 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
 
 #ifdef CONFIG_PLATFORM_STM32_SPI_RC
     case IF_RATE:
-      interface->rate = *(const uint32_t *)data;
-      spiSetRate(object, interface->rate);
-      return E_OK;
+    {
+      const uint32_t rate = *(const uint32_t *)data;
+
+      if (spiSetRate(&interface->base, rate))
+      {
+        interface->rate = rate;
+        return E_OK;
+      }
+      else
+        return E_VALUE;
+    }
 #endif
 
     case IF_ZEROCOPY:

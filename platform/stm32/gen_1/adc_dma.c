@@ -173,6 +173,7 @@ static void stopConversion(struct AdcDma *interface)
   reg->CR2 = 0;
   reg->CR1 = 0;
   dmaDisable(interface->dma);
+  dmaClear(interface->dma);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)

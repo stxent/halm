@@ -48,7 +48,7 @@ static void powerStateHandler(void *object, enum PmState state)
     struct UartRateConfig rateConfig;
 
     /* Recalculate and set baud rate */
-    if (uartCalcRate(&interface->base, interface->rate, &rateConfig) == E_OK)
+    if (uartCalcRate(&interface->base, interface->rate, &rateConfig))
       uartSetRate(&interface->base, rateConfig);
   }
 }
@@ -72,8 +72,8 @@ static enum Result serialInit(void *object, const void *configBase)
   if ((res = UartBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  if ((res = uartCalcRate(object, config->rate, &rateConfig)) != E_OK)
-    return res;
+  if (!uartCalcRate(&interface->base, config->rate, &rateConfig))
+    return E_VALUE;
 
   interface->rate = config->rate;
 
@@ -88,8 +88,8 @@ static enum Result serialInit(void *object, const void *configBase)
   reg->IER = 0;
   /* Transmitter is enabled by default thus TER register is left untouched */
 
-  uartSetParity(object, config->parity);
-  uartSetRate(object, rateConfig);
+  uartSetParity(&interface->base, config->parity);
+  uartSetRate(&interface->base, rateConfig);
 
 #ifdef CONFIG_PLATFORM_LPC_UART_PM
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
@@ -149,7 +149,7 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
   switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_PARITY:
-      uartSetParity(object, (enum SerialParity)(*(const uint8_t *)data));
+      uartSetParity(&interface->base, (enum SerialParity)(*(const uint8_t *)data));
       return E_OK;
 
     default:
@@ -161,15 +161,16 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
     case IF_RATE:
     {
       struct UartRateConfig rateConfig;
-      const enum Result res = uartCalcRate(object, *(const uint32_t *)data,
-          &rateConfig);
+      const uint32_t rate = *(const uint32_t *)data;
 
-      if (res == E_OK)
+      if (uartCalcRate(&interface->base, rate, &rateConfig))
       {
-        interface->rate = *(const uint32_t *)data;
-        uartSetRate(object, rateConfig);
+        interface->rate = rate;
+        uartSetRate(&interface->base, rateConfig);
+        return E_OK;
       }
-      return res;
+      else
+        return E_VALUE;
     }
 
     default:

@@ -41,11 +41,11 @@ void uartConfigPins(const struct UartBaseConfig *config)
   }
 }
 /*----------------------------------------------------------------------------*/
-enum Result uartCalcRate(const struct UartBase *interface, uint32_t rate,
+bool uartCalcRate(const struct UartBase *interface, uint32_t rate,
     struct UartRateConfig *output)
 {
   if (!rate)
-    return E_VALUE;
+    return false;
 
   const uint32_t clock = uartGetClock(interface);
   const uint32_t divisor = ((clock >> 4) + (rate >> 1)) / rate;
@@ -56,10 +56,10 @@ enum Result uartCalcRate(const struct UartBase *interface, uint32_t rate,
     output->fraction = 0x10;
     /* TODO Add fractional part calculation */
 
-    return E_OK;
+    return true;
   }
   else
-    return E_ERROR;
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 enum SerialParity uartGetParity(const struct UartBase *interface)

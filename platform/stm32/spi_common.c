@@ -81,9 +81,10 @@ void spiSetMode(struct SpiBase *interface, uint8_t mode)
   reg->CR1 = cr1;
 }
 /*----------------------------------------------------------------------------*/
-void spiSetRate(struct SpiBase *interface, uint32_t rate)
+bool spiSetRate(struct SpiBase *interface, uint32_t rate)
 {
-  assert(rate != 0);
+  if (!rate)
+    return false;
 
   const uint32_t clock = spiGetClock(interface);
   uint32_t divisor = (clock + (rate - 1)) / rate;
@@ -95,10 +96,11 @@ void spiSetRate(struct SpiBase *interface, uint32_t rate)
     --prescalerExp;
   }
 
-  /* Limit the prescaler by PCLK / 256 */
   if (prescalerExp > 7)
-    prescalerExp = 7;
+    return false;
 
   STM_SPI_Type * const reg = interface->reg;
   reg->CR1 = (reg->CR1 & ~CR1_BR_MASK) | CR1_BR(prescalerExp);
+
+  return true;
 }

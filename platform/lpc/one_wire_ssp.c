@@ -390,7 +390,8 @@ static enum Result oneWireInit(void *object, const void *configBase)
   /* Disable all interrupts */
   reg->IMSC = 0;
 
-  sspSetRate(object, RATE_RESET);
+  if (!sspSetRate(&interface->base, RATE_RESET))
+    return E_VALUE;
 
   /* Enable peripheral */
   reg->CR1 = CR1_SSE;

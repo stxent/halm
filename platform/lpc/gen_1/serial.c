@@ -154,7 +154,7 @@ static void powerStateHandler(void *object, enum PmState state)
     struct UartRateConfig rateConfig;
 
     /* Recalculate and set baud rate */
-    if (uartCalcRate(&interface->base, interface->rate, &rateConfig) == E_OK)
+    if (uartCalcRate(&interface->base, interface->rate, &rateConfig))
       uartSetRate(&interface->base, rateConfig);
   }
 }
@@ -178,8 +178,8 @@ static enum Result serialInit(void *object, const void *configBase)
   if ((res = UartBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  if ((res = uartCalcRate(object, config->rate, &rateConfig)) != E_OK)
-    return res;
+  if (!uartCalcRate(&interface->base, config->rate, &rateConfig))
+    return E_VALUE;
 
   if (!byteQueueInit(&interface->rxQueue, config->rxLength))
     return E_MEMORY;
@@ -205,8 +205,8 @@ static enum Result serialInit(void *object, const void *configBase)
   reg->IER = IER_RBRINTEN | IER_THREINTEN;
   /* Transmitter is enabled by default thus TER register is left untouched */
 
-  uartSetParity(object, config->parity);
-  uartSetRate(object, rateConfig);
+  uartSetParity(&interface->base, config->parity);
+  uartSetRate(&interface->base, rateConfig);
 
 #ifdef CONFIG_PLATFORM_LPC_UART_PM
   interface->rate = config->rate;
@@ -329,17 +329,18 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
     {
       struct UartRateConfig rateConfig;
       const uint32_t rate = *(const uint32_t *)data;
-      const enum Result res = uartCalcRate(&interface->base, rate, &rateConfig);
 
-      if (res == E_OK)
+      if (uartCalcRate(&interface->base, rate, &rateConfig))
       {
 #  ifdef CONFIG_PLATFORM_LPC_UART_PM
         interface->rate = rate;
 #  endif /* CONFIG_PLATFORM_LPC_UART_PM */
 
         uartSetRate(&interface->base, rateConfig);
+        return E_OK;
       }
-      return res;
+      else
+        return E_VALUE;
     }
 
     default:
