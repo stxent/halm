@@ -11,6 +11,7 @@
 #ifndef HALM_PLATFORM_IMXRT_IMXRT106X_PIN_H_
 #define HALM_PLATFORM_IMXRT_IMXRT106X_PIN_H_
 /*----------------------------------------------------------------------------*/
+#include <halm/platform/imxrt/imxrt106x/pin_daisy.h>
 #include <halm/platform/platform_defs.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -60,6 +61,7 @@ void *pinAddress(struct Pin);
 struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
+void pinSetDaisyChain(enum PinDaisyIndex, uint8_t);
 void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum PinPull);
 void pinSetSlewRate(struct Pin, enum PinSlewRate);

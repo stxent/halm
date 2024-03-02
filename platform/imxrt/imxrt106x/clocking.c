@@ -10,7 +10,9 @@
 #include <assert.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
+#define INT_OSC_FREQUENCY     24000000
 #define EXT_OSC_FREQUENCY     24000000
+#define OSC_FREQUENCY         (EXT_OSC_FREQUENCY)
 #define TICK_RATE(frequency)  ((frequency) / 1000)
 /*----------------------------------------------------------------------------*/
 struct PfdClockClass
@@ -20,12 +22,17 @@ struct PfdClockClass
 };
 /*----------------------------------------------------------------------------*/
 static void clockDisableStub(const void *);
-// static bool clockReadyStub(const void *);
+static bool clockReadyStub(const void *);
 
 static void extOscDisable(const void *);
 static enum Result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
 static bool extOscReady(const void *);
+
+static void intOscDisable(const void *);
+static enum Result intOscEnable(const void *, const void *);
+static uint32_t intOscFrequency(const void *);
+static bool intOscReady(const void *);
 
 static enum Result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
@@ -49,12 +56,28 @@ static void pll3Disable(const void *);
 static enum Result pll3Enable(const void *, const void *);
 static uint32_t pll3Frequency(const void *);
 static bool pll3Ready(const void *);
+
+static enum Result flexSpi1ClockEnable(const void *, const void *);
+static uint32_t flexSpi1ClockFrequency(const void *);
+
+static enum Result flexSpi2ClockEnable(const void *, const void *);
+static uint32_t flexSpi2ClockFrequency(const void *);
+
+static enum Result uartClockEnable(const void *, const void *);
+static uint32_t uartClockFrequency(const void *);
 /*----------------------------------------------------------------------------*/
 const struct ClockClass * const ExternalOsc = &(const struct ClockClass){
     .disable = extOscDisable,
     .enable = extOscEnable,
     .frequency = extOscFrequency,
     .ready = extOscReady
+};
+
+const struct ClockClass * const InternalOsc = &(const struct ClockClass){
+    .disable = intOscDisable,
+    .enable = intOscEnable,
+    .frequency = intOscFrequency,
+    .ready = intOscReady
 };
 
 const struct ClockClass * const MainClock = &(const struct ClockClass){
@@ -187,22 +210,42 @@ const struct ClockClass * const Usb1PllPfd3 =
     },
     .pfd = 3
 };
+
+const struct ClockClass * const FlexSpi1Clock = &(const struct ClockClass){
+    .disable = clockDisableStub,
+    .enable = flexSpi1ClockEnable,
+    .frequency = flexSpi1ClockFrequency,
+    .ready = clockReadyStub
+};
+
+const struct ClockClass * const FlexSpi2Clock = &(const struct ClockClass){
+    .disable = clockDisableStub,
+    .enable = flexSpi2ClockEnable,
+    .frequency = flexSpi2ClockFrequency,
+    .ready = clockReadyStub
+};
+
+const struct ClockClass * const UartClock = &(const struct ClockClass){
+    .disable = clockDisableStub,
+    .enable = uartClockEnable,
+    .frequency = uartClockFrequency,
+    .ready = clockReadyStub
+};
 /*----------------------------------------------------------------------------*/
-uint32_t ticksPerSecond = TICK_RATE(EXT_OSC_FREQUENCY);
+uint32_t ticksPerSecond = TICK_RATE(OSC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
 static void clockDisableStub(const void *clockBase __attribute__((unused)))
 {
 }
 /*----------------------------------------------------------------------------*/
-// static bool clockReadyStub(const void *clockBase __attribute__((unused)))
-// {
-//   // TODO
-//   return true;
-// }
+static bool clockReadyStub(const void *clockBase __attribute__((unused)))
+{
+  return true;
+}
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *clockBase __attribute__((unused)))
 {
-  IMX_CCM_ANALOG->MISC0 |= MISC0_XTAL_24M_PWD;
+  IMX_XTALOSC24M->MISC0_SET = MISC0_XTAL_24M_PWD;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
@@ -210,34 +253,70 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
 {
   const struct ExternalOscConfig * const config = configBase;
 
-  if (config != NULL && config->current > OSC_CURRENT_MINUS_37P5)
+  if (config != NULL && (config->current > OSC_CURRENT_MINUS_37P5
+      || config->delay > OSC_DELAY_2MS))
+  {
     return E_VALUE;
+  }
 
-  uint32_t misc0 = IMX_CCM_ANALOG->MISC0;
-
-  misc0 &= ~(MISC0_OSC_I_MASK | MISC0_XTAL_24M_PWD);
-  misc0 |= MISC0_OSC_XTALOK_EN;
+  uint32_t misc = IMX_XTALOSC24M->MISC0 & ~MISC0_XTAL_24M_PWD;
+  uint32_t pwr = IMX_XTALOSC24M->LOWPWR_CTRL;
 
   if (config != NULL)
-    misc0 |= MISC0_OSC_I(config->current);
+  {
+    misc = (misc & ~MISC0_OSC_I_MASK) | MISC0_OSC_I(config->current);
+    pwr &= ~LOWPWR_CTRL_XTALOSC_PWRUP_DELAY_MASK;
 
-  IMX_CCM_ANALOG->MISC0 = misc0;
+    if (config->delay != OSC_DELAY_DEFAULT)
+      pwr |= LOWPWR_CTRL_XTALOSC_PWRUP_DELAY(config->delay - 1);
+    else
+      pwr |= LOWPWR_CTRL_XTALOSC_PWRUP_DELAY(XTALOSC_PWRUP_DELAY_2MS);
+  }
+
+  IMX_XTALOSC24M->LOWPWR_CTRL = pwr;
+  IMX_XTALOSC24M->MISC0 = misc;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
 {
-  return extOscReady(NULL) ? EXT_OSC_FREQUENCY : 0;
+  return extOscReady(NULL) ? OSC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool extOscReady(const void *clockBase __attribute__((unused)))
 {
-  const uint32_t misc0 = IMX_CCM_ANALOG->MISC0;
-
-  if (misc0 & MISC0_XTAL_24M_PWD)
+  if (IMX_XTALOSC24M->MISC0 & MISC0_XTAL_24M_PWD)
     return false;
 
-  return misc0 & MISC0_OSC_XTALOK;
+  return (IMX_XTALOSC24M->LOWPWR_CTRL & LOWPWR_CTRL_XTALOSC_PWRUP_STAT) != 0;
+}
+/*----------------------------------------------------------------------------*/
+static void intOscDisable(const void *clockBase __attribute__((unused)))
+{
+  IMX_XTALOSC24M->LOWPWR_CTRL_CLR = LOWPWR_CTRL_OSC_SEL;
+  IMX_XTALOSC24M->LOWPWR_CTRL_CLR = LOWPWR_CTRL_RC_OSC_EN;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result intOscEnable(const void *clockBase __attribute__((unused)),
+    const void *configBase __attribute__((unused)))
+{
+  IMX_XTALOSC24M->OSC_CONFIG2_SET = OSC_CONFIG2_ENABLE_1M;
+  IMX_XTALOSC24M->OSC_CONFIG2_CLR = OSC_CONFIG2_MUX_1M;
+
+  IMX_XTALOSC24M->LOWPWR_CTRL_SET = LOWPWR_CTRL_RC_OSC_EN;
+  IMX_XTALOSC24M->LOWPWR_CTRL_SET = LOWPWR_CTRL_OSC_SEL;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
+{
+  return (IMX_XTALOSC24M->LOWPWR_CTRL & LOWPWR_CTRL_RC_OSC_EN) ?
+      INT_OSC_FREQUENCY : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool intOscReady(const void *clockBase __attribute__((unused)))
+{
+  return (IMX_XTALOSC24M->LOWPWR_CTRL & LOWPWR_CTRL_RC_OSC_EN) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result mainClockEnable(const void *clockBase
@@ -359,7 +438,7 @@ static uint32_t periphClockFrequency(const void *clockBase
 
     if (source == PERIPH_CLK2_SEL_OSC)
     {
-      return EXT_OSC_FREQUENCY / divisor;
+      return OSC_FREQUENCY / divisor;
     }
     else
     {
@@ -436,7 +515,7 @@ static uint32_t pll1Frequency(const void *clockBase __attribute__((unused)))
   const uint32_t divisor = PLL_ARM_DIV_SELECT_VALUE(value);
 
   if ((value & (PLL_POWERDOWN | PLL_LOCK)) == PLL_LOCK)
-    return EXT_OSC_FREQUENCY * divisor / 2;
+    return OSC_FREQUENCY * divisor / 2;
   else
     return 0;
 }
@@ -516,10 +595,10 @@ static uint32_t pll2Frequency(const void *clockBase)
     if (pfdControl & PLL_PFD_PFDn_CLKGATE(clock->pfd))
       return 0;
 
-    return EXT_OSC_FREQUENCY * pllDivisor / pfdDivisor * 18;
+    return OSC_FREQUENCY * pllDivisor / pfdDivisor * 18;
   }
   else
-    return EXT_OSC_FREQUENCY * pllDivisor;
+    return OSC_FREQUENCY * pllDivisor;
 }
 /*----------------------------------------------------------------------------*/
 static bool pll2Ready(const void *clockBase)
@@ -607,10 +686,10 @@ static uint32_t pll3Frequency(const void *clockBase)
     if (pfdControl & PLL_PFD_PFDn_CLKGATE(clock->pfd))
       return 0;
 
-    return EXT_OSC_FREQUENCY * pllDivisor / pfdDivisor * 18;
+    return OSC_FREQUENCY * pllDivisor / pfdDivisor * 18;
   }
   else
-    return EXT_OSC_FREQUENCY * pllDivisor;
+    return OSC_FREQUENCY * pllDivisor;
 }
 /*----------------------------------------------------------------------------*/
 static bool pll3Ready(const void *clockBase)
@@ -625,4 +704,190 @@ static bool pll3Ready(const void *clockBase)
     return !(IMX_CCM_ANALOG->PFD_480 & PLL_PFD_PFDn_CLKGATE(clock->pfd));
 
   return true;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result flexSpi1ClockEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
+{
+  const struct ExtendedClockConfig * const config = configBase;
+  assert(config != NULL);
+
+  if (config->divisor > 8)
+    return E_VALUE;
+
+  uint32_t cscmr1 = IMX_CCM->CSCMR1
+      & ~(CSCMR1_FLEXSPI_CLK_SEL_MASK | CSCMR1_FLEXSPI_PODF_MASK);
+
+  switch (config->source)
+  {
+    case CLOCK_SYSTEM_PLL_PFD2:
+      cscmr1 |= CSCMR1_FLEXSPI_CLK_SEL(FLEXSPI_CLK_SEL_PLL2_PFD2);
+      break;
+
+    case CLOCK_USB1_PLL:
+      cscmr1 |= CSCMR1_FLEXSPI_CLK_SEL(FLEXSPI_CLK_SEL_PLL3_SW);
+      break;
+
+    case CLOCK_USB1_PLL_PFD0:
+      cscmr1 |= CSCMR1_FLEXSPI_CLK_SEL(FLEXSPI_CLK_SEL_PLL3_PFD0);
+      break;
+
+    case CLOCK_SEMC:
+      cscmr1 |= CSCMR1_FLEXSPI_CLK_SEL(FLEXSPI_CLK_SEL_SEMC_ROOT_PRE);
+      break;
+
+    default:
+      return E_VALUE;
+  }
+
+  if (config->divisor > 1)
+    cscmr1 |= CSCMR1_FLEXSPI_PODF(config->divisor - 1);
+
+  IMX_CCM->CSCMR1 = cscmr1;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t flexSpi1ClockFrequency(const void *clockBase
+    __attribute__((unused)))
+{
+  const uint32_t cscmr1 = IMX_CCM->CSCMR1;
+  const uint32_t divisor = CSCMR1_FLEXSPI_PODF_VALUE(cscmr1) + 1;
+  uint32_t frequency = 0;
+
+  switch (CSCMR1_FLEXSPI_CLK_SEL_VALUE(cscmr1))
+  {
+    case FLEXSPI_CLK_SEL_SEMC_ROOT_PRE:
+      // TODO
+      break;
+
+    case FLEXSPI_CLK_SEL_PLL3_SW:
+      frequency = pll3Frequency(Usb1Pll);
+      break;
+
+    case FLEXSPI_CLK_SEL_PLL2_PFD2:
+      frequency = pll2Frequency(SystemPllPfd2);
+      break;
+
+    case FLEXSPI_CLK_SEL_PLL3_PFD0:
+      frequency = pll3Frequency(Usb1PllPfd0);
+      break;
+
+    default:
+      break;
+  }
+
+  return frequency / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result flexSpi2ClockEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
+{
+  const struct ExtendedClockConfig * const config = configBase;
+  assert(config != NULL);
+
+  if (config->divisor > 8)
+    return E_VALUE;
+
+  uint32_t cbcmr = IMX_CCM->CBCMR
+      & ~(CBCMR_FLEXSPI2_CLK_SEL_MASK | CBCMR_FLEXSPI2_PODF_MASK);
+
+  switch (config->source)
+  {
+    case CLOCK_SYSTEM_PLL:
+      cbcmr |= CBCMR_FLEXSPI2_CLK_SEL(FLEXSPI2_CLK_SEL_PLL2);
+      break;
+
+    case CLOCK_SYSTEM_PLL_PFD2:
+      cbcmr |= CBCMR_FLEXSPI2_CLK_SEL(FLEXSPI2_CLK_SEL_PLL2_PFD2);
+      break;
+
+    case CLOCK_USB1_PLL_PFD0:
+      cbcmr |= CBCMR_FLEXSPI2_CLK_SEL(FLEXSPI2_CLK_SEL_PLL3_PFD0);
+      break;
+
+    case CLOCK_USB1_PLL_PFD1:
+      cbcmr |= CBCMR_FLEXSPI2_CLK_SEL(FLEXSPI2_CLK_SEL_PLL3_PFD1);
+      break;
+
+    default:
+      return E_VALUE;
+  }
+
+  if (config->divisor > 1)
+    cbcmr |= CBCMR_FLEXSPI2_PODF(config->divisor - 1);
+
+  IMX_CCM->CBCMR = cbcmr;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t flexSpi2ClockFrequency(const void *clockBase
+    __attribute__((unused)))
+{
+  const uint32_t cbcmr = IMX_CCM->CBCMR;
+  const uint32_t divisor = CBCMR_FLEXSPI2_PODF_VALUE(cbcmr) + 1;
+  uint32_t frequency = 0;
+
+  switch (CBCMR_FLEXSPI2_CLK_SEL_VALUE(cbcmr))
+  {
+    case FLEXSPI2_CLK_SEL_PLL2_PFD2:
+      frequency = pll2Frequency(SystemPllPfd2);
+      break;
+
+    case FLEXSPI2_CLK_SEL_PLL3_PFD0:
+      frequency = pll3Frequency(Usb1PllPfd0);
+      break;
+
+    case FLEXSPI2_CLK_SEL_PLL3_PFD1:
+      frequency = pll3Frequency(Usb1PllPfd1);
+      break;
+
+    case FLEXSPI2_CLK_SEL_PLL2:
+      frequency = pll2Frequency(SystemPll);
+      break;
+
+    default:
+      break;
+  }
+
+  return frequency / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result uartClockEnable(const void *clockBase
+    __attribute__((unused)), const void *configBase)
+{
+  const struct ExtendedClockConfig * const config = configBase;
+  assert(config != NULL);
+
+  if (config->divisor > 64)
+    return E_VALUE;
+
+  uint32_t cscdr1 = IMX_CCM->CSCDR1 & ~CSCDR1_UART_CLK_PODF_MASK;
+
+  if (config->source == CLOCK_OSC)
+    cscdr1 |= CSCDR1_UART_CLK_SEL;
+  else if (config->source == CLOCK_USB1_PLL)
+    cscdr1 &= ~CSCDR1_UART_CLK_SEL;
+  else
+    return E_VALUE;
+
+  if (config->divisor > 1)
+    cscdr1 |= CSCDR1_UART_CLK_PODF(config->divisor - 1);
+
+  IMX_CCM->CSCDR1 = cscdr1;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t uartClockFrequency(const void *clockBase
+    __attribute__((unused)))
+{
+  const uint32_t cscdr1 = IMX_CCM->CSCDR1;
+  const uint32_t divisor = CSCDR1_UART_CLK_PODF_VALUE(cscdr1) + 1;
+
+  if (!(cscdr1 & CSCDR1_UART_CLK_SEL))
+  {
+    const uint32_t frequency = pll3Frequency(Usb1Pll);
+    return frequency / (6 * divisor);
+  }
+  else
+    return OSC_FREQUENCY / divisor;
 }

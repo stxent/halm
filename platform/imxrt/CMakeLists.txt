@@ -17,6 +17,11 @@ if(CONFIG_PM)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pm.c")
 endif()
 
+if(CONFIG_PLATFORM_IMXRT_LPUART_BASE)
+    list(APPEND SOURCE_FILES "lpuart_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/lpuart_base.c")
+endif()
+
 if(CONFIG_PLATFORM_IMXRT_SERIAL)
     list(APPEND SOURCE_FILES "serial.c")
 endif()

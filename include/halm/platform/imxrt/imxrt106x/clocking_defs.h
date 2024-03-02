@@ -230,7 +230,7 @@ enum
 #define CSCDR1_UART_CLK_PODF_VALUE(reg) \
     FIELD_VALUE((reg), CSCDR1_UART_CLK_PODF_MASK, 0)
 
-/* Set to use PLL3 80M, clear to use OSC clock */
+/* Set to use OSC clock, clear to use PLL3 80M */
 #define CSCDR1_UART_CLK_SEL             BIT(6)
 
 #define CSCDR1_USDHC1_PODF_MASK         BIT_FIELD(MASK(3), 11)
@@ -605,7 +605,7 @@ enum
 
 #define PLL_PFD_PFDn_STABLE(channel)    BIT((channel) * 8 + 6)
 #define PLL_PFD_PFDn_CLKGATE(channel)   BIT((channel) * 8 + 7)
-/*------------------Miscellaneous register 0----------------------------------*/
+/*------------------XTALOSC 24MHz Miscellaneous register 0--------------------*/
 enum
 {
   OSC_I_NOMINAL     = 0,
@@ -646,6 +646,8 @@ enum
 #define MISC0_REFTOP_VBGADJ_VALUE(reg) \
     FIELD_VALUE((reg), MISC0_REFTOP_VBGADJ_MASK, 4)
 
+#define MISC0_REFTOP_VBGUP              BIT(7)
+
 #define MISC0_STOP_MODE_CONFIG_MASK     BIT_FIELD(MASK(2), 10)
 #define MISC0_STOP_MODE_CONFIG(value)   BIT_FIELD((value), 10)
 #define MISC0_STOP_MODE_CONFIG_VALUE(reg) \
@@ -671,7 +673,8 @@ enum
 #define MISC0_RTC_XTAL_SOURCE           BIT(29)
 /* Power down 24MHz crystal oscillator */
 #define MISC0_XTAL_24M_PWD              BIT(30)
-/*------------------Miscellaneous register 1----------------------------------*/
+#define MISC0_VID_PLL_PREDIV            BIT(31)
+/*------------------Analog Miscellaneous register 1---------------------------*/
 enum
 {
   LVDS1_CLK_SEL_ARM_PLL   = 0,
@@ -707,8 +710,17 @@ enum
 #define MISC1_IRQ_TEMPHIGH              BIT(29)
 #define MISC1_IRQ_ANA_BO                BIT(30)
 #define MISC1_IRQ_DIG_BO                BIT(31)
-/*------------------Miscellaneous register 2----------------------------------*/
-// TODO Enums
+/*------------------Analog Miscellaneous register 2---------------------------*/
+enum
+{
+  REG_STEP_TIME_64_CLOCKS   = 0,
+  REG_STEP_TIME_128_CLOCKS  = 1,
+  REG_STEP_TIME_256_CLOCKS  = 2,
+  REG_STEP_TIME_512_CLOCKS  = 3
+};
+
+// TODO More Enums
+
 #define MISC2_REG0_BO_OFFSET_MASK       BIT_FIELD(MASK(3), 0)
 #define MISC2_REG0_BO_OFFSET(value)     BIT_FIELD((value), 0)
 #define MISC2_REG0_BO_OFFSET_VALUE(reg) \
@@ -759,5 +771,77 @@ enum
 #define MISC2_VIDEO_DIV(value)          BIT_FIELD((value), 30)
 #define MISC2_VIDEO_DIV_VALUE(reg) \
     FIELD_VALUE((reg), MISC2_VIDEO_DIV_MASK, 30)
+/*------------------XTALOSC 24MHz Low Power Control---------------------------*/
+enum
+{
+  XTALOSC_PWRUP_DELAY_0MS25 = 0,
+  XTALOSC_PWRUP_DELAY_0MS5  = 1,
+  XTALOSC_PWRUP_DELAY_1MS   = 2,
+  XTALOSC_PWRUP_DELAY_2MS   = 3
+};
+
+#define LOWPWR_CTRL_RC_OSC_EN           BIT(0)
+#define LOWPWR_CTRL_OSC_SEL             BIT(4)
+#define LOWPWR_CTRL_LPBG_SEL            BIT(5)
+#define LOWPWR_CTRL_LPBG_TEST           BIT(6)
+#define LOWPWR_CTRL_REFTOP_IBIAS_OFF    BIT(7)
+#define LOWPWR_CTRL_L1_PWRGATE          BIT(8)
+#define LOWPWR_CTRL_L2_PWRGATE          BIT(9)
+#define LOWPWR_CTRL_CPU_PWRGATE         BIT(10)
+#define LOWPWR_CTRL_DISPLAY_PWRGATE     BIT(11)
+#define LOWPWR_CTRL_RCOSC_CG_OVERRIDE   BIT(13)
+
+#define LOWPWR_CTRL_XTALOSC_PWRUP_DELAY_MASK \
+    BIT_FIELD(MASK(2), 14)
+#define LOWPWR_CTRL_XTALOSC_PWRUP_DELAY(value) \
+    BIT_FIELD((value), 14)
+#define LOWPWR_CTRL_XTALOSC_PWRUP_DELAY_VALUE(reg) \
+    FIELD_VALUE((reg), LOWPWR_CTRL_XTALOSC_PWRUP_DELAY_MASK, 14)
+
+#define LOWPWR_CTRL_XTALOSC_PWRUP_STAT  BIT(16)
+#define LOWPWR_CTRL_MIX_PWRGATE         BIT(17)
+#define LOWPWR_CTRL_GPU_PWRGATE         BIT(18)
+/*------------------XTALOSC 24MHz Oscillator Configuration Register 0---------*/
+#define OSC_CONFIG0_START               BIT(0)
+#define OSC_CONFIG0_ENABLE              BIT(1)
+#define OSC_CONFIG0_BYPASS              BIT(2)
+#define OSC_CONFIG0_INVERT              BIT(3)
+
+#define OSC_CONFIG0_RC_OSC_PROG_MASK    BIT_FIELD(MASK(8), 4)
+#define OSC_CONFIG0_RC_OSC_PROG(value)  BIT_FIELD((value), 4)
+#define OSC_CONFIG0_RC_OSC_PROG_VALUE(reg) \
+    FIELD_VALUE((reg), OSC_CONFIG0_RC_OSC_PROG_MASK, 4)
+
+#define OSC_CONFIG0_HYST_PLUS_MASK      BIT_FIELD(MASK(4), 12)
+#define OSC_CONFIG0_HYST_PLUS(value)    BIT_FIELD((value), 12)
+#define OSC_CONFIG0_HYST_PLUS_VALUE(reg) \
+    FIELD_VALUE((reg), OSC_CONFIG0_HYST_PLUS_MASK, 12)
+
+#define OSC_CONFIG0_HYST_MINUS_MASK     BIT_FIELD(MASK(4), 16)
+#define OSC_CONFIG0_HYST_MINUS(value)   BIT_FIELD((value), 16)
+#define OSC_CONFIG0_HYST_MINUS_VALUE(reg) \
+    FIELD_VALUE((reg), OSC_CONFIG0_HYST_MINUS_MASK, 16)
+
+#define OSC_CONFIG0_RC_OSC_PROG_CUR_MASK \
+    BIT_FIELD(MASK(8), 24)
+#define OSC_CONFIG0_RC_OSC_PROG_CUR(value) \
+    BIT_FIELD((value), 24)
+#define OSC_CONFIG0_RC_OSC_PROG_CUR_VALUE(reg) \
+    FIELD_VALUE((reg), OSC_CONFIG0_RC_OSC_PROG_CUR_MASK, 24)
+/*------------------XTALOSC 24MHz Oscillator Configuration Register 1---------*/
+#define OSC_CONFIG1_COUNT_RC_TRG_MASK   BIT_FIELD(MASK(12), 0)
+#define OSC_CONFIG1_COUNT_RC_TRG(value) BIT_FIELD((value), 0)
+#define OSC_CONFIG1_COUNT_RC_TRG_VALUE(reg) \
+    FIELD_VALUE((reg), OSC_CONFIG1_COUNT_RC_TRG_MASK, 0)
+
+#define OSC_CONFIG1_COUNT_RC_CUR_MASK   BIT_FIELD(MASK(12), 20)
+#define OSC_CONFIG1_COUNT_RC_CUR(value) BIT_FIELD((value), 20)
+#define OSC_CONFIG1_COUNT_RC_CUR_VALUE(reg) \
+    FIELD_VALUE((reg), OSC_CONFIG1_COUNT_RC_CUR_MASK, 20)
+/*------------------XTALOSC 24MHz Oscillator Configuration Register 2---------*/
+#define OSC_CONFIG2_COUNT_1M_TRG        BIT(0)
+#define OSC_CONFIG2_ENABLE_1M           BIT(16)
+#define OSC_CONFIG2_MUX_1M              BIT(17)
+#define OSC_CONFIG2_CLK_1M_ERR_FL       BIT(31)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_IMXRT_IMXRT106X_CLOCKING_DEFS_H_ */

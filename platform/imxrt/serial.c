@@ -1,12 +1,12 @@
 /*
  * serial.c
- * Copyright (C) 2023 xent
+ * Copyright (C) 2024 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/numicro/serial.h>
-#include <halm/platform/numicro/uart_base.h>
-#include <halm/platform/numicro/uart_defs.h>
+#include <halm/platform/imxrt/lpuart_base.h>
+#include <halm/platform/imxrt/lpuart_defs.h>
+#include <halm/platform/imxrt/serial.h>
 #include <halm/pm.h>
 #include <xcore/containers/byte_queue.h>
 #include <stdbool.h>
@@ -14,7 +14,7 @@
 /*----------------------------------------------------------------------------*/
 struct Serial
 {
-  struct UartBase base;
+  struct LpUartBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
@@ -23,13 +23,17 @@ struct Serial
   struct ByteQueue rxQueue;
   /* Output queue */
   struct ByteQueue txQueue;
+  /* Input FIFO depth */
+  uint8_t rxFifoDepth;
+  /* Output FIFO depth */
+  uint8_t txFifoDepth;
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_PM
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_PM
   /* Desired baud rate */
   uint32_t rate;
 #endif
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_WATERMARK
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_WATERMARK
   /* Maximum available frames in the receive queue */
   size_t rxWatermark;
   /* Maximum pending frames in the transmit queue */
@@ -41,7 +45,7 @@ static void interruptHandler(void *);
 static void updateRxWatermark(struct Serial *, size_t);
 static void updateTxWatermark(struct Serial *, size_t);
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_PM
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_PM
 static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
@@ -52,7 +56,7 @@ static enum Result serialSetParam(void *, int, const void *);
 static size_t serialRead(void *, void *, size_t);
 static size_t serialWrite(void *, const void *, size_t);
 
-#ifndef CONFIG_PLATFORM_NUMICRO_UART_NO_DEINIT
+#ifndef CONFIG_PLATFORM_IMXRT_LPUART_NO_DEINIT
 static void serialDeinit(void *);
 #else
 #  define serialDeinit deletedDestructorTrap
@@ -73,57 +77,57 @@ const struct InterfaceClass * const Serial = &(const struct InterfaceClass){
 static void interruptHandler(void *object)
 {
   struct Serial * const interface = object;
-  NM_UART_Type * const reg = interface->base.reg;
+  IMX_LPUART_Type * const reg = interface->base.reg;
   bool event = false;
 
-  const uint32_t fifo = reg->FIFOSTS;
-  const uint32_t status = reg->INTSTS;
+  const uint32_t stat = reg->STAT;
+  reg->STAT = stat;
 
   /* Handle received data */
-  if (!(fifo & FIFOSTS_RXEMPTY))
+  if (stat & STAT_RDRF)
   {
-    size_t count = FIFOSTS_RXPTR_VALUE(fifo);
+    uint32_t pending = interface->rxFifoDepth > 1 ?
+        WATER_RXCOUNT_VALUE(reg->WATER) : 1;
 
-    do
+    while (pending--)
     {
-      const uint8_t data = reg->DAT;
+      const uint8_t data = reg->DATA;
 
-      /* Received bytes will be dropped when the queue becomes full */
+      /* Received bytes will be dropped when queue becomes full */
       if (!byteQueueFull(&interface->rxQueue))
         byteQueuePushBack(&interface->rxQueue, data);
     }
-    while (--count);
   }
 
   /* Handle reception timeout */
-  if (status & INTSTS_RXTOIF)
+  if (stat & STAT_IDLE)
   {
-    /* New incoming data word or draining of RX FIFO will clear RXTOIF */
+    /* Idle flag is already cleared */
     event = true;
   }
 
   /* Send queued data */
-  if (!(fifo & FIFOSTS_TXFULL))
+  if (reg->CTRL & CTRL_TIE)
   {
-    const size_t txQueueSize = byteQueueSize(&interface->txQueue);
+    uint32_t available = interface->txFifoDepth > 1 ?
+        (interface->txFifoDepth - WATER_TXCOUNT_VALUE(reg->WATER)) : 1;
 
-    if (txQueueSize > 0)
+    updateTxWatermark(interface, byteQueueSize(&interface->txQueue));
+
+    if (available)
     {
-      updateTxWatermark(interface, txQueueSize);
+      if (available > byteQueueSize(&interface->txQueue))
+        available = byteQueueSize(&interface->txQueue);
 
-      /* Fill FIFO with a selected burst size */
-      const size_t pending = FIFOSTS_TXPTR_VALUE(fifo);
-      size_t burst = MIN(txQueueSize, interface->base.depth - pending);
+      while (available--)
+        reg->DATA = byteQueuePopFront(&interface->txQueue);
 
-      /* Call user handler when transmit queue is empty */
-      if (burst == txQueueSize)
+      if (byteQueueEmpty(&interface->txQueue))
       {
-        reg->INTEN &= ~INTEN_THREIEN;
+        /* User function will be called when the transmit queue is empty */
+        reg->CTRL &= ~CTRL_TIE;
         event = true;
       }
-
-      while (burst--)
-        reg->DAT = byteQueuePopFront(&interface->txQueue);
     }
   }
 
@@ -134,13 +138,13 @@ static void interruptHandler(void *object)
   updateRxWatermark(interface, rxQueueSize);
   event = event || rxQueueSize >= rxQueueLevel;
 
-  if (event && interface->callback != NULL)
+  if (interface->callback && event)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static void updateRxWatermark(struct Serial *interface, size_t level)
 {
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_WATERMARK
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_WATERMARK
   if (level > interface->rxWatermark)
     interface->rxWatermark = level;
 #else
@@ -151,7 +155,7 @@ static void updateRxWatermark(struct Serial *interface, size_t level)
 /*----------------------------------------------------------------------------*/
 static void updateTxWatermark(struct Serial *interface, size_t level)
 {
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_WATERMARK
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_WATERMARK
   if (level > interface->txWatermark)
     interface->txWatermark = level;
 #else
@@ -160,7 +164,7 @@ static void updateTxWatermark(struct Serial *interface, size_t level)
 #endif
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_PM
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_PM
 static void powerStateHandler(void *object, enum PmState state)
 {
   if (state == PM_ACTIVE)
@@ -176,17 +180,16 @@ static enum Result serialInit(void *object, const void *configBase)
   const struct SerialConfig * const config = configBase;
   assert(config != NULL);
 
-  const struct UartBaseConfig baseConfig = {
+  const struct LpUartBaseConfig baseConfig = {
       .rx = config->rx,
       .tx = config->tx,
-      .priority = config->priority,
       .channel = config->channel
   };
   struct Serial * const interface = object;
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = UartBase->init(interface, &baseConfig)) != E_OK)
+  if ((res = LpUartBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
   if (!byteQueueInit(&interface->rxQueue, config->rxLength))
@@ -197,56 +200,85 @@ static enum Result serialInit(void *object, const void *configBase)
   interface->base.handler = interruptHandler;
   interface->callback = NULL;
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_WATERMARK
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_WATERMARK
   interface->rxWatermark = 0;
   interface->txWatermark = 0;
 #endif
 
-  NM_UART_Type * const reg = interface->base.reg;
+  IMX_LPUART_Type * const reg = interface->base.reg;
+  uint32_t depth;
 
-  /* Disable interrupts, disable receiver and transmitter */
-  reg->INTEN = 0;
-  reg->FUNCSEL = FUNCSEL_TXRXDIS;
-  while (reg->FIFOSTS & FIFOSTS_TXRXACT);
+  /* Reset the peripheral */
+  reg->GLOBAL = GLOBAL_RST;
+  reg->GLOBAL = 0;
 
-  reg->LINE = LINE_WLS(WLS_8BIT);
-  reg->FIFO = FIFO_RXRST | FIFO_TXRST | FIFO_RFITL(RX_TRIGGER_LEVEL_8);
-  reg->TOUT = TOUT_TOIC(40) | TOUT_DLY(0);
+  /* Set oversampling ratio of 16, 1 stop bit, 8 data bits */
+  reg->BAUD = BAUD_OSR(15);
+  /* Enable RX interrupt */
+  reg->CTRL = CTRL_RIE;
+
+  /* Configure RX FIFO */
+  depth = FIFO_RXFIFOSIZE_VALUE(reg->FIFO);
+  interface->rxFifoDepth = depth > 0 ? (1 << (depth + 1)) : 1;
+
+  if (interface->rxFifoDepth > 1)
+  {
+    depth = MIN(interface->rxFifoDepth >> 1, 3);
+    reg->WATER |= WATER_RXWATER(depth);
+    reg->FIFO |= FIFO_RXFE | FIFO_RXIDEN(RXIDEN_4_CHARS) | FIFO_RXFLUSH;
+  }
+  else
+  {
+    reg->CTRL |= CTRL_ILT | CTRL_IDLECFG(IDLECFG_4_CHARS) | CTRL_ILIE;
+  }
+
+  /* Configure TX FIFO */
+  depth = FIFO_TXFIFOSIZE_VALUE(reg->FIFO);
+  interface->txFifoDepth = depth > 0 ? (1 << (depth + 1)) : 1;
+
+  if (interface->txFifoDepth > 1)
+  {
+    depth = MIN(interface->txFifoDepth >> 1, 3);
+    reg->WATER |= WATER_TXWATER(depth);
+    reg->FIFO |= FIFO_TXFE | FIFO_TXFLUSH;
+  }
 
   if (!uartSetRate(&interface->base, config->rate))
     return E_VALUE;
   uartSetParity(&interface->base, config->parity);
 
-  reg->FUNCSEL = FUNCSEL_FUNCSEL(FUNCSEL_UART);
-  reg->INTEN = INTEN_RDAIEN | INTEN_RXTOIEN | INTEN_TOCNTEN;
-
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_PM
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_PM
   interface->rate = config->rate;
 
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)
     return res;
 #endif
 
+  /* Enable receiver and transmitter */
+  reg->CTRL |= CTRL_RE | CTRL_TE;
+
+  irqSetPriority(interface->base.irq, config->priority);
+  irqEnable(interface->base.irq);
+
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-#ifndef CONFIG_PLATFORM_NUMICRO_UART_NO_DEINIT
+#ifndef CONFIG_PLATFORM_IMXRT_LPUART_NO_DEINIT
 static void serialDeinit(void *object)
 {
   struct Serial * const interface = object;
-  NM_UART_Type * const reg = interface->base.reg;
+  IMX_LPUART_Type * const reg = interface->base.reg;
 
-  reg->INTEN = 0;
-  reg->FUNCSEL = FUNCSEL_TXRXDIS;
-  while (reg->FIFOSTS & FIFOSTS_TXRXACT);
+  irqDisable(interface->base.irq);
+  reg->CTRL = 0;
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_PM
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_PM
   pmUnregister(interface);
 #endif
 
   byteQueueDeinit(&interface->txQueue);
   byteQueueDeinit(&interface->rxQueue);
-  UartBase->deinit(interface);
+  LpUartBase->deinit(interface);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -263,7 +295,7 @@ static enum Result serialGetParam(void *object, int parameter, void *data)
 {
   struct Serial * const interface = object;
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_RC
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_RC
   switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_PARITY:
@@ -295,7 +327,7 @@ static enum Result serialGetParam(void *object, int parameter, void *data)
       *(size_t *)data = byteQueueSize(&interface->txQueue);
       return E_OK;
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_WATERMARK
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_WATERMARK
     case IF_RX_WATERMARK:
       *(size_t *)data = interface->rxWatermark;
       return E_OK;
@@ -305,7 +337,7 @@ static enum Result serialGetParam(void *object, int parameter, void *data)
       return E_OK;
 #endif
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_RC
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_RC
     case IF_RATE:
       *(uint32_t *)data = uartGetRate(&interface->base);
       return E_OK;
@@ -320,7 +352,7 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
 {
   struct Serial * const interface = object;
 
-#ifdef CONFIG_PLATFORM_NUMICRO_UART_RC
+#ifdef CONFIG_PLATFORM_IMXRT_LPUART_RC
   switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_PARITY:
@@ -343,9 +375,9 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
 
       if (uartSetRate(&interface->base, rate))
       {
-#  ifdef CONFIG_PLATFORM_NUMICRO_UART_PM
+#  ifdef CONFIG_PLATFORM_IMXRT_LPUART_PM
         interface->rate = rate;
-#  endif /* CONFIG_PLATFORM_NUMICRO_UART_PM */
+#  endif /* CONFIG_PLATFORM_IMXRT_LPUART_PM */
 
         return E_OK;
       }
@@ -356,13 +388,13 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
     default:
       return E_INVALID;
   }
-#else /* CONFIG_PLATFORM_NUMICRO_UART_RC */
+#else /* CONFIG_PLATFORM_IMXRT_LPUART_RC */
   (void)interface;
   (void)parameter;
   (void)data;
 
   return E_INVALID;
-#endif /* CONFIG_PLATFORM_NUMICRO_UART_RC */
+#endif /* CONFIG_PLATFORM_IMXRT_LPUART_RC */
 }
 /*----------------------------------------------------------------------------*/
 static size_t serialRead(void *object, void *buffer, size_t length)
@@ -412,12 +444,12 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
     length -= count;
   }
 
-  NM_UART_Type * const reg = interface->base.reg;
+  IMX_LPUART_Type * const reg = interface->base.reg;
 
   /* Invoke interrupt when the transmitter is idle */
   irqDisable(interface->base.irq);
-  if (!byteQueueEmpty(&interface->txQueue) && !(reg->INTEN & INTEN_THREIEN))
-    reg->INTEN |= INTEN_THREIEN;
+  if (!byteQueueEmpty(&interface->txQueue) && !(reg->CTRL & CTRL_TIE))
+    reg->CTRL |= CTRL_TIE;
   irqEnable(interface->base.irq);
 
   return position - (const uint8_t *)buffer;

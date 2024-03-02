@@ -37,7 +37,9 @@ enum ClockSource
   CLOCK_USB1_PLL_PFD2, /* PLL3 PFD2 */
   CLOCK_USB1_PLL_PFD3, /* PLL3 PFD3 */
   CLOCK_USB2_PLL, /* PLL7 */
-  CLOCK_VIDEO_PLL /* PLL5 */
+  CLOCK_VIDEO_PLL, /* PLL5 */
+
+  CLOCK_SEMC
 } __attribute__((packed));
 /*----------------------------------------------------------------------------*/
 enum ExternalOscCurrent
@@ -48,14 +50,28 @@ enum ExternalOscCurrent
   OSC_CURRENT_MINUS_37P5
 } __attribute__((packed));
 
+enum ExternalOscDelay
+{
+  OSC_DELAY_DEFAULT,
+  OSC_DELAY_0MS25,
+  OSC_DELAY_0MS5,
+  OSC_DELAY_1MS,
+  OSC_DELAY_2MS
+} __attribute__((packed));
+
 struct ExternalOscConfig
 {
-  /** Optional: bias current in the 24MHz oscillator. */
+  /** Optional: bias current of the 24MHz oscillator. */
   enum ExternalOscCurrent current;
+  /** Optional: startup delay of the 24MHz oscillator. */
+  enum ExternalOscDelay delay;
 };
 
 /* Requires an ExternalOscConfig structure */
 extern const struct ClockClass * const ExternalOsc;
+
+/* May be initialized with the null pointer */
+extern const struct ClockClass * const InternalOsc;
 /*----------------------------------------------------------------------------*/
 struct GenericClockConfig
 {
@@ -63,6 +79,11 @@ struct GenericClockConfig
   uint16_t divisor;
 };
 
+/* IPG_CLK_ROOT - IPG bus clock */
+extern const struct ClockClass * const IpgClock;
+/* AHB_CLK_ROOT - ARM Core clock */
+extern const struct ClockClass * const MainClock;
+/*----------------------------------------------------------------------------*/
 struct ExtendedClockConfig
 {
   /** Optional: clock divider value. */
@@ -71,14 +92,16 @@ struct ExtendedClockConfig
   enum ClockSource source;
 };
 
-/* IPG_CLK_ROOT - IPG bus clock */
-extern const struct ClockClass * const IpgClock;
-/* AHB_CLK_ROOT - ARM Core clock */
-extern const struct ClockClass * const MainClock;
+/* FLEXSPI_CLK_ROOT */
+extern const struct ClockClass * const FlexSpi1Clock;
+/* FLEXSPI2_CLK_ROOT */
+extern const struct ClockClass * const FlexSpi2Clock;
 /* PERIPH_CLK */
 extern const struct ClockClass * const PeriphClock;
 /* PERCLK_CLK_ROOT - PIT, GPT */
 extern const struct ClockClass * const TimerClock;
+/* UART_CLK_ROOT */
+extern const struct ClockClass * const UartClock;
 /*----------------------------------------------------------------------------*/
 struct PllConfig
 {
@@ -93,6 +116,7 @@ struct PllConfig
   uint16_t divisor;
 };
 
+/* Require a PllConfig structure */
 extern const struct ClockClass * const ArmPll; /* PLL1 */
 extern const struct ClockClass * const AudioPll; /* PLL4 */
 extern const struct ClockClass * const EthernetPll; /* PLL6 */

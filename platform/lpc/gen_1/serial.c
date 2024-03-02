@@ -112,7 +112,7 @@ static void interruptHandler(void *object)
     }
   }
 
-  /* User handler will be called when receive queue is half-full */
+  /* User function will be called when receive queue is half-full */
   const size_t rxQueueLevel = byteQueueCapacity(&interface->rxQueue) / 2;
   const size_t rxQueueSize = byteQueueSize(&interface->rxQueue);
 

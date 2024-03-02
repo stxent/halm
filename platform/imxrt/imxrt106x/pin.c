@@ -167,7 +167,7 @@ static void commonPinInit(struct Pin pin)
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
   pinSetType(pin, PIN_PUSHPULL);
-  pinSetSlewRate(pin, PIN_SLEW_NORMAL);
+  pinSetSlewRate(pin, PIN_SLEW_FAST);
 }
 /*----------------------------------------------------------------------------*/
 static void enablePortClock(struct Pin pin)
@@ -260,6 +260,18 @@ void pinOutput(struct Pin pin, bool value)
     pinWrite(pin, value);
     ((IMX_GPIO_Type *)pin.reg)->GDIR |= 1UL << pin.number;
   }
+}
+/*----------------------------------------------------------------------------*/
+void pinSetDaisyChain(enum PinDaisyIndex index, uint8_t value)
+{
+  if (index == DAISY_UNDEFINED)
+    return;
+
+  // TODO Input Select B
+  if (index < 0x100)
+    IMX_IOMUXC->SELECT_INPUT_A[index] = value;
+  else
+    IMX_IOMUXC->SELECT_INPUT_B[index & 0xFF] = value;
 }
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
