@@ -554,7 +554,7 @@ void TIM17_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-uint32_t gpTimerGetClock([[maybe_unused]] const struct GpTimerBase *timer)
+uint32_t gpTimerGetClock(const struct GpTimerBase *)
 {
   const uint32_t ahbClock = clockFrequency(MainClock);
   const uint32_t apbClock = clockFrequency(ApbClock);

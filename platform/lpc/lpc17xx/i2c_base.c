@@ -118,7 +118,7 @@ void I2C2_ISR(void)
   instances[2]->handler(instances[2]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetClock([[maybe_unused]] const struct I2CBase *interface)
+uint32_t i2cGetClock(const struct I2CBase *)
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }

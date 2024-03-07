@@ -19,8 +19,7 @@ const struct EntityClass * const EepromBase = &(const struct EntityClass){
 extern const unsigned long _seeprom;
 extern const unsigned long _eeeprom;
 /*----------------------------------------------------------------------------*/
-static enum Result eepromInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result eepromInit(void *object, const void *)
 {
   struct EepromBase * const interface = object;
 
@@ -35,7 +34,7 @@ static enum Result eepromInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void eepromDeinit([[maybe_unused]] void *object)
+static void eepromDeinit(void *)
 {
   sysClockDisable(CLK_M4_EEPROM);
 }

@@ -40,7 +40,7 @@ void WDT_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t wdtGetClock([[maybe_unused]] const struct WdtBase *timer)
+uint32_t wdtGetClock(const struct WdtBase *)
 {
   switch (CLKSEL_WDSEL_VALUE(LPC_WDT->CLKSEL) + 1)
   {

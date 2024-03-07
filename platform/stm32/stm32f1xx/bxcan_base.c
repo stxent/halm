@@ -227,7 +227,7 @@ void CAN2_SCE_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-uint32_t canGetClock([[maybe_unused]] const struct BxCanBase *interface)
+uint32_t canGetClock(const struct BxCanBase *)
 {
   return clockFrequency(Apb1Clock);
 }

@@ -830,7 +830,7 @@ static enum State stateErrorEnter(struct Msc *driver)
     return STATE_SUSPEND;
 }
 /*----------------------------------------------------------------------------*/
-static enum State stateErrorRun([[maybe_unused]] struct Msc *driver)
+static enum State stateErrorRun(struct Msc *)
 {
   return STATE_SUSPEND;
 }
@@ -901,8 +901,8 @@ static enum State sendResponse(struct Msc *driver, uint32_t tag,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor([[maybe_unused]] const void *object,
-    struct UsbDescriptor *header, void *payload)
+static void deviceDescriptor(const void *, struct UsbDescriptor *header,
+    void *payload)
 {
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
@@ -919,8 +919,8 @@ static void deviceDescriptor([[maybe_unused]] const void *object,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void configDescriptor([[maybe_unused]] const void *object,
-    struct UsbDescriptor *header, void *payload)
+static void configDescriptor(const void *, struct UsbDescriptor *header,
+    void *payload)
 {
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
@@ -1128,7 +1128,7 @@ static void driverDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static enum Result driverControl(void *object,
     const struct UsbSetupPacket *packet, void *buffer, uint16_t *responseLength,
-    [[maybe_unused]] uint16_t maxResponseLength)
+    uint16_t)
 {
   if (REQUEST_TYPE_VALUE(packet->requestType) == REQUEST_TYPE_CLASS)
     return handleClassRequest(object, packet, buffer, responseLength);
@@ -1136,8 +1136,7 @@ static enum Result driverControl(void *object,
     return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static const UsbDescriptorFunctor *driverDescribe(
-    [[maybe_unused]] const void *object)
+static const UsbDescriptorFunctor *driverDescribe(const void *)
 {
   return deviceDescriptorTable;
 }

@@ -259,8 +259,7 @@ static void dmaHubInstantiate(void)
   assert(hub != NULL);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result dmaHubInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result dmaHubInit(void *object, const void *)
 {
   struct DmaHub * const handler = object;
 

@@ -87,19 +87,19 @@ static enum Result tmrInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_CORE_CORTEX_SYSTICK_NO_DEINIT
-static void tmrDeinit([[maybe_unused]] void *object)
+static void tmrDeinit(void *)
 {
   SYSTICK->CTRL = 0;
   instance = NULL;
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static void tmrEnable([[maybe_unused]] void *object)
+static void tmrEnable(void *)
 {
   SYSTICK->CTRL |= CTRL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrDisable([[maybe_unused]] void *object)
+static void tmrDisable(void *)
 {
   SYSTICK->CTRL &= ~CTRL_ENABLE;
 }
@@ -118,17 +118,17 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
     SYSTICK->CTRL &= ~CTRL_TICKINT;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetFrequency([[maybe_unused]] const void *object)
+static uint32_t tmrGetFrequency(const void *)
 {
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetOverflow([[maybe_unused]] const void *object)
+static uint32_t tmrGetOverflow(const void *)
 {
   return SYSTICK->LOAD + 1;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetOverflow([[maybe_unused]] void *object, uint32_t overflow)
+static void tmrSetOverflow(void *, uint32_t overflow)
 {
   const uint32_t state = SYSTICK->CTRL & ~CTRL_COUNTFLAG;
 
@@ -139,12 +139,12 @@ static void tmrSetOverflow([[maybe_unused]] void *object, uint32_t overflow)
   SYSTICK->CTRL = state;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetValue([[maybe_unused]] const void *object)
+static uint32_t tmrGetValue(const void *)
 {
   return SYSTICK->LOAD - SYSTICK->VAL;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetValue([[maybe_unused]] void *object, uint32_t value)
+static void tmrSetValue(void *, uint32_t value)
 {
   assert(value <= SYSTICK->LOAD);
   SYSTICK->VAL = SYSTICK->LOAD - value;

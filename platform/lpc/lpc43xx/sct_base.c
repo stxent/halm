@@ -437,7 +437,7 @@ void SCT_ISR(void)
   LPC_SCT->EVFLAG = state;
 }
 /*----------------------------------------------------------------------------*/
-bool sctAllocateEvent([[maybe_unused]] struct SctBase *timer, uint8_t *event)
+bool sctAllocateEvent(struct SctBase *, uint8_t *event)
 {
   if (instance.events)
   {
@@ -449,12 +449,12 @@ bool sctAllocateEvent([[maybe_unused]] struct SctBase *timer, uint8_t *event)
     return false;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sctGetClock([[maybe_unused]] const struct SctBase *timer)
+uint32_t sctGetClock(const struct SctBase *)
 {
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
-void sctReleaseEvent([[maybe_unused]] struct SctBase *timer, uint8_t event)
+void sctReleaseEvent(struct SctBase *, uint8_t event)
 {
   instance.events |= 1 << event;
 }

@@ -210,13 +210,13 @@ void SPI2_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-uint32_t spiGetClock([[maybe_unused]] const struct SpiBase *interface)
+uint32_t spiGetClock(const struct SpiBase *)
 {
   return clockFrequency(ApbClock);
 }
 /*----------------------------------------------------------------------------*/
-void *spiMakeOneShotDma([[maybe_unused]] uint8_t channel, uint8_t stream,
-    enum DmaPriority priority, enum DmaType type)
+void *spiMakeOneShotDma(uint8_t, uint8_t stream, enum DmaPriority priority,
+    enum DmaType type)
 {
   const struct BdmaOneShotConfig config = {
       .event = DMA_GENERIC,

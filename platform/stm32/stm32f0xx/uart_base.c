@@ -564,8 +564,8 @@ uint32_t uartGetClock(const struct UartBase *interface)
   return clockFrequency(clock);
 }
 /*----------------------------------------------------------------------------*/
-void *uartMakeCircularDma([[maybe_unused]] uint8_t channel, uint8_t stream,
-    enum DmaPriority priority, enum DmaType type)
+void *uartMakeCircularDma(uint8_t, uint8_t stream, enum DmaPriority priority,
+    enum DmaType type)
 {
   const struct BdmaCircularConfig config = {
       .event = DMA_GENERIC,
@@ -578,8 +578,8 @@ void *uartMakeCircularDma([[maybe_unused]] uint8_t channel, uint8_t stream,
   return init(BdmaCircular, &config);
 }
 /*----------------------------------------------------------------------------*/
-void *uartMakeOneShotDma([[maybe_unused]] uint8_t channel, uint8_t stream,
-    enum DmaPriority priority, enum DmaType type)
+void *uartMakeOneShotDma(uint8_t, uint8_t stream, enum DmaPriority priority,
+    enum DmaType type)
 {
   const struct BdmaOneShotConfig config = {
       .event = DMA_GENERIC,

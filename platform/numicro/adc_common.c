@@ -49,7 +49,7 @@ uint32_t adcMakePinCondition(enum InputEvent event)
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-void adcReleasePin([[maybe_unused]] struct AdcPin adcPin)
+void adcReleasePin(struct AdcPin)
 {
 }
 /*----------------------------------------------------------------------------*/

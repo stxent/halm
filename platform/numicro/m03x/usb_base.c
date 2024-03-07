@@ -111,7 +111,7 @@ static enum Result devInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_USB_NO_DEINIT
-static void devDeinit([[maybe_unused]] void *object)
+static void devDeinit(void *)
 {
   sysClockDisable(CLK_USBD);
   instance = NULL;

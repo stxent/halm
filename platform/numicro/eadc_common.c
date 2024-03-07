@@ -24,7 +24,7 @@ struct AdcPin adcConfigPin(const struct EadcBase *interface, PinNumber key)
   return (struct AdcPin){pinEntry->value};
 }
 /*----------------------------------------------------------------------------*/
-void adcReleasePin([[maybe_unused]] struct AdcPin adcPin)
+void adcReleasePin(struct AdcPin)
 {
 }
 /*----------------------------------------------------------------------------*/

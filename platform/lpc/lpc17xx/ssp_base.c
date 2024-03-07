@@ -110,7 +110,7 @@ void SSP1_ISR(void)
   instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sspGetClock([[maybe_unused]] const struct SspBase *interface)
+uint32_t sspGetClock(const struct SspBase *)
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }

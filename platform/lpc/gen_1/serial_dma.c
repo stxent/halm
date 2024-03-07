@@ -431,8 +431,7 @@ static void serialSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result serialGetParam(void *object, int parameter,
-    [[maybe_unused]] void *data)
+static enum Result serialGetParam(void *object, int parameter, void *data)
 {
   struct SerialDma * const interface = object;
 

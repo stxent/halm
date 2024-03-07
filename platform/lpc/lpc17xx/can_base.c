@@ -117,7 +117,7 @@ void CAN_ISR(void)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t canGetClock([[maybe_unused]] const struct CanBase *interface)
+uint32_t canGetClock(const struct CanBase *)
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }

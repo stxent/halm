@@ -234,7 +234,7 @@ void I2C3_EV_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetClock([[maybe_unused]] const struct I2CBase *interface)
+uint32_t i2cGetClock(const struct I2CBase *)
 {
   return clockFrequency(Apb1Clock);
 }

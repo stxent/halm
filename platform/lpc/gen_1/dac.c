@@ -64,14 +64,12 @@ static void dacDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result dacGetParam([[maybe_unused]] void *object,
-    [[maybe_unused]] int parameter, [[maybe_unused]] void *data)
+static enum Result dacGetParam(void *, int, void *)
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result dacSetParam([[maybe_unused]] void *object,
-    [[maybe_unused]] int parameter, [[maybe_unused]] const void *data)
+static enum Result dacSetParam(void *, int, const void *)
 {
   return E_INVALID;
 }

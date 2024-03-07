@@ -183,8 +183,8 @@ uint32_t i2cGetClock(const struct I2CBase *interface)
   return clockFrequency(clock);
 }
 /*----------------------------------------------------------------------------*/
-void *i2cMakeOneShotDma([[maybe_unused]] uint8_t channel, uint8_t stream,
-    enum DmaPriority priority, enum DmaType type)
+void *i2cMakeOneShotDma(uint8_t, uint8_t stream, enum DmaPriority priority,
+    enum DmaType type)
 {
   const struct BdmaOneShotConfig config = {
       .event = DMA_GENERIC,

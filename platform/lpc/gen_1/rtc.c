@@ -137,7 +137,7 @@ static enum Result clkInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_RTC_NO_DEINIT
-static void clkDeinit([[maybe_unused]] void *object)
+static void clkDeinit(void *object)
 {
   struct Rtc * const clock = object;
   LPC_RTC_Type * const reg = clock->base.reg;

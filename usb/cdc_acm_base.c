@@ -124,8 +124,8 @@ static void interfaceAssociationDescriptor(const void *object,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor([[maybe_unused]] const void *object,
-    struct UsbDescriptor *header, void *payload)
+static void deviceDescriptor(const void *, struct UsbDescriptor *header,
+    void *payload)
 {
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
@@ -142,8 +142,8 @@ static void deviceDescriptor([[maybe_unused]] const void *object,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void configDescriptor([[maybe_unused]] const void *object,
-    struct UsbDescriptor *header, void *payload)
+static void configDescriptor(const void *, struct UsbDescriptor *header,
+    void *payload)
 {
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
@@ -184,8 +184,8 @@ static void controlInterfaceDescriptor(const void *object,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void cdcHeaderDescriptor([[maybe_unused]] const void *object,
-    struct UsbDescriptor *header, void *payload)
+static void cdcHeaderDescriptor(const void *, struct UsbDescriptor *header,
+    void *payload)
 {
   header->length = sizeof(struct CdcHeaderDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
@@ -199,7 +199,7 @@ static void cdcHeaderDescriptor([[maybe_unused]] const void *object,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void cdcCallManagementDescriptor([[maybe_unused]] const void *object,
+static void cdcCallManagementDescriptor(const void *,
     struct UsbDescriptor *header, void *payload)
 {
   header->length = sizeof(struct CdcCallManagementDescriptor);
@@ -213,8 +213,8 @@ static void cdcCallManagementDescriptor([[maybe_unused]] const void *object,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void cdcAcmDescriptor([[maybe_unused]] const void *object,
-    struct UsbDescriptor *header, void *payload)
+static void cdcAcmDescriptor(const void *, struct UsbDescriptor *header,
+    void *payload)
 {
   header->length = sizeof(struct CdcAcmDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CS_INTERFACE;
@@ -455,7 +455,7 @@ static void driverDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static enum Result driverControl(void *object,
     const struct UsbSetupPacket *packet, void *buffer, uint16_t *responseLength,
-    [[maybe_unused]] uint16_t maxResponseLength)
+    uint16_t)
 {
   if (REQUEST_TYPE_VALUE(packet->requestType) == REQUEST_TYPE_CLASS)
     return handleClassRequest(object, packet, buffer, responseLength);
@@ -463,8 +463,7 @@ static enum Result driverControl(void *object,
     return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static const UsbDescriptorFunctor *driverDescribe(
-    [[maybe_unused]] const void *object)
+static const UsbDescriptorFunctor *driverDescribe(const void *)
 {
   return deviceDescriptorTable;
 }

@@ -84,7 +84,7 @@ static enum Result bodInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_BOD_NO_DEINIT
-static void bodDeinit([[maybe_unused]] void *object)
+static void bodDeinit(void *)
 {
   /* Disable interrupts */
   irqDisable(BOD_IRQ);

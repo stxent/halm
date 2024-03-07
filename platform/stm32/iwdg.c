@@ -68,7 +68,7 @@ static bool wdtFired(const void *object)
   return timer->base.fired;
 }
 /*----------------------------------------------------------------------------*/
-static void wdtReload([[maybe_unused]] void *object)
+static void wdtReload(void *)
 {
   STM_IWDG->KR = KR_RELOAD;
 }

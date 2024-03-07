@@ -69,7 +69,7 @@ void EVENTROUTER_ISR(void)
   notifyObservers(status);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result erInit(void *object, [[maybe_unused]] const void *configBase)
+static enum Result erInit(void *object, const void *)
 {
   struct EventRouter * const handler = object;
 

@@ -144,8 +144,7 @@ static void pinIntHandlerDetach(const struct PinInt *interrupt)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result pinIntHandlerInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result pinIntHandlerInit(void *object, const void *)
 {
   struct PinIntHandler * const handler = object;
 

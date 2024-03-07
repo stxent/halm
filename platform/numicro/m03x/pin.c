@@ -103,13 +103,11 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   *mfp = value;
 }
 /*----------------------------------------------------------------------------*/
-void pinSetPull([[maybe_unused]] struct Pin pin,
-    [[maybe_unused]] enum PinPull pull)
+void pinSetPull(struct Pin, enum PinPull)
 {
 }
 /*----------------------------------------------------------------------------*/
-void pinSetSlewRate([[maybe_unused]] struct Pin pin,
-    [[maybe_unused]] enum PinSlewRate rate)
+void pinSetSlewRate(struct Pin, enum PinSlewRate)
 {
 }
 /*----------------------------------------------------------------------------*/

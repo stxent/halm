@@ -22,8 +22,7 @@ enum
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline void gpTimerEnableCapture([[maybe_unused]] uint8_t channel,
-    [[maybe_unused]] uint8_t number)
+static inline void gpTimerEnableCapture(uint8_t, uint8_t)
 {
 }
 

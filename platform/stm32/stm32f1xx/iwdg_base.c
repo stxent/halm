@@ -32,13 +32,12 @@ static bool setInstance(struct IwdgBase *object)
     return false;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t iwdgGetClock([[maybe_unused]] const struct IwdgBase *timer)
+uint32_t iwdgGetClock(const struct IwdgBase *)
 {
   return clockFrequency(InternalLowSpeedOsc);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result wdtInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result wdtInit(void *object, const void *)
 {
   struct IwdgBase * const timer = object;
 

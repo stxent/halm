@@ -109,8 +109,7 @@ static inline void pinWrite(struct Pin pin, bool value)
   LPC_GPIO->B[pin.index] = value;
 }
 
-static inline void pinSetType([[maybe_unused]] struct Pin pin,
-    [[maybe_unused]] enum PinType type)
+static inline void pinSetType(struct Pin, enum PinType)
 {
   /* Pin type control is not supported on these devices */
 }

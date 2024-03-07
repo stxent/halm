@@ -88,8 +88,8 @@ const struct UsbDeviceClass * const CompositeDevice =
     .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor([[maybe_unused]] const void *object,
-    struct UsbDescriptor *header, void *payload)
+static void deviceDescriptor(const void *, struct UsbDescriptor *header,
+    void *payload)
 {
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
@@ -283,7 +283,7 @@ static enum Result driverInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void driverDeinit([[maybe_unused]] void *object)
+static void driverDeinit(void *)
 {
 }
 /*----------------------------------------------------------------------------*/
@@ -335,8 +335,7 @@ static void driverNotify(void *object, unsigned int event)
   }
 }
 /*----------------------------------------------------------------------------*/
-static const UsbDescriptorFunctor *driverDescribe(
-    [[maybe_unused]] const void *object)
+static const UsbDescriptorFunctor *driverDescribe(const void *)
 {
   return NULL;
 }

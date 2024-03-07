@@ -246,7 +246,7 @@ void CT32B1_ISR(void)
   instances[3]->handler(instances[3]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t gpTimerGetClock([[maybe_unused]] const struct GpTimerBase *timer)
+uint32_t gpTimerGetClock(const struct GpTimerBase *)
 {
   return clockFrequency(MainClock);
 }

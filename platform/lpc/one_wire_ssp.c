@@ -78,7 +78,7 @@ const struct InterfaceClass * const OneWireSsp = &(const struct InterfaceClass){
     .write = oneWireWrite
 };
 /*----------------------------------------------------------------------------*/
-static void adjustPins([[maybe_unused]] struct OneWireSsp *interface,
+static void adjustPins(struct OneWireSsp *,
     const struct OneWireSspConfig *config)
 {
   pinSetType(pinInit(config->mosi), PIN_OPENDRAIN);
@@ -426,8 +426,7 @@ static void oneWireSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result oneWireGetParam(void *object, int parameter,
-    [[maybe_unused]] void *data)
+static enum Result oneWireGetParam(void *object, int parameter, void *data)
 {
   struct OneWireSsp * const interface = object;
 

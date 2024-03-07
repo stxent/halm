@@ -37,13 +37,12 @@ void WDT_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t wdtGetClock([[maybe_unused]] const struct WdtBase *timer)
+uint32_t wdtGetClock(const struct WdtBase *)
 {
   return clockFrequency(WdtClock);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result wdtInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result wdtInit(void *object, const void *)
 {
   struct WdtBase * const timer = object;
 

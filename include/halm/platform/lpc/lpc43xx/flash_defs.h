@@ -60,8 +60,7 @@ static inline uint32_t addressToPage(uint32_t address)
   return address;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t addressToSector(uint32_t address,
-    [[maybe_unused]] bool uniform)
+static inline uint32_t addressToSector(uint32_t address, bool)
 {
   const uint32_t local = address & FLASH_BANK_MASK;
 

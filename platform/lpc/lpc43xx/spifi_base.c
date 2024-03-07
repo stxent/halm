@@ -98,14 +98,13 @@ void SPIFI_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t spifiGetClock([[maybe_unused]] const struct SpifiBase *interface)
+uint32_t spifiGetClock(const struct SpifiBase *)
 {
   /* Clock frequency should not exceed 104 MHz */
   return clockFrequency(SpifiClock);
 }
 /*----------------------------------------------------------------------------*/
-void *spifiGetMemoryAddress([[maybe_unused]] const struct SpifiBase *interface,
-    bool large)
+void *spifiGetMemoryAddress(const struct SpifiBase *, bool large)
 {
   if (large)
     return (void *)LPC_SPIFI_BASE;
@@ -134,7 +133,7 @@ static enum Result spifiInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void spifiDeinit([[maybe_unused]] void *object)
+static void spifiDeinit(void *)
 {
   sysClockDisable(CLK_SPIFI);
   sysClockDisable(CLK_M4_SPIFI);

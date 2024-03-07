@@ -109,7 +109,7 @@ struct AdcBase *adcGetInstance([[maybe_unused]] uint8_t channel)
   return instance;
 }
 /*----------------------------------------------------------------------------*/
-void adcReleasePin([[maybe_unused]] struct AdcPin adcPin)
+void adcReleasePin(struct AdcPin)
 {
 }
 /*----------------------------------------------------------------------------*/

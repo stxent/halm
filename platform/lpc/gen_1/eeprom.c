@@ -26,8 +26,7 @@ const struct InterfaceClass * const Eeprom = &(const struct InterfaceClass){
     .write = eepromWrite
 };
 /*----------------------------------------------------------------------------*/
-static enum Result eepromInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result eepromInit(void *object, const void *)
 {
   struct Eeprom * const interface = object;
   const enum Result res = EepromBase->init(interface, NULL);

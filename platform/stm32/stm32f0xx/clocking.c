@@ -238,22 +238,21 @@ static void updateAhbClock(uint32_t configuration)
   ticksPerSecond = TICK_RATE(frequency);
 }
 /*----------------------------------------------------------------------------*/
-static void clockDisableStub([[maybe_unused]] const void *clockBase)
+static void clockDisableStub(const void *)
 {
 }
 /*----------------------------------------------------------------------------*/
-static bool clockReadyStub([[maybe_unused]] const void *clockBase)
+static bool clockReadyStub(const void *)
 {
   return true;
 }
 /*----------------------------------------------------------------------------*/
-static void extOscDisable([[maybe_unused]] const void *clockBase)
+static void extOscDisable(const void *)
 {
   STM_RCC->CR &= ~CR_HSEON;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result extOscEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result extOscEnable(const void *, const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
   assert(config->frequency >= 4000000 && config->frequency <= 32000000);
@@ -270,111 +269,106 @@ static enum Result extOscEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extOscFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t extOscFrequency(const void *)
 {
   return (STM_RCC->CR & CR_HSERDY) ? extFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool extOscReady([[maybe_unused]] const void *clockBase)
+static bool extOscReady(const void *)
 {
   return extFrequency && (STM_RCC->CR & CR_HSERDY) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void intLowSpeedOscDisable([[maybe_unused]] const void *clockBase)
+static void intLowSpeedOscDisable(const void *)
 {
   STM_RCC->CSR &= ~CSR_LSION;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result intLowSpeedOscEnable([[maybe_unused]] const void *clockBase,
-    [[maybe_unused]] const void *configBase)
+static enum Result intLowSpeedOscEnable(const void *, const void *)
 {
   STM_RCC->CSR |= CSR_LSION;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intLowSpeedOscFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t intLowSpeedOscFrequency(const void *)
 {
   return (STM_RCC->CSR & CSR_LSIRDY) != 0 ? LSI_OSC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool intLowSpeedOscReady([[maybe_unused]] const void *clockBase)
+static bool intLowSpeedOscReady(const void *)
 {
   return (STM_RCC->CSR & CSR_LSIRDY) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void intOscDisable([[maybe_unused]] const void *clockBase)
+static void intOscDisable(const void *)
 {
   STM_RCC->CR &= ~CR_HSION;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result intOscEnable([[maybe_unused]] const void *clockBase,
-    [[maybe_unused]] const void *configBase)
+static enum Result intOscEnable(const void *, const void *)
 {
   STM_RCC->CR |= CR_HSION;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intOscFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t intOscFrequency(const void *)
 {
   return (STM_RCC->CR & CR_HSIRDY) != 0 ? HSI_OSC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool intOscReady([[maybe_unused]] const void *clockBase)
+static bool intOscReady(const void *)
 {
   return (STM_RCC->CR & CR_HSIRDY) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void intOsc14Disable([[maybe_unused]] const void *clockBase)
+static void intOsc14Disable(const void *)
 {
   STM_RCC->CR2 &= ~CR2_HSI14ON;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result intOsc14Enable([[maybe_unused]] const void *clockBase,
-    [[maybe_unused]] const void *configBase)
+static enum Result intOsc14Enable(const void *, const void *)
 {
   STM_RCC->CR2 = (STM_RCC->CR2 & ~CR2_HSI14DIS) | CR2_HSI14ON;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intOsc14Frequency([[maybe_unused]] const void *clockBase)
+static uint32_t intOsc14Frequency(const void *)
 {
   return (STM_RCC->CR2 & CR2_HSI14RDY) != 0 ? HSI_OSC_14_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool intOsc14Ready([[maybe_unused]] const void *clockBase)
+static bool intOsc14Ready(const void *)
 {
   return (STM_RCC->CR2 & CR2_HSI14RDY) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void intOsc48Disable([[maybe_unused]] const void *clockBase)
+static void intOsc48Disable(const void *)
 {
   STM_RCC->CR2 &= ~CR2_HSI48ON;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result intOsc48Enable([[maybe_unused]] const void *clockBase,
-    [[maybe_unused]] const void *configBase)
+static enum Result intOsc48Enable(const void *, const void *)
 {
   STM_RCC->CR2 |= CR2_HSI48ON;
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intOsc48Frequency([[maybe_unused]] const void *clockBase)
+static uint32_t intOsc48Frequency(const void *)
 {
   return (STM_RCC->CR2 & CR2_HSI48RDY) != 0 ? HSI_OSC_48_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool intOsc48Ready([[maybe_unused]] const void *clockBase)
+static bool intOsc48Ready(const void *)
 {
   return (STM_RCC->CR2 & CR2_HSI48RDY) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void systemPllDisable([[maybe_unused]] const void *clockBase)
+static void systemPllDisable(const void *)
 {
   STM_RCC->CR &= ~CR_PLLON;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result systemPllEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result systemPllEnable(const void *, const void *configBase)
 {
   const struct SystemPllConfig * const config = configBase;
   assert(config != NULL);
@@ -423,18 +417,17 @@ static enum Result systemPllEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t systemPllFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t systemPllFrequency(const void *)
 {
   return (STM_RCC->CR & CR_PLLRDY) ? pllFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool systemPllReady([[maybe_unused]] const void *clockBase)
+static bool systemPllReady(const void *)
 {
   return (STM_RCC->CR & CR_PLLRDY) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result i2cClockEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result i2cClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
   assert(config != NULL);
@@ -448,7 +441,7 @@ static enum Result i2cClockEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t i2cClockFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t i2cClockFrequency(const void *)
 {
   const void * const clock = (STM_RCC->CFGR3 & CFGR3_I2C1SW) ?
       SystemClock : InternalOsc;
@@ -456,8 +449,7 @@ static uint32_t i2cClockFrequency([[maybe_unused]] const void *clockBase)
   return clockFrequency(clock);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result systemClockEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result systemClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
   assert(config != NULL);
@@ -494,7 +486,7 @@ static enum Result systemClockEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t systemClockFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t systemClockFrequency(const void *)
 {
   uint32_t frequency = 0;
 
@@ -581,8 +573,7 @@ static uint32_t usartClockFrequency(const void *clockBase)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcClockEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result adcClockEnable(const void *, const void *configBase)
 {
   const struct AdcClockConfig * const config = configBase;
   assert(config != NULL);
@@ -621,7 +612,7 @@ static enum Result adcClockEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t adcClockFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t adcClockFrequency(const void *)
 {
   const uint32_t source = ADC_CFGR2_CKMODE_VALUE(STM_ADC->CFGR2);
 
@@ -638,8 +629,7 @@ static uint32_t adcClockFrequency([[maybe_unused]] const void *clockBase)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result apbClockEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result apbClockEnable(const void *, const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
   assert(config != NULL);
@@ -654,14 +644,13 @@ static enum Result apbClockEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t apbClockFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t apbClockFrequency(const void *)
 {
   const uint32_t divisor = apbPrescalerToValue(CFGR_PPRE_VALUE(STM_RCC->CFGR));
   return mainClockFrequency(NULL) / divisor;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result mainClockEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result mainClockEnable(const void *, const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
   assert(config != NULL);
@@ -686,7 +675,7 @@ static enum Result mainClockEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t mainClockFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t mainClockFrequency(const void *)
 {
   const uint32_t divisor = ahbPrescalerToValue(CFGR_HPRE_VALUE(STM_RCC->CFGR));
   return systemClockFrequency(NULL) / divisor;

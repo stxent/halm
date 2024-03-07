@@ -263,7 +263,7 @@ void I2S1_ISR(void)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t i2sGetClock([[maybe_unused]] const struct I2SBase *interface)
+uint32_t i2sGetClock(const struct I2SBase *)
 {
   return clockFrequency(Apb1Clock);
 }

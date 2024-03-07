@@ -148,7 +148,7 @@ static void wdtSetCallback(void *object, void (*callback)(void *),
   timer->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static void wdtReload([[maybe_unused]] void *object)
+static void wdtReload(void *)
 {
   reloadCounter();
 }

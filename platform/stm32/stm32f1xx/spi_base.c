@@ -219,8 +219,8 @@ uint32_t spiGetClock(const struct SpiBase *interface)
   return clockFrequency(interface->channel == 0 ? Apb2Clock : Apb1Clock);
 }
 /*----------------------------------------------------------------------------*/
-void *spiMakeOneShotDma([[maybe_unused]] uint8_t channel, uint8_t stream,
-    enum DmaPriority priority, enum DmaType type)
+void *spiMakeOneShotDma(uint8_t, uint8_t stream, enum DmaPriority priority,
+    enum DmaType type)
 {
   const struct BdmaOneShotConfig config = {
       .event = DMA_GENERIC,

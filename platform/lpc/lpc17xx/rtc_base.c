@@ -41,8 +41,7 @@ void RTC_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result clkInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result clkInit(void *object, const void *)
 {
   struct RtcBase * const clock = object;
 
@@ -62,7 +61,7 @@ static enum Result clkInit(void *object,
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_RTC_NO_DEINIT
-static void clkDeinit([[maybe_unused]] void *object)
+static void clkDeinit(void *)
 {
   sysPowerDisable(PWR_RTC);
   instance = NULL;

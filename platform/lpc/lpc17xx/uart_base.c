@@ -164,7 +164,7 @@ void UART3_ISR(void)
   instances[3]->handler(instances[3]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetClock([[maybe_unused]] const struct UartBase *interface)
+uint32_t uartGetClock(const struct UartBase *)
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }

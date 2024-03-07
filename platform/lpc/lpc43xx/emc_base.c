@@ -400,8 +400,7 @@ static void emcSwitchEnabled(bool state)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result emcHandlerInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result emcHandlerInit(void *object, const void *)
 {
   struct EmcHandler * const handler = object;
 

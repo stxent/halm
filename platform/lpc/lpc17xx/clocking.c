@@ -147,28 +147,26 @@ static void pllDisconnect(void)
   LPC_SC->PLL0FEED = PLLFEED_SECOND;
 }
 /*----------------------------------------------------------------------------*/
-static void clockDisableStub([[maybe_unused]] const void *clockBase)
+static void clockDisableStub(const void *)
 {
 }
 /*----------------------------------------------------------------------------*/
-static enum Result clockEnableStub([[maybe_unused]] const void *clockBase,
-    [[maybe_unused]] const void *configBase)
+static enum Result clockEnableStub(const void *, const void *)
 {
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static bool clockReadyStub([[maybe_unused]] const void *clockBase)
+static bool clockReadyStub(const void *)
 {
   return true;
 }
 /*----------------------------------------------------------------------------*/
-static void extOscDisable([[maybe_unused]] const void *clockBase)
+static void extOscDisable(const void *)
 {
   LPC_SC->SCS &= ~SCS_OSCEN;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result extOscEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result extOscEnable(const void *, const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
   assert(config != NULL);
@@ -190,35 +188,34 @@ static enum Result extOscEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extOscFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t extOscFrequency(const void *)
 {
   return (LPC_SC->SCS & SCS_OSCSTAT) ? extFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool extOscReady([[maybe_unused]] const void *clockBase)
+static bool extOscReady(const void *)
 {
   return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intOscFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t intOscFrequency(const void *)
 {
   return INT_OSC_FREQUENCY;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t rtcOscFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t rtcOscFrequency(const void *)
 {
   return RTC_OSC_FREQUENCY;
 }
 /*----------------------------------------------------------------------------*/
-static void sysPllDisable([[maybe_unused]] const void *clockBase)
+static void sysPllDisable(const void *)
 {
   LPC_SC->PLL0CON &= ~PLL0CON_ENABLE;
   LPC_SC->PLL0FEED = PLLFEED_FIRST;
   LPC_SC->PLL0FEED = PLLFEED_SECOND;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result sysPllEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result sysPllEnable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
   assert(config != NULL);
@@ -305,25 +302,24 @@ static enum Result sysPllEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sysPllFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t sysPllFrequency(const void *)
 {
   return (LPC_SC->PLL0STAT & PLL0STAT_LOCK) ? pllFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool sysPllReady([[maybe_unused]] const void *clockBase)
+static bool sysPllReady(const void *)
 {
   return pllFrequency && (LPC_SC->PLL0STAT & PLL0STAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
-static void usbPllDisable([[maybe_unused]] const void *clockBase)
+static void usbPllDisable(const void *)
 {
   LPC_SC->PLL1CON &= ~PLL1CON_ENABLE;
   LPC_SC->PLL1FEED = PLLFEED_FIRST;
   LPC_SC->PLL1FEED = PLLFEED_SECOND;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result usbPllEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result usbPllEnable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
   assert(config != NULL);
@@ -365,23 +361,22 @@ static enum Result usbPllEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t usbPllFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t usbPllFrequency(const void *)
 {
   return (LPC_SC->PLL1STAT & PLL1STAT_LOCK) ? USB_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool usbPllReady([[maybe_unused]] const void *clockBase)
+static bool usbPllReady(const void *)
 {
   return (LPC_SC->PLL1STAT & PLL1STAT_LOCK) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void clockOutputDisable([[maybe_unused]] const void *clockBase)
+static void clockOutputDisable(const void *)
 {
   LPC_SC->CLKOUTCFG &= ~CLKOUTCFG_EN;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result clockOutputEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result clockOutputEnable(const void *, const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
   assert(config != NULL);
@@ -430,7 +425,7 @@ static enum Result clockOutputEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t clockOutputFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t clockOutputFrequency(const void *)
 {
   if (!(LPC_SC->CLKOUTCFG & CLKOUTCFG_ACT))
     return 0;
@@ -467,13 +462,12 @@ static uint32_t clockOutputFrequency([[maybe_unused]] const void *clockBase)
   return frequency / divisor;
 }
 /*----------------------------------------------------------------------------*/
-static bool clockOutputReady([[maybe_unused]] const void *clockBase)
+static bool clockOutputReady(const void *)
 {
   return (LPC_SC->CLKOUTCFG & CLKOUTCFG_ACT) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result mainClockEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result mainClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
   assert(config != NULL);
@@ -534,7 +528,7 @@ static enum Result mainClockEnable([[maybe_unused]] const void *clockBase,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t mainClockFrequency([[maybe_unused]] const void *clockBase)
+static uint32_t mainClockFrequency(const void *)
 {
   const uint32_t source = LPC_SC->CLKSRCSEL;
 
@@ -559,8 +553,7 @@ static uint32_t mainClockFrequency([[maybe_unused]] const void *clockBase)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result usbClockEnable([[maybe_unused]] const void *clockBase,
-    const void *configBase)
+static enum Result usbClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
   assert(config != NULL);
@@ -608,7 +601,7 @@ static uint32_t usbClockFrequency(const void *clockBase)
   return usbClockReady(clockBase) ? USB_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool usbClockReady([[maybe_unused]] const void *clockBase)
+static bool usbClockReady(const void *)
 {
   const unsigned int actualDivisor = USBCLKCFG_USBSEL_VALUE(LPC_SC->USBCLKCFG);
   const unsigned int divisor = pllFrequency / USB_FREQUENCY - 1;

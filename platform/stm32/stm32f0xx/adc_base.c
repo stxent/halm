@@ -71,8 +71,8 @@ void adcBaseHandler0(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-void *adcMakeCircularDma([[maybe_unused]] uint8_t channel,
-    uint8_t stream, enum DmaPriority priority, bool silent)
+void *adcMakeCircularDma(uint8_t, uint8_t stream, enum DmaPriority priority,
+    bool silent)
 {
   const struct BdmaCircularConfig config = {
       .event = DMA_GENERIC,

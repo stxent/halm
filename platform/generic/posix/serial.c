@@ -149,8 +149,7 @@ static void onCloseCallback(uv_handle_t *handle)
   free(handle);
 }
 /*----------------------------------------------------------------------------*/
-static void onInterfaceCallback(uv_poll_t *handle,
-    [[maybe_unused]] int status, [[maybe_unused]] int events)
+static void onInterfaceCallback(uv_poll_t *handle, int, int)
 {
   struct Serial * const interface = uv_handle_get_data((uv_handle_t *)handle);
   uint8_t buffer[BUFFER_SIZE];

@@ -28,8 +28,7 @@ const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .write = flashWrite
 };
 /*----------------------------------------------------------------------------*/
-static enum Result flashInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result flashInit(void *object, const void *)
 {
   struct Flash * const interface = object;
   const enum Result res = FlashBase->init(interface, NULL);
@@ -182,7 +181,7 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
   return length - left;
 }
 /*----------------------------------------------------------------------------*/
-void *flashGetAddress([[maybe_unused]] const void *object)
+void *flashGetAddress(const void *)
 {
   return (void *)0;
 }

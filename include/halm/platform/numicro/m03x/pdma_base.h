@@ -80,7 +80,7 @@ struct PdmaMuxConfig
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline enum PdmaEvent pdmaGetEventAdc([[maybe_unused]] uint8_t channel)
+static inline enum PdmaEvent pdmaGetEventAdc(uint8_t)
 {
   return PDMA_ADC_RX;
 }
@@ -95,24 +95,22 @@ static inline enum PdmaEvent pdmaGetEventI2CTx(uint8_t channel)
   return PDMA_I2C0_TX + channel * 2;
 }
 
-static inline enum PdmaEvent pdmaGetEventSpiRx([[maybe_unused]] uint8_t channel)
+static inline enum PdmaEvent pdmaGetEventSpiRx(uint8_t)
 {
   return PDMA_SPI0_RX;
 }
 
-static inline enum PdmaEvent pdmaGetEventSpiTx([[maybe_unused]] uint8_t channel)
+static inline enum PdmaEvent pdmaGetEventSpiTx(uint8_t)
 {
   return PDMA_SPI0_TX;
 }
 
-static inline enum PdmaEvent pdmaGetEventQspiRx(
-    [[maybe_unused]] uint8_t channel)
+static inline enum PdmaEvent pdmaGetEventQspiRx(uint8_t)
 {
   return PDMA_QSPI0_RX;
 }
 
-static inline enum PdmaEvent pdmaGetEventQspiTx(
-    [[maybe_unused]] uint8_t channel)
+static inline enum PdmaEvent pdmaGetEventQspiTx(uint8_t)
 {
   return PDMA_QSPI0_TX;
 }

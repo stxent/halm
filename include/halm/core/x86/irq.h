@@ -20,7 +20,7 @@ typedef unsigned int IrqState;
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline void irqRestore([[maybe_unused]] IrqState state)
+static inline void irqRestore(IrqState)
 {
 }
 
@@ -29,33 +29,32 @@ static inline IrqState irqSave(void)
   return 0;
 }
 
-static inline IrqPriority irqGetPriority([[maybe_unused]] IrqNumber irq)
+static inline IrqPriority irqGetPriority(IrqNumber)
 {
   return 0;
 }
 
-static inline void irqSetPriority([[maybe_unused]] IrqNumber irq,
-    [[maybe_unused]] IrqPriority priority)
+static inline void irqSetPriority(IrqNumber, IrqPriority)
 {
 }
 
-static inline void irqEnable([[maybe_unused]] IrqNumber irq)
+static inline void irqEnable(IrqNumber)
 {
 }
 
-static inline void irqDisable([[maybe_unused]] IrqNumber irq)
+static inline void irqDisable(IrqNumber)
 {
 }
 
-static inline void irqClearPending([[maybe_unused]] IrqNumber irq)
+static inline void irqClearPending(IrqNumber)
 {
 }
 
-static inline void irqSetPending([[maybe_unused]] IrqNumber irq)
+static inline void irqSetPending(IrqNumber)
 {
 }
 
-static inline bool irqStatus([[maybe_unused]] IrqNumber irq)
+static inline bool irqStatus(IrqNumber)
 {
   return false;
 }

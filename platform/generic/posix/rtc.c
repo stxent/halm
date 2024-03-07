@@ -27,13 +27,12 @@ const struct RtClockClass * const Rtc = &(const struct RtClockClass){
     .time = clkTime
 };
 /*----------------------------------------------------------------------------*/
-static enum Result clkInit([[maybe_unused]] void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result clkInit(void *, const void *)
 {
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static time64_t clkTime([[maybe_unused]] void *object)
+static time64_t clkTime(void *)
 {
   return (time64_t)time(NULL);
 }

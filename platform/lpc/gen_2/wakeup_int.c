@@ -118,8 +118,7 @@ static void startLogicHandlerDetach(struct WakeupInt *interrupt)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result startLogicHandlerInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result startLogicHandlerInit(void *object, const void *)
 {
   struct StartLogicHandler * const startLogicHandler = object;
 

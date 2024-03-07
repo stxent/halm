@@ -17,8 +17,7 @@ const struct EntityClass * const FlashBase = &(const struct EntityClass){
     .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static enum Result flashInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result flashInit(void *object, const void *)
 {
   struct FlashBase * const interface = object;
   const uint32_t id = flashReadId();

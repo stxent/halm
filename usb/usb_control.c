@@ -417,7 +417,7 @@ static enum Result handleStringRequest(struct UsbControl *control,
 #endif
 /*----------------------------------------------------------------------------*/
 static void controlInHandler(void *argument, struct UsbRequest *request,
-    [[maybe_unused]] enum UsbRequestStatus status)
+    enum UsbRequestStatus)
 {
   struct UsbControl * const control = argument;
   pointerArrayPushBack(&control->inRequestPool, request);

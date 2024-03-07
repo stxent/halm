@@ -16,30 +16,29 @@ struct Pin
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline struct Pin pinInit([[maybe_unused]] PinNumber id)
+static inline struct Pin pinInit(PinNumber)
 {
   return (struct Pin){-1};
 }
 
-static inline void pinInput([[maybe_unused]] struct Pin pin)
+static inline void pinInput(struct Pin)
 {
 }
 
-static inline void pinOutput([[maybe_unused]] struct Pin pin,
-    [[maybe_unused]] bool value)
+static inline void pinOutput(struct Pin, bool)
 {
 }
 
-static inline bool pinRead([[maybe_unused]] struct Pin pin)
+static inline bool pinRead(struct Pin)
 {
   return false;
 }
 
-static inline void pinReset([[maybe_unused]] struct Pin pin)
+static inline void pinReset(struct Pin)
 {
 }
 
-static inline void pinSet([[maybe_unused]] struct Pin pin)
+static inline void pinSet(struct Pin)
 {
 }
 
@@ -48,37 +47,32 @@ static inline struct Pin pinStub(void)
   return (struct Pin){-1};
 }
 
-static inline void pinToggle([[maybe_unused]] struct Pin pin)
+static inline void pinToggle(struct Pin)
 {
 }
 
-static inline bool pinValid([[maybe_unused]] struct Pin pin)
+static inline bool pinValid(struct Pin)
 {
   return false;
 }
 
-static inline void pinWrite([[maybe_unused]] struct Pin pin,
-    [[maybe_unused]] bool value)
+static inline void pinWrite(struct Pin, bool)
 {
 }
 
-static inline void pinSetFunction([[maybe_unused]] struct Pin pin,
-    [[maybe_unused]] uint8_t function)
+static inline void pinSetFunction(struct Pin, uint8_t)
 {
 }
 
-static inline void pinSetPull([[maybe_unused]] struct Pin pin,
-    [[maybe_unused]] enum PinPull pull)
+static inline void pinSetPull(struct Pin, enum PinPull)
 {
 }
 
-static inline void pinSetSlewRate([[maybe_unused]] struct Pin pin,
-    [[maybe_unused]] enum PinSlewRate rate)
+static inline void pinSetSlewRate(struct Pin, enum PinSlewRate)
 {
 }
 
-static inline void pinSetType([[maybe_unused]] struct Pin pin,
-    [[maybe_unused]] enum PinType type)
+static inline void pinSetType(struct Pin, enum PinType)
 {
 }
 

@@ -309,8 +309,7 @@ static enum Result adcGetParam(void *object, int parameter, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcSetParam(void *object, int parameter,
-    [[maybe_unused]] const void *data)
+static enum Result adcSetParam(void *object, int parameter, const void *)
 {
   struct AdcDmaStream * const interface = object;
 

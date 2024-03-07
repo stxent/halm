@@ -114,7 +114,7 @@ void PWM1_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t gpPwmGetClock([[maybe_unused]] const struct GpPwmUnitBase *unit)
+uint32_t gpPwmGetClock(const struct GpPwmUnitBase *)
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
@@ -144,7 +144,7 @@ static enum Result unitInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_GPPWM_NO_DEINIT
-static void unitDeinit([[maybe_unused]] void *object)
+static void unitDeinit(void *)
 {
   sysPowerDisable(PWR_PWM1);
   instance = NULL;

@@ -16,8 +16,7 @@ const struct EntityClass * const EepromBase = &(const struct EntityClass){
     .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static enum Result eepromInit(void *object,
-    [[maybe_unused]] const void *configBase)
+static enum Result eepromInit(void *object, const void *)
 {
   struct EepromBase * const interface = object;
   const uint32_t id = flashReadId();

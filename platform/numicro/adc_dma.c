@@ -251,8 +251,7 @@ static void adcSetCallback(void *object, void (*callback)(void *),
   interface->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcGetParam(void *object, int parameter,
-    [[maybe_unused]] void *data)
+static enum Result adcGetParam(void *object, int parameter, void *)
 {
   const struct AdcDma * const interface = object;
   const NM_ADC_Type * const reg = interface->base.reg;
@@ -275,8 +274,7 @@ static enum Result adcGetParam(void *object, int parameter,
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result adcSetParam(void *object, int parameter,
-    [[maybe_unused]] const void *data)
+static enum Result adcSetParam(void *object, int parameter, const void *)
 {
   struct AdcDma * const interface = object;
 
