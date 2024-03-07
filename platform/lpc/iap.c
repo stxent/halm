@@ -92,7 +92,8 @@ static enum Result iap(enum IapCommand command, unsigned long *results,
   for (size_t index = 0; index < parametersCount; ++index)
     parameterBuffer[1 + index] = parameters[index];
 
-  ((void (*)())IAP_BASE)(parameterBuffer, resultBuffer);
+  ((void (*)(const unsigned long *, unsigned long *))IAP_BASE)(parameterBuffer,
+      resultBuffer);
 
   for (size_t index = 0; index < resultsCount; ++index)
     results[index] = resultBuffer[1 + index];

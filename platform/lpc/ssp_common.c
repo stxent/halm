@@ -76,10 +76,14 @@ bool sspSetRate(struct SspBase *interface, uint32_t rate)
 
   const uint32_t clock = sspGetClock(interface);
   const uint32_t divisor = (clock + (rate - 1)) / rate;
-  uint32_t prescaler0 = (divisor + 255) >> 8;
 
-  if (prescaler0 < 2 || prescaler0 > 254)
+  if (divisor < 2 || divisor > CPSR_MAX * (CR0_SCR_MAX + 1))
     return false;
+
+  uint32_t prescaler0 = (divisor + CR0_SCR_MAX) / (CR0_SCR_MAX + 1);
+
+  if (prescaler0 < CPSR_MIN)
+    prescaler0 = CPSR_MIN;
   prescaler0 = (prescaler0 + 1) & 0xFE;
 
   LPC_SSP_Type * const reg = interface->reg;

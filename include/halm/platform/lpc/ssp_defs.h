@@ -29,6 +29,7 @@
 /* Resulting bit frequency is PCLK / (CPSDVSR * (SCR + 1)) */
 #define CR0_SCR(rate)                   BIT_FIELD((rate), 8)
 #define CR0_SCR_VALUE(reg)              FIELD_VALUE((reg), CR0_SCR_MASK, 8)
+#define CR0_SCR_MAX                     255
 /*------------------Control Register 1----------------------------------------*/
 /* Loop-back mode */
 #define CR1_LBM                         BIT(0)
@@ -44,6 +45,9 @@
 #define SR_RNE                          BIT(2) /* Receive FIFO not empty */
 #define SR_RFF                          BIT(3) /* Receive FIFO full */
 #define SR_BSY                          BIT(4) /* Is the controller busy */
+/*------------------Clock Prescaler Register----------------------------------*/
+#define CPSR_MIN                        2
+#define CPSR_MAX                        254
 /*------------------Interrupt Mask Set/Clear register-------------------------*/
 /* Enables or disables specific interrupts */
 #define IMSC_RORIM                      BIT(0) /* Receive overrun */
