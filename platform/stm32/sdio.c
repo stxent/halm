@@ -196,10 +196,11 @@ static void dmaInterruptHandler(void *object)
 
       if (pinRead(interface->data0))
       {
+        interface->cmdStatus = interface->dmaStatus;
+
         interruptDisable(interface->finalizer);
         if (interface->timer != NULL)
           timerDisable(interface->timer);
-        interface->cmdStatus = interface->dmaStatus;
       }
     }
     else
@@ -216,11 +217,17 @@ static void pinInterruptHandler(void *object)
 
   /* Disable further DATA0 interrupts */
   interruptDisable(interface->finalizer);
+  /* Disable data timeout timer */
+  if (interface->timer != NULL)
+    timerDisable(interface->timer);
 
-  interface->cmdStatus = interface->dmaStatus;
+  if (interface->cmdStatus == E_BUSY)
+  {
+    interface->cmdStatus = interface->dmaStatus;
 
-  if (interface->callback != NULL)
-    interface->callback(interface->callbackArgument);
+    if (interface->callback != NULL)
+      interface->callback(interface->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void sdioInterruptHandler(void *object)
@@ -327,10 +334,11 @@ static void sdioInterruptHandler(void *object)
 
         if (pinRead(interface->data0))
         {
+          interface->cmdStatus = interface->dmaStatus;
+
           interruptDisable(interface->finalizer);
           if (interface->timer != NULL)
             timerDisable(interface->timer);
-          interface->cmdStatus = interface->dmaStatus;
         }
       }
       else
@@ -355,10 +363,13 @@ static void timerInterruptHandler(void *argument)
   /* Disable further DATA0 interrupts */
   interruptDisable(interface->finalizer);
 
-  interface->cmdStatus = E_TIMEOUT;
+  if (interface->cmdStatus == E_BUSY)
+  {
+    interface->cmdStatus = E_TIMEOUT;
 
-  if (interface->callback != NULL)
-    interface->callback(interface->callbackArgument);
+    if (interface->callback != NULL)
+      interface->callback(interface->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result updateRate(struct Sdio *interface, uint32_t rate)

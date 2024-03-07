@@ -338,7 +338,9 @@ static enum Result initStepSdReadOCR(struct MMCSD *device)
 
     res = executeCommand(device,
         SDIO_COMMAND(ACMD41_SD_SEND_OP_COND, responseType, 0),
-        ocr, responseType == MMCSD_RESPONSE_R1 ? &responseValue : NULL, true);
+        ocr,
+        responseType == MMCSD_RESPONSE_R1 ? &responseValue : NULL,
+        true);
 
     if (responseType == MMCSD_RESPONSE_R1)
     {
@@ -396,14 +398,14 @@ static enum Result initStepSetBlockLength(struct MMCSD *device)
 {
   return executeCommand(device,
       SDIO_COMMAND(CMD16_SET_BLOCKLEN, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-      1UL << BLOCK_POW, NULL, true);
+      (1UL << BLOCK_POW), NULL, true);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result initStepSetRCA(struct MMCSD *device, uint32_t address)
 {
   const enum Result res = executeCommand(device,
       SDIO_COMMAND(CMD3_SEND_RELATIVE_ADDR, MMCSD_RESPONSE_R1, SDIO_CHECK_CRC),
-      address << 16, NULL, true);
+      (address << 16), NULL, true);
 
   if (res == E_OK)
     device->info.cardAddress = address;

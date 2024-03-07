@@ -137,10 +137,11 @@ static void execute(struct Sdh *interface, uint32_t blocks)
 
       if (reg->INTSTS & INTSTS_DAT0STS)
       {
+        interface->status = E_OK;
+
         interruptDisable(interface->finalizer);
         if (interface->timer != NULL)
           timerDisable(interface->timer);
-        interface->status = E_OK;
       }
     }
   }
@@ -214,11 +215,17 @@ static void pinInterruptHandler(void *object)
 
   /* Disable further DATA0 interrupts */
   interruptDisable(interface->finalizer);
+  /* Disable data timeout timer */
+  if (interface->timer != NULL)
+    timerDisable(interface->timer);
 
-  interface->status = E_OK;
+  if (interface->status == E_BUSY)
+  {
+    interface->status = E_OK;
 
-  if (interface->callback != NULL)
-    interface->callback(interface->callbackArgument);
+    if (interface->callback != NULL)
+      interface->callback(interface->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void sdioInterruptHandler(void *object)
@@ -278,10 +285,11 @@ static void sdioInterruptHandler(void *object)
 
         if (reg->INTSTS & INTSTS_DAT0STS)
         {
+          interface->status = E_OK;
+
           interruptDisable(interface->finalizer);
           if (interface->timer != NULL)
             timerDisable(interface->timer);
-          interface->status = E_OK;
         }
         else
         {
@@ -313,10 +321,13 @@ static void timerInterruptHandler(void *argument)
   /* Disable further DATA0 interrupts */
   interruptDisable(interface->finalizer);
 
-  interface->status = E_TIMEOUT;
+  if (interface->status == E_BUSY)
+  {
+    interface->status = E_TIMEOUT;
 
-  if (interface->callback != NULL)
-    interface->callback(interface->callbackArgument);
+    if (interface->callback != NULL)
+      interface->callback(interface->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result updateRate(struct Sdh *interface, uint32_t rate)
