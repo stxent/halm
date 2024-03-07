@@ -43,7 +43,7 @@
 /*----------------------------------------------------------------------------*/
 #define IAP_BASE              0x1FFF1FF1UL
 /*----------------------------------------------------------------------------*/
-static inline uint8_t addressToBank(uint32_t address __attribute__((unused)))
+static inline uint8_t addressToBank([[maybe_unused]] uint32_t address)
 {
   return 0;
 }

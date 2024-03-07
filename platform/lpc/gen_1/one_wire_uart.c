@@ -60,7 +60,7 @@ const struct InterfaceClass * const OneWireUart =
     .write = oneWireWrite
 };
 /*----------------------------------------------------------------------------*/
-static void adjustPins(struct OneWireUart *interface __attribute__((unused)),
+static void adjustPins([[maybe_unused]] struct OneWireUart *interface,
     const struct OneWireUartConfig *config)
 {
   pinSetType(pinInit(config->tx), PIN_OPENDRAIN);
@@ -119,7 +119,7 @@ static void interruptHandler(void *object)
       case STATE_RECEIVE:
         if (data & 0x01)
           interface->word |= 1 << interface->bit;
-        /* Falls through */
+        [[fallthrough]];
       case STATE_TRANSMIT:
         if (++interface->bit == 8)
         {
@@ -227,7 +227,7 @@ static void oneWireSetCallback(void *object, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 static enum Result oneWireGetParam(void *object, int parameter,
-    void *data __attribute__((unused)))
+    [[maybe_unused]] void *data)
 {
   struct OneWireUart * const interface = object;
 

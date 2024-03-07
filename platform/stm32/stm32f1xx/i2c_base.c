@@ -164,12 +164,12 @@ void I2C2_EV_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetClock(const struct I2CBase *interface __attribute__((unused)))
+uint32_t i2cGetClock([[maybe_unused]] const struct I2CBase *interface)
 {
   return clockFrequency(Apb1Clock);
 }
 /*----------------------------------------------------------------------------*/
-void *i2cMakeOneShotDma(uint8_t channel __attribute__((unused)), uint8_t stream,
+void *i2cMakeOneShotDma([[maybe_unused]] uint8_t channel, uint8_t stream,
     enum DmaPriority priority, enum DmaType type)
 {
   const struct BdmaOneShotConfig config = {

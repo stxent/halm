@@ -90,14 +90,14 @@ static void adcDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static enum Result adcGetParam(void *object __attribute__((unused)),
-    int parameter __attribute__((unused)), void *data __attribute__((unused)))
+static enum Result adcGetParam([[maybe_unused]] void *object,
+    [[maybe_unused]] int parameter, [[maybe_unused]] void *data)
 {
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcSetParam(void *object, int parameter,
-    const void *data __attribute__((unused)))
+    [[maybe_unused]] const void *data)
 {
 #ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
   struct AdcOneShot * const interface = object;

@@ -306,7 +306,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   return ep;
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t devGetInterface(const void *object __attribute__((unused)))
+static uint8_t devGetInterface([[maybe_unused]] const void *object)
 {
   return 0;
 }
@@ -350,13 +350,13 @@ static enum Result devBind(void *object, void *driver)
   return usbControlBindDriver(device->control, driver);
 }
 /*----------------------------------------------------------------------------*/
-static void devUnbind(void *object, const void *driver __attribute__((unused)))
+static void devUnbind(void *object, [[maybe_unused]] const void *driver)
 {
   struct UsbDevice * const device = object;
   usbControlUnbindDriver(device->control);
 }
 /*----------------------------------------------------------------------------*/
-static enum UsbSpeed devGetSpeed(const void *object __attribute__((unused)))
+static enum UsbSpeed devGetSpeed([[maybe_unused]] const void *object)
 {
   return USB_FS;
 }
@@ -492,11 +492,11 @@ static void epReadPacketMemory(LPC_USB_Type *reg, uint8_t *buffer,
       case 3:
         *buffer++ = (uint8_t)lastWord;
         lastWord >>= 8;
-        /* Falls through */
+        [[fallthrough]];
       case 2:
         *buffer++ = (uint8_t)lastWord;
         lastWord >>= 8;
-        /* Falls through */
+        [[fallthrough]];
       case 1:
         *buffer = (uint8_t)lastWord;
         break;
@@ -552,10 +552,10 @@ static void epWritePacketMemory(LPC_USB_Type *reg, const uint8_t *buffer,
       {
         case 3:
           lastWord = buffer[2] << 16;
-          /* Falls through */
+          [[fallthrough]];
         case 2:
           lastWord |= buffer[1] << 8;
-          /* Falls through */
+          [[fallthrough]];
         case 1:
           lastWord |= buffer[0];
           break;
@@ -642,8 +642,8 @@ static void epDisable(void *object)
     device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
-static void epEnable(void *object, uint8_t type __attribute__((unused)),
-    uint16_t size __attribute__((unused)))
+static void epEnable(void *object, [[maybe_unused]] uint8_t type,
+    [[maybe_unused]] uint16_t size)
 {
   struct UsbEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;

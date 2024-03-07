@@ -213,7 +213,7 @@ enum
   CSW_PHASE_ERROR = 0x02
 };
 
-struct CBW
+struct [[gnu::packed]] CBW
 {
   uint32_t signature;
   uint32_t tag;
@@ -222,17 +222,17 @@ struct CBW
   uint8_t lun;
   uint8_t cbLength;
   uint8_t cb[16];
-} __attribute__((packed));
+};
 
-struct CSW
+struct [[gnu::packed]] CSW
 {
   uint32_t signature;
   uint32_t tag;
   uint32_t dataResidue;
   uint8_t status;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
-struct InquiryData
+struct [[gnu::packed]] InquiryData
 {
   uint8_t peripheralDeviceType;
   uint8_t flags0; /* RMB */
@@ -245,17 +245,17 @@ struct InquiryData
   uint8_t vendorIdentification[8];
   uint8_t productIdentification[16];
   uint8_t productRevisionLevel[4];
-} __attribute__((packed));
+};
 
-struct ModeParameterHeader6
+struct [[gnu::packed]] ModeParameterHeader6
 {
   uint8_t modeDataLength;
   uint8_t mediumType;
   uint8_t deviceSpecificParameter;
   uint8_t blockDescriptorLength;
-} __attribute__((packed));
+};
 
-struct ModeParameterHeader10
+struct [[gnu::packed]] ModeParameterHeader10
 {
   uint16_t modeDataLength;
   uint8_t mediumType;
@@ -263,9 +263,9 @@ struct ModeParameterHeader10
   uint8_t flags;
   uint8_t reserved;
   uint16_t blockDescriptorLength;
-} __attribute__((packed));
+};
 
-struct ModeSense6Command
+struct [[gnu::packed]] ModeSense6Command
 {
   uint8_t operationCode;
   uint8_t flags;
@@ -273,9 +273,9 @@ struct ModeSense6Command
   uint8_t subpageCode;
   uint8_t allocationLength;
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct ModeSense10Command
+struct [[gnu::packed]] ModeSense10Command
 {
   uint8_t operationCode;
   uint8_t flags;
@@ -284,9 +284,9 @@ struct ModeSense10Command
   uint8_t reserved[3];
   uint16_t allocationLength;
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct PreventAllowMediumRemovalCommand
+struct [[gnu::packed]] PreventAllowMediumRemovalCommand
 {
   uint8_t operationCode;
   uint8_t flags0;
@@ -294,17 +294,17 @@ struct PreventAllowMediumRemovalCommand
   uint8_t flags1;
   uint8_t reserved1[4];
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct Read6Command
+struct [[gnu::packed]] Read6Command
 {
   uint8_t operationCode;
   uint8_t logicalBlockAddress[3];
   uint8_t transferLength;
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct Read10Command
+struct [[gnu::packed]] Read10Command
 {
   uint8_t operationCode;
   uint8_t flags;
@@ -312,9 +312,9 @@ struct Read10Command
   uint8_t groupNumber;
   uint16_t transferLength;
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct Read12Command
+struct [[gnu::packed]] Read12Command
 {
   uint8_t operationCode;
   uint8_t flags;
@@ -322,9 +322,9 @@ struct Read12Command
   uint32_t transferLength;
   uint8_t groupNumber;
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct ReadCapacity10Command
+struct [[gnu::packed]] ReadCapacity10Command
 {
   uint8_t operationCode;
   uint8_t flags0;
@@ -332,9 +332,9 @@ struct ReadCapacity10Command
   uint8_t reserved[2];
   uint8_t flags1;
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct RequestSenseData
+struct [[gnu::packed]] RequestSenseData
 {
   uint8_t responseCode;
   uint8_t reserved;
@@ -347,15 +347,15 @@ struct RequestSenseData
   uint8_t fieldReplacableUnitCode;
   uint8_t senseKeyData[3];
   uint8_t senseData[];
-} __attribute__((packed));
+};
 
-struct ReadCapacityData
+struct [[gnu::packed]] ReadCapacityData
 {
   uint32_t lastLogicalBlockAddress;
   uint32_t blockLength;
-} __attribute__((packed));
+};
 
-struct Verify10Command
+struct [[gnu::packed]] Verify10Command
 {
   uint8_t operationCode;
   uint8_t flags;
@@ -363,17 +363,17 @@ struct Verify10Command
   uint8_t groupNumber;
   uint16_t verificationLength;
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct Write6Command
+struct [[gnu::packed]] Write6Command
 {
   uint8_t operationCode;
   uint8_t logicalBlockAddress[3];
   uint8_t transferLength;
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct Write10Command
+struct [[gnu::packed]] Write10Command
 {
   uint8_t operationCode;
   uint8_t flags;
@@ -381,9 +381,9 @@ struct Write10Command
   uint8_t groupNumber;
   uint16_t transferLength;
   uint8_t control;
-} __attribute__((packed));
+};
 
-struct Write12Command
+struct [[gnu::packed]] Write12Command
 {
   uint8_t operationCode;
   uint8_t flags;
@@ -391,25 +391,25 @@ struct Write12Command
   uint32_t transferLength;
   uint8_t groupNumber;
   uint8_t control;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
-struct CapacityListHeader
+struct [[gnu::packed]] CapacityListHeader
 {
   uint8_t reserved[3];
   uint8_t capacityListLength;
-} __attribute__((packed));
+};
 
-struct CapacityDescriptor
+struct [[gnu::packed]] CapacityDescriptor
 {
   uint32_t numberOfBlocks;
   uint8_t flags;
   uint8_t blockLength[3];
-} __attribute__((packed));
+};
 
-struct ReadFormatCapacitiesData
+struct [[gnu::packed]] ReadFormatCapacitiesData
 {
   struct CapacityListHeader header;
   struct CapacityDescriptor descriptors[];
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_MSC_DEFS_H_ */

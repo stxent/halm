@@ -55,13 +55,13 @@ static void onCloseCallback(uv_handle_t *handle)
   free(uv_handle_get_data((uv_handle_t *)handle));
 }
 /*----------------------------------------------------------------------------*/
-static enum Result workQueueInit(void *object __attribute__((unused)),
-    const void *configBase __attribute__((unused)))
+static enum Result workQueueInit([[maybe_unused]] void *object,
+    [[maybe_unused]] const void *configBase)
 {
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result workQueueAdd(void *object __attribute__((unused)),
+static enum Result workQueueAdd([[maybe_unused]] void *object,
     void (*callback)(void *), void *argument)
 {
   if (callback == NULL)
@@ -90,11 +90,11 @@ static enum Result workQueueAdd(void *object __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result workQueueStart(void *object __attribute__((unused)))
+static enum Result workQueueStart([[maybe_unused]] void *object)
 {
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void workQueueStop(void *object __attribute__((unused)))
+static void workQueueStop([[maybe_unused]] void *object)
 {
 }

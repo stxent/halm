@@ -449,7 +449,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   {
     case PIN_DEFAULT:
       value |= SFS_EZI;
-      /* Falls through */
+      [[fallthrough]];
 
     case PIN_ANALOG:
       /* Input buffer is left disabled */

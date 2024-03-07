@@ -18,7 +18,7 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/clock.h>
 /*----------------------------------------------------------------------------*/
-enum ClockSource
+enum [[gnu::packed]] ClockSource
 {
   CLOCK_OSC,
   CLOCK_RTC,
@@ -40,24 +40,24 @@ enum ClockSource
   CLOCK_VIDEO_PLL, /* PLL5 */
 
   CLOCK_SEMC
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
-enum ExternalOscCurrent
+enum [[gnu::packed]] ExternalOscCurrent
 {
   OSC_CURRENT_NOMINAL,
   OSC_CURRENT_MINUS_12P5,
   OSC_CURRENT_MINUS_25P,
   OSC_CURRENT_MINUS_37P5
-} __attribute__((packed));
+};
 
-enum ExternalOscDelay
+enum [[gnu::packed]] ExternalOscDelay
 {
   OSC_DELAY_DEFAULT,
   OSC_DELAY_0MS25,
   OSC_DELAY_0MS5,
   OSC_DELAY_1MS,
   OSC_DELAY_2MS
-} __attribute__((packed));
+};
 
 struct ExternalOscConfig
 {

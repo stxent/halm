@@ -263,7 +263,7 @@ enum SgpioPin sgpioConfigPin(PinNumber key, enum PinPull pull)
   return (enum SgpioPin)(offset + UNPACK_NUMBER(group->value));
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sgpioGetClock(const struct SgpioBase *unit __attribute__((unused)))
+uint32_t sgpioGetClock([[maybe_unused]] const struct SgpioBase *unit)
 {
   return clockFrequency(MainClock);
 }
@@ -374,7 +374,7 @@ enum SgpioSlice sgpioPinToSlice(enum SgpioPin pin, uint8_t mux)
 }
 /*----------------------------------------------------------------------------*/
 static enum Result unitInit(void *object,
-    const void *configBase __attribute__((unused)))
+    [[maybe_unused]] const void *configBase)
 {
   struct SgpioBase * const unit = object;
 
@@ -394,7 +394,7 @@ static enum Result unitInit(void *object,
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
-static void unitDeinit(void *object __attribute__((unused)))
+static void unitDeinit([[maybe_unused]] void *object)
 {
   sysClockDisable(CLK_PERIPH_SGPIO);
   instance = NULL;

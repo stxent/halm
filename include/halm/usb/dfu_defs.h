@@ -79,7 +79,7 @@ enum
   DFU_WILL_DETACH             = 0x08
 };
 
-struct DfuFunctionalDescriptor
+struct [[gnu::packed]] DfuFunctionalDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
@@ -87,14 +87,14 @@ struct DfuFunctionalDescriptor
   uint16_t detachTimeout;
   uint16_t transferSize;
   uint16_t dfuVersion;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
-struct DfuGetStatusResponse
+struct [[gnu::packed]] DfuGetStatusResponse
 {
   uint8_t status;
   uint8_t pollTimeout[3];
   uint8_t state;
   uint8_t string;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_DFU_DEFS_H_ */

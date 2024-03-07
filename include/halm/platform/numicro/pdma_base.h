@@ -20,7 +20,7 @@
 #define PDMA_MAX_TRANSFER_SIZE ((1 << 14) - 1)
 /*----------------------------------------------------------------------------*/
 /** DMA burst transfer size. */
-enum PdmaBurst
+enum [[gnu::packed]] PdmaBurst
 {
   DMA_BURST_1,
   DMA_BURST_2,
@@ -30,29 +30,29 @@ enum PdmaBurst
   DMA_BURST_32,
   DMA_BURST_64,
   DMA_BURST_128
-} __attribute__((packed));
+};
 
-enum PdmaPriority
+enum [[gnu::packed]] PdmaPriority
 {
   DMA_PRIORITY_FIXED,
   DMA_PRIORITY_RR
-} __attribute__((packed));
+};
 
 /** DMA transfer width. */
-enum PdmaWidth
+enum [[gnu::packed]] PdmaWidth
 {
   DMA_WIDTH_BYTE,
   DMA_WIDTH_HALFWORD,
   DMA_WIDTH_WORD
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
-struct PdmaEntry
+struct [[gnu::packed]] PdmaEntry
 {
   uint32_t control;
   uint32_t source;
   uint32_t destination;
   uint32_t next;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const PdmaBase;
 

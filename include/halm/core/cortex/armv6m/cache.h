@@ -17,8 +17,8 @@
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline void dCacheClean(uintptr_t address __attribute__((unused)),
-    size_t size __attribute__((unused)))
+static inline void dCacheClean([[maybe_unused]] uintptr_t address,
+    [[maybe_unused]] size_t size)
 {
 }
 
@@ -34,8 +34,8 @@ static inline void dCacheEnable(void)
 {
 }
 
-static inline void dCacheFlush(uintptr_t address __attribute__((unused)),
-    size_t size __attribute__((unused)))
+static inline void dCacheFlush([[maybe_unused]] uintptr_t address,
+    [[maybe_unused]] size_t size)
 {
 }
 
@@ -43,8 +43,8 @@ static inline void dCacheFlushAll(void)
 {
 }
 
-static inline void dCacheInvalidate(uintptr_t address __attribute__((unused)),
-    size_t size __attribute__((unused)))
+static inline void dCacheInvalidate([[maybe_unused]] uintptr_t address,
+    [[maybe_unused]] size_t size)
 {
 }
 

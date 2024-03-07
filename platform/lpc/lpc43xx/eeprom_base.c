@@ -20,7 +20,7 @@ extern const unsigned long _seeprom;
 extern const unsigned long _eeeprom;
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *object,
-    const void *configBase __attribute__((unused)))
+    [[maybe_unused]] const void *configBase)
 {
   struct EepromBase * const interface = object;
 
@@ -35,7 +35,7 @@ static enum Result eepromInit(void *object,
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void eepromDeinit(void *object __attribute__((unused)))
+static void eepromDeinit([[maybe_unused]] void *object)
 {
   sysClockDisable(CLK_M4_EEPROM);
 }

@@ -305,7 +305,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   return ep;
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t devGetInterface(const void *object __attribute__((unused)))
+static uint8_t devGetInterface([[maybe_unused]] const void *object)
 {
   return 0;
 }
@@ -340,13 +340,13 @@ static enum Result devBind(void *object, void *driver)
   return usbControlBindDriver(device->control, driver);
 }
 /*----------------------------------------------------------------------------*/
-static void devUnbind(void *object, const void *driver __attribute__((unused)))
+static void devUnbind(void *object, [[maybe_unused]] const void *driver)
 {
   struct UsbDevice * const device = object;
   usbControlUnbindDriver(device->control);
 }
 /*----------------------------------------------------------------------------*/
-static enum UsbSpeed devGetSpeed(const void *object __attribute__((unused)))
+static enum UsbSpeed devGetSpeed([[maybe_unused]] const void *object)
 {
   return USB_FS;
 }
@@ -575,7 +575,7 @@ static void epDisable(void *object)
     device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
-static void epEnable(void *object, uint8_t type __attribute__((unused)),
+static void epEnable(void *object, [[maybe_unused]] uint8_t type,
     uint16_t size)
 {
   struct SbUsbEndpoint * const ep = object;

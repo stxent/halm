@@ -19,7 +19,7 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum ClockSource
+enum [[gnu::packed]] ClockSource
 {
   CLOCK_INTERNAL,
   CLOCK_EXTERNAL,
@@ -27,7 +27,7 @@ enum ClockSource
   CLOCK_PLL2,
   CLOCK_PLL3,
   CLOCK_SYSTEM
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -99,13 +99,13 @@ struct SystemClockConfig
 /* Requires a SystemClockConfig structure */
 extern const struct ClockClass * const SystemClock;
 /*----------------------------------------------------------------------------*/
-enum UsbClockPrescaler
+enum [[gnu::packed]] UsbClockPrescaler
 {
   /** PLL clock is not divided. */
   USB_CLK_DIV_1,
   /** PLL clock is divided by 1.5. */
   USB_CLK_DIV_1_5
-} __attribute__((packed));
+};
 
 struct UsbClockConfig
 {

@@ -65,8 +65,7 @@ static void notifyObservers(enum PmState state)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result pmInit(void *object,
-    const void *configBase __attribute__((unused)))
+static enum Result pmInit(void *object, [[maybe_unused]] const void *configBase)
 {
   struct PowerManager * const handler = object;
 

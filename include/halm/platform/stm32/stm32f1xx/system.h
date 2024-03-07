@@ -19,7 +19,7 @@
 #include <xcore/helpers.h>
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
-enum SysBlockReset
+enum [[gnu::packed]] SysBlockReset
 {
   RST_OTGFS   = 12,
   RST_ETHMAC  = 14,
@@ -67,9 +67,9 @@ enum SysBlockReset
   RST_TIM9    = 0x40 + 19,
   RST_TIM10   = 0x40 + 20,
   RST_TIM11   = 0x40 + 21
-} __attribute__((packed));
+};
 
-enum SysClockBranch
+enum [[gnu::packed]] SysClockBranch
 {
   CLK_DMA1      = 0,
   CLK_DMA2      = 1,
@@ -126,7 +126,7 @@ enum SysClockBranch
   CLK_TIM9      = 0x40 + 19,
   CLK_TIM10     = 0x40 + 20,
   CLK_TIM11     = 0x40 + 21
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

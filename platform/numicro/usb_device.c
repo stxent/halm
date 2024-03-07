@@ -326,7 +326,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   return ep;
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t devGetInterface(const void *object __attribute__((unused)))
+static uint8_t devGetInterface([[maybe_unused]] const void *object)
 {
   return 0;
 }
@@ -377,13 +377,13 @@ static enum Result devBind(void *object, void *driver)
   return usbControlBindDriver(device->control, driver);
 }
 /*----------------------------------------------------------------------------*/
-static void devUnbind(void *object, const void *driver __attribute__((unused)))
+static void devUnbind(void *object, [[maybe_unused]] const void *driver)
 {
   struct UsbDevice * const device = object;
   usbControlUnbindDriver(device->control);
 }
 /*----------------------------------------------------------------------------*/
-static enum UsbSpeed devGetSpeed(const void *object __attribute__((unused)))
+static enum UsbSpeed devGetSpeed([[maybe_unused]] const void *object)
 {
   return USB_FS;
 }
@@ -529,10 +529,10 @@ static void epReadPacketMemory(uint32_t *destination, const uint32_t *source,
     {
       case 3:
         buffer[2] = word >> 16;
-        /* Falls through */
+        [[fallthrough]];
       case 2:
         buffer[1] = word >> 8;
-        /* Falls through */
+        [[fallthrough]];
       case 1:
         buffer[0] = word;
         break;
@@ -582,10 +582,10 @@ static void epWritePacketMemory(uint32_t *destination, const uint32_t *source,
     {
       case 3:
         word = buffer[2] << 16;
-        /* Falls through */
+        [[fallthrough]];
       case 2:
         word |= buffer[1] << 8;
-        /* Falls through */
+        [[fallthrough]];
       case 1:
         word |= buffer[0];
         break;

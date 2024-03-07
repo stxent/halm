@@ -15,7 +15,7 @@
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* ADC trigger sources */
-enum AdcEvent
+enum [[gnu::packed]] AdcEvent
 {
   ADC_BURST     = 0,
   ADC_SOFTWARE  = 1,
@@ -25,7 +25,7 @@ enum AdcEvent
   ADC_TRIG1     = 5,
   ADC_MCOA2     = 6,
   ADC_EVENT_END
-} __attribute__((packed));
+};
 
 struct AdcPin
 {

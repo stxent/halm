@@ -249,14 +249,14 @@ static void flashLatencyUpdate(uint32_t frequency)
   sysFlashLatencyUpdate(MIN(clocks, 3));
 }
 /*----------------------------------------------------------------------------*/
-static void extOscDisable(const void *clockBase __attribute__((unused)))
+static void extOscDisable([[maybe_unused]] const void *clockBase)
 {
   sysPowerDisable(PWR_SYSOSC);
   extFrequency = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result extOscEnable(const void *clockBase
-    __attribute__((unused)), const void *configBase)
+static enum Result extOscEnable([[maybe_unused]] const void *clockBase,
+    const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
   assert(config != NULL);
@@ -286,48 +286,48 @@ static enum Result extOscEnable(const void *clockBase
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t extOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return extFrequency;
 }
 /*----------------------------------------------------------------------------*/
-static bool extOscReady(const void *clockBase __attribute__((unused)))
+static bool extOscReady([[maybe_unused]] const void *clockBase)
 {
   return extFrequency != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void intOscDisable(const void *clockBase __attribute__((unused)))
+static void intOscDisable([[maybe_unused]] const void *clockBase)
 {
   sysPowerDisable(PWR_IRCOUT);
   sysPowerDisable(PWR_IRC);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result intOscEnable(const void *clockBase __attribute__((unused)),
-    const void *configBase __attribute__((unused)))
+static enum Result intOscEnable([[maybe_unused]] const void *clockBase,
+    [[maybe_unused]] const void *configBase)
 {
   sysPowerEnable(PWR_IRC);
   sysPowerEnable(PWR_IRCOUT);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t intOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return sysPowerStatus(PWR_IRC) && sysPowerStatus(PWR_IRCOUT) ?
       INT_OSC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool intOscReady(const void *clockBase __attribute__((unused)))
+static bool intOscReady([[maybe_unused]] const void *clockBase)
 {
   return sysPowerStatus(PWR_IRC) && sysPowerStatus(PWR_IRCOUT);
 }
 /*----------------------------------------------------------------------------*/
-static void wdtOscDisable(const void *clockBase __attribute__((unused)))
+static void wdtOscDisable([[maybe_unused]] const void *clockBase)
 {
   sysPowerDisable(PWR_WDTOSC);
   wdtFrequency = 0;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result wdtOscEnable(const void *clockBase __attribute__((unused)),
+static enum Result wdtOscEnable([[maybe_unused]] const void *clockBase,
     const void *configBase)
 {
   const struct WdtOscConfig * const config = configBase;
@@ -344,22 +344,22 @@ static enum Result wdtOscEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t wdtOscFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t wdtOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return wdtFrequency;
 }
 /*----------------------------------------------------------------------------*/
-static bool wdtOscReady(const void *clockBase __attribute__((unused)))
+static bool wdtOscReady([[maybe_unused]] const void *clockBase)
 {
   return wdtFrequency != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void sysPllDisable(const void *clockBase __attribute__((unused)))
+static void sysPllDisable([[maybe_unused]] const void *clockBase)
 {
   sysPowerDisable(PWR_SYSPLL);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
+static enum Result sysPllEnable([[maybe_unused]] const void *clockBase,
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
@@ -388,18 +388,18 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sysPllFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t sysPllFrequency([[maybe_unused]] const void *clockBase)
 {
   return (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK) ? pllFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool sysPllReady(const void *clockBase __attribute__((unused)))
+static bool sysPllReady([[maybe_unused]] const void *clockBase)
 {
   return pllFrequency && (LPC_SYSCON->SYSPLLSTAT & PLLSTAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result clockOutputEnable(const void *clockBase
-    __attribute__((unused)), const void *configBase)
+static enum Result clockOutputEnable([[maybe_unused]] const void *clockBase,
+    const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
   assert(config != NULL);

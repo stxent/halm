@@ -313,8 +313,7 @@ void gpTimerEnableCapture(uint8_t channel, uint8_t number)
   LPC_GIMA->CAP[channel].IN[number] = value;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t gpTimerGetClock(const struct GpTimerBase *timer
-    __attribute__((unused)))
+uint32_t gpTimerGetClock([[maybe_unused]] const struct GpTimerBase *timer)
 {
   return clockFrequency(MainClock);
 }

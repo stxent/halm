@@ -27,9 +27,9 @@ struct AdcBlockDescriptor
   uint8_t channel;
 };
 /*----------------------------------------------------------------------------*/
-void adcBaseHandler0(void) __attribute__((weak));
-void adcBaseHandler1(void) __attribute__((weak));
-void adcBaseHandler2(void) __attribute__((weak));
+[[gnu::weak]] void adcBaseHandler0(void);
+[[gnu::weak]] void adcBaseHandler1(void);
+[[gnu::weak]] void adcBaseHandler2(void);
 
 static enum Result adcInit(void *, const void *);
 
@@ -202,8 +202,8 @@ void adcBaseHandler2(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-void *adcMakeCircularDma(uint8_t channel __attribute__((unused)),
-    uint8_t stream, enum DmaPriority priority, bool silent)
+void *adcMakeCircularDma([[maybe_unused]] uint8_t channel, uint8_t stream,
+    enum DmaPriority priority, bool silent)
 {
   const struct BdmaCircularConfig config = {
       .event = DMA_GENERIC,

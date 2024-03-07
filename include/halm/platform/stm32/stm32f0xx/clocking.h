@@ -19,7 +19,7 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum ClockSource
+enum [[gnu::packed]] ClockSource
 {
   CLOCK_INTERNAL,    /* HSI */
   CLOCK_INTERNAL_14, /* HSI14 */
@@ -30,9 +30,9 @@ enum ClockSource
   CLOCK_RTC,         /* LSE */
   CLOCK_APB,
   CLOCK_SYSTEM
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
-enum AdcClockSource
+enum [[gnu::packed]] AdcClockSource
 {
   /** Separate asynchronous ADC clock. */
   ADC_CLOCK_INTERNAL_14,
@@ -40,7 +40,7 @@ enum AdcClockSource
   ADC_CLOCK_APB_DIV_2,
   /** Synchronous APB clock divided by 4. */
   ADC_CLOCK_APB_DIV_4
-} __attribute__((packed));
+};
 
 struct AdcClockConfig
 {

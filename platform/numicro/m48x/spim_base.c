@@ -184,14 +184,12 @@ void SPIM_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t spimGetClock(const struct SpimBase *interface
-    __attribute__((unused)))
+uint32_t spimGetClock([[maybe_unused]] const struct SpimBase *interface)
 {
   return clockFrequency(MainClock);
 }
 /*----------------------------------------------------------------------------*/
-void *spimGetMemoryAddress(const struct SpimBase *interface
-    __attribute__((unused)))
+void *spimGetMemoryAddress([[maybe_unused]] const struct SpimBase *interface)
 {
   return (void *)NM_SPIM_BASE;
 }
@@ -220,7 +218,7 @@ static enum Result spimInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NUMICRO_SPIM_NO_DEINIT
-static void spimDeinit(void *object __attribute__((unused)))
+static void spimDeinit([[maybe_unused]] void *object)
 {
   sysClockDisable(CLK_SPIM);
   instance = NULL;

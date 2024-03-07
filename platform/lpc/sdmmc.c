@@ -91,7 +91,7 @@ static void execute(struct Sdmmc *interface)
   {
     case SDIO_RESPONSE_LONG:
       command |= CMD_RESPONSE_LENGTH;
-      /* Falls through */
+      [[fallthrough]];
     case SDIO_RESPONSE_SHORT:
       command |= CMD_RESPONSE_EXPECT;
       break;

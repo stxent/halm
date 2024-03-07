@@ -82,8 +82,7 @@ static void onCloseCallback(uv_handle_t *handle)
 }
 /*----------------------------------------------------------------------------*/
 static void onInterfaceCallback(uv_poll_t *handle,
-    int status __attribute__((unused)),
-    int events __attribute__((unused)))
+    [[maybe_unused]] int status, [[maybe_unused]] int events)
 {
   struct Console * const interface = handle->data;
   uint8_t buffer[BUFFER_SIZE];
@@ -99,7 +98,7 @@ static void onInterfaceCallback(uv_poll_t *handle,
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object,
-    const void *configBase __attribute__((unused)))
+    [[maybe_unused]] const void *configBase)
 {
   struct Console * const interface = object;
   enum Result res;
@@ -137,7 +136,7 @@ free_mutex:
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static void streamDeinit(void *object __attribute__((unused)))
+static void streamDeinit([[maybe_unused]] void *object)
 {
   struct Console * const interface = object;
 
@@ -192,9 +191,8 @@ static enum Result streamGetParam(void *object, int parameter, void *data)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result streamSetParam(void *object __attribute__((unused)),
-    int parameter __attribute__((unused)),
-    const void *data __attribute__((unused)))
+static enum Result streamSetParam([[maybe_unused]] void *object,
+    [[maybe_unused]] int parameter, [[maybe_unused]] const void *data)
 {
   return E_INVALID;
 }
@@ -210,7 +208,7 @@ static size_t streamRead(void *object, void *buffer, size_t length)
   return read;
 }
 /*----------------------------------------------------------------------------*/
-static size_t streamWrite(void *object __attribute__((unused)),
+static size_t streamWrite([[maybe_unused]] void *object,
     const void *buffer, size_t length)
 {
   if (!length)

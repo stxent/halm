@@ -115,8 +115,8 @@ static unsigned int eventToPeripheral(enum GpDmaEvent event)
   return eventTranslationMap[event];
 }
 /*----------------------------------------------------------------------------*/
-uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
-    __attribute__((unused)), const struct GpDmaSettings *settings)
+uint32_t gpDmaBaseCalcControl([[maybe_unused]] const struct GpDmaBase *channel,
+    const struct GpDmaSettings *settings)
 {
   assert(settings->source.burst <= DMA_BURST_256);
   assert(settings->source.width <= DMA_WIDTH_WORD);
@@ -139,9 +139,9 @@ uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *channel
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpDmaBaseCalcMasterAffinity(
-    const struct GpDmaBase *channel __attribute__((unused)),
-    enum GpDmaMaster dstMaster __attribute__((unused)),
-    enum GpDmaMaster srcMaster __attribute__((unused)))
+    [[maybe_unused]] const struct GpDmaBase *channel,
+    [[maybe_unused]] enum GpDmaMaster dstMaster,
+    [[maybe_unused]] enum GpDmaMaster srcMaster)
 {
   return 0;
 }

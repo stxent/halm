@@ -22,7 +22,7 @@ enum
 };
 
 /* ADC trigger sources for regular group */
-enum AdcEvent
+enum [[gnu::packed]] AdcEvent
 {
   ADC_TIM1_CC1  = 0,
   ADC_TIM1_CC2  = 1,
@@ -42,10 +42,10 @@ enum AdcEvent
   ADC_EXTI11    = 15,
   ADC_SOFTWARE,
   ADC_EVENT_END
-} __attribute__((packed));
+};
 
 /* ADC trigger sources for injected group */
-enum AdcInjectedEvent
+enum [[gnu::packed]] AdcInjectedEvent
 {
   ADC_INJ_TIM1_CC4  = 0,
   ADC_INJ_TIM1_TRGO = 1,
@@ -65,10 +65,10 @@ enum AdcInjectedEvent
   ADC_INJ_EXTI15    = 15,
   ADC_INJ_SOFTWARE,
   ADC_INJ_EVENT_END
-} __attribute__((packed));
+};
 
 /* ADC sampling time */
-enum AdcSamplingTime
+enum [[gnu::packed]] AdcSamplingTime
 {
   ADC_SAMPLING_TIME_3 = 0,
   ADC_SAMPLING_TIME_15 = 1,
@@ -79,7 +79,7 @@ enum AdcSamplingTime
   ADC_SAMPLING_TIME_144 = 6,
   ADC_SAMPLING_TIME_480 = 7,
   ADC_SAMPLING_TIME_END
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_ADC/adc_base.h>

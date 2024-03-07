@@ -74,7 +74,7 @@ static void interruptHandler(void *object)
 
     case STATUS_ADDRESS_READ_RECEIVED:
       interface->state = STATE_DATA;
-      /* Falls through */
+      [[fallthrough]];
     case STATUS_SLAVE_DATA_TRANSMITTED_ACK:
       reg->DAT = interface->cache[interface->external];
 

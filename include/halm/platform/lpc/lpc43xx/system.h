@@ -21,7 +21,7 @@
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals register */
-enum SysBlockReset
+enum [[gnu::packed]] SysBlockReset
 {
   RST_CORE      = 0,
   RST_PERIPH    = 1,
@@ -70,10 +70,10 @@ enum SysBlockReset
   RST_SGPIO     = 0x20 + 25,
   RST_SPI       = 0x20 + 26,
   RST_ADCHS     = 0x20 + 28
-} __attribute__((packed));
+};
 
 /* Enable or disable clock branches */
-enum SysClockBranch
+enum [[gnu::packed]] SysClockBranch
 {
   /* Offsets from the beginning of the CCU1 peripheral */
   CLK_APB3_BUS      = 0x000,
@@ -138,7 +138,7 @@ enum SysClockBranch
   CLK_APB2_SSP1     = 0x2A0,
   CLK_APB0_SSP0     = 0x2C0,
   CLK_SDIO          = 0x2E0
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

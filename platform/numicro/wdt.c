@@ -108,7 +108,7 @@ static void wdtSetCallback(void *object, void (*callback)(void *),
   sysLockReg();
 }
 /*----------------------------------------------------------------------------*/
-static void wdtReload(void *object __attribute__((unused)))
+static void wdtReload([[maybe_unused]] void *object)
 {
   NM_WDT->RSTCNT = RSTCNT_MAGIC_NUMBER;
 }

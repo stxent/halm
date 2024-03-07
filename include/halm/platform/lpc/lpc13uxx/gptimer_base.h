@@ -18,12 +18,12 @@ enum
   GPTIMER_CT16B1,
   GPTIMER_CT32B0,
   GPTIMER_CT32B1
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline void gpTimerEnableCapture(uint8_t channel __attribute__((unused)),
-    uint8_t number __attribute__((unused)))
+static inline void gpTimerEnableCapture([[maybe_unused]] uint8_t channel,
+    [[maybe_unused]] uint8_t number)
 {
 }
 

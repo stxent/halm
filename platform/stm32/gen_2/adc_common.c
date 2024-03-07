@@ -44,7 +44,7 @@ uint32_t adcEncodeSensitivity(enum InputEvent event)
   }
 }
 /*----------------------------------------------------------------------------*/
-void adcReleasePin(struct AdcPin adcPin __attribute__((unused)))
+void adcReleasePin([[maybe_unused]] struct AdcPin adcPin)
 {
 }
 /*----------------------------------------------------------------------------*/

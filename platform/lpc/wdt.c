@@ -80,7 +80,7 @@ static bool wdtFired(const void *object)
   return timer->fired;
 }
 /*----------------------------------------------------------------------------*/
-static void wdtReload(void *object __attribute__((unused)))
+static void wdtReload([[maybe_unused]] void *object)
 {
   reloadCounter();
 }

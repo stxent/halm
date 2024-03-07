@@ -355,8 +355,8 @@ static void channelSetDuration(void *object, uint32_t duration)
   *pwm->value = duration;
 }
 /*----------------------------------------------------------------------------*/
-static void channelSetEdges(void *object,
-    uint32_t leading __attribute__((unused)), uint32_t trailing)
+static void channelSetEdges(void *object, [[maybe_unused]] uint32_t leading,
+    uint32_t trailing)
 {
   assert(leading == 0); /* Leading edge time must be zero */
   channelSetDuration(object, trailing);

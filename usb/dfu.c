@@ -52,7 +52,7 @@ static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     NULL
 };
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor(const void *object __attribute__((unused)),
+static void deviceDescriptor([[maybe_unused]] const void *object,
     struct UsbDescriptor *header, void *payload)
 {
   header->length = sizeof(struct UsbDeviceDescriptor);
@@ -70,7 +70,7 @@ static void deviceDescriptor(const void *object __attribute__((unused)),
   }
 }
 /*----------------------------------------------------------------------------*/
-static void configDescriptor(const void *object __attribute__((unused)),
+static void configDescriptor([[maybe_unused]] const void *object,
     struct UsbDescriptor *header, void *payload)
 {
   header->length = sizeof(struct UsbConfigurationDescriptor);
@@ -339,9 +339,8 @@ static void driverDeinit(void *object)
 }
 /*----------------------------------------------------------------------------*/
 static enum Result driverControl(void *object,
-    const struct UsbSetupPacket *packet, void *buffer,
-    uint16_t *responseLength,
-    uint16_t maxResponseLength __attribute__((unused)))
+    const struct UsbSetupPacket *packet, void *buffer, uint16_t *responseLength,
+    [[maybe_unused]] uint16_t maxResponseLength)
 {
   struct Dfu * const driver = object;
   const uint8_t type = REQUEST_TYPE_VALUE(packet->requestType);
@@ -462,8 +461,8 @@ static enum Result driverControl(void *object,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static const UsbDescriptorFunctor *driverDescribe(const void *object
-    __attribute__((unused)))
+static const UsbDescriptorFunctor *driverDescribe(
+    [[maybe_unused]] const void *object)
 {
   return deviceDescriptorTable;
 }

@@ -194,8 +194,7 @@ void TIMER3_ISR(void)
   instances[3]->handler(instances[3]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t gpTimerGetClock(const struct GpTimerBase *timer
-    __attribute__((unused)))
+uint32_t gpTimerGetClock([[maybe_unused]] const struct GpTimerBase *timer)
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }

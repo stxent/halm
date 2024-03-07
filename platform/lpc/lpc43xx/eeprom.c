@@ -151,7 +151,7 @@ static enum Result eepromInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void eepromDeinit(void *object __attribute__((unused)))
+static void eepromDeinit([[maybe_unused]] void *object)
 {
   irqDisable(EEPROM_IRQ);
   instance = NULL;

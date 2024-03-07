@@ -29,7 +29,7 @@ const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
 };
 /*----------------------------------------------------------------------------*/
 static enum Result flashInit(void *object,
-    const void *configBase __attribute__((unused)))
+    [[maybe_unused]] const void *configBase)
 {
   struct Flash * const interface = object;
   const enum Result res = FlashBase->init(interface, NULL);
@@ -182,7 +182,7 @@ static size_t flashWrite(void *object, const void *buffer, size_t length)
   return length - left;
 }
 /*----------------------------------------------------------------------------*/
-void *flashGetAddress(const void *object __attribute__((unused)))
+void *flashGetAddress([[maybe_unused]] const void *object)
 {
   return (void *)0;
 }

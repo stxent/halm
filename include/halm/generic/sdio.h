@@ -27,13 +27,13 @@ enum SDIOFlags
   SDIO_AUTO_STOP      = 0x40
 };
 
-enum SDIOMode
+enum [[gnu::packed]] SDIOMode
 {
   SDIO_SPI,
   SDIO_1BIT,
   SDIO_4BIT,
   SDIO_8BIT
-} __attribute__((packed));
+};
 
 enum SDIOParameter
 {
@@ -54,11 +54,11 @@ enum SDIOParameter
   IF_SDIO_BLOCK_SIZE
 };
 
-enum SDIOResponse
+enum [[gnu::packed]] SDIOResponse
 {
   SDIO_RESPONSE_NONE,
   SDIO_RESPONSE_SHORT,
   SDIO_RESPONSE_LONG
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_SDIO_H_ */

@@ -29,10 +29,10 @@ enum
   DMA2_STREAM5
 };
 
-enum DmaEvent
+enum [[gnu::packed]] DmaEvent
 {
   DMA_GENERIC,
   DMA_EVENT_END
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F0XX_BDMA_BASE_H_ */

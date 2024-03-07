@@ -20,7 +20,7 @@ typedef unsigned int IrqState;
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline void irqRestore(IrqState state __attribute__((unused)))
+static inline void irqRestore([[maybe_unused]] IrqState state)
 {
 }
 
@@ -29,33 +29,33 @@ static inline IrqState irqSave(void)
   return 0;
 }
 
-static inline IrqPriority irqGetPriority(IrqNumber irq __attribute__((unused)))
+static inline IrqPriority irqGetPriority([[maybe_unused]] IrqNumber irq)
 {
   return 0;
 }
 
-static inline void irqSetPriority(IrqNumber irq __attribute__((unused)),
-    IrqPriority priority __attribute__((unused)))
+static inline void irqSetPriority([[maybe_unused]] IrqNumber irq,
+    [[maybe_unused]] IrqPriority priority)
 {
 }
 
-static inline void irqEnable(IrqNumber irq __attribute__((unused)))
+static inline void irqEnable([[maybe_unused]] IrqNumber irq)
 {
 }
 
-static inline void irqDisable(IrqNumber irq __attribute__((unused)))
+static inline void irqDisable([[maybe_unused]] IrqNumber irq)
 {
 }
 
-static inline void irqClearPending(IrqNumber irq __attribute__((unused)))
+static inline void irqClearPending([[maybe_unused]] IrqNumber irq)
 {
 }
 
-static inline void irqSetPending(IrqNumber irq __attribute__((unused)))
+static inline void irqSetPending([[maybe_unused]] IrqNumber irq)
 {
 }
 
-static inline bool irqStatus(IrqNumber irq __attribute__((unused)))
+static inline bool irqStatus([[maybe_unused]] IrqNumber irq)
 {
   return false;
 }

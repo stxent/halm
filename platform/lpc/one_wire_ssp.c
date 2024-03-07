@@ -78,7 +78,7 @@ const struct InterfaceClass * const OneWireSsp = &(const struct InterfaceClass){
     .write = oneWireWrite
 };
 /*----------------------------------------------------------------------------*/
-static void adjustPins(struct OneWireSsp *interface __attribute__((unused)),
+static void adjustPins([[maybe_unused]] struct OneWireSsp *interface,
     const struct OneWireSspConfig *config)
 {
   pinSetType(pinInit(config->mosi), PIN_OPENDRAIN);
@@ -124,7 +124,7 @@ static void standardInterruptHandler(void *object)
       case STATE_RECEIVE:
         if (!(data & DATA_MASK))
           interface->word |= 1 << interface->bit;
-        /* Falls through */
+        [[fallthrough]];
       case STATE_TRANSMIT:
         if (++interface->bit == 8)
         {
@@ -427,7 +427,7 @@ static void oneWireSetCallback(void *object, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 static enum Result oneWireGetParam(void *object, int parameter,
-    void *data __attribute__((unused)))
+    [[maybe_unused]] void *data)
 {
   struct OneWireSsp * const interface = object;
 

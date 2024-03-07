@@ -32,40 +32,40 @@ enum
   PIN_ANALOG  = 0x7E
 };
 
-enum InputEvent
+enum [[gnu::packed]] InputEvent
 {
   INPUT_RISING,
   INPUT_FALLING,
   INPUT_HIGH,
   INPUT_LOW,
   INPUT_TOGGLE
-} __attribute__((packed));
+};
 
-enum PinDirection
+enum [[gnu::packed]] PinDirection
 {
   PIN_INPUT,
   PIN_OUTPUT
-} __attribute__((packed));
+};
 
-enum PinPull
+enum [[gnu::packed]] PinPull
 {
   PIN_NOPULL,
   PIN_PULLUP,
   PIN_PULLDOWN
-} __attribute__((packed));
+};
 
-enum PinSlewRate
+enum [[gnu::packed]] PinSlewRate
 {
   PIN_SLEW_FAST,
   PIN_SLEW_NORMAL,
   PIN_SLEW_SLOW
-} __attribute__((packed));
+};
 
-enum PinType
+enum [[gnu::packed]] PinType
 {
   PIN_PUSHPULL,
   PIN_OPENDRAIN
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 struct PinEntry
 {

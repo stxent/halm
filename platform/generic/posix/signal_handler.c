@@ -46,7 +46,7 @@ static void onCloseCallback(uv_handle_t *handle)
 }
 /*----------------------------------------------------------------------------*/
 static void onSignalReceived(uv_signal_t *handle,
-    int signum __attribute__((unused)))
+    [[maybe_unused]] int signum)
 {
   struct SignalHandler * const handler =
       uv_handle_get_data((uv_handle_t *)handle);

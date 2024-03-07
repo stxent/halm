@@ -65,7 +65,7 @@ void SDIO_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sdioGetClock(const struct SdioBase *interface __attribute__((unused)))
+uint32_t sdioGetClock([[maybe_unused]] const struct SdioBase *interface)
 {
   return clockFrequency(UsbClock);
 }
@@ -107,7 +107,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void sdioDeinit(void *object __attribute__((unused)))
+static void sdioDeinit([[maybe_unused]] void *object)
 {
   sysClockDisable(CLK_SDIO);
   instance = NULL;

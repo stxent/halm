@@ -174,7 +174,7 @@ static void adcSetCallback(void *object, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcGetParam(void *object, int parameter,
-    void *data __attribute__((unused)))
+    [[maybe_unused]] void *data)
 {
   const struct Adc * const interface = object;
   const LPC_ADC_Type * const reg = interface->base.reg;
@@ -193,7 +193,7 @@ static enum Result adcGetParam(void *object, int parameter,
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcSetParam(void *object, int parameter,
-    const void *data __attribute__((unused)))
+    [[maybe_unused]] const void *data)
 {
   struct Adc * const interface = object;
 

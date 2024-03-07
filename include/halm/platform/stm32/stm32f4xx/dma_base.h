@@ -33,7 +33,7 @@ enum
   DMA2_STREAM7
 };
 
-enum DmaEvent
+enum [[gnu::packed]] DmaEvent
 {
   DMA_SPI1_RX,
   DMA_SPI1_TX,
@@ -115,7 +115,7 @@ enum DmaEvent
 
   DMA_MEMORY,
   DMA_EVENT_END
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

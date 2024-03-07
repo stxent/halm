@@ -17,7 +17,7 @@
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Power-down configuration register */
-enum SysBlockPower
+enum [[gnu::packed]] SysBlockPower
 {
   PWR_IRCOUT  = 0,
   PWR_IRC     = 1,
@@ -29,10 +29,10 @@ enum SysBlockPower
   PWR_SYSPLL  = 7,
   PWR_USBPLL  = 8,
   PWR_USBPAD  = 10
-} __attribute__((packed));
+};
 
 /* System AHB clock control register */
-enum SysClockBranch
+enum [[gnu::packed]] SysClockBranch
 {
   CLK_SYS         = 0,
   CLK_ROM         = 1,
@@ -57,7 +57,7 @@ enum SysClockBranch
   CLK_GROUP1INT   = 24,
   CLK_RAM1        = 26,
   CLK_USBSRAM     = 27
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

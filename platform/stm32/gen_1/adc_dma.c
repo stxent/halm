@@ -269,7 +269,7 @@ static void adcSetCallback(void *object, void (*callback)(void *),
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcGetParam(void *object, int parameter,
-    void *data __attribute__((unused)))
+    [[maybe_unused]] void *data)
 {
   const struct AdcDma * const interface = object;
 
@@ -287,7 +287,7 @@ static enum Result adcGetParam(void *object, int parameter,
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcSetParam(void *object, int parameter,
-    const void *data __attribute__((unused)))
+    [[maybe_unused]] const void *data)
 {
   struct AdcDma * const interface = object;
 

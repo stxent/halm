@@ -124,14 +124,14 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
   timerSetFrequency(timer->timer, frequency);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetOverflow(const void *object __attribute__((unused)))
+static uint32_t tmrGetOverflow([[maybe_unused]] const void *object)
 {
   // TODO
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetOverflow(void *object __attribute__((unused)),
-    uint32_t overflow __attribute__((unused)))
+static void tmrSetOverflow([[maybe_unused]] void *object,
+    [[maybe_unused]] uint32_t overflow)
 {
   // TODO
 }

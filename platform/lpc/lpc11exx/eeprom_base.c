@@ -17,7 +17,7 @@ const struct EntityClass * const EepromBase = &(const struct EntityClass){
 };
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *object,
-    const void *configBase __attribute__((unused)))
+    [[maybe_unused]] const void *configBase)
 {
   struct EepromBase * const interface = object;
   const uint32_t id = flashReadId();

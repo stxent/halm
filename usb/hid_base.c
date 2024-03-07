@@ -14,11 +14,11 @@
 #include <assert.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-struct SingleHidDescriptor
+struct [[gnu::packed]] SingleHidDescriptor
 {
   struct HidDescriptorBase base;
   struct HidDescriptorEntry entries[1];
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 static void deviceDescriptor(const void *, struct UsbDescriptor *, void *);
 static void configDescriptor(const void *, struct UsbDescriptor *, void *);
@@ -57,7 +57,7 @@ static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     NULL
 };
 /*----------------------------------------------------------------------------*/
-static void deviceDescriptor(const void *object __attribute__((unused)),
+static void deviceDescriptor([[maybe_unused]] const void *object,
     struct UsbDescriptor *header, void *payload)
 {
   header->length = sizeof(struct UsbDeviceDescriptor);
@@ -75,7 +75,7 @@ static void deviceDescriptor(const void *object __attribute__((unused)),
   }
 }
 /*----------------------------------------------------------------------------*/
-static void configDescriptor(const void *object __attribute__((unused)),
+static void configDescriptor([[maybe_unused]] const void *object,
     struct UsbDescriptor *header, void *payload)
 {
   header->length = sizeof(struct UsbConfigurationDescriptor);
@@ -311,8 +311,8 @@ static enum Result driverControl(void *object,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-static const UsbDescriptorFunctor *driverDescribe(const void *object
-    __attribute__((unused)))
+static const UsbDescriptorFunctor *driverDescribe(
+    [[maybe_unused]] const void *object)
 {
   return deviceDescriptorTable;
 }

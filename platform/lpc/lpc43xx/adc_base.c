@@ -37,8 +37,8 @@ struct PinDescriptor
 static struct AdcPin configGroupPin(const struct PinGroupEntry *, PinNumber);
 static struct AdcPin configRegularPin(const struct PinEntry *, PinNumber);
 /*----------------------------------------------------------------------------*/
-void adcBaseHandler0(void) __attribute__((weak));
-void adcBaseHandler1(void) __attribute__((weak));
+[[gnu::weak]] void adcBaseHandler0(void);
+[[gnu::weak]] void adcBaseHandler1(void);
 
 static enum Result adcInit(void *, const void *);
 

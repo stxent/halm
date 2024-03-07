@@ -22,7 +22,7 @@
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals */
-enum SysBlockReset
+enum [[gnu::packed]] SysBlockReset
 {
   RST_CHIP    = 0,
   RST_CPU     = 1,
@@ -87,10 +87,10 @@ enum SysBlockReset
   RST_CAN2    = 0x40 + 28,
   RST_OPA     = 0x40 + 30,
   RST_EADC1   = 0x40 + 31
-} __attribute__((packed));
+};
 
 /* Enable or disable clock branches */
-enum SysClockBranch
+enum [[gnu::packed]] SysClockBranch
 {
   CLK_PDMA    = 1,
   CLK_ISP     = 2,
@@ -158,7 +158,7 @@ enum SysClockBranch
   CLK_CAN2    = 0x40 + 28,
   CLK_OPA     = 0x40 + 30,
   CLK_EADC1   = 0x40 + 31
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

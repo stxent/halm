@@ -82,7 +82,7 @@ static enum Result bodInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_BOD_NO_DEINIT
-static void bodDeinit(void *object __attribute__((unused)))
+static void bodDeinit([[maybe_unused]] void *object)
 {
   irqDisable(BOD_IRQ);
   LPC_SYSCON->BODCTRL &= ~BODCTRL_BODRSTENA;

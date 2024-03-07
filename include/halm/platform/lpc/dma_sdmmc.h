@@ -10,13 +10,13 @@
 #include <halm/platform/lpc/gpdma_base.h>
 #include <halm/platform/lpc/sdmmc.h>
 /*----------------------------------------------------------------------------*/
-struct DmaSdmmcEntry
+struct [[gnu::packed]] DmaSdmmcEntry
 {
   uint32_t control;
   uint32_t size;
   uint32_t buffer1;
   uint32_t buffer2;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const DmaSdmmc;
 

@@ -141,7 +141,7 @@ void SPI0_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t spiGetClock(const struct SpiBase *interface __attribute__((unused)))
+uint32_t spiGetClock([[maybe_unused]] const struct SpiBase *interface)
 {
   return clockFrequency(Spi0Clock);
 }
@@ -172,7 +172,7 @@ static enum Result spiInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_NUMICRO_SPI_NO_DEINIT
-static void spiDeinit(void *object __attribute__((unused)))
+static void spiDeinit([[maybe_unused]] void *object)
 {
   sysClockDisable(CLK_SPI0);
   instance = NULL;

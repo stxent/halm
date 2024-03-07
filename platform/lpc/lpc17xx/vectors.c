@@ -6,60 +6,60 @@
 
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
-void defaultHandler(void) __attribute__((weak));
+[[gnu::weak]] void defaultHandler(void);
 /*----------------------------------------------------------------------------*/
 /* Core Cortex-M3 IRQ handlers */
-void RESET_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void NMI_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void HARDFAULT_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void MEMMANAGE_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void BUSFAULT_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void USAGEFAULT_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void SVCALL_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void DEBUGMON_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void PENDSV_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void SYSTICK_ISR(void) __attribute__((weak, alias("defaultHandler")));
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void RESET_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void NMI_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void HARDFAULT_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void MEMMANAGE_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void BUSFAULT_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void USAGEFAULT_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void SVCALL_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void DEBUGMON_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void PENDSV_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void SYSTICK_ISR(void);
 /*----------------------------------------------------------------------------*/
 /* Chip-specific IRQ handlers */
-void WDT_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER2_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void TIMER3_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void UART0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void UART1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void UART2_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void UART3_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void PWM1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void I2C0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void I2C1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void I2C2_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void SPI_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void SSP0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void SSP1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void PLL0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void RTC_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void EINT0_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void EINT1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void EINT2_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void EINT3_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void ADC_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void BOD_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void USB_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void CAN_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void GPDMA_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void I2S_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void ENET_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void RIT_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void MCPWM_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void QEI_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void PLL1_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void USB_ACT_ISR(void) __attribute__((weak, alias("defaultHandler")));
-void CAN_ACT_ISR(void) __attribute__((weak, alias("defaultHandler")));
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void WDT_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void TIMER0_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void TIMER1_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void TIMER2_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void TIMER3_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void UART0_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void UART1_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void UART2_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void UART3_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void PWM1_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void I2C0_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void I2C1_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void I2C2_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void SPI_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void SSP0_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void SSP1_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void PLL0_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void RTC_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void EINT0_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void EINT1_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void EINT2_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void EINT3_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void ADC_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void BOD_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void USB_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void CAN_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void GPDMA_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void I2S_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void ENET_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void RIT_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void MCPWM_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void QEI_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void PLL1_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void USB_ACT_ISR(void);
+[[gnu::weak]] [[gnu::alias("defaultHandler")]] void CAN_ACT_ISR(void);
 /*----------------------------------------------------------------------------*/
 extern unsigned long _stack; /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
-__attribute__((section(".vectors"))) void (* const vectorTable[])(void) = {
+[[gnu::section(".vectors")]] void (* const vectorTable[])(void) = {
     /* The top of the stack */
     (void (*)(void))(unsigned long)&_stack,
     /* Core interrupts */

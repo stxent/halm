@@ -22,7 +22,7 @@
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
-enum SysBlockPower
+enum [[gnu::packed]] SysBlockPower
 {
   PWR_TIM0  = 1,
   PWR_TIM1  = 2,
@@ -51,10 +51,10 @@ enum SysBlockPower
   PWR_GPDMA = 29,
   PWR_ENET  = 30,
   PWR_USB   = 31
-} __attribute__((packed));
+};
 
 /* Peripheral clock selection registers */
-enum SysClockBranch
+enum [[gnu::packed]] SysClockBranch
 {
   /* PCLKSEL0 */
   CLK_WDT      = 0,
@@ -86,10 +86,10 @@ enum SysClockBranch
   CLK_RIT      = 0x20 + 26,
   CLK_SYSCON   = 0x20 + 28,
   CLK_MC       = 0x20 + 30
-} __attribute__((packed));
+};
 
 /* Divider values for peripheral clock control registers */
-enum SysClockDiv
+enum [[gnu::packed]] SysClockDiv
 {
   CLK_DIV1 = 0,
   CLK_DIV2 = 1,

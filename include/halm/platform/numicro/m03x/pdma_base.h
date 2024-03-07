@@ -26,7 +26,7 @@ enum
 };
 
 /** PDMA Request Source Selection. */
-enum PdmaEvent
+enum [[gnu::packed]] PdmaEvent
 {
   PDMA_DISABLE    = 0,
   PDMA_UART0_TX   = 4,
@@ -70,7 +70,7 @@ enum PdmaEvent
   PDMA_UART7_RX   = 45,
   PDMA_MEMORY,
   PDMA_EVENT_END
-} __attribute__((packed));
+};
 
 struct PdmaMuxConfig
 {
@@ -80,8 +80,7 @@ struct PdmaMuxConfig
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-static inline enum PdmaEvent pdmaGetEventAdc(uint8_t channel
-    __attribute__((unused)))
+static inline enum PdmaEvent pdmaGetEventAdc([[maybe_unused]] uint8_t channel)
 {
   return PDMA_ADC_RX;
 }
@@ -96,26 +95,24 @@ static inline enum PdmaEvent pdmaGetEventI2CTx(uint8_t channel)
   return PDMA_I2C0_TX + channel * 2;
 }
 
-static inline enum PdmaEvent pdmaGetEventSpiRx(uint8_t channel
-    __attribute__((unused)))
+static inline enum PdmaEvent pdmaGetEventSpiRx([[maybe_unused]] uint8_t channel)
 {
   return PDMA_SPI0_RX;
 }
 
-static inline enum PdmaEvent pdmaGetEventSpiTx(uint8_t channel
-    __attribute__((unused)))
+static inline enum PdmaEvent pdmaGetEventSpiTx([[maybe_unused]] uint8_t channel)
 {
   return PDMA_SPI0_TX;
 }
 
-static inline enum PdmaEvent pdmaGetEventQspiRx(uint8_t channel
-    __attribute__((unused)))
+static inline enum PdmaEvent pdmaGetEventQspiRx(
+    [[maybe_unused]] uint8_t channel)
 {
   return PDMA_QSPI0_RX;
 }
 
-static inline enum PdmaEvent pdmaGetEventQspiTx(uint8_t channel
-    __attribute__((unused)))
+static inline enum PdmaEvent pdmaGetEventQspiTx(
+    [[maybe_unused]] uint8_t channel)
 {
   return PDMA_QSPI0_TX;
 }

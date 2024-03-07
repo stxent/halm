@@ -148,7 +148,7 @@ static void wdtSetCallback(void *object, void (*callback)(void *),
   timer->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static void wdtReload(void *object __attribute__((unused)))
+static void wdtReload([[maybe_unused]] void *object)
 {
   reloadCounter();
 }

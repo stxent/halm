@@ -73,7 +73,7 @@ static bool setInstance(struct Atimer *object)
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object,
-    const void *configBase __attribute__((unused)))
+    [[maybe_unused]] const void *configBase)
 {
   struct Atimer * const timer = object;
 
@@ -104,7 +104,7 @@ static void tmrDeinit(void *object)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static void tmrEnable(void *object __attribute__((unused)))
+static void tmrEnable([[maybe_unused]] void *object)
 {
   /* Timer is free-running, reload current value and enable interrupts */
   LPC_ATIMER->DOWNCOUNTER = LPC_ATIMER->PRESET;
@@ -113,7 +113,7 @@ static void tmrEnable(void *object __attribute__((unused)))
   LPC_ATIMER->SET_EN = SET_EN_SET_EN;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrDisable(void *object __attribute__((unused)))
+static void tmrDisable([[maybe_unused]] void *object)
 {
   LPC_ATIMER->CLR_EN = CLR_EN_CLR_EN;
 }
@@ -127,18 +127,17 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callback = callback;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetFrequency(const void *object __attribute__((unused)))
+static uint32_t tmrGetFrequency([[maybe_unused]] const void *object)
 {
   return clockFrequency(RtcOsc) / ATIMER_DIVIDER;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetOverflow(const void *object __attribute__((unused)))
+static uint32_t tmrGetOverflow([[maybe_unused]] const void *object)
 {
   return LPC_ATIMER->PRESET + 1;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetOverflow(void *object __attribute__((unused)),
-    uint32_t overflow)
+static void tmrSetOverflow([[maybe_unused]] void *object, uint32_t overflow)
 {
   const uint32_t value = overflow ? overflow - 1 : PRESET_MAX;
 
@@ -148,12 +147,12 @@ static void tmrSetOverflow(void *object __attribute__((unused)),
   while (LPC_ATIMER->PRESET != value);
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetValue(const void *object __attribute__((unused)))
+static uint32_t tmrGetValue([[maybe_unused]] const void *object)
 {
   return LPC_ATIMER->DOWNCOUNTER;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetValue(void *object __attribute__((unused)), uint32_t value)
+static void tmrSetValue([[maybe_unused]] void *object, uint32_t value)
 {
   assert(value <= PRESET_MAX);
   LPC_ATIMER->DOWNCOUNTER = value;

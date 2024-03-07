@@ -441,15 +441,15 @@ static void singleEdgeSetDurationUnified(void *object, uint32_t duration)
   *(volatile uint32_t *)pwm->value = duration - 1;
 }
 /*----------------------------------------------------------------------------*/
-static void singleEdgeSetEdges(void *object,
-    uint32_t leading __attribute__((unused)), uint32_t trailing)
+static void singleEdgeSetEdges(void *object, [[maybe_unused]] uint32_t leading,
+    uint32_t trailing)
 {
   assert(leading == 0); /* Leading edge time must be zero */
   singleEdgeSetDuration(object, trailing);
 }
 /*----------------------------------------------------------------------------*/
 static void singleEdgeSetEdgesUnified(void *object,
-    uint32_t leading __attribute__((unused)), uint32_t trailing)
+    [[maybe_unused]] uint32_t leading, uint32_t trailing)
 {
   assert(leading == 0); /* Leading edge time must be zero */
   singleEdgeSetDurationUnified(object, trailing);

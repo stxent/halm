@@ -164,23 +164,23 @@ enum
 #define ENDPOINT_DESCRIPTOR_FEEDBACK            BIT_FIELD(1, 4)
 #define ENDPOINT_DESCRIPTOR_EXPLICIT_FEEDBACK   BIT_FIELD(2, 4)
 /*----------------------------------------------------------------------------*/
-struct UsbSetupPacket
+struct [[gnu::packed]] UsbSetupPacket
 {
   uint8_t requestType;
   uint8_t request;
   uint16_t value;
   uint16_t index;
   uint16_t length;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
-struct UsbDescriptor
+struct [[gnu::packed]] UsbDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
   uint8_t data[];
-} __attribute__((packed));
+};
 
-struct UsbConfigurationDescriptor
+struct [[gnu::packed]] UsbConfigurationDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
@@ -190,9 +190,9 @@ struct UsbConfigurationDescriptor
   uint8_t configuration;
   uint8_t attributes;
   uint8_t maxPower;
-} __attribute__((packed));
+};
 
-struct UsbDeviceDescriptor
+struct [[gnu::packed]] UsbDeviceDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
@@ -208,9 +208,9 @@ struct UsbDeviceDescriptor
   uint8_t product;
   uint8_t serialNumber;
   uint8_t numConfigurations;
-} __attribute__((packed));
+};
 
-struct UsbDeviceQualifierDescriptor
+struct [[gnu::packed]] UsbDeviceQualifierDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
@@ -221,9 +221,9 @@ struct UsbDeviceQualifierDescriptor
   uint8_t maxPacketSize;
   uint8_t numConfigurations;
   uint8_t reserved;
-} __attribute__((packed));
+};
 
-struct UsbEndpointDescriptor
+struct [[gnu::packed]] UsbEndpointDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
@@ -231,9 +231,9 @@ struct UsbEndpointDescriptor
   uint8_t attributes;
   uint16_t maxPacketSize;
   uint8_t interval;
-} __attribute__((packed));
+};
 
-struct UsbInterfaceDescriptor
+struct [[gnu::packed]] UsbInterfaceDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
@@ -244,9 +244,9 @@ struct UsbInterfaceDescriptor
   uint8_t interfaceSubClass;
   uint8_t interfaceProtocol;
   uint8_t interface;
-} __attribute__((packed));
+};
 
-struct UsbInterfaceAssociationDescriptor
+struct [[gnu::packed]] UsbInterfaceAssociationDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
@@ -256,6 +256,6 @@ struct UsbInterfaceAssociationDescriptor
   uint8_t functionSubClass;
   uint8_t functionProtocol;
   uint8_t function;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_USB_DEFS_H_ */

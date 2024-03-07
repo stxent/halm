@@ -885,7 +885,7 @@ static bool checkClockSource(enum ClockSource source,
   return false;
 }
 /*----------------------------------------------------------------------------*/
-static void clockDisableStub(const void *clockBase __attribute__((unused)))
+static void clockDisableStub([[maybe_unused]] const void *clockBase)
 {
 }
 /*----------------------------------------------------------------------------*/
@@ -1065,13 +1065,13 @@ static void setMaxClockDivider(enum ClockDivider divider)
   NM_CLK->CLKDIV[index] = clkdiv;
 }
 /*----------------------------------------------------------------------------*/
-static void clockOutputDisable(const void *clockBase __attribute__((unused)))
+static void clockOutputDisable([[maybe_unused]] const void *clockBase)
 {
   NM_CLK->CLKOCTL &= ~CLKOCTL_CLKOEN;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result clockOutputEnable(const void *clockBase
-    __attribute__((unused)), const void *configBase)
+static enum Result clockOutputEnable([[maybe_unused]] const void *clockBase,
+    const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
   assert(config != NULL);
@@ -1109,14 +1109,14 @@ static enum Result clockOutputEnable(const void *clockBase
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void extOscDisable(const void *clockBase __attribute__((unused)))
+static void extOscDisable([[maybe_unused]] const void *clockBase)
 {
   sysUnlockReg();
   NM_CLK->PWRCTL &= ~PWRCTL_HXTEN;
   sysLockReg();
 }
 /*----------------------------------------------------------------------------*/
-static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
+static enum Result extOscEnable([[maybe_unused]] const void *clockBase,
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
@@ -1139,26 +1139,25 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t extOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_HXTSTB) ? extFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool extOscReady(const void *clockBase __attribute__((unused)))
+static bool extOscReady([[maybe_unused]] const void *clockBase)
 {
   return extFrequency && (NM_CLK->STATUS & STATUS_HXTSTB);
 }
 /*----------------------------------------------------------------------------*/
-static void intHighSpeedOscDisable(const void *clockBase
-    __attribute__((unused)))
+static void intHighSpeedOscDisable([[maybe_unused]] const void *clockBase)
 {
   sysUnlockReg();
   NM_CLK->PWRCTL &= ~PWRCTL_HIRC48MEN;
   sysLockReg();
 }
 /*----------------------------------------------------------------------------*/
-static enum Result intHighSpeedOscEnable(const void *clockBase
-    __attribute__((unused)), const void *configBase __attribute__((unused)))
+static enum Result intHighSpeedOscEnable([[maybe_unused]] const void *clockBase,
+    [[maybe_unused]] const void *configBase)
 {
   sysUnlockReg();
   NM_CLK->PWRCTL |= PWRCTL_HIRC48MEN;
@@ -1167,26 +1166,25 @@ static enum Result intHighSpeedOscEnable(const void *clockBase
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intHighSpeedOscFrequency(const void *clockBase
-    __attribute__((unused)))
+static uint32_t intHighSpeedOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_HIRC48MSTB) != 0 ? HIRC_48_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool intHighSpeedOscReady(const void *clockBase __attribute__((unused)))
+static bool intHighSpeedOscReady([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_HIRC48MSTB) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void intLowSpeedOscDisable(const void *clockBase __attribute__((unused)))
+static void intLowSpeedOscDisable([[maybe_unused]] const void *clockBase)
 {
   sysUnlockReg();
   NM_CLK->PWRCTL &= ~PWRCTL_LIRCEN;
   sysLockReg();
 }
 /*----------------------------------------------------------------------------*/
-static enum Result intLowSpeedOscEnable(const void *clockBase
-    __attribute__((unused)), const void *configBase __attribute__((unused)))
+static enum Result intLowSpeedOscEnable([[maybe_unused]] const void *clockBase,
+    [[maybe_unused]] const void *configBase)
 {
   sysUnlockReg();
   NM_CLK->PWRCTL |= PWRCTL_LIRCEN;
@@ -1195,26 +1193,25 @@ static enum Result intLowSpeedOscEnable(const void *clockBase
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intLowSpeedOscFrequency(const void *clockBase
-    __attribute__((unused)))
+static uint32_t intLowSpeedOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_LIRCSTB) != 0 ? LIRC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool intLowSpeedOscReady(const void *clockBase __attribute__((unused)))
+static bool intLowSpeedOscReady([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_LIRCSTB) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void intOscDisable(const void *clockBase __attribute__((unused)))
+static void intOscDisable([[maybe_unused]] const void *clockBase)
 {
   sysUnlockReg();
   NM_CLK->PWRCTL &= ~PWRCTL_HIRCEN;
   sysLockReg();
 }
 /*----------------------------------------------------------------------------*/
-static enum Result intOscEnable(const void *clockBase __attribute__((unused)),
-    const void *configBase __attribute__((unused)))
+static enum Result intOscEnable([[maybe_unused]] const void *clockBase,
+    [[maybe_unused]] const void *configBase)
 {
   sysUnlockReg();
   NM_CLK->PWRCTL |= PWRCTL_HIRCEN;
@@ -1223,25 +1220,25 @@ static enum Result intOscEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t intOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_HIRCSTB) != 0 ? HIRC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool intOscReady(const void *clockBase __attribute__((unused)))
+static bool intOscReady([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_HIRCSTB) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void rtcOscDisable(const void *clockBase __attribute__((unused)))
+static void rtcOscDisable([[maybe_unused]] const void *clockBase)
 {
   sysUnlockReg();
   NM_CLK->PWRCTL &= ~PWRCTL_LXTEN;
   sysLockReg();
 }
 /*----------------------------------------------------------------------------*/
-static enum Result rtcOscEnable(const void *clockBase __attribute__((unused)),
-    const void *configBase __attribute__((unused)))
+static enum Result rtcOscEnable([[maybe_unused]] const void *clockBase,
+    [[maybe_unused]] const void *configBase)
 {
   // TODO Is bypass available for LXT?
   configRtcOscPins(false);
@@ -1253,24 +1250,24 @@ static enum Result rtcOscEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t rtcOscFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t rtcOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_LXTSTB) != 0 ? RTC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool rtcOscReady(const void *clockBase __attribute__((unused)))
+static bool rtcOscReady([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_LXTSTB) != 0;
 }
 /*----------------------------------------------------------------------------*/
-static void sysPllDisable(const void *clockBase __attribute__((unused)))
+static void sysPllDisable([[maybe_unused]] const void *clockBase)
 {
   sysUnlockReg();
   NM_CLK->PWRCTL |= PLLCTL_OE | PLLCTL_PD;
   sysLockReg();
 }
 /*----------------------------------------------------------------------------*/
-static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
+static enum Result sysPllEnable([[maybe_unused]] const void *clockBase,
     const void *configBase)
 {
   const struct PllConfig * const config = configBase;
@@ -1334,12 +1331,12 @@ static enum Result sysPllEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t sysPllFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t sysPllFrequency([[maybe_unused]] const void *clockBase)
 {
   return (NM_CLK->STATUS & STATUS_PLLSTB) ? pllFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool sysPllReady(const void *clockBase __attribute__((unused)))
+static bool sysPllReady([[maybe_unused]] const void *clockBase)
 {
   return pllFrequency && (NM_CLK->STATUS & STATUS_PLLSTB);
 }
@@ -1483,7 +1480,7 @@ static uint32_t genericBranchFrequency(const void *clockBase)
   return getClockFrequency(clock->branch, clock->group);
 }
 /*----------------------------------------------------------------------------*/
-static bool genericBranchReady(const void *clockBase __attribute__((unused)))
+static bool genericBranchReady([[maybe_unused]] const void *clockBase)
 {
   return true;
 }

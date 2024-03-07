@@ -15,9 +15,9 @@
 #define MAX_FREQUENCY_HV 30000000
 #define MAX_FREQUENCY_LV 15000000
 /*----------------------------------------------------------------------------*/
-void adcBaseHandler0(void) __attribute__((weak));
-void adcBaseHandler1(void) __attribute__((weak));
-void adcBaseHandler2(void) __attribute__((weak));
+[[gnu::weak]] void adcBaseHandler0(void);
+[[gnu::weak]] void adcBaseHandler1(void);
+[[gnu::weak]] void adcBaseHandler2(void);
 
 static enum Result adcInit(void *, const void *);
 

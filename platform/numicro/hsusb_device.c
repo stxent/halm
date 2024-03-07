@@ -435,7 +435,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   return ep;
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t devGetInterface(const void *object __attribute__((unused)))
+static uint8_t devGetInterface([[maybe_unused]] const void *object)
 {
   return 0;
 }
@@ -485,7 +485,7 @@ static enum Result devBind(void *object, void *driver)
   return usbControlBindDriver(device->control, driver);
 }
 /*----------------------------------------------------------------------------*/
-static void devUnbind(void *object, const void *driver __attribute__((unused)))
+static void devUnbind(void *object, [[maybe_unused]] const void *driver)
 {
   struct UsbDevice * const device = object;
   usbControlUnbindDriver(device->control);
@@ -799,7 +799,7 @@ static void controlEpDisable(void *object)
   reg->CEPINTEN = 0;
 }
 /*----------------------------------------------------------------------------*/
-static void controlEpEnable(void *object, uint8_t type __attribute__((unused)),
+static void controlEpEnable(void *object, [[maybe_unused]] uint8_t type,
     uint16_t size)
 {
   struct ControlUsbEndpoint * const ep = object;

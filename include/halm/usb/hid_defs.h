@@ -226,25 +226,25 @@ enum
 #define HID_NONVOLATILE        0
 #define HID_VOLATILE           BIT(7)
 /*----------------------------------------------------------------------------*/
-struct HidDescriptorBase
+struct [[gnu::packed]] HidDescriptorBase
 {
   uint8_t length;
   uint8_t descriptorType;
   uint16_t hid;
   uint8_t countryCode;
   uint8_t numDescriptors;
-} __attribute__((packed));
+};
 
-struct HidDescriptorEntry
+struct [[gnu::packed]] HidDescriptorEntry
 {
   uint8_t type;
   uint16_t length;
-} __attribute__((packed));
+};
 
-struct AbstractHidDescriptor
+struct [[gnu::packed]] AbstractHidDescriptor
 {
   struct HidDescriptorBase base;
   struct HidDescriptorEntry entries[];
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_HID_DEFS_H_ */

@@ -55,49 +55,49 @@ enum
   CDC_SUBTYPE_UNION             = 0x06
 };
 /*----------------------------------------------------------------------------*/
-struct CdcAcmDescriptor
+struct [[gnu::packed]] CdcAcmDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
   uint8_t descriptorSubType;
   uint8_t capabilities;
-} __attribute__((packed));
+};
 
-struct CdcCallManagementDescriptor
+struct [[gnu::packed]] CdcCallManagementDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
   uint8_t descriptorSubType;
   uint8_t capabilities;
   uint8_t dataInterface;
-} __attribute__((packed));
+};
 
-struct CdcHeaderDescriptor
+struct [[gnu::packed]] CdcHeaderDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
   uint8_t descriptorSubType;
   uint16_t cdc;
-} __attribute__((packed));
+};
 
-struct CdcUnionDescriptor
+struct [[gnu::packed]] CdcUnionDescriptor
 {
   uint8_t length;
   uint8_t descriptorType;
   uint8_t descriptorSubType;
   uint8_t masterInterface0;
   uint8_t slaveInterface0;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
-struct CdcLineCoding
+struct [[gnu::packed]] CdcLineCoding
 {
   uint32_t dteRate;
   uint8_t charFormat;
   uint8_t parityType;
   uint8_t dataBits;
-} __attribute__((packed));
+};
 
-struct CdcSerialState
+struct [[gnu::packed]] CdcSerialState
 {
   uint8_t requestType;
   uint8_t request;
@@ -105,6 +105,6 @@ struct CdcSerialState
   uint16_t index;
   uint16_t length;
   uint16_t data;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_USB_CDC_ACM_DEFS_H_ */

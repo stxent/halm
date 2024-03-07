@@ -63,7 +63,7 @@ static bool setInstance(struct DacBase *object)
     return false;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t dacGetClock(const struct DacBase *interface __attribute__((unused)))
+uint32_t dacGetClock([[maybe_unused]] const struct DacBase *interface)
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
@@ -86,7 +86,7 @@ static enum Result dacInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_DAC_NO_DEINIT
-static void dacDeinit(void *object __attribute__((unused)))
+static void dacDeinit([[maybe_unused]] void *object)
 {
   instance = NULL;
 }

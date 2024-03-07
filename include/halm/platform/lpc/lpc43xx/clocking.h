@@ -19,7 +19,7 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum ClockBranch
+enum [[gnu::packed]] ClockBranch
 {
   CLOCK_BASE_USB0     = 0,
   CLOCK_BASE_PERIPH   = 1,
@@ -44,9 +44,9 @@ enum ClockBranch
   CLOCK_BASE_AUDIO    = 24,
   CLOCK_BASE_CGU_OUT0 = 25,
   CLOCK_BASE_CGU_OUT1 = 26
-} __attribute__((packed));
+};
 
-enum ClockSource
+enum [[gnu::packed]] ClockSource
 {
   CLOCK_RTC         = 0x00,
   CLOCK_INTERNAL    = 0x01,
@@ -62,7 +62,7 @@ enum ClockSource
   CLOCK_IDIVC       = 0x0E,
   CLOCK_IDIVD       = 0x0F,
   CLOCK_IDIVE       = 0x10
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 struct GenericDividerConfig
 {
@@ -183,7 +183,7 @@ extern const struct ClockClass * const CguOut0Clock;
 extern const struct ClockClass * const CguOut1Clock;
 extern const struct ClockClass * const ClockOutput;
 /*----------------------------------------------------------------------------*/
-struct ClockSettings
+struct [[gnu::packed]] ClockSettings
 {
   uint32_t extOscFrequency;
   uint32_t audioPllFrequency;
@@ -191,7 +191,7 @@ struct ClockSettings
   uint32_t usbPllFrequency;
   uint32_t mainClockFrequency;
   uint32_t checksum;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

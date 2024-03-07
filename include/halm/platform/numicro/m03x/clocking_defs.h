@@ -18,7 +18,7 @@
 #define EXTRACT_BRANCH_OFFSET(value)    (((value) >> 5) & 0x1F)
 #define EXTRACT_BRANCH_SIZE(value)      ((value) & 0x1F)
 
-enum ClockBranch
+enum [[gnu::packed]] ClockBranch
 {
   BRANCH_HCLK     = BRANCH_FIELD(0, 0, 3),
   BRANCH_STCLK    = BRANCH_FIELD(0, 3, 3),
@@ -45,7 +45,7 @@ enum ClockBranch
   BRANCH_UART5    = BRANCH_FIELD(3, 20, 3),
   BRANCH_UART2    = BRANCH_FIELD(3, 24, 3),
   BRANCH_UART3    = BRANCH_FIELD(3, 28, 3)
-} __attribute__((packed));
+};
 
 #define DIVIDER_FIELD(index, offset, size) \
     ((size) | ((offset) << 5) | ((index) << 10))
@@ -53,7 +53,7 @@ enum ClockBranch
 #define EXTRACT_DIVIDER_OFFSET(value)   (((value) >> 5) & 0x1F)
 #define EXTRACT_DIVIDER_SIZE(value)     ((value) & 0x1F)
 
-enum ClockBranchGroup
+enum [[gnu::packed]] ClockBranchGroup
 {
   BRANCH_GROUP_ADC_SPI,
   BRANCH_GROUP_PWM,
@@ -68,9 +68,9 @@ enum ClockBranchGroup
   BRANCH_GROUP_WWDT,
 
   GROUP_COUNT
-} __attribute__((packed));
+};
 
-enum ClockDivider
+enum [[gnu::packed]] ClockDivider
 {
   DIVIDER_HCLK  = DIVIDER_FIELD(0, 0, 4),
   DIVIDER_USB   = DIVIDER_FIELD(0, 4, 4),
@@ -87,7 +87,7 @@ enum ClockDivider
 
   DIVIDER_APB0  = DIVIDER_FIELD(5, 0, 3),
   DIVIDER_APB1  = DIVIDER_FIELD(5, 4, 3)
-} __attribute__((packed));
+};
 /*------------------System Power-down Control register------------------------*/
 enum
 {

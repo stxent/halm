@@ -6,8 +6,8 @@
 
 #include <halm/core/cortex/cache.h>
 /*----------------------------------------------------------------------------*/
-void dCacheClean(uintptr_t address __attribute__((unused)),
-    size_t size __attribute__((unused)))
+void dCacheClean([[maybe_unused]] uintptr_t address,
+    [[maybe_unused]] size_t size)
 {
 }
 /*----------------------------------------------------------------------------*/
@@ -23,8 +23,8 @@ void dCacheEnable(void)
 {
 }
 /*----------------------------------------------------------------------------*/
-void dCacheFlush(uintptr_t address __attribute__((unused)),
-    size_t size __attribute__((unused)))
+void dCacheFlush([[maybe_unused]] uintptr_t address,
+    [[maybe_unused]] size_t size)
 {
 }
 /*----------------------------------------------------------------------------*/
@@ -32,8 +32,8 @@ void dCacheFlushAll(void)
 {
 }
 /*----------------------------------------------------------------------------*/
-void dCacheInvalidate(uintptr_t address __attribute__((unused)),
-    size_t size __attribute__((unused)))
+void dCacheInvalidate([[maybe_unused]] uintptr_t address,
+    [[maybe_unused]] size_t size)
 {
 }
 /*----------------------------------------------------------------------------*/

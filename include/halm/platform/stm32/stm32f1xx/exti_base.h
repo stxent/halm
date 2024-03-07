@@ -11,7 +11,7 @@
 #ifndef HALM_PLATFORM_STM32_STM32F1XX_EXTI_BASE_H_
 #define HALM_PLATFORM_STM32_STM32F1XX_EXTI_BASE_H_
 /*----------------------------------------------------------------------------*/
-enum ExtiEvent
+enum [[gnu::packed]] ExtiEvent
 {
   EXTI_PIN0,
   EXTI_PIN1,
@@ -34,6 +34,6 @@ enum ExtiEvent
   EXTI_USB_WAKEUP,
   EXTI_ETHERNET_WAKEUP,
   EXTI_EVENT_END
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F1XX_EXTI_BASE_H_ */

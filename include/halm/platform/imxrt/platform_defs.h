@@ -12,7 +12,7 @@
 #define HALM_PLATFORM_IMXRT_PLATFORM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 /* No effect or reserved registers */
-#define __ne__ __attribute__((deprecated))
+#define __ne__ [[deprecated]]
 /* Registers with read and write access types */
 #define __rw__ volatile
 /* Read-only registers */

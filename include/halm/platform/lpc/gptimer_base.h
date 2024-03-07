@@ -16,7 +16,7 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
-enum GpTimerEvent
+enum [[gnu::packed]] GpTimerEvent
 {
   GPTIMER_MATCH_AUTO,
   GPTIMER_MATCH0,
@@ -24,7 +24,7 @@ enum GpTimerEvent
   GPTIMER_MATCH2,
   GPTIMER_MATCH3,
   GPTIMER_EVENT_END
-} __attribute__((packed));
+};
 
 enum GpTimerFlags
 {

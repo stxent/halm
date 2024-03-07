@@ -20,7 +20,7 @@
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Enable or disable clock branches */
-enum SysClockBranch
+enum [[gnu::packed]] SysClockBranch
 {
   /* CCGR0 */
   CLK_AIPS_TZ1        = 0,
@@ -155,7 +155,7 @@ enum SysClockBranch
   CLK_CAN3_SERIAL     = 0x70 + 4,
   CLK_AIPS_LITE       = 0x70 + 5,
   CLK_FLEXIO3         = 0x70 + 6
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

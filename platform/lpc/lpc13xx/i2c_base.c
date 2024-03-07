@@ -58,7 +58,7 @@ void I2C_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t i2cGetClock(const struct I2CBase *interface __attribute__((unused)))
+uint32_t i2cGetClock([[maybe_unused]] const struct I2CBase *interface)
 {
   return clockFrequency(MainClock);
 }
@@ -89,7 +89,7 @@ static enum Result i2cInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_I2C_NO_DEINIT
-static void i2cDeinit(void *object __attribute__((unused)))
+static void i2cDeinit([[maybe_unused]] void *object)
 {
   /* Put the peripheral into the reset state */
   LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C;

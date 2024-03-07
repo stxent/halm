@@ -19,7 +19,7 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum ClockSource
+enum [[gnu::packed]] ClockSource
 {
   CLOCK_INTERNAL,    /* HSI */
   CLOCK_INTERNAL_LS, /* LSI */
@@ -28,16 +28,16 @@ enum ClockSource
   CLOCK_PLL,
   CLOCK_RTC,         /* LSE */
   CLOCK_SYSTEM
-} __attribute__((packed));
+};
 
-enum VoltageRange
+enum [[gnu::packed]] VoltageRange
 {
   VR_DEFAULT,
   VR_1V8_2V1,
   VR_2V1_2V4,
   VR_2V4_2V7,
   VR_2V7_3V6
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {

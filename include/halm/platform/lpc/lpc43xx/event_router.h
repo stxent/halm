@@ -12,7 +12,7 @@
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* Router Event sources */
-enum RouterEvent
+enum [[gnu::packed]] RouterEvent
 {
   ER_WAKEUP0    = 1 << 0,
   ER_WAKEUP1    = 1 << 1,
@@ -34,7 +34,7 @@ enum RouterEvent
   ER_RESET      = 1 << 19,
   ER_BODRESET   = 1 << 20,
   ER_DPDRESET   = 1 << 21
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

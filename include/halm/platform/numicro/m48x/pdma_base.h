@@ -33,7 +33,7 @@ enum
 };
 
 /** PDMA Request Source Selection. */
-enum PdmaEvent
+enum [[gnu::packed]] PdmaEvent
 {
   PDMA_DISABLE      = 0,
   PDMA_USB_TX       = 2,
@@ -106,7 +106,7 @@ enum PdmaEvent
   PDMA_EADC1_RX     = 70,
   PDMA_MEMORY,
   PDMA_EVENT_END
-} __attribute__((packed));
+};
 
 struct PdmaMuxConfig
 {

@@ -27,7 +27,7 @@ const struct InterfaceClass * const Eeprom = &(const struct InterfaceClass){
 };
 /*----------------------------------------------------------------------------*/
 static enum Result eepromInit(void *object,
-    const void *configBase __attribute__((unused)))
+    [[maybe_unused]] const void *configBase)
 {
   struct Eeprom * const interface = object;
   const enum Result res = EepromBase->init(interface, NULL);

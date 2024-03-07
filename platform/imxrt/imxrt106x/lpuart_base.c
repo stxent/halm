@@ -389,8 +389,7 @@ void LPUART8_ISR(void)
   instances[7]->handler(instances[7]);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetClock(const struct LpUartBase *interface
-    __attribute__((unused)))
+uint32_t uartGetClock([[maybe_unused]] const struct LpUartBase *interface)
 {
   return clockFrequency(UartClock);
 }

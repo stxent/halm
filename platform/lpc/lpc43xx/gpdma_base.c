@@ -260,7 +260,7 @@ static void dmaHubInstantiate(void)
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dmaHubInit(void *object,
-    const void *configBase __attribute__((unused)))
+    [[maybe_unused]] const void *configBase)
 {
   struct DmaHub * const handler = object;
 

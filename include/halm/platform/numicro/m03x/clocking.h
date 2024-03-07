@@ -19,7 +19,7 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum ClockSource
+enum [[gnu::packed]] ClockSource
 {
   CLOCK_INTERNAL,     /* HIRC */
   CLOCK_INTERNAL_LS,  /* LIRC */
@@ -32,7 +32,7 @@ enum ClockSource
 
   /* Undefined clock source for internal usage */
   CLOCK_UNDEFINED
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
@@ -51,11 +51,11 @@ struct ExternalOscConfig
 /* Requires an ExternalOscConfig structure */
 extern const struct ClockClass * const ExternalOsc;
 /*----------------------------------------------------------------------------*/
-enum RtcOscGain
+enum [[gnu::packed]] RtcOscGain
 {
   RTC_GAIN_LOW,
   RTC_GAIN_HIGH
-} __attribute__((packed));
+};
 
 struct RtcOscConfig
 {

@@ -10,25 +10,25 @@
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /** Burst size. */
-enum DmaBurst
+enum [[gnu::packed]] DmaBurst
 {
   DMA_BURST_1,
   DMA_BURST_4,
   DMA_BURST_8,
   DMA_BURST_16
-} __attribute__((packed));
+};
 
 /** Transfer priority. */
-enum DmaPriority
+enum [[gnu::packed]] DmaPriority
 {
   DMA_PRIORITY_LOW,
   DMA_PRIORITY_MEDIUM,
   DMA_PRIORITY_HIGH,
   DMA_PRIORITY_VERY_HIGH
-} __attribute__((packed));
+};
 
 /** Transfer type. */
-enum DmaType
+enum [[gnu::packed]] DmaType
 {
   /** Peripheral to memory. */
   DMA_TYPE_P2M,
@@ -36,15 +36,15 @@ enum DmaType
   DMA_TYPE_M2P,
   /** Memory to memory. */
   DMA_TYPE_M2M
-} __attribute__((packed));
+};
 
 /** Transfer width. */
-enum DmaWidth
+enum [[gnu::packed]] DmaWidth
 {
   DMA_WIDTH_BYTE,
   DMA_WIDTH_HALFWORD,
   DMA_WIDTH_WORD
-} __attribute__((packed));
+};
 
 struct DmaSettings
 {

@@ -7,7 +7,7 @@
 #ifndef HALM_PLATFORM_IMXRT_IMXRT106X_PIN_DAISY_H_
 #define HALM_PLATFORM_IMXRT_IMXRT106X_PIN_DAISY_H_
 /*----------------------------------------------------------------------------*/
-enum PinDaisyIndex
+enum [[gnu::packed]] PinDaisyIndex
 {
   DAISY_UNDEFINED       = -1,
 
@@ -192,6 +192,6 @@ enum PinDaisyIndex
   DAISY_ENET2_TXCLK     = 256 + 7,
 
   // TODO
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_IMXRT_IMXRT106X_PIN_DAISY_H_ */

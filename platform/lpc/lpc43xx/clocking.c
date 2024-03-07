@@ -742,12 +742,12 @@ static bool genericDividerReady(const void *clockBase)
   return !(*calcDividerReg(clock->channel) & IDIV_PD);
 }
 /*----------------------------------------------------------------------------*/
-static void extOscDisable(const void *clockBase __attribute__((unused)))
+static void extOscDisable([[maybe_unused]] const void *clockBase)
 {
   LPC_CGU->XTAL_OSC_CTRL &= ~XTAL_ENABLE;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
+static enum Result extOscEnable([[maybe_unused]] const void *clockBase,
     const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
@@ -779,46 +779,46 @@ static enum Result extOscEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t extOscFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t extOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return !(LPC_CGU->XTAL_OSC_CTRL & XTAL_ENABLE) ? extFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool extOscReady(const void *clockBase __attribute__((unused)))
+static bool extOscReady([[maybe_unused]] const void *clockBase)
 {
   return extFrequency && !(LPC_CGU->XTAL_OSC_CTRL & XTAL_ENABLE);
 }
 /*----------------------------------------------------------------------------*/
-static void intOscDisable(const void *clockBase __attribute__((unused)))
+static void intOscDisable([[maybe_unused]] const void *clockBase)
 {
   /* Unsupported */
 }
 /*----------------------------------------------------------------------------*/
-static enum Result intOscEnable(const void *clockBase __attribute__((unused)),
-    const void *configBase __attribute__((unused)))
+static enum Result intOscEnable([[maybe_unused]] const void *clockBase,
+    [[maybe_unused]] const void *configBase)
 {
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t intOscFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t intOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return INT_OSC_FREQUENCY;
 }
 /*----------------------------------------------------------------------------*/
-static bool intOscReady(const void *clockBase __attribute__((unused)))
+static bool intOscReady([[maybe_unused]] const void *clockBase)
 {
   return true;
 }
 /*----------------------------------------------------------------------------*/
-static void rtcOscDisable(const void *clockBase __attribute__((unused)))
+static void rtcOscDisable([[maybe_unused]] const void *clockBase)
 {
   /* Disable and reset clock, disable outputs */
   LPC_CREG->CREG0 = (LPC_CREG->CREG0 & ~(CREG0_EN1KHZ | CREG0_EN32KHZ))
       | CREG0_PD32KHZ | CREG0_RESET32KHZ;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result rtcOscEnable(const void *clockBase __attribute__((unused)),
-    const void *configBase __attribute__((unused)))
+static enum Result rtcOscEnable([[maybe_unused]] const void *clockBase,
+    [[maybe_unused]] const void *configBase)
 {
   /* Enable and reset clock */
   LPC_CREG->CREG0 = (LPC_CREG->CREG0 & ~CREG0_PD32KHZ) | CREG0_RESET32KHZ;
@@ -829,12 +829,12 @@ static enum Result rtcOscEnable(const void *clockBase __attribute__((unused)),
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t rtcOscFrequency(const void *clockBase __attribute__((unused)))
+static uint32_t rtcOscFrequency([[maybe_unused]] const void *clockBase)
 {
   return rtcOscReady(clockBase) ? RTC_OSC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool rtcOscReady(const void *clockBase __attribute__((unused)))
+static bool rtcOscReady([[maybe_unused]] const void *clockBase)
 {
   /* There is no convenient way to find out that the oscillator is running */
   return !(LPC_CREG->CREG0 & (CREG0_PD32KHZ | CREG0_RESET32KHZ));
@@ -931,13 +931,13 @@ static bool pll0ClockReady(const void *clockBase)
   return frequency && (calcPllReg(clock->channel)->STAT & PLL0_STAT_LOCK);
 }
 /*----------------------------------------------------------------------------*/
-static void pll1ClockDisable(const void *clockBase __attribute__((unused)))
+static void pll1ClockDisable([[maybe_unused]] const void *clockBase)
 {
   LPC_CGU->PLL1_CTRL |= BASE_PD;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result pll1ClockEnable(const void *clockBase
-    __attribute__((unused)), const void *configBase)
+static enum Result pll1ClockEnable([[maybe_unused]] const void *clockBase,
+    const void *configBase)
 {
   const struct PllConfig * const config = configBase;
   assert(config != NULL);
@@ -1010,13 +1010,12 @@ static enum Result pll1ClockEnable(const void *clockBase
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t pll1ClockFrequency(const void *clockBase
-    __attribute__((unused)))
+static uint32_t pll1ClockFrequency([[maybe_unused]] const void *clockBase)
 {
   return (LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK) ? pll1Frequency : 0;
 }
 /*----------------------------------------------------------------------------*/
-static bool pll1ClockReady(const void *clockBase __attribute__((unused)))
+static bool pll1ClockReady([[maybe_unused]] const void *clockBase)
 {
   return pll1Frequency && (LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK);
 }

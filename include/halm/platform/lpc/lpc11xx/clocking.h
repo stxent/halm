@@ -19,23 +19,23 @@
 #include <halm/clock.h>
 #include <halm/pin.h>
 /*----------------------------------------------------------------------------*/
-enum ClockBranch
+enum [[gnu::packed]] ClockBranch
 {
   CLOCK_BRANCH_MAIN,
   CLOCK_BRANCH_OUTPUT,
   CLOCK_BRANCH_WDT
-} __attribute__((packed));
+};
 
-enum ClockSource
+enum [[gnu::packed]] ClockSource
 {
   CLOCK_INTERNAL,
   CLOCK_EXTERNAL,
   CLOCK_PLL,
   CLOCK_WDT,
   CLOCK_MAIN
-} __attribute__((packed));
+};
 
-enum WdtFrequency
+enum [[gnu::packed]] WdtFrequency
 {
   /* Watchdog oscillator analog output frequency in kHz */
   WDT_FREQ_600 = 0x01,
@@ -53,7 +53,7 @@ enum WdtFrequency
   WDT_FREQ_4200,
   WDT_FREQ_4400,
   WDT_FREQ_4600
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {

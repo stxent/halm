@@ -58,7 +58,7 @@ static void configOutputPin(PinNumber key)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_DAC_NO_DEINIT
-static void releaseOutputPin(PinNumber key __attribute__((unused)))
+static void releaseOutputPin([[maybe_unused]] PinNumber key)
 {
   /* Disable analog pin function */
   LPC_SCU->ENAIO2 &= ~0x01;
@@ -76,7 +76,7 @@ static bool setInstance(struct DacBase *object)
     return false;
 }
 /*----------------------------------------------------------------------------*/
-uint32_t dacGetClock(const struct DacBase *interface __attribute__((unused)))
+uint32_t dacGetClock([[maybe_unused]] const struct DacBase *interface)
 {
   return clockFrequency(Apb3Clock);
 }

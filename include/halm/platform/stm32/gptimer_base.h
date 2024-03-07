@@ -18,7 +18,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpTimerBase;
 
-enum GpTimerEvent
+enum [[gnu::packed]] GpTimerEvent
 {
   TIM_EVENT_DISABLED,
   TIM_EVENT_UPDATE,
@@ -26,7 +26,7 @@ enum GpTimerEvent
   TIM_EVENT_CC2,
   TIM_EVENT_CC3,
   TIM_EVENT_CC4
-} __attribute__((packed));
+};
 
 struct GpTimerBaseConfig
 {

@@ -313,7 +313,7 @@ static enum Result ethInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void ethDeinit(void *object __attribute__((unused)))
+static void ethDeinit([[maybe_unused]] void *object)
 {
   sysClockDisable(CLK_M4_ETHERNET);
   instance = NULL;

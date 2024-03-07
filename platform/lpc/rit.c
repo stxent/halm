@@ -95,7 +95,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_RIT_NO_DEINIT
-static void tmrDeinit(void *object __attribute__((unused)))
+static void tmrDeinit([[maybe_unused]] void *object)
 {
   irqDisable(RIT_IRQ);
   LPC_RIT->CTRL = 0;
@@ -105,12 +105,12 @@ static void tmrDeinit(void *object __attribute__((unused)))
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static void tmrEnable(void *object __attribute__((unused)))
+static void tmrEnable([[maybe_unused]] void *object)
 {
   LPC_RIT->CTRL |= CTRL_RITEN;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrDisable(void *object __attribute__((unused)))
+static void tmrDisable([[maybe_unused]] void *object)
 {
   LPC_RIT->CTRL &= ~CTRL_RITEN;
 }
@@ -124,28 +124,27 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetFrequency(const void *object __attribute__((unused)))
+static uint32_t tmrGetFrequency([[maybe_unused]] const void *object)
 {
   return ritGetClock();
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetOverflow(const void *object __attribute__((unused)))
+static uint32_t tmrGetOverflow([[maybe_unused]] const void *object)
 {
   return LPC_RIT->COMPVAL + 1;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetOverflow(void *object __attribute__((unused)),
-    uint32_t overflow)
+static void tmrSetOverflow([[maybe_unused]] void *object, uint32_t overflow)
 {
   LPC_RIT->COMPVAL = overflow - 1;
 }
 /*----------------------------------------------------------------------------*/
-static uint32_t tmrGetValue(const void *object __attribute__((unused)))
+static uint32_t tmrGetValue([[maybe_unused]] const void *object)
 {
   return LPC_RIT->COUNTER;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetValue(void *object __attribute__((unused)), uint32_t value)
+static void tmrSetValue([[maybe_unused]] void *object, uint32_t value)
 {
   LPC_RIT->COUNTER = value;
 }

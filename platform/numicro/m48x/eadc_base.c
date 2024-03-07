@@ -13,8 +13,8 @@
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY 72000000
 /*----------------------------------------------------------------------------*/
-void adcBaseHandler0(void) __attribute__((weak));
-void adcBaseHandler1(void) __attribute__((weak));
+[[gnu::weak]] void adcBaseHandler0(void);
+[[gnu::weak]] void adcBaseHandler1(void);
 
 static enum Result adcInit(void *, const void *);
 

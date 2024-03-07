@@ -13,7 +13,7 @@
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY 34000000
 /*----------------------------------------------------------------------------*/
-void adcBaseHandler0(void) __attribute__((weak));
+[[gnu::weak]] void adcBaseHandler0(void);
 
 static enum Result adcInit(void *, const void *);
 
@@ -131,14 +131,14 @@ void adcBaseHandler0(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-struct AdcBase *adcGetInstance(uint8_t channel __attribute__((unused)))
+struct AdcBase *adcGetInstance([[maybe_unused]] uint8_t channel)
 {
   assert(channel == 0);
   return instance;
 }
 /*----------------------------------------------------------------------------*/
-bool adcSetInstance(uint8_t channel __attribute__((unused)),
-    struct AdcBase *expected, struct AdcBase *interface)
+bool adcSetInstance([[maybe_unused]] uint8_t channel, struct AdcBase *expected,
+    struct AdcBase *interface)
 {
   assert(channel == 0);
   return compareExchangePointer(&instance, &expected, interface);

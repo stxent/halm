@@ -11,7 +11,7 @@
 #include <halm/pin.h>
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-enum SctInput
+enum [[gnu::packed]] SctInput
 {
   SCT_INPUT_NONE,
   SCT_INPUT_0,
@@ -23,14 +23,14 @@ enum SctInput
   SCT_INPUT_6,
   SCT_INPUT_7,
   SCT_INPUT_END
-} __attribute__((packed));
+};
 
-enum SctPart
+enum [[gnu::packed]] SctPart
 {
   SCT_LOW,
   SCT_HIGH,
   SCT_UNIFIED
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SctBase;
 

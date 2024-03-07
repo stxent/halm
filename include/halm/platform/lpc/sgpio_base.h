@@ -11,7 +11,7 @@
 #include <halm/pin.h>
 #include <xcore/entity.h>
 /*----------------------------------------------------------------------------*/
-enum SgpioPin
+enum [[gnu::packed]] SgpioPin
 {
   SGPIO_0,
   SGPIO_1,
@@ -29,9 +29,9 @@ enum SgpioPin
   SGPIO_13,
   SGPIO_14,
   SGPIO_15
-} __attribute__((packed));
+};
 
-enum SgpioSlice
+enum [[gnu::packed]] SgpioSlice
 {
   SGPIO_SLICE_A,
   SGPIO_SLICE_B,
@@ -49,7 +49,7 @@ enum SgpioSlice
   SGPIO_SLICE_N,
   SGPIO_SLICE_O,
   SGPIO_SLICE_P
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SgpioBase;
 

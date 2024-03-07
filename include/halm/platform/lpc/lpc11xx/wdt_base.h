@@ -13,9 +13,9 @@
 /*----------------------------------------------------------------------------*/
 #define WDT_TIMER_RESOLUTION 24
 /*----------------------------------------------------------------------------*/
-enum WdtClockSource
+enum [[gnu::packed]] WdtClockSource
 {
   WDT_CLOCK_DEFAULT
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC11XX_WDT_BASE_H_ */

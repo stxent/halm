@@ -139,7 +139,7 @@ void I2S_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t i2sGetClock(const struct I2SBase *interface __attribute__((unused)))
+uint32_t i2sGetClock([[maybe_unused]] const struct I2SBase *interface)
 {
   return clockFrequency(MainClock) / sysClockDivToValue(DEFAULT_DIV);
 }
@@ -168,7 +168,7 @@ static enum Result i2sInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_I2S_NO_DEINIT
-static void i2sDeinit(void *object __attribute__((unused)))
+static void i2sDeinit([[maybe_unused]] void *object)
 {
   sysPowerDisable(PWR_I2S);
   instance = NULL;

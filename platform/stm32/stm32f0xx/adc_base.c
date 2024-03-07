@@ -14,7 +14,7 @@
 /*----------------------------------------------------------------------------*/
 #define MAX_FREQUENCY 14000000
 /*----------------------------------------------------------------------------*/
-void adcBaseHandler0(void) __attribute__((weak));
+[[gnu::weak]] void adcBaseHandler0(void);
 
 static enum Result adcInit(void *, const void *);
 
@@ -71,7 +71,7 @@ void adcBaseHandler0(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-void *adcMakeCircularDma(uint8_t channel __attribute__((unused)),
+void *adcMakeCircularDma([[maybe_unused]] uint8_t channel,
     uint8_t stream, enum DmaPriority priority, bool silent)
 {
   const struct BdmaCircularConfig config = {
@@ -85,13 +85,13 @@ void *adcMakeCircularDma(uint8_t channel __attribute__((unused)),
   return init(BdmaCircular, &config);
 }
 /*----------------------------------------------------------------------------*/
-struct AdcBase *adcGetInstance(uint8_t channel __attribute__((unused)))
+struct AdcBase *adcGetInstance([[maybe_unused]] uint8_t channel)
 {
   assert(channel == 0);
   return instance;
 }
 /*----------------------------------------------------------------------------*/
-bool adcSetInstance(uint8_t channel __attribute__((unused)),
+bool adcSetInstance([[maybe_unused]] uint8_t channel,
     struct AdcBase *expected, struct AdcBase *interface)
 {
   assert(channel == 0);

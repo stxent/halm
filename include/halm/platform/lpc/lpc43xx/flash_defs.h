@@ -61,7 +61,7 @@ static inline uint32_t addressToPage(uint32_t address)
 }
 /*----------------------------------------------------------------------------*/
 static inline uint32_t addressToSector(uint32_t address,
-    bool uniform __attribute__((unused)))
+    [[maybe_unused]] bool uniform)
 {
   const uint32_t local = address & FLASH_BANK_MASK;
 

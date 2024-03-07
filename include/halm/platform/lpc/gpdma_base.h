@@ -19,7 +19,7 @@
 #define GPDMA_MAX_TRANSFER_SIZE ((1 << 12) - 1)
 /*----------------------------------------------------------------------------*/
 /** DMA burst transfer size. */
-enum GpDmaBurst
+enum [[gnu::packed]] GpDmaBurst
 {
   DMA_BURST_1,
   DMA_BURST_4,
@@ -29,10 +29,10 @@ enum GpDmaBurst
   DMA_BURST_64,
   DMA_BURST_128,
   DMA_BURST_256
-} __attribute__((packed));
+};
 
 /** DMA transfer type. */
-enum GpDmaType
+enum [[gnu::packed]] GpDmaType
 {
   /** Memory to memory. */
   GPDMA_TYPE_M2M,
@@ -40,23 +40,23 @@ enum GpDmaType
   GPDMA_TYPE_M2P,
   /** Peripheral to memory. */
   GPDMA_TYPE_P2M
-} __attribute__((packed));
+};
 
 /** DMA transfer width. */
-enum GpDmaWidth
+enum [[gnu::packed]] GpDmaWidth
 {
   DMA_WIDTH_BYTE,
   DMA_WIDTH_HALFWORD,
   DMA_WIDTH_WORD
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
-struct GpDmaEntry
+struct [[gnu::packed]] GpDmaEntry
 {
   uint32_t source;
   uint32_t destination;
   uint32_t next;
   uint32_t control;
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const GpDmaBase;
 

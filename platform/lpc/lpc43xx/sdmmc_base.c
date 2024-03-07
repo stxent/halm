@@ -214,8 +214,7 @@ void SDIO_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t sdmmcGetClock(const struct SdmmcBase *interface
-    __attribute__((unused)))
+uint32_t sdmmcGetClock([[maybe_unused]] const struct SdmmcBase *interface)
 {
   /* Clock frequency should not exceed 52 MHz */
   return clockFrequency(SdioClock);
@@ -245,7 +244,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void sdioDeinit(void *object __attribute__((unused)))
+static void sdioDeinit([[maybe_unused]] void *object)
 {
   sysClockDisable(CLK_SDIO);
   sysClockDisable(CLK_M4_SDIO);

@@ -12,7 +12,7 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Flash;
 
-enum FlashBank
+enum [[gnu::packed]] FlashBank
 {
   FLASH_BANK_A,
   FLASH_BANK_B,
@@ -21,7 +21,7 @@ enum FlashBank
 
   /* End of the list */
   FLASH_BANK_END
-} __attribute__((packed));
+};
 
 struct FlashConfig
 {

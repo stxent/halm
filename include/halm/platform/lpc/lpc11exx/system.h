@@ -17,7 +17,7 @@
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Power-down configuration register */
-enum SysBlockPower
+enum [[gnu::packed]] SysBlockPower
 {
   PWR_IRCOUT    = 0,
   PWR_IRC       = 1,
@@ -30,10 +30,10 @@ enum SysBlockPower
   PWR_USBPLL    = 8,  /* Only for LPC11U6x */
   PWR_USBPAD    = 10, /* Only for LPC11U6x */
   PWR_TEMPSENSE = 13  /* Only for LPC11U6x and LPC11E6x */
-} __attribute__((packed));
+};
 
 /* System AHB clock control register */
-enum SysClockBranch
+enum [[gnu::packed]] SysClockBranch
 {
   CLK_SYS         = 0,
   CLK_ROM         = 1,
@@ -65,7 +65,7 @@ enum SysClockBranch
   CLK_DMA         = 29, /* Only for LPC11U6x and LPC11E6x */
   CLK_RTC         = 30, /* Only for LPC11U6x and LPC11E6x */
   CLK_SCT0_1      = 31  /* Only for LPC11U6x and LPC11E6x */
-} __attribute__((packed));
+};
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

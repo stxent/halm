@@ -86,30 +86,29 @@
 /*----------------------------------------------------------------------------*/
 #define IAP_BASE          0x1FFF1FF1UL
 /*----------------------------------------------------------------------------*/
-static inline uint8_t addressToBank(uint32_t address __attribute__((unused)))
+static inline uint8_t addressToBank([[maybe_unused]] uint32_t address)
 {
   return 0;
 }
 /*----------------------------------------------------------------------------*/
-static inline uint32_t addressToPage(uint32_t address __attribute__((unused)))
+static inline uint32_t addressToPage([[maybe_unused]] uint32_t address)
 {
   return 0;
 }
 /*----------------------------------------------------------------------------*/
 static inline uint32_t addressToSector(uint32_t address,
-    bool uniform __attribute__((unused)))
+    [[maybe_unused]] bool uniform)
 {
   return address / FLASH_SECTOR_SIZE;
 }
 /*----------------------------------------------------------------------------*/
-static inline bool isPagePositionValid(uint32_t position
-    __attribute__((unused)))
+static inline bool isPagePositionValid([[maybe_unused]] uint32_t position)
 {
   return false;
 }
 /*----------------------------------------------------------------------------*/
 static inline bool isSectorPositionValid(uint32_t position,
-    bool uniform __attribute__((unused)))
+    [[maybe_unused]] bool uniform)
 {
   return (position & (FLASH_SECTOR_SIZE - 1)) == 0;
 }

@@ -417,8 +417,8 @@ static void stateDelayEnter(struct SdioSpi *interface)
   timerEnable(interface->timer);
 }
 /*----------------------------------------------------------------------------*/
-static enum State stateReadDelayAdvance(struct SdioSpi *interface
-    __attribute__((unused)))
+static enum State stateReadDelayAdvance(
+    [[maybe_unused]] struct SdioSpi *interface)
 {
   return STATE_WAIT_READ;
 }
@@ -489,8 +489,8 @@ static enum State stateWaitWriteAdvance(struct SdioSpi *interface)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum State stateWriteDelayAdvance(struct SdioSpi *interface
-    __attribute__((unused)))
+static enum State stateWriteDelayAdvance(
+    [[maybe_unused]] struct SdioSpi *interface)
 {
   return STATE_WRITE_BUSY;
 }
@@ -817,7 +817,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
-static void sdioDeinit(void *object __attribute__((unused)))
+static void sdioDeinit([[maybe_unused]] void *object)
 {
   struct SdioSpi * const interface = object;
 

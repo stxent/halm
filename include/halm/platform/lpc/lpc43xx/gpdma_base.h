@@ -14,7 +14,7 @@
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /** Direct Memory Access controller connections. */
-enum GpDmaEvent
+enum [[gnu::packed]] GpDmaEvent
 {
   GPDMA_SSP0_RX,
   GPDMA_SSP1_RX,
@@ -54,15 +54,15 @@ enum GpDmaEvent
   GPDMA_SPIFI,
   GPDMA_MEMORY,
   GPDMA_EVENT_END
-} __attribute__((packed));
+};
 
 /** Direct Memory Access controller masters. */
-enum GpDmaMaster
+enum [[gnu::packed]] GpDmaMaster
 {
   GPDMA_MASTER_DEFAULT,
   GPDMA_MASTER_0,
   GPDMA_MASTER_1
-} __attribute__((packed));
+};
 
 struct GpDmaMuxConfig
 {

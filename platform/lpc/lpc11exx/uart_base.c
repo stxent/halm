@@ -81,7 +81,7 @@ void UART_ISR(void)
   instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t uartGetClock(const struct UartBase *interface __attribute__((unused)))
+uint32_t uartGetClock([[maybe_unused]] const struct UartBase *interface)
 {
   const uint32_t frequency = clockFrequency(MainClock);
   return frequency * LPC_SYSCON->SYSAHBCLKDIV / LPC_SYSCON->UARTCLKDIV;
@@ -111,7 +111,7 @@ static enum Result uartInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_UART_NO_DEINIT
-static void uartDeinit(void *object __attribute__((unused)))
+static void uartDeinit([[maybe_unused]] void *object)
 {
   /* Disable the peripheral clock */
   LPC_SYSCON->UARTCLKDIV = 0;

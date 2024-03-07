@@ -99,7 +99,7 @@ void CAN_ISR(void)
     instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
-uint32_t canGetClock(const struct BxCanBase *interface __attribute__((unused)))
+uint32_t canGetClock([[maybe_unused]] const struct BxCanBase *interface)
 {
   return clockFrequency(ApbClock);
 }
@@ -132,7 +132,7 @@ static enum Result canInit(void *object, const void *configBase)
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_STM32_BXCAN_NO_DEINIT
-static void canDeinit(void *object __attribute__((unused)))
+static void canDeinit([[maybe_unused]] void *object)
 {
   sysClockDisable(CLK_CAN);
   instance = NULL;

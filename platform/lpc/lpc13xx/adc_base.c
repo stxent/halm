@@ -17,7 +17,7 @@
 #define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-void adcBaseHandler0(void) __attribute__((weak));
+[[gnu::weak]] void adcBaseHandler0(void);
 
 static enum Result adcInit(void *, const void *);
 
@@ -104,18 +104,18 @@ struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
   return (struct AdcPin){index};
 }
 /*----------------------------------------------------------------------------*/
-struct AdcBase *adcGetInstance(uint8_t channel __attribute__((unused)))
+struct AdcBase *adcGetInstance([[maybe_unused]] uint8_t channel)
 {
   assert(channel == 0);
   return instance;
 }
 /*----------------------------------------------------------------------------*/
-void adcReleasePin(struct AdcPin adcPin __attribute__((unused)))
+void adcReleasePin([[maybe_unused]] struct AdcPin adcPin)
 {
 }
 /*----------------------------------------------------------------------------*/
-bool adcSetInstance(uint8_t channel __attribute__((unused)),
-    struct AdcBase *expected, struct AdcBase *interface)
+bool adcSetInstance([[maybe_unused]] uint8_t channel, struct AdcBase *expected,
+    struct AdcBase *interface)
 {
   assert(channel == 0);
   return compareExchangePointer(&instance, &expected, interface);
