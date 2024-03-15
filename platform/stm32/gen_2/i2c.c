@@ -280,17 +280,23 @@ static enum Result i2cGetParam(void *object, int parameter, void *data)
 {
   struct I2C * const interface = object;
 
+#ifndef CONFIG_PLATFORM_STM32_I2C_RC
+  (void)data;
+#endif
+
   switch ((enum IfParameter)parameter)
   {
+#ifdef CONFIG_PLATFORM_STM32_I2C_RC
+    case IF_RATE:
+      *(uint32_t *)data = i2cGetRate(object);
+      return E_OK;
+#endif
+
     case IF_STATUS:
       if (interface->status != STATUS_ERROR)
         return interface->status != STATUS_OK ? E_BUSY : E_OK;
       else
         return E_ERROR;
-
-    case IF_RATE:
-      *(uint32_t *)data = i2cGetRate(object);
-      return E_OK;
 
     default:
       return E_INVALID;
@@ -308,6 +314,7 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
       interface->sendRepeatedStart = true;
       return E_OK;
 
+#ifdef CONFIG_PLATFORM_STM32_I2C_RECOVERY
     case IF_I2C_BUS_RECOVERY:
     {
       STM_I2C_Type * const reg = interface->base.reg;
@@ -321,6 +328,7 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
       interface->status = STATUS_OK;
       return E_OK;
     }
+#endif
 
     case IF_I2C_10BIT_ADDRESS:
       if (*(const uint8_t *)data)
@@ -345,13 +353,15 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
       else
         return E_VALUE;
 
-    case IF_BLOCKING:
-      interface->blocking = true;
-      return E_OK;
-
+#ifdef CONFIG_PLATFORM_STM32_I2C_RC
     case IF_RATE:
       interface->rate = *(const uint32_t *)data;
       i2cSetRate(&interface->base, interface->rate);
+      return E_OK;
+#endif
+
+    case IF_BLOCKING:
+      interface->blocking = true;
       return E_OK;
 
     case IF_ZEROCOPY:

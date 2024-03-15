@@ -189,6 +189,19 @@ config PLATFORM_STM32_I2C_PM
 	default n
 	depends on PM && PLATFORM_STM32_I2C_BASE
 
+config PLATFORM_STM32_I2C_RC
+	bool "Runtime configuration"
+	default y
+	depends on PLATFORM_STM32_I2C_BASE
+
+config PLATFORM_STM32_I2C_RECOVERY
+	bool "Bus recovery"
+	default y
+	depends on PLATFORM_STM32_I2C_BASE
+	help
+	  This enables I2C bus recovery interface accessible through
+	  a specific I2C parameter.
+
 config PLATFORM_STM32_I2C
 	bool "I2C Master with DMA"
 	default y
