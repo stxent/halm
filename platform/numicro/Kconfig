@@ -1,7 +1,7 @@
 config GEN_TIMER
 	string
-	default gen_1 if FAMILY_M03X
-	default gen_2 if FAMILY_M48X
+	default "gen_1" if FAMILY_M03X
+	default "gen_2" if FAMILY_M48X
 
 menu "Power settings"
 

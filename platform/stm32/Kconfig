@@ -1,27 +1,27 @@
 config GEN_ADC
 	string
-	default gen_1 if FAMILY_STM32F1XX || FAMILY_STM32F4XX
-	default gen_2 if FAMILY_STM32F0XX
+	default "gen_1" if FAMILY_STM32F1XX || FAMILY_STM32F4XX
+	default "gen_2" if FAMILY_STM32F0XX
 
 config GEN_I2C
 	string
-	default gen_1 if FAMILY_STM32F1XX || FAMILY_STM32F4XX
-	default gen_2 if FAMILY_STM32F0XX
+	default "gen_1" if FAMILY_STM32F1XX || FAMILY_STM32F4XX
+	default "gen_2" if FAMILY_STM32F0XX
 
 config GEN_PIN
 	string
-	default gen_2 if FAMILY_STM32F0XX || FAMILY_STM32F4XX
-	default stm32f1xx if FAMILY_STM32F1XX
+	default "gen_2" if FAMILY_STM32F0XX || FAMILY_STM32F4XX
+	default "stm32f1xx" if FAMILY_STM32F1XX
 
 config GEN_UART
 	string
-	default gen_1 if FAMILY_STM32F1XX || FAMILY_STM32F4XX
-	default gen_2 if FAMILY_STM32F0XX
+	default "gen_1" if FAMILY_STM32F1XX || FAMILY_STM32F4XX
+	default "gen_2" if FAMILY_STM32F0XX
 
 config GEN_USB
 	string
-	default gen_1 if FAMILY_STM32F0XX || FAMILY_STM32F1XX
-	default gen_2 if FAMILY_STM32F4XX
+	default "gen_1" if FAMILY_STM32F0XX || FAMILY_STM32F1XX
+	default "gen_2" if FAMILY_STM32F4XX
 
 config PLATFORM_STM32_PIN_REMAP
 	bool
