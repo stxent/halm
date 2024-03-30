@@ -110,4 +110,10 @@ if(CONFIG_PLATFORM_USB)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_base.c")
 endif()
 
+if(CONFIG_PLATFORM_STM32_DMA)
+    list(APPEND SOURCE_FILES "dma_memcopy.c")
+elseif(CONFIG_PLATFORM_STM32_BDMA)
+    list(APPEND SOURCE_FILES "bdma_memcopy.c")
+endif()
+
 add_library(halm_platform OBJECT ${SOURCE_FILES})
