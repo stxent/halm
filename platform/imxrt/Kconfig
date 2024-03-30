@@ -38,6 +38,17 @@ config PLATFORM_IMXRT_LPUART_WATERMARK
 	default n
 	depends on PLATFORM_IMXRT_LPUART_BASE
 
+config PLATFORM_IMXRT_PIT
+	bool "PIT"
+	default y
+	help
+	  This is the driver for the Periodic Interrupt Timer.
+
+config PLATFORM_IMXRT_PIT_NO_DEINIT
+	bool
+	default y if PLATFORM_IMXRT_NO_DEINIT
+	depends on PLATFORM_IMXRT_PIT
+
 config PLATFORM_IMXRT_SERIAL
 	bool "Interrupt-driven serial port driver"
 	default y

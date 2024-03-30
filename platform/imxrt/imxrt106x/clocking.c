@@ -34,6 +34,9 @@ static enum Result intOscEnable(const void *, const void *);
 static uint32_t intOscFrequency(const void *);
 static bool intOscReady(const void *);
 
+static enum Result ipgClockEnable(const void *, const void *);
+static uint32_t ipgClockFrequency(const void *);
+
 static enum Result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
 static bool mainClockReady(const void *);
@@ -63,6 +66,9 @@ static uint32_t flexSpi1ClockFrequency(const void *);
 static enum Result flexSpi2ClockEnable(const void *, const void *);
 static uint32_t flexSpi2ClockFrequency(const void *);
 
+static enum Result timerClockEnable(const void *, const void *);
+static uint32_t timerClockFrequency(const void *);
+
 static enum Result uartClockEnable(const void *, const void *);
 static uint32_t uartClockFrequency(const void *);
 /*----------------------------------------------------------------------------*/
@@ -78,6 +84,13 @@ const struct ClockClass * const InternalOsc = &(const struct ClockClass){
     .enable = intOscEnable,
     .frequency = intOscFrequency,
     .ready = intOscReady
+};
+
+const struct ClockClass * const IpgClock = &(const struct ClockClass){
+    .disable = clockDisableStub,
+    .enable = ipgClockEnable,
+    .frequency = ipgClockFrequency,
+    .ready = clockReadyStub
 };
 
 const struct ClockClass * const MainClock = &(const struct ClockClass){
@@ -225,6 +238,13 @@ const struct ClockClass * const FlexSpi2Clock = &(const struct ClockClass){
     .ready = clockReadyStub
 };
 
+const struct ClockClass * const TimerClock = &(const struct ClockClass){
+    .disable = clockDisableStub,
+    .enable = timerClockEnable,
+    .frequency = timerClockFrequency,
+    .ready = clockReadyStub
+};
+
 const struct ClockClass * const UartClock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = uartClockEnable,
@@ -317,6 +337,29 @@ static bool intOscReady(const void *)
   return (IMX_XTALOSC24M->LOWPWR_CTRL & LOWPWR_CTRL_RC_OSC_EN) != 0;
 }
 /*----------------------------------------------------------------------------*/
+static enum Result ipgClockEnable(const void *, const void *configBase)
+{
+  const struct GenericClockConfig * const config = configBase;
+  assert(config != NULL);
+
+  if (config->divisor > 4)
+    return E_VALUE;
+
+  const uint32_t divisor = config->divisor ? config->divisor : 1;
+  uint32_t cbcdr = IMX_CCM->CBCDR;
+
+  cbcdr = (cbcdr & ~CBCDR_IPG_PODF_MASK) | CBCDR_IPG_PODF(divisor - 1);
+  IMX_CCM->CBCDR = cbcdr;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t ipgClockFrequency(const void *)
+{
+  const uint32_t divisor = CBCDR_IPG_PODF_VALUE(IMX_CCM->CBCDR) + 1;
+  return mainClockFrequency(NULL) / divisor;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result mainClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
@@ -330,9 +373,9 @@ static enum Result mainClockEnable(const void *, const void *configBase)
   uint32_t cbcdr = IMX_CCM->CBCDR;
 
   cbcdr = (cbcdr & ~CBCDR_AHB_PODF_MASK) | CBCDR_AHB_PODF(divisor - 1);
-  ticksPerSecond = TICK_RATE(frequency / divisor);
-
   IMX_CCM->CBCDR = cbcdr;
+
+  ticksPerSecond = TICK_RATE(frequency / divisor);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -837,6 +880,44 @@ static uint32_t flexSpi2ClockFrequency(const void *)
     default:
       break;
   }
+
+  return frequency / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result timerClockEnable(const void *, const void *configBase)
+{
+  const struct ExtendedClockConfig * const config = configBase;
+  assert(config != NULL);
+
+  if (config->divisor > 64)
+    return E_VALUE;
+
+  uint32_t cscmr1 = IMX_CCM->CSCMR1 & ~CSCMR1_PERCLK_PODF_MASK;
+
+  if (config->source == CLOCK_OSC)
+    cscmr1 |= CSCMR1_PERCLK_CLK_SEL;
+  else if (config->source == CLOCK_IPG)
+    cscmr1 &= ~CSCMR1_PERCLK_CLK_SEL;
+  else
+    return E_VALUE;
+
+  if (config->divisor > 1)
+    cscmr1 |= CSCMR1_PERCLK_PODF(config->divisor - 1);
+
+  IMX_CCM->CSCMR1 = cscmr1;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t timerClockFrequency(const void *)
+{
+  const uint32_t cscmr1 = IMX_CCM->CSCMR1;
+  const uint32_t divisor = CSCMR1_PERCLK_PODF_VALUE(cscmr1) + 1;
+  uint32_t frequency;
+
+  if (cscmr1 & CSCMR1_PERCLK_CLK_SEL)
+    frequency = OSC_FREQUENCY;
+  else
+    frequency = ipgClockFrequency(NULL);
 
   return frequency / divisor;
 }

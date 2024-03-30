@@ -39,6 +39,7 @@ enum [[gnu::packed]] ClockSource
   CLOCK_USB2_PLL, /* PLL7 */
   CLOCK_VIDEO_PLL, /* PLL5 */
 
+  CLOCK_IPG,
   CLOCK_SEMC
 };
 /*----------------------------------------------------------------------------*/
