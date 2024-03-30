@@ -259,7 +259,7 @@ static void txDmaHandler(void *object)
   else
     event = true;
 
-  if (event && interface->callback)
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -299,8 +299,10 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaTOCConfig * const config = configBase;
-  assert(config);
-  assert(config->rxChunk % 2 == 0);
+  assert(config != NULL);
+  assert(config->rxChunk > 0 && config->rxChunk % 2 == 0);
+  assert(config->rxLength > 0 && config->txLength > 0);
+  assert(config->rxLength % config->rxChunk == 0);
 
   const struct UartBaseConfig baseConfig = {
       .rx = config->rx,

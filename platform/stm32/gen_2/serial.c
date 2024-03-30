@@ -122,7 +122,7 @@ static void interruptHandler(void *object)
   updateRxWatermark(interface, rxQueueSize);
   event = event || rxQueueSize >= rxQueueLevel;
 
-  if (interface->callback && event)
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -163,6 +163,7 @@ static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->rxLength > 0 && config->txLength > 0);
 
   const struct UartBaseConfig baseConfig = {
       .rx = config->rx,

@@ -150,7 +150,7 @@ static void interruptHandler(void *object)
       sendWord(interface, byteQueuePopFront(&interface->txQueue));
   }
 
-  if (interface->callback && event)
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/

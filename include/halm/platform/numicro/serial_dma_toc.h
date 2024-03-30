@@ -38,10 +38,10 @@ struct SerialDmaTOCConfig
   PinNumber rx;
   /** Optional: serial output. */
   PinNumber tx;
-  /** Optional: interrupt priority. */
-  IrqPriority priority;
   /** Optional: parity bit setting. */
   enum SerialParity parity;
+  /** Optional: interrupt priority. */
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /**

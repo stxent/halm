@@ -138,7 +138,7 @@ static void interruptHandler(void *object)
   updateRxWatermark(interface, rxQueueSize);
   event = event || rxQueueSize >= rxQueueLevel;
 
-  if (interface->callback && event)
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/

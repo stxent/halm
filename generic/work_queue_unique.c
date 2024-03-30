@@ -114,13 +114,14 @@ const struct WorkQueueClass * const WorkQueueUnique =
 static bool findTaskBucket(struct WorkQueueUnique *wq,
     const struct WqTask *task, size_t *index)
 {
+  WqTaskArray * const buckets = &wq->buckets;
   size_t left = 0;
-  size_t right = wqTaskArraySize(&wq->buckets);
+  size_t right = wqTaskArraySize(buckets);
 
   while (left != right)
   {
     const size_t middle = (left + right) / 2;
-    struct WqTaskBucket * const current = *wqTaskArrayAt(&wq->buckets, middle);
+    const struct WqTaskBucket * const current = *wqTaskArrayAt(buckets, middle);
     const int result = taskComparator(&current->task, task);
 
     if (result > 0)

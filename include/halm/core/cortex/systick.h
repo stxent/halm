@@ -24,11 +24,11 @@ struct SysTickConfig
 
 struct SysTick
 {
-  struct Timer parent;
+  struct Timer base;
 
   /* User interrupt handler */
   void (*callback)(void *);
-  /* User interrupt handler argument */
+  /* Argument passed to the user interrupt handler */
   void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/

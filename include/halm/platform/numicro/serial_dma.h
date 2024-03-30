@@ -24,7 +24,7 @@ struct SerialDmaConfig
    * Pointer address should be aligned.
    */
   void *arena;
-  /** Mandatory: number of input chunk. */
+  /** Mandatory: number of input chunks. */
   size_t rxChunks;
   /** Mandatory: input queue size. */
   size_t rxLength;
@@ -36,10 +36,10 @@ struct SerialDmaConfig
   PinNumber rx;
   /** Optional: serial output. */
   PinNumber tx;
-  /** Optional: interrupt priority. */
-  IrqPriority priority;
   /** Optional: parity bit setting. */
   enum SerialParity parity;
+  /** Optional: interrupt priority. */
+  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: direct memory access channels. */

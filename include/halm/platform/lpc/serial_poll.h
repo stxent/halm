@@ -15,12 +15,12 @@ struct SerialPollConfig
 {
   /** Mandatory: baud rate. */
   uint32_t rate;
-  /** Optional: parity bit setting. */
-  enum SerialParity parity;
   /** Optional: serial input. */
   PinNumber rx;
   /** Optional: serial output. */
   PinNumber tx;
+  /** Optional: parity bit setting. */
+  enum SerialParity parity;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };
