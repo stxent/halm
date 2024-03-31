@@ -251,8 +251,11 @@ static enum Result streamResidue(const void *object, size_t *count)
   if (stream->state != STATE_IDLE && stream->state != STATE_READY)
   {
     const STM_DMA_STREAM_Type * const reg = stream->base.reg;
+    const uint32_t config = stream->base.config;
+    const uint32_t width = SCR_DIR_VALUE(config) == DMA_TYPE_M2P ?
+        (1 << SCR_PSIZE_VALUE(config)) : (1 << SCR_MSIZE_VALUE(config));
 
-    *count = reg->NDTR;
+    *count = (size_t)(reg->NDTR * width);
     return E_OK;
   }
   else
@@ -282,26 +285,39 @@ static void streamAppend(void *object, void *destination, const void *source,
     size_t size)
 {
   struct DmaCircular * const stream = object;
+  const uint32_t config = stream->base.config;
+  uintptr_t memoryAddress;
+  uintptr_t periphAddress;
+  uint32_t transfers;
 
   assert(destination != NULL && source != NULL);
-  assert(size > 0 && size <= DMA_MAX_TRANSFER);
-  assert(!(stream->base.config & SCR_HTIE) || (size % 2 == 0));
+  assert(!(size % (1 << SCR_PSIZE_VALUE(config))));
+  assert(!(size % (1 << SCR_MSIZE_VALUE(config))));
   assert(stream->state != STATE_BUSY && stream->state != STATE_READY);
 
-  if (SCR_DIR_VALUE(stream->base.config) == DMA_TYPE_M2P)
+  if (SCR_DIR_VALUE(config) == DMA_TYPE_M2P)
   {
     /* Direction is from memory to peripheral */
-    stream->memoryAddress = (uintptr_t)source;
-    stream->periphAddress = (uintptr_t)destination;
+    memoryAddress = (uintptr_t)source;
+    periphAddress = (uintptr_t)destination;
+    transfers = size >> SCR_PSIZE_VALUE(config);
   }
   else
   {
     /* Direction is from peripheral to memory */
-    stream->memoryAddress = (uintptr_t)destination;
-    stream->periphAddress = (uintptr_t)source;
+    memoryAddress = (uintptr_t)destination;
+    periphAddress = (uintptr_t)source;
+    transfers = size >> SCR_MSIZE_VALUE(config);
   }
 
-  stream->transfers = (uint16_t)size;
+  assert(!(periphAddress % (1 << SCR_PSIZE_VALUE(config))));
+  assert(!(memoryAddress % (1 << SCR_MSIZE_VALUE(config))));
+  assert(!(config & SCR_HTIE) || (transfers % 2 == 0));
+  assert(transfers > 0 && transfers <= DMA_MAX_TRANSFER);
+
+  stream->memoryAddress = memoryAddress;
+  stream->periphAddress = periphAddress;
+  stream->transfers = (uint16_t)transfers;
   stream->state = STATE_READY;
 }
 /*----------------------------------------------------------------------------*/

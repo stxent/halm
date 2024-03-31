@@ -127,7 +127,8 @@ static void resetInnerBuffers(struct AdcDmaStream *interface)
   for (size_t index = 0; index < interface->count; ++index)
   {
     dmaAppend(interface->inner, &interface->buffer,
-        (const void *)&reg->DR[interface->pins[index].channel], 1);
+        (const void *)&reg->DR[interface->pins[index].channel],
+        sizeof(interface->buffer));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -178,7 +179,7 @@ static bool setupOuterChannel(struct AdcDmaStream *interface,
       },
       .destination = {
           .burst = DMA_BURST_4,
-          .width = DMA_WIDTH_WORD,
+          .width = DMA_WIDTH_HALFWORD,
           .increment = true
       }
   };
@@ -367,12 +368,12 @@ static enum Result adcHandlerEnqueue(void *object,
   /* Ensure the buffer has enough space and is aligned on the sample size */
   assert(request->capacity / (interface->count * sizeof(uint16_t)) >= 2);
   assert(request->capacity % (interface->count * sizeof(uint16_t)) == 0);
-  /* Output buffer should be aligned on the sample size */
-  assert((uintptr_t)request->buffer % sizeof(uint16_t) == 0);
 
   /* Prepare linked list of DMA descriptors */
-  const size_t samples = request->capacity / sizeof(uint16_t);
-  const size_t parts[] = {samples >> 1, samples - (samples >> 1)};
+  const size_t parts[] = {
+      request->capacity >> 1,
+      request->capacity - (request->capacity >> 1)
+  };
 
   enum Result res = E_OK;
   const IrqState state = irqSave();
@@ -380,7 +381,7 @@ static enum Result adcHandlerEnqueue(void *object,
   if (!pointerQueueFull(&stream->requests))
   {
     LPC_ADC_Type * const reg = interface->base.reg;
-    uint16_t * const dst = request->buffer;
+    uint8_t * const dst = request->buffer;
 
     /* When a previous transfer is ongoing it will be continued */
     dmaAppend(interface->outer, dst, &interface->buffer, parts[0]);

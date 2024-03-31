@@ -112,7 +112,7 @@ static void interruptHandler(void *object, enum Result res)
   if (channel->state != STATE_BUSY)
   {
     reg->CHCTL &= ~CHCTL_CH(number);
-    pdmaResetInstance(number);
+    pdmaUnbindInstance(&channel->base);
 
     channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
     event = true;
@@ -210,7 +210,7 @@ static enum Result channelEnable(void *object)
 
   assert(channel->state == STATE_READY);
 
-  if (!pdmaSetInstance(channel->base.number, object))
+  if (!pdmaBindInstance(&channel->base))
   {
     channel->state = STATE_ERROR;
     return E_BUSY;
@@ -240,7 +240,7 @@ static void channelDisable(void *object)
   if (channel->state == STATE_BUSY)
   {
     reg->CHRST = CHRST_CH(number);
-    pdmaResetInstance(number);
+    pdmaUnbindInstance(&channel->base);
 
     channel->state = STATE_DONE;
   }
@@ -268,12 +268,14 @@ static enum Result channelResidue(const void *object, size_t *count)
      */
     if (DSCT_NEXT_EXENEXT_VALUE(entry->NEXT) == next)
     {
-      const size_t transfers = DSCT_CTL_TXCNT_VALUE(entry->CTL) + 1;
+      const uint32_t control = entry->CTL;
+      const uint32_t transfers = DSCT_CTL_TXCNT_VALUE(control) + 1;
+      const uint32_t width = DSCT_CTL_TXWIDTH_VALUE(control);
 
       if (DSCT_NEXT_EXENEXT_VALUE(entry->NEXT) == next)
       {
         /* Linked list item is not changed, transfer count is correct */
-        *count = transfers;
+        *count = (size_t)(transfers * width);
         return E_OK;
       }
     }
@@ -305,9 +307,14 @@ static void channelAppend(void *object, void *destination, const void *source,
     size_t size)
 {
   struct PdmaList * const channel = object;
+  const uint32_t control = channel->base.control;
+  const uint32_t transfers = size >> DSCT_CTL_TXWIDTH_VALUE(control);
 
   assert(destination != NULL && source != NULL);
-  assert(size > 0 && size <= PDMA_MAX_TRANSFER_SIZE);
+  assert(!((uintptr_t)destination % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
+  assert(!((uintptr_t)source % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
+  assert(!(size % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
+  assert(transfers > 0 && transfers <= PDMA_MAX_TRANSFER_SIZE);
   assert(channel->queued < channel->capacity);
 
   if (channel->state == STATE_DONE || channel->state == STATE_ERROR)
@@ -331,8 +338,8 @@ static void channelAppend(void *object, void *destination, const void *source,
 
   current->source = (uintptr_t)source;
   current->destination = (uintptr_t)destination;
-  current->control = channel->base.control
-      | DSCT_CTL_OPMODE(OPMODE_BASIC) | DSCT_CTL_TXCNT(size - 1);
+  current->control = control | DSCT_CTL_OPMODE(OPMODE_BASIC)
+      | DSCT_CTL_TXCNT(transfers - 1);
   current->next = 0;
 
   if (previous != NULL)

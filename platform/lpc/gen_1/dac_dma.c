@@ -268,14 +268,14 @@ static enum Result dacStreamEnqueue(void *object,
 
   assert(request != NULL && request->callback != NULL);
   /* Ensure the buffer has enough space and is aligned on the sample size */
-  assert(request->capacity / sizeof(uint16_t) >= 2);
-  assert(request->capacity % sizeof(uint16_t) == 0);
-  /* Input buffer should be aligned on the sample size */
-  assert((uintptr_t)request->buffer % sizeof(uint16_t) == 0);
+  assert(request->length / sizeof(uint16_t) >= 2);
+  assert(request->length % sizeof(uint16_t) == 0);
 
   /* Prepare linked list of DMA descriptors */
-  const size_t samples = request->capacity / sizeof(uint16_t);
-  const size_t parts[] = {samples >> 1, samples - (samples >> 1)};
+  const size_t parts[] = {
+      request->length >> 1,
+      request->length - (request->length >> 1)
+  };
 
   enum Result res = E_OK;
   const IrqState state = irqSave();
@@ -283,7 +283,7 @@ static enum Result dacStreamEnqueue(void *object,
   if (!pointerQueueFull(&stream->requests))
   {
     LPC_DAC_Type * const reg = interface->base.reg;
-    const uint16_t * const src = request->buffer;
+    const uint8_t * const src = request->buffer;
 
     /* When a previous transfer is ongoing it will be continued */
     dmaAppend(interface->dma, (void *)&reg->CR, src, parts[0]);

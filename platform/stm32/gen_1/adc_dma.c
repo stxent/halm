@@ -126,7 +126,7 @@ static bool startConversion(struct AdcDma *interface)
   STM_ADC_Type * const reg = interface->base.reg;
 
   dmaAppend(interface->dma, interface->buffer, (const void *)&reg->DR,
-      interface->count);
+      interface->count * sizeof(uint16_t));
   if (dmaEnable(interface->dma) != E_OK)
     return false;
 
@@ -205,10 +205,10 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(interface->count > 0 && interface->count <= 16);
 
   /* Allocate buffer for conversion results */
-  interface->buffer = malloc(sizeof(uint16_t) * interface->count);
+  interface->buffer = malloc(interface->count * sizeof(uint16_t));
   if (interface->buffer == NULL)
     return E_MEMORY;
-  memset(interface->buffer, 0, sizeof(uint16_t) * interface->count);
+  memset(interface->buffer, 0, interface->count * sizeof(uint16_t));
 
   /* Allocate buffer for pin descriptors */
   interface->pins = malloc(sizeof(struct AdcPin) * interface->count);

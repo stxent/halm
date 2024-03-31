@@ -47,7 +47,6 @@ struct DmaBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-const struct DmaBase *dmaGetInstance(uint8_t);
 void dmaResetInstance(uint8_t);
 bool dmaSetInstance(uint8_t, struct DmaBase *);
 

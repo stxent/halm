@@ -119,12 +119,6 @@ static const enum DmaEvent eventMap2[EVENT_COUNT][EVENT_SOURCES] = {
 
 static struct DmaBase *instances[STREAM_COUNT * 2] = {NULL};
 /*----------------------------------------------------------------------------*/
-const struct DmaBase *dmaGetInstance(uint8_t number)
-{
-  assert(number < ARRAY_SIZE(instances));
-  return instances[number];
-}
-/*----------------------------------------------------------------------------*/
 void dmaResetInstance(uint8_t number)
 {
   assert(number < ARRAY_SIZE(instances));

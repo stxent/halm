@@ -16,7 +16,7 @@
 #define CHANNEL_COUNT ARRAY_SIZE(LPC_GPDMA->CHANNELS)
 /*----------------------------------------------------------------------------*/
 static struct GpDmaMuxConfig calcEventMux(enum GpDmaType, enum GpDmaEvent);
-static void dmaPeripheralInit(void);
+static void dmaControllerInit(void);
 static unsigned int eventToPeripheral(enum GpDmaEvent);
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
@@ -27,7 +27,7 @@ const struct EntityClass * const GpDmaBase = &(const struct EntityClass){
     .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static const uint8_t eventTranslationMap[] = {
+static const uint8_t EVENT_MAP[] = {
     [GPDMA_SSP0_RX]   = 1,
     [GPDMA_SSP1_RX]   = 3,
     [GPDMA_SSP0_TX]   = 0,
@@ -89,7 +89,7 @@ static struct GpDmaMuxConfig calcEventMux(enum GpDmaType type,
   };
 }
 /*----------------------------------------------------------------------------*/
-static void dmaPeripheralInit(void)
+static void dmaControllerInit(void)
 {
   sysPowerEnable(PWR_GPDMA);
 
@@ -112,7 +112,7 @@ static void dmaPeripheralInit(void)
 static unsigned int eventToPeripheral(enum GpDmaEvent event)
 {
   assert(event < GPDMA_MEMORY);
-  return eventTranslationMap[event];
+  return EVENT_MAP[event];
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *,
@@ -235,7 +235,7 @@ static enum Result channelInit(void *object, const void *configBase)
   }
 
   if (!sysPowerStatus(PWR_GPDMA))
-    dmaPeripheralInit();
+    dmaControllerInit();
 
   return E_OK;
 }

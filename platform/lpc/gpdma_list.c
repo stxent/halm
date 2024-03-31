@@ -236,12 +236,14 @@ static enum Result channelResidue(const void *object, size_t *count)
     if (index >= channel->capacity)
       index -= channel->capacity;
 
-    const size_t transfers = CONTROL_SIZE_VALUE(reg->CONTROL);
+    const uint32_t control = reg->CONTROL;
+    const uint32_t transfers = CONTROL_SIZE_VALUE(control);
+    const uint32_t width = 1 << CONTROL_DST_WIDTH_VALUE(control);
 
     if (reg->LLI == channel->list[index].next)
     {
       /* Linked list item is not changed, transfer count is correct */
-      *count = transfers;
+      *count = (size_t)(transfers * width);
       return E_OK;
     }
   }
@@ -272,9 +274,15 @@ static void channelAppend(void *object, void *destination, const void *source,
     size_t size)
 {
   struct GpDmaList * const channel = object;
+  const uint32_t control = channel->control;
+  const uint32_t transfers = size >> CONTROL_DST_WIDTH_VALUE(control);
 
   assert(destination != NULL && source != NULL);
-  assert(size > 0 && size <= GPDMA_MAX_TRANSFER_SIZE);
+  assert(!((uintptr_t)destination % (1 << CONTROL_DST_WIDTH_VALUE(control))));
+  assert(!(size % (1 << CONTROL_DST_WIDTH_VALUE(control))));
+  assert(!((uintptr_t)source % (1 << CONTROL_SRC_WIDTH_VALUE(control))));
+  assert(!(size % (1 << CONTROL_SRC_WIDTH_VALUE(control))));
+  assert(transfers > 0 && transfers <= GPDMA_MAX_TRANSFER_SIZE);
   assert(channel->queued < channel->capacity);
 
   if (channel->state == STATE_DONE || channel->state == STATE_ERROR)
@@ -298,7 +306,7 @@ static void channelAppend(void *object, void *destination, const void *source,
 
   entry->source = (uintptr_t)source;
   entry->destination = (uintptr_t)destination;
-  entry->control = channel->control | CONTROL_SIZE(size);
+  entry->control = control | CONTROL_SIZE(transfers);
   entry->next = 0;
 
   if (previous != NULL)

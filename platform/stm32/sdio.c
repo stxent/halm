@@ -663,16 +663,11 @@ static enum Result sdioSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t sdioRead(void *object, void *buffer, size_t length)
 {
-  /* Buffer address must be aligned on a 4-byte boundary */
-  assert((uintptr_t)buffer % 4 == 0);
-  /* Buffer size must be aligned on a 4-byte boundary */
-  assert(length % 4 == 0);
-
   struct Sdio * const interface = object;
   STM_SDIO_Type * const reg = interface->base.reg;
 
   interface->count = length;
-  dmaAppend(interface->rxDma, buffer, (const void *)&reg->FIFO, length >> 2);
+  dmaAppend(interface->rxDma, buffer, (const void *)&reg->FIFO, length);
 
   execute(interface, interface->command, interface->argument);
   return length;
@@ -680,16 +675,11 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t sdioWrite(void *object, const void *buffer, size_t length)
 {
-  /* Buffer address must be aligned on a 4-byte boundary */
-  assert((uintptr_t)buffer % 4 == 0);
-  /* Buffer size must be aligned on a 4-byte boundary */
-  assert(length % 4 == 0);
-
   struct Sdio * const interface = object;
   STM_SDIO_Type * const reg = interface->base.reg;
 
   interface->count = length;
-  dmaAppend(interface->txDma, (void *)&reg->FIFO, buffer, length >> 2);
+  dmaAppend(interface->txDma, (void *)&reg->FIFO, buffer, length);
 
   execute(interface, interface->command, interface->argument);
   return length;

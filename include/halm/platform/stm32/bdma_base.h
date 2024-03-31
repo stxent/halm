@@ -47,7 +47,6 @@ struct BdmaBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-const struct BdmaBase *bdmaGetInstance(uint8_t);
 void bdmaResetInstance(uint8_t);
 bool bdmaSetInstance(uint8_t, struct BdmaBase *);
 

@@ -13,6 +13,8 @@
 #include <xcore/atomic.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
+#define CHANNEL_COUNT ARRAY_SIZE(NM_PDMA->CHANNELS)
+/*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *, const void *);
 /*----------------------------------------------------------------------------*/
 const struct EntityClass * const PdmaBase = &(const struct EntityClass){
@@ -23,33 +25,28 @@ const struct EntityClass * const PdmaBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 extern unsigned long _sbss;
 /*----------------------------------------------------------------------------*/
-static struct PdmaBase *instances[16] = {NULL};
+static struct PdmaBase *instances[CHANNEL_COUNT] = {NULL};
 /*----------------------------------------------------------------------------*/
-const struct PdmaBase *pdmaGetInstance(uint8_t channel)
+bool pdmaBindInstance(struct PdmaBase *channel)
 {
-  assert(channel < ARRAY_SIZE(instances));
-  return instances[channel];
-}
-/*----------------------------------------------------------------------------*/
-void pdmaResetInstance(uint8_t channel)
-{
-  assert(channel < ARRAY_SIZE(instances));
-  instances[channel] = NULL;
-}
-/*----------------------------------------------------------------------------*/
-bool pdmaSetInstance(uint8_t channel, struct PdmaBase *object)
-{
-  assert(object != NULL);
-  assert(channel < ARRAY_SIZE(instances));
+  assert(channel != NULL);
 
   void *expected = NULL;
-  return compareExchangePointer(&instances[channel], &expected, object);
+
+  return compareExchangePointer(&instances[channel->number],
+      &expected, channel);
 }
 /*----------------------------------------------------------------------------*/
-void pdmaSetMux(struct PdmaBase *descriptor)
+void pdmaUnbindInstance(struct PdmaBase *channel)
 {
-  volatile uint32_t * const reg = &NM_PDMA->REQSEL[descriptor->number >> 2];
-  *reg = (*reg & descriptor->mux.mask) | descriptor->mux.value;
+  assert(channel != NULL);
+  instances[channel->number] = NULL;
+}
+/*----------------------------------------------------------------------------*/
+void pdmaSetMux(struct PdmaBase *channel)
+{
+  volatile uint32_t * const reg = &NM_PDMA->REQSEL[channel->number >> 2];
+  *reg = (*reg & channel->mux.mask) | channel->mux.value;
 }
 /*----------------------------------------------------------------------------*/
 void pdmaStartTransfer(struct PdmaBase *channel, uint32_t control,
@@ -135,6 +132,7 @@ static enum Result channelInit(void *object, const void *configBase)
   channel->reg = NM_PDMA;
   channel->handler = NULL;
   channel->control = 0;
+  channel->controller = 0;
   channel->number = config->channel;
   channel->mux.mask = ~REQSEL_CH_MASK(offset);
 
@@ -154,7 +152,7 @@ static enum Result channelInit(void *object, const void *configBase)
     sysResetBlock(RST_PDMA);
 
     /* Clear descriptors */
-    for (size_t index = 0; index < 16; ++index)
+    for (size_t index = 0; index < CHANNEL_COUNT; ++index)
     {
       NM_PDMA->CHANNELS[index].CTL = 0;
       NM_PDMA->CHANNELS[index].SA = 0;

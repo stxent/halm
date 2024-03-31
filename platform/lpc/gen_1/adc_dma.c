@@ -92,7 +92,8 @@ static void resetDmaBuffers(struct AdcDma *interface)
   for (size_t index = 0; index < interface->count; ++index)
   {
     dmaAppend(interface->dma, &interface->buffer[index],
-        (const void *)&reg->DR[interface->pins[index].channel], 1);
+        (const void *)&reg->DR[interface->pins[index].channel],
+        sizeof(*interface->buffer));
   }
 }
 /*----------------------------------------------------------------------------*/

@@ -54,7 +54,7 @@ enum Result dmaMemCopyStart(struct DmaMemCopyHandler *handler,
 {
   if (((uintptr_t)destination & 3) || ((uintptr_t)source & 3) || (length & 3))
   {
-    /* Unaligned buffers or length */
+    /* Unaligned buffer addresses or length */
     return E_MEMORY;
   }
 
@@ -65,7 +65,7 @@ enum Result dmaMemCopyStart(struct DmaMemCopyHandler *handler,
   handler->callback = callback;
 
   dmaSetCallback(handler->dma, interruptHandler, handler);
-  dmaAppend(handler->dma, destination, source, length >> 2);
+  dmaAppend(handler->dma, destination, source, length);
 
   const enum Result res = dmaEnable(handler->dma);
 

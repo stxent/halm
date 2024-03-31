@@ -61,7 +61,7 @@ static void interruptHandler(void *object, enum Result res)
   const uint8_t number = channel->base.number;
 
   reg->CHCTL &= ~CHCTL_CH(number);
-  pdmaResetInstance(number);
+  pdmaUnbindInstance(&channel->base);
 
   channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
@@ -150,7 +150,7 @@ static enum Result channelEnable(void *object)
 
   assert(channel->state == STATE_READY);
 
-  if (!pdmaSetInstance(number, object))
+  if (!pdmaBindInstance(&channel->base))
   {
     channel->state = STATE_ERROR;
     return E_BUSY;
@@ -181,7 +181,7 @@ static void channelDisable(void *object)
   if (channel->state == STATE_BUSY)
   {
     reg->CHRST = CHRST_CH(number);
-    pdmaResetInstance(number);
+    pdmaUnbindInstance(&channel->base);
 
     channel->state = STATE_DONE;
   }
@@ -197,7 +197,11 @@ static enum Result channelResidue(const void *object, size_t *count)
     const NM_PDMA_CHANNEL_Type * const entry =
         &reg->CHANNELS[channel->base.number];
 
-    *count = DSCT_CTL_TXCNT_VALUE(entry->CTL) + 1;
+    const uint32_t control = entry->CTL;
+    const uint32_t transfers = DSCT_CTL_TXCNT_VALUE(control) + 1;
+    const uint32_t width = DSCT_CTL_TXWIDTH_VALUE(control);
+
+    *count = (size_t)(transfers * width);
     return E_OK;
   }
   else
@@ -227,14 +231,19 @@ static void channelAppend(void *object, void *destination, const void *source,
     size_t size)
 {
   struct PdmaOneShot * const channel = object;
+  const uint32_t control = channel->base.control;
+  const uint32_t transfers = size >> DSCT_CTL_TXWIDTH_VALUE(control);
 
   assert(destination != NULL && source != NULL);
-  assert(size > 0 && size <= PDMA_MAX_TRANSFER_SIZE);
+  assert(!((uintptr_t)destination % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
+  assert(!((uintptr_t)source % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
+  assert(!(size % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
+  assert(transfers > 0 && transfers <= PDMA_MAX_TRANSFER_SIZE);
   assert(channel->state != STATE_BUSY && channel->state != STATE_READY);
 
   channel->destination = (uintptr_t)destination;
   channel->source = (uintptr_t)source;
-  channel->transfers = (uint16_t)size;
+  channel->transfers = (uint16_t)transfers;
   channel->state = STATE_READY;
 }
 /*----------------------------------------------------------------------------*/

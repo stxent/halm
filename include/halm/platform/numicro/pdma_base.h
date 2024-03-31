@@ -97,6 +97,8 @@ struct PdmaBase
 
   /* Precalculated value of Channel Control register */
   uint32_t control;
+  /* Controller number */
+  uint8_t controller;
   /* Channel number */
   uint8_t number;
 
@@ -106,9 +108,8 @@ struct PdmaBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-const struct PdmaBase *pdmaGetInstance(uint8_t);
-void pdmaResetInstance(uint8_t);
-bool pdmaSetInstance(uint8_t, struct PdmaBase *);
+bool pdmaBindInstance(struct PdmaBase *);
+void pdmaUnbindInstance(struct PdmaBase *);
 void pdmaSetMux(struct PdmaBase *);
 void pdmaStartTransfer(struct PdmaBase *, uint32_t, uintptr_t, uintptr_t,
     uintptr_t);

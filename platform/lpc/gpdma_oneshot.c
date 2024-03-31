@@ -170,8 +170,11 @@ static enum Result channelResidue(const void *object, size_t *count)
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
   {
     const LPC_GPDMA_CHANNEL_Type * const reg = channel->base.reg;
+    const uint32_t control = reg->CONTROL;
+    const uint32_t transfers = CONTROL_SIZE_VALUE(control);
+    const uint32_t width = 1 << CONTROL_DST_WIDTH_VALUE(control);
 
-    *count = CONTROL_SIZE_VALUE(reg->CONTROL);
+    *count = (size_t)(transfers * width);
     return E_OK;
   }
 
@@ -201,15 +204,20 @@ static void channelAppend(void *object, void *destination, const void *source,
     size_t size)
 {
   struct GpDmaOneShot * const channel = object;
+  const uint32_t control = channel->control;
+  const uint32_t transfers = size >> CONTROL_DST_WIDTH_VALUE(control);
 
   assert(destination != NULL && source != NULL);
-  assert(size > 0 && size <= GPDMA_MAX_TRANSFER_SIZE);
+  assert(!((uintptr_t)destination % (1 << CONTROL_DST_WIDTH_VALUE(control))));
+  assert(!(size % (1 << CONTROL_DST_WIDTH_VALUE(control))));
+  assert(!((uintptr_t)source % (1 << CONTROL_SRC_WIDTH_VALUE(control))));
+  assert(!(size % (1 << CONTROL_SRC_WIDTH_VALUE(control))));
+  assert(transfers > 0 && transfers <= GPDMA_MAX_TRANSFER_SIZE);
   assert(channel->state != STATE_BUSY && channel->state != STATE_READY);
 
   channel->destination = (uintptr_t)destination;
   channel->source = (uintptr_t)source;
-  channel->control = (channel->control & ~CONTROL_SIZE_MASK)
-      | CONTROL_SIZE(size);
+  channel->control = (control & ~CONTROL_SIZE_MASK) | CONTROL_SIZE(transfers);
   channel->state = STATE_READY;
 }
 /*----------------------------------------------------------------------------*/

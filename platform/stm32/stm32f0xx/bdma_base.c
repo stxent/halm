@@ -53,15 +53,6 @@ const struct EntityClass * const BdmaBase = &(const struct EntityClass){
 /*----------------------------------------------------------------------------*/
 static struct BdmaBase *instances[STREAM_COUNT] = {NULL};
 /*----------------------------------------------------------------------------*/
-const struct BdmaBase *bdmaGetInstance(uint8_t number)
-{
-  const unsigned int controller = number >= DMA2_STREAM1;
-  const unsigned int index = controller ? number - DMA2_STREAM1 : number;
-
-  assert(STREAM_ENCODE(controller, index) < ARRAY_SIZE(instances));
-  return instances[STREAM_ENCODE(controller, index)];
-}
-/*----------------------------------------------------------------------------*/
 void bdmaResetInstance(uint8_t number)
 {
   const unsigned int controller = number >= DMA2_STREAM1;

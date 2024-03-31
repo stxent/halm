@@ -577,17 +577,16 @@ static enum Result i2sRxStreamEnqueue(void *object,
 {
   struct I2SDmaStream * const stream = object;
   struct I2SDma * const interface = stream->parent;
-  const size_t samples = request->capacity >> interface->sampleSize;
 
   assert(request != NULL && request->callback != NULL);
   /* Ensure the buffer has enough space and is aligned on the sample size */
   assert(request->capacity >> interface->sampleSize >= 2);
   assert(request->capacity % (1 << interface->sampleSize) == 0);
-  /* Input buffer should be aligned on a 4-byte boundary */
-  assert((uintptr_t)request->buffer % 4 == 0);
 
-  const size_t elements = (samples << interface->sampleSize) >> 2;
-  const size_t parts[] = {elements / 2, elements - elements / 2};
+  const size_t parts[] = {
+      request->capacity >> 1,
+      request->capacity - (request->capacity >> 1)
+  };
 
   enum Result res = E_OK;
   const IrqState state = irqSave();
@@ -596,7 +595,7 @@ static enum Result i2sRxStreamEnqueue(void *object,
   {
     LPC_I2S_Type * const reg = interface->base.reg;
     const uint32_t * const src = (const uint32_t *)&reg->RXFIFO;
-    uint32_t * const dst = request->buffer;
+    uint8_t * const dst = request->buffer;
 
     /*
      * When the transfer is already active it will be continued.
@@ -637,13 +636,13 @@ static enum Result i2sTxStreamEnqueue(void *object,
 
   assert(request != NULL && request->callback != NULL);
   /* Ensure the buffer has enough space and is aligned on the sample size */
-  assert(request->capacity >> interface->sampleSize >= 2);
-  assert(request->capacity % (1 << interface->sampleSize) == 0);
-  /* Output buffer should be aligned on a 4-byte boundary */
-  assert((uintptr_t)request->buffer % 4 == 0);
+  assert(request->length >> interface->sampleSize >= 2);
+  assert(request->length % (1 << interface->sampleSize) == 0);
 
-  const size_t words = request->length >> 2;
-  const size_t parts[] = {words >> 1, words - (words >> 1)};
+  const size_t parts[] = {
+      request->length >> 1,
+      request->length - (request->length >> 1)
+  };
 
   enum Result res = E_OK;
   const IrqState state = irqSave();
@@ -652,7 +651,7 @@ static enum Result i2sTxStreamEnqueue(void *object,
   {
     LPC_I2S_Type * const reg = interface->base.reg;
     uint32_t * const dst = (uint32_t *)&reg->TXFIFO;
-    const uint32_t * const src = request->buffer;
+    const uint8_t * const src = request->buffer;
 
     /*
      * When the transfer is already active it will be continued.

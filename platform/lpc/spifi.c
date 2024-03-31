@@ -717,7 +717,7 @@ static size_t spifiRead(void *object, void *buffer, size_t length)
     }
     else
     {
-      dmaAppend(interface->rxDma, buffer, (const void *)&reg->DATA, length / 4);
+      dmaAppend(interface->rxDma, buffer, (const void *)&reg->DATA, length);
 
       interface->status = STATUS_RX_BUSY;
       if (dmaEnable(interface->rxDma) != E_OK)
@@ -761,7 +761,7 @@ static size_t spifiWrite(void *object, const void *buffer, size_t length)
     }
     else
     {
-      dmaAppend(interface->txDma, (void *)&reg->DATA, buffer, length / 4);
+      dmaAppend(interface->txDma, (void *)&reg->DATA, buffer, length);
 
       interface->status = STATUS_TX_BUSY;
       if (dmaEnable(interface->txDma) != E_OK)

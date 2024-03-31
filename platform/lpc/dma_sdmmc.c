@@ -173,8 +173,10 @@ static void channelAppend(void *object, void *destination, const void *source,
 
   assert(destination != NULL || source != NULL);
   assert(destination == NULL || source == NULL);
-  assert(size);
-  assert(size <= channel->capacity * DESC_SIZE_MAX);
+  assert(!((uintptr_t)destination % sizeof(uint32_t)));
+  assert(!((uintptr_t)source % sizeof(uint32_t)));
+  assert(!(size % sizeof(uint32_t)));
+  assert(size > 0 && size <= channel->capacity * DESC_SIZE_MAX);
 
   const uintptr_t address = destination != NULL ?
       (uintptr_t)destination : (uintptr_t)source;
