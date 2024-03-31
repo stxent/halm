@@ -6,12 +6,31 @@ config CORE_CORTEX_NO_DEINIT
 	bool "Disable destructors"
 	default n
 
+config CORE_CORTEX_CACHE_LINE
+	int
+	default 32 if FAMILY_IMXRT106X
+	depends on CORE_CORTEX_M7
+
+config CORE_CORTEX_DCACHE
+	bool "Enable D-Cache"
+	default y
+	depends on CORE_CORTEX_M7
+	help
+	  This enables Data Cache usage.
+
 config CORE_CORTEX_DCACHE_WT
 	bool "D-Cache Write-Through"
 	default n
-	depends on CORE_CORTEX_M7
+	depends on CORE_CORTEX_DCACHE
 	help
 	  This enables Write-Through mode for the Data Cache.
+
+config CORE_CORTEX_ICACHE
+	bool "Enable I-Cache"
+	default y
+	depends on CORE_CORTEX_M7
+	help
+	  This enables Instruction Cache usage.
 
 config CORE_CORTEX_FPU
 	bool "FPU"

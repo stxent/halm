@@ -12,7 +12,7 @@
 /*----------------------------------------------------------------------------*/
 void dCacheClean(uintptr_t address, size_t size)
 {
-#ifndef CONFIG_CORE_CORTEX_DCACHE_WT
+#if defined(CONFIG_CORE_CORTEX_DCACHE) && !defined(CONFIG_CORE_CORTEX_DCACHE_WT)
   const uint32_t ccsidr = SCB->CCSIDR;
   const size_t lineSize = 1 << (CCSIDR_LINESIZE_VALUE(ccsidr) + 4);
 
@@ -38,7 +38,7 @@ void dCacheClean(uintptr_t address, size_t size)
 /*----------------------------------------------------------------------------*/
 void dCacheCleanAll(void)
 {
-#ifndef CONFIG_CORE_CORTEX_DCACHE_WT
+#if defined(CONFIG_CORE_CORTEX_DCACHE) && !defined(CONFIG_CORE_CORTEX_DCACHE_WT)
   const uint32_t ccsidr = SCB->CCSIDR;
   const unsigned int lineSizePow = CCSIDR_LINESIZE_VALUE(ccsidr) + 4;
   const unsigned int nWays = CCSIDR_ASSOCIATIVITY_VALUE(ccsidr);
@@ -69,6 +69,7 @@ void dCacheCleanAll(void)
 /*----------------------------------------------------------------------------*/
 void dCacheDisable(void)
 {
+#ifdef CONFIG_CORE_CORTEX_DCACHE
   const uint32_t ccsidr = SCB->CCSIDR;
   const unsigned int lineSizePow = CCSIDR_LINESIZE_VALUE(ccsidr) + 4;
   const unsigned int nWays = CCSIDR_ASSOCIATIVITY_VALUE(ccsidr);
@@ -94,10 +95,12 @@ void dCacheDisable(void)
 
   __dsb();
   __isb();
+#endif
 }
 /*----------------------------------------------------------------------------*/
 void dCacheEnable(void)
 {
+#ifdef CONFIG_CORE_CORTEX_DCACHE
   const uint32_t ccsidr = SCB->CCSIDR;
   const unsigned int lineSizePow = CCSIDR_LINESIZE_VALUE(ccsidr) + 4;
   const unsigned int nWays = CCSIDR_ASSOCIATIVITY_VALUE(ccsidr);
@@ -120,20 +123,21 @@ void dCacheEnable(void)
 
   __dsb();
 
-#ifdef CONFIG_CORE_CORTEX_DCACHE_WT
+#  ifdef CONFIG_CORE_CORTEX_DCACHE_WT
   SCB->CACR |= CACR_FORCEWT;
-#endif
+#  endif /* CONFIG_CORE_CORTEX_DCACHE_WT */
 
   /* Enable the D-Cache */
   SCB->CCR |= CCR_DC;
 
   __dsb();
   __isb();
+#endif /* CONFIG_CORE_CORTEX_DCACHE */
 }
 /*----------------------------------------------------------------------------*/
 void dCacheFlush(uintptr_t address, size_t size)
 {
-#ifndef CONFIG_CORE_CORTEX_DCACHE_WT
+#if defined(CONFIG_CORE_CORTEX_DCACHE) && !defined(CONFIG_CORE_CORTEX_DCACHE_WT)
   const uint32_t ccsidr = SCB->CCSIDR;
   const size_t lineSize = 1 << (CCSIDR_LINESIZE_VALUE(ccsidr) + 4);
 
@@ -159,7 +163,7 @@ void dCacheFlush(uintptr_t address, size_t size)
 /*----------------------------------------------------------------------------*/
 void dCacheFlushAll(void)
 {
-#ifndef CONFIG_CORE_CORTEX_DCACHE_WT
+#if defined(CONFIG_CORE_CORTEX_DCACHE) && !defined(CONFIG_CORE_CORTEX_DCACHE_WT)
   const uint32_t ccsidr = SCB->CCSIDR;
   const unsigned int lineSizePow = CCSIDR_LINESIZE_VALUE(ccsidr) + 4;
   const unsigned int nWays = CCSIDR_ASSOCIATIVITY_VALUE(ccsidr);
@@ -192,6 +196,7 @@ void dCacheFlushAll(void)
 /*----------------------------------------------------------------------------*/
 void dCacheInvalidate(uintptr_t address, size_t size)
 {
+#ifdef CONFIG_CORE_CORTEX_DCACHE
   const uint32_t ccsidr = SCB->CCSIDR;
   const size_t lineSize = 1 << (CCSIDR_LINESIZE_VALUE(ccsidr) + 4);
 
@@ -220,10 +225,15 @@ void dCacheInvalidate(uintptr_t address, size_t size)
 
   __dsb();
   __isb();
+#else
+  (void)address;
+  (void)size;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 void dCacheInvalidateAll(void)
 {
+#ifdef CONFIG_CORE_CORTEX_DCACHE
   const uint32_t ccsidr = SCB->CCSIDR;
   const unsigned int lineSizePow = CCSIDR_LINESIZE_VALUE(ccsidr) + 4;
   const unsigned int nWays = CCSIDR_ASSOCIATIVITY_VALUE(ccsidr);
@@ -249,10 +259,12 @@ void dCacheInvalidateAll(void)
 
   __dsb();
   __isb();
+#endif
 }
 /*----------------------------------------------------------------------------*/
 void iCacheDisable(void)
 {
+#ifdef CONFIG_CORE_CORTEX_ICACHE
   __dsb();
   __isb();
 
@@ -263,10 +275,12 @@ void iCacheDisable(void)
 
   __dsb();
   __isb();
+#endif
 }
 /*----------------------------------------------------------------------------*/
 void iCacheEnable(void)
 {
+#ifdef CONFIG_CORE_CORTEX_ICACHE
   __dsb();
   __isb();
 
@@ -277,10 +291,12 @@ void iCacheEnable(void)
 
   __dsb();
   __isb();
+#endif
 }
 /*----------------------------------------------------------------------------*/
 void iCacheInvalidateAll(void)
 {
+#ifdef CONFIG_CORE_CORTEX_ICACHE
   __dsb();
   __isb();
 
@@ -289,4 +305,5 @@ void iCacheInvalidateAll(void)
 
   __dsb();
   __isb();
+#endif
 }

@@ -367,6 +367,54 @@ typedef struct
 /*------------------Enhanced Direct Memory Access-----------------------------*/
 typedef struct
 {
+  /* Source Address */
+  __rw__ uint32_t SADDR;
+  /* Signed Source Address Offset */
+  __rw__ int16_t SOFF;
+  /* Transfer Attributes */
+  __rw__ uint16_t ATTR;
+
+  union
+  {
+    /* Minor Byte Count (Minor Loop Mapping off) */
+    __rw__ uint32_t NBYTES_MLNO;
+    /* Signed Minor Loop Offset (Minor Loop Mapping on and Offset off) */
+    __rw__ uint32_t NBYTES_MLOFFNO;
+    /* Signed Minor Loop Offset (Minor Loop Mapping and Offset on) */
+    __rw__ uint32_t NBYTES_MLOFFYES;
+  };
+
+  /* Last Source Address Adjustment */
+  __rw__ int32_t SLAST;
+  /* Destination Address */
+  __rw__ uint32_t DADDR;
+  /* Signed Destination Address Offset */
+  __rw__ int16_t DOFF;
+
+  union
+  {
+    /* Current Minor Loop Link, Major Loop Count (Channel Linking off) */
+    __rw__ uint16_t CITER_ELINKNO;
+    /* Current Minor Loop Link, Major Loop Count (Channel Linking on) */
+    __rw__ uint16_t CITER_ELINKYES;
+  };
+
+  /* Last Destination Address Adjustment/Scatter Gather Address */
+  __rw__ int32_t DLAST_SGA;
+  /* Control and Status register */
+  __rw__ uint16_t CSR;
+
+  union
+  {
+    /* Beginning Minor Loop Link, Major Loop Count (Channel Linking off) */
+    __rw__ uint16_t BITER_ELINKNO;
+    /* Beginning Minor Loop Link, Major Loop Count (Channel Linking on) */
+    __rw__ uint16_t BITER_ELINKYES;
+  };
+} IMX_EDMA_TCD_Type;
+
+typedef struct
+{
   __rw__ uint32_t CR; /* Control Register */
   __ro__ uint32_t ES; /* Error Status register */
   __ne__ uint32_t RESERVED0;
@@ -396,53 +444,7 @@ typedef struct
   __ne__ uint32_t RESERVED7[952];
 
   /* Offset 0x1000 */
-  struct
-  {
-    /* Source Address */
-    __rw__ uint32_t SADDR;
-    /* Signed Source Address Offset */
-    __rw__ uint16_t SOFF;
-    /* Transfer Attributes */
-    __rw__ uint16_t ATTR;
-
-    union
-    {
-      /* Minor Byte Count (Minor Loop Mapping off) */
-      __rw__ uint32_t NBYTES_MLNO;
-      /* Signed Minor Loop Offset (Minor Loop Mapping on and Offset off) */
-      __rw__ uint32_t NBYTES_MLOFFNO;
-      /* Signed Minor Loop Offset (Minor Loop Mapping and Offset on) */
-      __rw__ uint32_t NBYTES_MLOFFYES;
-    };
-
-    /* Last Source Address Adjustment */
-    __rw__ int32_t SLAST;
-    /* Destination Address */
-    __rw__ uint32_t DADDR;
-    /* Signed Destination Address Offset */
-    __rw__ uint16_t DOFF;
-
-    union
-    {
-      /* Current Minor Loop Link, Major Loop Count (Channel Linking off) */
-      __rw__ uint16_t CITER_ELINKNO;
-      /* Current Minor Loop Link, Major Loop Count (Channel Linking on) */
-      __rw__ uint16_t CITER_ELINKYES;
-    };
-
-    /* Last Destination Address Adjustment/Scatter Gather Address */
-    __rw__ int32_t DLAST_SGA;
-    /* Control and Status register */
-    __rw__ uint16_t CSR;
-
-    union
-    {
-      /* Beginning Minor Loop Link, Major Loop Count (Channel Linking off) */
-      __rw__ uint16_t BITER_ELINKNO;
-      /* Beginning Minor Loop Link, Major Loop Count (Channel Linking on) */
-      __rw__ uint16_t BITER_ELINKYES;
-    };
-  } TCD[32];
+  IMX_EDMA_TCD_Type TCD[32];
 } IMX_EDMA_Type;
 /*------------------Quadrature Encoder/Decoder--------------------------------*/
 typedef struct

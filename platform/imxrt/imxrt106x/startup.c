@@ -8,6 +8,7 @@
 #include <halm/core/cortex/fpu.h>
 #endif
 
+#include <halm/core/cortex/cache.h>
 #include <halm/core/cortex/nvic.h>
 #include <halm/platform/imxrt/system.h>
 #include <stddef.h>
@@ -111,6 +112,9 @@ void platformStartup(void)
 #ifdef CONFIG_CORE_CORTEX_FPU
   fpuEnable();
 #endif
+
+  iCacheEnable();
+  dCacheEnable();
 
   nvicSetVectorTableOffset((uint32_t)&_stext);
 }

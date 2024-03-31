@@ -87,11 +87,11 @@ static inline void dmaDisable(void *channel)
 }
 
 /**
- * Get a number of pending transfers.
+ * Get a number of bytes awaiting the transfer.
  * @param channel Pointer to a Dma object.
  * @param count Pointer to an output variable where a number of
- * pending transfers will be written.
- * @return @b E_OK when a number of pending transfers is available and
+ * pending bytes will be written.
+ * @return @b E_OK when a number of pending bytes is available and
  * other error types when the channel or the buffer aren't in correct state.
  */
 static inline enum Result dmaResidue(const void *channel, size_t *count)
@@ -115,7 +115,7 @@ static inline enum Result dmaStatus(const void *channel)
  * @param channel Pointer to a Dma object.
  * @param destination Destination memory address.
  * @param source Source memory address.
- * @param size Transfer size in number of transfers.
+ * @param size Total number of bytes to transfer.
  */
 static inline void dmaAppend(void *channel, void *destination,
     const void *source, size_t size)
