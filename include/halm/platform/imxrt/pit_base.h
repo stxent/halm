@@ -17,6 +17,8 @@ struct PitBaseConfig
 {
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Optional: enable chaining mode, chain next timer with current one. */
+  bool chain;
 };
 
 struct PitBase
@@ -27,8 +29,12 @@ struct PitBase
   void (*handler)(void *);
   IrqNumber irq;
 
-  /* Peripheral block identifier */
+  /* Base timer number */
   uint8_t channel;
+  /* Timer used as an overflow counter */
+  uint8_t counter;
+  /* Chain mode enabled */
+  bool chain;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS

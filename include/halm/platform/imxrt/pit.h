@@ -9,15 +9,21 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/imxrt/pit_base.h>
 /*----------------------------------------------------------------------------*/
+/* Basic 32-bit version requires PitConfig configuration structure */
 extern const struct TimerClass * const Pit;
-extern const struct Timer64Class * const Pit64; // TODO
+/* Lifetime 64-bit version does not require configuration structure */
+extern const struct Timer64Class * const Pit64;
 
 struct PitConfig
 {
+  /** Optional: timer frequency in chained mode. */
+  uint32_t frequency;
   /** Optional: timer interrupt priority. */
   IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Optional: enable chained mode to make a frequency divider. */
+  bool chain;
 };
 
 struct Pit

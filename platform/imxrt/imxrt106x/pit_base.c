@@ -76,10 +76,19 @@ static enum Result tmrInit(void *object, const void *configBase)
   const struct PitBaseConfig * const config = configBase;
   struct PitBase * const interface = object;
 
+  assert(!config->chain || (config->channel < ARRAY_SIZE(instances) - 1));
+
   if (!setInstance(config->channel, interface))
     return E_BUSY;
+  if (config->chain && !setInstance(config->channel + 1, interface))
+  {
+    instances[config->channel] = NULL;
+    return E_BUSY;
+  }
 
+  interface->chain = config->chain;
   interface->channel = config->channel;
+  interface->counter = config->chain ? config->channel + 1 : config->channel;
   interface->handler = NULL;
   interface->irq = PIT_IRQ;
   interface->reg = IMX_PIT;
@@ -106,6 +115,8 @@ static void tmrDeinit(void *object)
   bool active = false;
 
   instances[interface->channel] = NULL;
+  if (interface->chain)
+    instances[interface->channel + 1] = NULL;
 
   for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
   {
