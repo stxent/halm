@@ -11,6 +11,24 @@ config GENERIC_GPIO_BUS
 	bool "GPIO Bus"
 	default y
 
+config GENERIC_LIFETIME_TIMER_32
+	bool "Lifetime 32-bit timer"
+	default y
+	help
+	  This enables the driver for a software 32-bit lifetime timer. This timer
+	  is built atop of a low resoltion hardware timer, for example
+	  16-bit timer. Lifetime timer is not intended for a callback generation,
+	  callback, autostop and overflow features aren't supported.
+
+config GENERIC_LIFETIME_TIMER_64
+	bool "Lifetime 64-bit timer"
+	default y
+	help
+	  This enables the driver for a software 64-bit lifetime timer. This timer
+	  is built atop of a low resoltion hardware timer, for example
+	  32-bit timer. Lifetime timer is not intended for a callback generation,
+	  callback, autostop and overflow features aren't supported.
+
 config GENERIC_MMCSD
 	bool "MMC/SD cards"
 	default y
@@ -31,14 +49,6 @@ config GENERIC_SDIO_SPI_CRC
 	bool "Enable CRC checking"
 	default y
 	depends on GENERIC_SDIO_SPI
-
-config GENERIC_SOFTWARE_TIMER_32
-	bool "Extending 32-bit timer"
-	default y
-
-config GENERIC_SOFTWARE_TIMER_64
-	bool "Extending 64-bit timer"
-	default y
 
 config GENERIC_TIMER_FACTORY
 	bool "Software Timer Factory"

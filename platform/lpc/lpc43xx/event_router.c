@@ -55,7 +55,7 @@ static void notifyObservers(uint32_t status)
   {
     const struct EventRouterObserver * const entry = eroListData(current);
 
-    if ((status & entry->events) && entry->callback)
+    if ((status & entry->events) && entry->callback != NULL)
       entry->callback(entry->object);
     current = eroListNext(current);
   }

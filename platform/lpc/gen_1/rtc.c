@@ -54,7 +54,7 @@ static void interruptHandler(void *object)
   /* Clear pending interrupts */
   reg->ILR = ILR_RTCCIF | ILR_RTCALF;
 
-  if (event && clock->callback)
+  if (event && clock->callback != NULL)
     clock->callback(clock->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/

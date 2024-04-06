@@ -37,7 +37,7 @@ static void interruptHandler(void *object)
 {
   struct Bod * const bod = object;
 
-  if (bod->enabled && bod->callback)
+  if (bod->enabled && bod->callback != NULL)
     bod->callback(bod->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/

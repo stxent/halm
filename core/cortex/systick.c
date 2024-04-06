@@ -132,7 +132,7 @@ static void tmrSetOverflow(void *, uint32_t overflow)
 {
   const uint32_t state = SYSTICK->CTRL & ~CTRL_COUNTFLAG;
 
-  assert(overflow <= TIMER_RESOLUTION);
+  assert(overflow > 0 && overflow <= TIMER_RESOLUTION);
 
   SYSTICK->CTRL = 0;
   SYSTICK->LOAD = (overflow - 1) & TIMER_RESOLUTION;

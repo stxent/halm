@@ -12,6 +12,14 @@ if(CONFIG_GENERIC_GPIO_BUS)
     list(APPEND SOURCE_FILES "gpio_bus.c")
 endif()
 
+if(CONFIG_GENERIC_LIFETIME_TIMER_32)
+    list(APPEND SOURCE_FILES "lifetime_timer_32.c")
+endif()
+
+if(CONFIG_GENERIC_LIFETIME_TIMER_64)
+    list(APPEND SOURCE_FILES "lifetime_timer_64.c")
+endif()
+
 if(CONFIG_GENERIC_MMCSD)
     list(APPEND SOURCE_FILES "mmcsd.c")
 endif()
@@ -22,14 +30,6 @@ endif()
 
 if(CONFIG_GENERIC_SDIO_SPI)
     list(APPEND SOURCE_FILES "sdio_spi.c")
-endif()
-
-if(CONFIG_GENERIC_SOFTWARE_TIMER_32)
-    list(APPEND SOURCE_FILES "software_timer_32.c")
-endif()
-
-if(CONFIG_GENERIC_SOFTWARE_TIMER_64)
-    list(APPEND SOURCE_FILES "software_timer_64.c")
 endif()
 
 if(CONFIG_GENERIC_TIMER_FACTORY)

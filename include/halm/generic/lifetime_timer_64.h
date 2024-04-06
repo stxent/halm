@@ -1,31 +1,28 @@
 /*
- * halm/generic/software_timer_32.h
+ * halm/generic/lifetime_timer_64.h
  * Copyright (C) 2019 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_GENERIC_SOFTWARE_TIMER_32_H_
-#define HALM_GENERIC_SOFTWARE_TIMER_32_H_
+#ifndef HALM_GENERIC_LIFETIME_TIMER_64_H_
+#define HALM_GENERIC_LIFETIME_TIMER_64_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct TimerClass * const SoftwareTimer32;
+extern const struct Timer64Class * const LifetimeTimer64;
 
-struct SoftwareTimer32Config
+struct LifetimeTimer64Config
 {
   /** Mandatory: base timer. */
   struct Timer *timer;
 };
 
-struct SoftwareTimer32
+struct LifetimeTimer64
 {
-  struct Timer base;
-
-  void (*callback)(void *);
-  void *callbackArgument;
+  struct Timer64 base;
 
   struct Timer *timer;
-  uint32_t ticks;
+  uint64_t ticks;
 };
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_GENERIC_SOFTWARE_TIMER_32_H_ */
+#endif /* HALM_GENERIC_LIFETIME_TIMER_64_H_ */
