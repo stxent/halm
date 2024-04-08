@@ -651,7 +651,7 @@ config PLATFORM_USB_DOUBLE_BUFFERING
 
 config PLATFORM_USB_HS
 	bool "USB HS"
-	default n
+	default y
 	depends on PLATFORM_USB && FAMILY_LPC43XX
 	help
 	  This enables support for USB High Speed mode.

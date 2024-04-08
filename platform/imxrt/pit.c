@@ -261,7 +261,7 @@ static uint64_t tmrGetValue64(const void *object)
   return UINT64_MAX - (((uint64_t)high << 32) | low);
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetValue(void *object, uint32_t value)
+static void tmrSetValue(void *object, [[maybe_unused]] uint32_t value)
 {
   assert(value == 0);
 

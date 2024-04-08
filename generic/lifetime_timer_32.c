@@ -101,7 +101,7 @@ static uint32_t tmrGetValue(const void *object)
   return accumulated + current;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetValue(void *object, uint32_t value)
+static void tmrSetValue(void *object, [[maybe_unused]] uint32_t value)
 {
   assert(value == 0);
 

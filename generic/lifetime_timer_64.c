@@ -124,7 +124,7 @@ static uint64_t tmrGetValue64(const void *object)
   return accumulated + current;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetValue64(void *object, uint64_t value)
+static void tmrSetValue64(void *object, [[maybe_unused]] uint64_t value)
 {
   assert(value == 0);
 
