@@ -51,6 +51,13 @@ config CORE_CORTEX_MEMORY_PATTERN
 	range 0x00000000 0xFFFFFFFF
 	depends on CORE_CORTEX_MEMORY_DEBUG
 
+config CORE_CORTEX_MPU
+	bool "MPU"
+	default n
+	depends on CORE_CORTEX_M3 || CORE_CORTEX_M4 || CORE_CORTEX_M7
+	help
+	  This enables Memory Protection Unit.
+
 config CORE_CORTEX_SYSTICK
 	bool "SysTick"
 	default y

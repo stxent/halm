@@ -5,6 +5,7 @@
  */
 
 #include <halm/core/core_defs.h>
+#include <halm/core/cortex/mpu.h>
 #include <halm/core/cortex/scb_defs.h>
 #include <halm/platform/stm32/system.h>
 #include <stddef.h>
@@ -20,4 +21,8 @@ void platformStartup(void)
 
   for (size_t index = 0; index < ARRAY_SIZE(clocksToEnable); ++index)
     sysClockEnable(clocksToEnable[index]);
+
+#ifdef CONFIG_CORE_CORTEX_MPU
+  mpuEnable();
+#endif
 }

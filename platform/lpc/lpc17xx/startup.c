@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/core/cortex/mpu.h>
 #include <halm/platform/lpc/lpc17xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
 #include <xcore/bits.h>
@@ -32,4 +33,8 @@ void platformStartup(void)
 
   for (size_t index = 0; index < ARRAY_SIZE(blocksToDisable); ++index)
     sysPowerDisable(blocksToDisable[index]);
+
+#ifdef CONFIG_CORE_CORTEX_MPU
+  mpuEnable();
+#endif
 }

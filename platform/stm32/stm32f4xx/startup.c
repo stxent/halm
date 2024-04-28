@@ -4,13 +4,16 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#ifdef CONFIG_CORE_CORTEX_FPU
 #include <halm/core/cortex/fpu.h>
-#endif
+#include <halm/core/cortex/mpu.h>
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
 #ifdef CONFIG_CORE_CORTEX_FPU
   fpuEnable();
+#endif
+
+#ifdef CONFIG_CORE_CORTEX_MPU
+  mpuEnable();
 #endif
 }

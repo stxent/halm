@@ -242,8 +242,9 @@ typedef struct
 /*----------------------------------------------------------------------------*/
 extern PPB_DOMAIN_Type PPB_DOMAIN;
 /*----------------------------------------------------------------------------*/
-#define SCB       (&PPB_DOMAIN.SCB)
 #define SYSTICK   (&PPB_DOMAIN.SYSTICK)
 #define NVIC      (&PPB_DOMAIN.NVIC)
+#define MPU       (&PPB_DOMAIN.MPU)
+#define SCB       (&PPB_DOMAIN.SCB)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_CORTEX_ARMV7M_CORE_DEFS_H_ */
