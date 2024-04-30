@@ -38,13 +38,13 @@ enum
   PIN_SNVS_POR_B,
   PIN_SNVS_ONOFF,
 
-  PIN_USB0_DN = 0,
-  PIN_USB0_DP,
-  PIN_USB0_ID,
-  PIN_USB0_VBUS,
-  PIN_USB1_DN,
-  PIN_USB1_DP,
-  PIN_USB1_VBUS
+  PIN_USB_OTG1_DN = 0,
+  PIN_USB_OTG1_DP,
+  PIN_USB_OTG1_ID,
+  PIN_USB_OTG1_VBUS,
+  PIN_USB_OTG2_DN,
+  PIN_USB_OTG2_DP,
+  PIN_USB_OTG2_VBUS
 };
 /*----------------------------------------------------------------------------*/
 struct Pin

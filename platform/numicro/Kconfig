@@ -412,17 +412,13 @@ config PLATFORM_USB_DEVICE_EP_REQUESTS
 	default 4
 	depends on PLATFORM_USB_DEVICE
 
-config PLATFORM_USB_DEVICE_FORCE_FS
-	bool "Force FS mode"
-	default n
-	depends on PLATFORM_USB_DEVICE && FAMILY_M48X
-	help
-	  This forces Full Speed mode on High Speed USB ports.
-
 config PLATFORM_USB_HS
 	bool
 	default y if FAMILY_M48X
 	depends on PLATFORM_USB
+	select USB_DEVICE_HS
+	help
+	  This enables support for USB High Speed mode.
 
 config PLATFORM_USB_DEVICE_EP_COUNT
 	int

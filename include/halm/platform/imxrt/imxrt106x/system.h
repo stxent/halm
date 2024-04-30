@@ -131,8 +131,8 @@ enum [[gnu::packed]] SysClockBranch
 
   /* CCGR6 */
   CLK_USBOH3          = 0x60 + 0,
-  CLK_USBHC1          = 0x60 + 1,
-  CLK_USBHC2          = 0x60 + 2,
+  CLK_USDHC1          = 0x60 + 1,
+  CLK_USDHC2          = 0x60 + 2,
   CLK_DCDC            = 0x60 + 3,
   CLK_IPMUX4          = 0x60 + 4,
   CLK_FLEXSPI1        = 0x60 + 5,

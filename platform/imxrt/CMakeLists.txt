@@ -44,5 +44,10 @@ if(CONFIG_PLATFORM_IMXRT_SERIAL_DMA)
     list(APPEND SOURCE_FILES "serial_dma.c")
 endif()
 
+if(CONFIG_PLATFORM_USB)
+    list(APPEND SOURCE_FILES "usb_device.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/usb_base.c")
+endif()
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_SYSTEM_SOC}/CMakeLists.txt" OPTIONAL)
 add_library(halm_platform OBJECT ${SOURCE_FILES})

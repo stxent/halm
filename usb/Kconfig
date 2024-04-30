@@ -8,10 +8,10 @@ config USB_DEVICE
 
 config USB_DEVICE_HS
 	bool "High Speed device"
-	default n
+	default y
 	depends on USB_DEVICE && PLATFORM_USB_HS
 	help
-	  This enables High Speed versions of drivers.
+	  This enables support for the High Speed mode in USB device drivers.
 
 config USB_DEVICE_COMPOSITE
 	bool "Composite device"

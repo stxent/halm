@@ -653,6 +653,7 @@ config PLATFORM_USB_HS
 	bool "USB HS"
 	default y
 	depends on PLATFORM_USB && FAMILY_LPC43XX
+	select USB_DEVICE_HS
 	help
 	  This enables support for USB High Speed mode.
 

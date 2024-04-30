@@ -1,12 +1,13 @@
 /*
  * usb_device.c
- * Copyright (C) 2016 xent
+ * Copyright (C) 2024 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc43xx/usb_base.h>
-#include <halm/platform/lpc/lpc43xx/usb_defs.h>
-#include <halm/platform/lpc/usb_device.h>
+#include <halm/core/cortex/cache.h>
+#include <halm/platform/imxrt/usb_base.h>
+#include <halm/platform/imxrt/usb_defs.h>
+#include <halm/platform/imxrt/usb_device.h>
 #include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
@@ -151,34 +152,43 @@ static bool initEndpoints(struct UsbDevice *device)
 /*----------------------------------------------------------------------------*/
 static void initPeripheral(struct UsbDevice *device)
 {
-  LPC_USB_Type * const reg = device->base.reg;
+  IMX_USBPHY_Type * const phy = device->base.phy;
+  IMX_USB_Type * const reg = device->base.reg;
 
-  usbBaseOtgTerminationControl(&device->base, false);
-  usbBaseVbusDischargeControl(&device->base, true);
+  /* Reset the USB PHY */
+  phy->CTRL_SET = PHY_CTRL_SFTRST;
+  phy->CTRL_CLR = PHY_CTRL_SFTRST;
 
-  /* Reset the controller */
-  reg->USBCMD_D = USBCMD_D_RST;
-  while (reg->USBCMD_D & USBCMD_D_RST);
+  /* Enable USB PHY clock */
+  phy->CTRL_CLR = PHY_CTRL_CLKGATE;
+  /* Enable USB PHY power */
+  phy->PWD = 0;
+
+  /* Reset the USB Controller */
+  reg->USBCMD = USBCMD_D_RST;
+  while (reg->USBCMD & USBCMD_D_RST);
 
   /* Program the controller to be the USB device controller */
-  reg->USBMODE_D = USBMODE_D_CM(CM_DEVICE_CONTROLLER) | USBMODE_D_SLOM;
+  reg->USBMODE = USBMODE_D_CM(CM_DEVICE_CONTROLLER) | USBMODE_D_SLOM;
 
   /* Recommended by NXP technical support */
-  reg->SBUSCFG = SBUSCFG_AHB_BRST(AHB_BRST_INCR16_UNSPECIFIED);
+  reg->SBUSCFG = SBUSCFG_AHBBRST(AHB_BRST_INCR16_UNSPECIFIED);
 
 #ifndef CONFIG_PLATFORM_USB_HS
   /* Force Full Speed mode */
-  reg->PORTSC1_D |= PORTSC1_D_PFSC;
+  reg->PORTSC1 |= PORTSC1_D_PFSC;
 #endif
+
+  reg->OTGSC = OTGSC_OT | OTGSC_VD;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct UsbDevice * const device = object;
-  LPC_USB_Type * const reg = device->base.reg;
+  IMX_USB_Type * const reg = device->base.reg;
 
-  const uint32_t intStatus = reg->USBSTS_D;
-  reg->USBSTS_D = intStatus;
+  const uint32_t intStatus = reg->USBSTS;
+  reg->USBSTS = intStatus;
 
   if (intStatus & USBSTS_D_URI)
   {
@@ -234,7 +244,7 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static void resetDevice(struct UsbDevice *device)
 {
-  LPC_USB_Type * const reg = device->base.reg;
+  IMX_USB_Type * const reg = device->base.reg;
 
   device->suspended = false;
 
@@ -245,7 +255,7 @@ static void resetDevice(struct UsbDevice *device)
   /* Clear all pending interrupts */
   reg->ENDPTNAK = 0xFFFFFFFFUL;
   reg->ENDPTNAKEN = 0;
-  reg->USBSTS_D = 0xFFFFFFFFUL;
+  reg->USBSTS = 0xFFFFFFFFUL;
   reg->ENDPTSETUPSTAT = reg->ENDPTSETUPSTAT;
   reg->ENDPTCOMPLETE = reg->ENDPTCOMPLETE;
 
@@ -254,7 +264,7 @@ static void resetDevice(struct UsbDevice *device)
   while (reg->ENDPTFLUSH);
 
   /* Set the Interrupt Threshold control interval to 0 */
-  reg->USBCMD_D &= ~USBCMD_D_ITC_MASK;
+  reg->USBCMD &= ~USBCMD_D_ITC_MASK;
 
   /* Zero out all queue heads */
   for (size_t index = 0; index < device->base.td.numberOfEndpoints; ++index)
@@ -273,10 +283,10 @@ static void resetDevice(struct UsbDevice *device)
   }
 
   /* Configure the Endpoint List Address */
-  reg->ENDPOINTLISTADDR = (uint32_t)device->base.td.heads;
+  reg->ENDPTLISTADDR = (uint32_t)device->base.td.heads;
 
   /* Enable interrupts */
-  reg->USBINTR_D = USBINTR_D_UE | USBINTR_D_UEE | USBINTR_D_PCE
+  reg->USBINTR = USBINTR_D_UE | USBINTR_D_UEE | USBINTR_D_PCE
       | USBINTR_D_URE | USBINTR_D_SLE;
 
   devSetAddress(device, 0);
@@ -307,7 +317,6 @@ static enum Result devInit(void *object, const void *configBase)
   const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
       .dp = config->dp,
-      .connect = config->connect,
       .vbus = config->vbus,
       .channel = config->channel
   };
@@ -337,8 +346,10 @@ static enum Result devInit(void *object, const void *configBase)
   resetDevice(device);
 
   /* Configure NVIC interrupts */
-  irqSetPriority(device->base.irq, config->priority);
-  irqEnable(device->base.irq);
+  irqSetPriority(device->base.irq.phy, config->priority);
+  irqSetPriority(device->base.irq.usb, config->priority);
+  irqEnable(device->base.irq.phy);
+  irqEnable(device->base.irq.usb);
 
   return E_OK;
 }
@@ -347,8 +358,15 @@ static enum Result devInit(void *object, const void *configBase)
 static void devDeinit(void *object)
 {
   struct UsbDevice * const device = object;
+  IMX_USBPHY_Type * const phy = device->base.phy;
 
-  irqDisable(device->base.irq);
+  irqDisable(device->base.irq.usb);
+  irqDisable(device->base.irq.phy);
+
+  /* Disable USB PHY power */
+  phy->PWD_SET = PHY_PWD_MASK;
+  /* Disable USB PHY clock */
+  phy->CTRL_SET = PHY_CTRL_CLKGATE;
 
   deinit(device->control);
   free(device->endpoints);
@@ -387,7 +405,7 @@ static uint8_t devGetInterface(const void *)
 static void devSetAddress(void *object, uint8_t address)
 {
   struct UsbDevice * const device = object;
-  LPC_USB_Type * const reg = device->base.reg;
+  IMX_USB_Type * const reg = device->base.reg;
 
   if (address)
     reg->DEVICEADDR = DEVICEADDR_USBADRA | DEVICEADDR_USBADR(address);
@@ -398,14 +416,22 @@ static void devSetAddress(void *object, uint8_t address)
 static void devSetConnected(void *object, bool state)
 {
   struct UsbDevice * const device = object;
-  LPC_USB_Type * const reg = device->base.reg;
+  IMX_USB_Type * const reg = device->base.reg;
 
   if (state)
-    reg->USBCMD_D |= USBCMD_D_RS;
+  {
+    /* Disable VBUS discharge */
+    reg->OTGSC &= ~OTGSC_VD;
+    /* Enter Run Mode */
+    reg->USBCMD |= USBCMD_D_RS;
+  }
   else
-    reg->USBCMD_D &= ~USBCMD_D_RS;
-
-  usbBaseVbusDischargeControl(&device->base, !state);
+  {
+    /* Enter Stop Mode */
+    reg->USBCMD &= ~USBCMD_D_RS;
+    /* Enable VBUS discharge */
+    reg->OTGSC |= OTGSC_VD;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devBind(void *object, void *driver)
@@ -423,8 +449,8 @@ static void devUnbind(void *object, const void *)
 static enum UsbSpeed devGetSpeed(const void *object)
 {
   const struct UsbDevice * const device = object;
-  const LPC_USB_Type * const reg = device->base.reg;
-  const bool high = PORTSC1_D_PSPD_VALUE(reg->PORTSC1_D) == PSPD_HIGH_SPEED;
+  const IMX_USB_Type * const reg = device->base.reg;
+  const bool high = PORTSC1_D_PSPD_VALUE(reg->PORTSC1) == PSPD_HIGH_SPEED;
 
   return high ? USB_HS : USB_FS;
 }
@@ -455,6 +481,10 @@ static void epCommonHandler(struct UsbEndpoint *ep)
 
   while ((packetStatus = epGetStatus(ep)) != STATUS_IDLE)
   {
+    /*
+     * Queue Head and Transfer Descriptor caches are invalidated
+     * in the epGetStatus function.
+     */
     struct UsbRequest * const request = epGetHeadRequest(head);
     enum UsbRequestStatus requestStatus = USB_REQUEST_ERROR;
 
@@ -474,6 +504,8 @@ static void epCommonHandler(struct UsbEndpoint *ep)
       {
         epExtractDataLength(ep, request);
         requestStatus = USB_REQUEST_COMPLETED;
+
+        dCacheInvalidate((uintptr_t)request->buffer, request->length);
       }
     }
 
@@ -556,7 +588,7 @@ static void epAppendDescriptor(struct UsbEndpoint *ep,
     head->listTail = (uint32_t)descriptor;
 
     const uint32_t mask = ENDPT_BIT(ep->address);
-    LPC_USB_Type * const reg = ep->device->base.reg;
+    IMX_USB_Type * const reg = ep->device->base.reg;
 
     if (!(reg->ENDPTPRIME & mask))
     {
@@ -564,11 +596,11 @@ static void epAppendDescriptor(struct UsbEndpoint *ep,
 
       do
       {
-        reg->USBCMD_D |= USBCMD_D_ATDTW;
+        reg->USBCMD |= USBCMD_D_ATDTW;
         status = reg->ENDPTSTAT;
       }
-      while (!(reg->USBCMD_D & USBCMD_D_ATDTW));
-      reg->USBCMD_D &= ~USBCMD_D_ATDTW;
+      while (!(reg->USBCMD & USBCMD_D_ATDTW));
+      reg->USBCMD &= ~USBCMD_D_ATDTW;
 
       reprime = (status & mask) == 0;
     }
@@ -621,6 +653,7 @@ static enum Result epEnqueueTx(struct UsbEndpoint *ep,
 
   if (descriptor != NULL)
   {
+    dCacheFlush((uintptr_t)request->buffer, request->length);
     epAppendDescriptor(ep, descriptor);
     return E_OK;
   }
@@ -632,9 +665,13 @@ static void epExtractDataLength(const struct UsbEndpoint *ep,
     struct UsbRequest *request)
 {
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
+
   const struct QueueHead * const head = &ep->device->base.td.heads[index];
+  /* Queue Head cache is already invalidated */
+
   const struct TransferDescriptor * const descriptor =
       (const struct TransferDescriptor *)head->listHead;
+  /* Transfer Descriptor cache is already invalidated */
 
   request->length =
       request->capacity - TD_TOKEN_TOTAL_BYTES_VALUE(descriptor->token);
@@ -642,7 +679,7 @@ static void epExtractDataLength(const struct UsbEndpoint *ep,
 /*----------------------------------------------------------------------------*/
 static void epFlush(struct UsbEndpoint *ep)
 {
-  LPC_USB_Type * const reg = ep->device->base.reg;
+  IMX_USB_Type * const reg = ep->device->base.reg;
   const uint32_t mask = ENDPT_BIT(ep->address);
 
   /* Remove current descriptor from the queue */
@@ -659,6 +696,7 @@ static inline struct UsbRequest *epGetHeadRequest(const struct QueueHead *head)
   struct TransferDescriptor * const descriptor =
       (struct TransferDescriptor *)head->listHead;
 
+  /* Invalidation is not required, core doesn't change node address */
   return (struct UsbRequest *)descriptor->listNode;
 }
 /*----------------------------------------------------------------------------*/
@@ -676,7 +714,7 @@ static enum EndpointStatus epGetStatus(const struct UsbEndpoint *ep)
   const struct TransferDescriptor * const descriptor =
       (const struct TransferDescriptor *)head->listHead;
 
-  const LPC_USB_Type * const reg = ep->device->base.reg;
+  const IMX_USB_Type * const reg = ep->device->base.reg;
   const uint32_t status = TD_TOKEN_STATUS_VALUE(descriptor->token);
 
   if (reg->ENDPTSETUPSTAT & ENDPT_BIT(ep->address))
@@ -693,18 +731,23 @@ static void epPopDescriptor(struct UsbEndpoint *ep)
 {
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
   struct QueueHead * const head = &ep->device->base.td.heads[index];
+  /* Queue Head is already invalidated */
+
   struct TransferDescriptor * const descriptor =
       (struct TransferDescriptor *)head->listHead;
+  /* Invalidation is not required, core doesn't change next node address */
 
   head->listHead = (uint32_t)descriptor->next;
   if (head->listHead == TD_NEXT_TERMINATE)
     head->listTail = TD_NEXT_TERMINATE;
+  /* Queue Head cache will be cleaned in a parent function */
+
   pointerArrayPushBack(&ep->device->base.td.descriptors, descriptor);
 }
 /*----------------------------------------------------------------------------*/
 static void epPrime(struct UsbEndpoint *ep)
 {
-  LPC_USB_Type * const reg = ep->device->base.reg;
+  IMX_USB_Type * const reg = ep->device->base.reg;
   const uint32_t mask = ENDPT_BIT(ep->address);
 
   /* Wait until all memory stores have been completed */
@@ -721,12 +764,13 @@ static enum Result epReadSetupPacket(struct UsbEndpoint *ep,
   if (request->capacity < 8)
     return E_VALUE;
 
-  LPC_USB_Type * const reg = ep->device->base.reg;
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
   const struct QueueHead * const head = &ep->device->base.td.heads[index];
+  /* Queue Head cache is already invalidated */
 
   epFlush(ep);
 
+  IMX_USB_Type * const reg = ep->device->base.reg;
   uint32_t buffer[2];
   uint32_t status;
 
@@ -737,15 +781,15 @@ static enum Result epReadSetupPacket(struct UsbEndpoint *ep,
   do
   {
     /* Set the tripwire semaphore */
-    reg->USBCMD_D |= USBCMD_D_SUTW;
+    reg->USBCMD |= USBCMD_D_SUTW;
     /* Transfer setup data to the buffer */
     buffer[0] = head->setup[0];
     buffer[1] = head->setup[1];
   }
-  while (!(reg->USBCMD_D & USBCMD_D_SUTW));
+  while (!(reg->USBCMD & USBCMD_D_SUTW));
 
   /* Clear the tripwire */
-  reg->USBCMD_D &= ~USBCMD_D_SUTW;
+  reg->USBCMD &= ~USBCMD_D_SUTW;
 
   /* Wait until setup interrupt is cleared */
   while ((status = reg->ENDPTSETUPSTAT))
@@ -762,6 +806,8 @@ static void epReprime(struct UsbEndpoint *ep)
 {
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
   struct QueueHead * const head = &ep->device->base.td.heads[index];
+  /* Queue Head is already invalidated */
+
   struct TransferDescriptor * const descriptor =
       (struct TransferDescriptor *)head->listHead;
 
@@ -804,6 +850,7 @@ static void epClear(void *object)
 {
   struct UsbEndpoint * const ep = object;
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
+
   struct QueueHead * const head = &ep->device->base.td.heads[index];
 
   if (head->listHead != TD_NEXT_TERMINATE)
@@ -823,7 +870,7 @@ static void epDisable(void *object)
   struct UsbEndpoint * const ep = object;
   struct UsbDevice * const device = ep->device;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
-  LPC_USB_Type * const reg = device->base.reg;
+  IMX_USB_Type * const reg = device->base.reg;
 
   reg->ENDPTCTRL[number] &= ep->address & USB_EP_DIRECTION_IN ?
       ~ENDPTCTRL_TXE : ~ENDPTCTRL_RXE;
@@ -865,7 +912,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
   const bool tx = (ep->address & USB_EP_DIRECTION_IN) != 0;
 
-  LPC_USB_Type * const reg = device->base.reg;
+  IMX_USB_Type * const reg = device->base.reg;
   uint32_t controlValue = reg->ENDPTCTRL[number];
 
   if (tx)
@@ -906,7 +953,7 @@ static enum Result epEnqueue(void *object, struct UsbRequest *request)
 static bool epIsStalled(void *object)
 {
   const struct UsbEndpoint * const ep = object;
-  LPC_USB_Type * const reg = ep->device->base.reg;
+  IMX_USB_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
   const uint32_t stallMask = ep->address & USB_EP_DIRECTION_IN ?
       ENDPTCTRL_TXS : ENDPTCTRL_RXS;
@@ -917,7 +964,7 @@ static bool epIsStalled(void *object)
 static void epSetStalled(void *object, bool stalled)
 {
   struct UsbEndpoint * const ep = object;
-  LPC_USB_Type * const reg = ep->device->base.reg;
+  IMX_USB_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
   const bool tx = (ep->address & USB_EP_DIRECTION_IN) != 0;

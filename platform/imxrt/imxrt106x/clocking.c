@@ -60,6 +60,11 @@ static enum Result pll3Enable(const void *, const void *);
 static uint32_t pll3Frequency(const void *);
 static bool pll3Ready(const void *);
 
+static void pll7Disable(const void *);
+static enum Result pll7Enable(const void *, const void *);
+static uint32_t pll7Frequency(const void *);
+static bool pll7Ready(const void *);
+
 static enum Result flexSpi1ClockEnable(const void *, const void *);
 static uint32_t flexSpi1ClockFrequency(const void *);
 
@@ -222,6 +227,13 @@ const struct ClockClass * const Usb1PllPfd3 =
         .ready = pll3Ready,
     },
     .pfd = 3
+};
+
+const struct ClockClass * const Usb2Pll = &(const struct ClockClass){
+    .disable = pll7Disable,
+    .enable = pll7Enable,
+    .frequency = pll7Frequency,
+    .ready = pll7Ready
 };
 
 const struct ClockClass * const FlexSpi1Clock = &(const struct ClockClass){
@@ -682,7 +694,7 @@ static enum Result pll3Enable(const void *clockBase, const void *configBase)
   }
   else
   {
-    uint32_t value = PLL_ENABLE | PLL_USB_POWER
+    uint32_t value = PLL_USB_EN_USB_CLKS | PLL_USB_POWER | PLL_ENABLE
         | PLL_BYPASS_CLK_SRC(BYPASS_CLK_SRC_REF_CLK_24M);
 
     if (config->divisor == 22)
@@ -740,6 +752,48 @@ static bool pll3Ready(const void *clockBase)
     return !(IMX_CCM_ANALOG->PFD_480 & PLL_PFD_PFDn_CLKGATE(clock->pfd));
 
   return true;
+}
+/*----------------------------------------------------------------------------*/
+static void pll7Disable(const void *)
+{
+  IMX_CCM_ANALOG->PLL_USB2_SET = PLL_POWERDOWN | PLL_BYPASS;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result pll7Enable(const void *, const void *configBase)
+{
+  const struct PllConfig * const config = configBase;
+  assert(config != NULL);
+
+  uint32_t value = PLL_USB_EN_USB_CLKS | PLL_USB_POWER | PLL_ENABLE
+      | PLL_BYPASS_CLK_SRC(BYPASS_CLK_SRC_REF_CLK_24M);
+
+  if (config->divisor == 22)
+    value |= PLL_USB_DIV_SELECT;
+  else if (config->divisor != 20)
+    return E_VALUE;
+
+  IMX_CCM_ANALOG->PLL_USB2_SET = PLL_BYPASS;
+  IMX_CCM_ANALOG->PLL_USB2_CLR = PLL_USB_POWER;
+  IMX_CCM_ANALOG->PLL_USB2 = value;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t pll7Frequency(const void *)
+{
+  const uint32_t pllControl = IMX_CCM_ANALOG->PLL_USB2;
+  const uint32_t pllDivisor = (pllControl & PLL_USB_DIV_SELECT) ? 22 : 20;
+
+  if ((pllControl & (PLL_USB_POWER | PLL_LOCK)) != (PLL_USB_POWER | PLL_LOCK))
+    return 0;
+
+  return OSC_FREQUENCY * pllDivisor;
+}
+/*----------------------------------------------------------------------------*/
+static bool pll7Ready(const void *)
+{
+  static const uint32_t READY_MASK = PLL_USB_POWER | PLL_LOCK;
+  return (IMX_CCM_ANALOG->PLL_USB2 & READY_MASK) == READY_MASK;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result flexSpi1ClockEnable(const void *, const void *configBase)

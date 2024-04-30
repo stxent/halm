@@ -177,7 +177,7 @@ static inline void usbDevSetPower(void *device, uint16_t current)
  * Append string descriptor.
  * @param device Pointer to an UsbDevice object.
  * @param string String descriptor.
- * @return String identifier on success or negative number in case of failure.
+ * @return String identifier on success or a negative number in case of failure.
  */
 static inline UsbStringIndex usbDevStringAppend(void *device,
     struct UsbString string)

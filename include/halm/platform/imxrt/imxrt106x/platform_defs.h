@@ -1993,8 +1993,24 @@ typedef struct
   __rw__ uint32_t ENDPTFLUSH; /* Endpoint Flush register */
   __ro__ uint32_t ENDPTSTAT; /* Endpoint Status register */
   __rw__ uint32_t ENDPTCOMPLETE; /* Endpoint Complete register */
-  __rw__ uint32_t ENDPTCTRL0; /* Endpoint 0 Control register */
-  __rw__ uint32_t ENDPTCTRL[7]; /* Endpoint 1..7 Control registers */
+
+  /* Endpoint control registers */
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t ENDPTCTRL0;
+      __rw__ uint32_t ENDPTCTRL1;
+      __rw__ uint32_t ENDPTCTRL2;
+      __rw__ uint32_t ENDPTCTRL3;
+      __rw__ uint32_t ENDPTCTRL4;
+      __rw__ uint32_t ENDPTCTRL5;
+      __rw__ uint32_t ENDPTCTRL6;
+      __rw__ uint32_t ENDPTCTRL7;
+    };
+
+    __rw__ uint32_t ENDPTCTRL[8]; /* Endpoint 0..7 Control registers */
+  };
 } IMX_USB_Type;
 /*------------------USB Non-Core Registers------------------------------------*/
 typedef struct
@@ -2037,7 +2053,7 @@ typedef struct
   /* Offset 0x60 */
   __ro__ uint32_t DBG0_STATUS; /* UTMI Debug Status register 0 */
   __ne__ uint32_t RESERVED1[3];
-  __rw__ uint32_t DBG1; /* UTMI Debug status register 1 */
+  __rw__ uint32_t DBG1; /* UTMI Debug Status register 1 */
   __rw__ uint32_t DBG1_SET;
   __rw__ uint32_t DBG1_CLR;
   __rw__ uint32_t DBG1_TOG;
@@ -2200,7 +2216,7 @@ typedef struct
     IMX_USB_ANALOG_Type USB_ANALOG;
     IMX_XTALOSC24M_Type XTALOSC24M;
   };
-} IMX_ANALOG_Type;
+} IMX_ANATOP_Type;
 
 typedef struct
 {
@@ -2239,8 +2255,8 @@ typedef struct
   __ne__ uint8_t RESERVED16[0x4000 - sizeof(IMX_WDOG_Type)];
   IMX_SNVS_Type SNVS;
   __ne__ uint8_t RESERVED17[0x4000 - sizeof(IMX_SNVS_Type)];
-  IMX_ANALOG_Type ANALOG;
-  __ne__ uint8_t RESERVED18[0x1000 - sizeof(IMX_ANALOG_Type)];
+  IMX_ANATOP_Type ANATOP;
+  __ne__ uint8_t RESERVED18[0x1000 - sizeof(IMX_ANATOP_Type)];
   IMX_USBPHY_Type USBPHY1;
   __ne__ uint8_t RESERVED19[0x1000 - sizeof(IMX_USBPHY_Type)];
   IMX_USBPHY_Type USBPHY2;
@@ -2446,12 +2462,12 @@ extern AIPS5_DOMAIN_Type AIPS5_DOMAIN;
 #define IMX_TRNG            (&AIPS1_DOMAIN.TRNG)
 #define IMX_WDOG2           (&AIPS1_DOMAIN.WDOG2)
 #define IMX_SNVS            (&AIPS1_DOMAIN.SNVS)
-#define IMX_ANALOG          (&AIPS1_DOMAIN.ANALOG)
-#define IMX_CCM_ANALOG      (&AIPS1_DOMAIN.ANALOG.CCM_ANALOG)
-#define IMX_PMU             (&AIPS1_DOMAIN.ANALOG.PMU)
-#define IMX_TEMPMON         (&AIPS1_DOMAIN.ANALOG.TEMPMON)
-#define IMX_USB_ANALOG      (&AIPS1_DOMAIN.ANALOG.USB_ANALOG)
-#define IMX_XTALOSC24M      (&AIPS1_DOMAIN.ANALOG.XTALOSC24M)
+#define IMX_ANATOP          (&AIPS1_DOMAIN.ANATOP)
+#define IMX_CCM_ANALOG      (&AIPS1_DOMAIN.ANATOP.CCM_ANALOG)
+#define IMX_PMU             (&AIPS1_DOMAIN.ANATOP.PMU)
+#define IMX_TEMPMON         (&AIPS1_DOMAIN.ANATOP.TEMPMON)
+#define IMX_USB_ANALOG      (&AIPS1_DOMAIN.ANATOP.USB_ANALOG)
+#define IMX_XTALOSC24M      (&AIPS1_DOMAIN.ANATOP.XTALOSC24M)
 #define IMX_USBPHY1         (&AIPS1_DOMAIN.USBPHY1)
 #define IMX_USBPHY2         (&AIPS1_DOMAIN.USBPHY2)
 #define IMX_CSU             (&AIPS1_DOMAIN.CSU)

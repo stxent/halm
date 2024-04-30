@@ -113,6 +113,7 @@ struct PllConfig
    * from 54 to 108. Output frequency is additionally divided by 2.
    * @n The divider value for the PLL2 (System PLL) should be 20 or 22.
    * @n The divider value for the PLL3 (USB1 PLL) should be 20 or 22.
+   * @n The divider value for the PLL7 (USB2 PLL) should be 20 or 22.
    */
   uint16_t divisor;
 };

@@ -1,16 +1,22 @@
 /*
- * halm/platform/lpc/lpc43xx/usb_base.h
- * Copyright (C) 2016 xent
+ * halm/platform/imxrt/usb_base.h
+ * Copyright (C) 2024 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_LPC_LPC43XX_USB_BASE_H_
-#define HALM_PLATFORM_LPC_LPC43XX_USB_BASE_H_
+#ifndef HALM_PLATFORM_IMXRT_USB_BASE_H_
+#define HALM_PLATFORM_IMXRT_USB_BASE_H_
 /*----------------------------------------------------------------------------*/
+#include <halm/core/cortex/mpu.h>
 #include <halm/generic/pointer_array.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
 #include <xcore/entity.h>
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/usb_base.h>
+#include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UsbBase;
 
@@ -23,8 +29,6 @@ struct UsbBaseConfig
   PinNumber dm;
   /** Mandatory: USB bidirectional D+ line. */
   PinNumber dp;
-  /** Mandatory: output pin used for soft connect feature. */
-  PinNumber connect;
   /** Mandatory: monitors the presence of USB bus power. */
   PinNumber vbus;
   /** Mandatory: peripheral identifier. */
@@ -35,10 +39,18 @@ struct UsbBase
 {
   struct Entity base;
 
+  void *phy;
   void *reg;
   void (*handler)(void *);
-  IrqNumber irq;
 
+  struct
+  {
+    IrqNumber phy;
+    IrqNumber usb;
+  } irq;
+
+  /* MPU region number */
+  MpuRegion region;
   /* Unique peripheral identifier */
   uint8_t channel;
 
@@ -46,8 +58,6 @@ struct UsbBase
   {
     /* Pointer to an aligned array of Queue Head descriptors */
     struct QueueHead *heads;
-    /* Pointer to an aligned memory buffer for Transfer Descriptors */
-    struct TransferDescriptor *memory;
     /* Pool for transfer descriptors */
     PointerArray descriptors;
     /* Physical endpoint count */
@@ -55,11 +65,4 @@ struct UsbBase
   } td;
 };
 /*----------------------------------------------------------------------------*/
-BEGIN_DECLS
-
-void usbBaseOtgTerminationControl(struct UsbBase *, bool);
-void usbBaseVbusDischargeControl(struct UsbBase *, bool);
-
-END_DECLS
-/*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_LPC_LPC43XX_USB_BASE_H_ */
+#endif /* HALM_PLATFORM_IMXRT_USB_BASE_H_ */

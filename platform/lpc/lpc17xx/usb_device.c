@@ -27,7 +27,7 @@ struct DmaDescriptorPool
   volatile struct DmaDescriptor *heads[32];
   /* Transfer descriptor pool */
   PointerArray descriptors;
-  /* Memory allocated for Transfer descriptors */
+  /* Memory allocated for Transfer Descriptors */
   struct DmaDescriptor memory[CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE];
 };
 /*----------------------------------------------------------------------------*/
@@ -198,16 +198,18 @@ static const struct UsbEndpointClass * const UsbDmaEndpoint =
 static void deinitDescriptorPool(struct UsbDevice *device)
 {
   struct DmaDescriptorPool * const pool = device->pool;
+
   pointerArrayDeinit(&pool->descriptors);
+  free(pool);
 }
 #endif
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_USB_DMA
 static bool initDescriptorPool(struct UsbDevice *device)
 {
-  struct DmaDescriptorPool *pool;
+  struct DmaDescriptorPool * const pool =
+      memalign(128, sizeof(struct DmaDescriptorPool));
 
-  pool = memalign(128, sizeof(struct DmaDescriptorPool));
   if (pool == NULL)
     return false;
 

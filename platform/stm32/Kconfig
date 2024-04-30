@@ -301,6 +301,7 @@ config PLATFORM_USB_HS
 	bool "USB HS"
 	default n
 	depends on PLATFORM_USB && FAMILY_STM32F4XX
+	select USB_DEVICE_HS
 	help
 	  This enables support for USB High Speed mode.
 

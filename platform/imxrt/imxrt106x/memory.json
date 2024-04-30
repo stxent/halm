@@ -21,7 +21,7 @@
       {"offset": "0xCC000", "name": "TRNG", "type": "IMX_TRNG_Type"},
       {"offset": "0xD0000", "name": "WDOG2", "type": "IMX_WDOG_Type"},
       {"offset": "0xD4000", "name": "SNVS", "type": "IMX_SNVS_Type"},
-      {"offset": "0xD8000", "name": "ANALOG", "type": "IMX_ANALOG_Type"},
+      {"offset": "0xD8000", "name": "ANATOP", "type": "IMX_ANATOP_Type"},
       {"offset": "0xD9000", "name": "USBPHY1", "type": "IMX_USBPHY_Type"},
       {"offset": "0xDA000", "name": "USBPHY2", "type": "IMX_USBPHY_Type"},
       {"offset": "0xDC000", "name": "CSU", "type": "IMX_CSU_Type"},

@@ -162,4 +162,18 @@ config PLATFORM_NUMICRO_UART7
 
 endmenu
 
+menu "USB"
+
+config PLATFORM_NUMICRO_USB_FS
+	bool "FS USB"
+	default y
+	depends on PLATFORM_USB
+
+config PLATFORM_NUMICRO_USB_HS
+	bool "HS USB"
+	default y
+	depends on PLATFORM_USB
+
+endmenu
+
 endmenu

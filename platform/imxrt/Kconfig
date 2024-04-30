@@ -68,4 +68,32 @@ config PLATFORM_IMXRT_SERIAL_DMA
 	default y
 	depends on PLATFORM_IMXRT_LPUART_BASE && PLATFORM_IMXRT_EDMA
 
+config PLATFORM_USB
+	bool "USB"
+	default y
+	select CORE_CORTEX_MPU if CORE_CORTEX_DCACHE
+
+config PLATFORM_USB_NO_DEINIT
+	bool
+	default y if PLATFORM_IMXRT_NO_DEINIT
+	depends on PLATFORM_USB
+
+config PLATFORM_USB_HS
+	bool "USB HS"
+	default y
+	depends on PLATFORM_USB
+	select USB_DEVICE_HS
+	help
+	  This enables support for USB High Speed mode.
+
+config PLATFORM_USB_DEVICE
+	bool "USB Device"
+	default y
+	depends on PLATFORM_USB
+
+config PLATFORM_USB_DEVICE_POOL_SIZE
+	int "Descriptor pool size"
+	default 32
+	depends on PLATFORM_USB_DEVICE
+
 endmenu

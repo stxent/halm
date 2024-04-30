@@ -1,20 +1,19 @@
 /*
  * usb_base.c
- * Copyright (C) 2016 xent
+ * Copyright (C) 2024 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/lpc43xx/system_defs.h>
-#include <halm/platform/lpc/lpc43xx/usb_base.h>
-#include <halm/platform/lpc/lpc43xx/usb_defs.h>
-#include <halm/platform/lpc/system.h>
+#include <halm/platform/imxrt/imxrt106x/system_defs.h>
+#include <halm/platform/imxrt/usb_base.h>
+#include <halm/platform/imxrt/usb_defs.h>
+#include <halm/platform/imxrt/system.h>
 #include <assert.h>
 #include <malloc.h>
 #include <stdlib.h>
 /*----------------------------------------------------------------------------*/
-#define ENDPOINT_REQUESTS     CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
-#define USB0_ENDPOINT_COUNT   12
-#define USB1_ENDPOINT_COUNT   8
+#define ENDPOINT_REQUESTS   CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
+#define USB_ENDPOINT_COUNT  16
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UsbBaseConfig *);
 static bool setInstance(uint8_t, struct UsbBase *);
@@ -34,80 +33,91 @@ const struct EntityClass * const UsbBase = &(const struct EntityClass){
 };
 /*----------------------------------------------------------------------------*/
 const struct PinEntry usbPins[] = {
+    /* USB OTG1 */
     {
-        .key = PIN(PORT_1, 5), /* USB0_PWR_FAULT */
-        .channel = 0,
-        .value = 4
-    }, {
-        .key = PIN(PORT_1, 7), /* USB0_PPWR */
-        .channel = 0,
-        .value = 4
-    }, {
-        .key = PIN(PORT_2, 0), /* USB0_PPWR */
+        .key = PIN(PORT_AD_B0, 2), /* USB_OTG1_PWR */
         .channel = 0,
         .value = 3
     }, {
-        .key = PIN(PORT_2, 1), /* USB0_PWR_FAULT */
+        .key = PIN(PORT_AD_B1, 1), /* USB_OTG1_PWR */
+        .channel = 0,
+        .value = 0
+    }, {
+        .key = PIN(PORT_AD_B0, 3), /* USB_OTG1_OC */
         .channel = 0,
         .value = 3
     }, {
-        .key = PIN(PORT_2, 3), /* USB0_PPWR */
+        .key = PIN(PORT_AD_B1, 3), /* USB_OTG1_OC */
         .channel = 0,
-        .value = 7
+        .value = 0
     }, {
-        .key = PIN(PORT_2, 4), /* USB0_PWR_FAULT */
-        .channel = 0,
-        .value = 7
-    }, {
-        .key = PIN(PORT_6, 3), /* USB0_PPWR */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = PIN(PORT_6, 6), /* USB0_PWR_FAULT */
+        .key = PIN(PORT_AD_B0, 1), /* USB_OTG1_ID */
         .channel = 0,
         .value = 3
     }, {
-        .key = PIN(PORT_8, 0), /* USB0_PWR_FAULT */
-        .channel = 0,
-        .value = 1
-    }, {
-        .key = PIN(PORT_USB, PIN_USB0_DM), /* USB0_DM */
+        .key = PIN(PORT_AD_B1, 2), /* USB_OTG1_ID */
         .channel = 0,
         .value = 0
     }, {
-        .key = PIN(PORT_USB, PIN_USB0_DP), /* USB0_DP */
+        .key = PIN(PORT_USB, PIN_USB_OTG1_DN), /* USB_OTG1_DN */
         .channel = 0,
         .value = 0
     }, {
-        .key = PIN(PORT_USB, PIN_USB0_ID), /* USB0_ID */
+        .key = PIN(PORT_USB, PIN_USB_OTG1_DP), /* USB_OTG1_DP */
         .channel = 0,
         .value = 0
     }, {
-        .key = PIN(PORT_USB, PIN_USB0_VBUS), /* USB0_VBUS */
+        .key = PIN(PORT_USB, PIN_USB_OTG1_ID), /* USB_OTG1_ID */
         .channel = 0,
         .value = 0
     }, {
-        .key = PIN(PORT_2, 5), /* USB1_VBUS1 */
+        .key = PIN(PORT_USB, PIN_USB_OTG1_VBUS), /* USB_OTG1_VBUS */
+        .channel = 0,
+        .value = 0
+    },
+
+    /* USB OTG2 */
+    {
+        .key = PIN(PORT_EMC, 41), /* USB_OTG2_PWR */
         .channel = 1,
-        .value = 2
+        .value = 3
     }, {
-        .key = PIN(PORT_9, 5), /* USB1_PPWR */
-        .channel = 1,
-        .value = 2
-    }, {
-        .key = PIN(PORT_9, 6), /* USB1_PWR_FAULT */
-        .channel = 1,
-        .value = 2
-    }, {
-        .key = PIN(PORT_USB, PIN_USB1_DM), /* USB1_DM */
+        .key = PIN(PORT_AD_B0, 15), /* USB_OTG2_PWR */
         .channel = 1,
         .value = 0
     }, {
-        .key = PIN(PORT_USB, PIN_USB1_DP), /* USB1_DP */
+        .key = PIN(PORT_EMC, 40), /* USB_OTG2_OC */
+        .channel = 1,
+        .value = 3
+    }, {
+        .key = PIN(PORT_AD_B0, 14), /* USB_OTG2_OC */
         .channel = 1,
         .value = 0
     }, {
-        .key = 0 /* End of pin function association list */
+        .key = PIN(PORT_AD_B0, 0), /* USB_OTG2_ID */
+        .channel = 1,
+        .value = 3
+    }, {
+        .key = PIN(PORT_AD_B1, 0), /* USB_OTG2_ID */
+        .channel = 1,
+        .value = 0
+    }, {
+        .key = PIN(PORT_USB, PIN_USB_OTG2_DN), /* USB_OTG2_DN */
+        .channel = 1,
+        .value = 0
+    }, {
+        .key = PIN(PORT_USB, PIN_USB_OTG2_DP), /* USB_OTG2_DP */
+        .channel = 1,
+        .value = 0
+    }, {
+        .key = PIN(PORT_USB, PIN_USB_OTG2_VBUS), /* USB_OTG2_VBUS */
+        .channel = 1,
+        .value = 0
+    },
+
+    /* End of pin function association list */
+    {
+        .key = 0
     }
 };
 /*----------------------------------------------------------------------------*/
@@ -116,7 +126,7 @@ static struct UsbBase *instances[2] = {NULL};
 static void configPins(const struct UsbBaseConfig *config)
 {
   const PinNumber pinArray[] = {
-      config->dm, config->dp, config->connect, config->vbus
+      config->dm, config->dp, config->vbus
   };
 
   for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
@@ -148,40 +158,24 @@ static bool setInstance(uint8_t channel, struct UsbBase *object)
     return false;
 }
 /*----------------------------------------------------------------------------*/
-void USB0_ISR(void)
+void USB_OTG1_ISR(void)
 {
   instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
-void USB1_ISR(void)
+void USB_OTG2_ISR(void)
 {
   instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
-void usbBaseOtgTerminationControl(struct UsbBase *device, bool enable)
+void USB_PHY1_ISR(void)
 {
-  if (device->channel == 0)
-  {
-    LPC_USB_Type * const reg = device->reg;
-
-    if (enable)
-      reg->OTGSC &= ~OTGSC_OT;
-    else
-      reg->OTGSC |= OTGSC_OT;
-  }
+  instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
-void usbBaseVbusDischargeControl(struct UsbBase *device, bool enable)
+void USB_PHY2_ISR(void)
 {
-  if (device->channel == 0)
-  {
-    LPC_USB_Type * const reg = device->reg;
-
-    if (enable)
-      reg->OTGSC |= OTGSC_VD;
-    else
-      reg->OTGSC &= ~OTGSC_VD;
-  }
+  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
@@ -194,49 +188,56 @@ static enum Result devInit(void *object, const void *configBase)
 
   configPins(config);
 
+  if (!sysClockStatus(CLK_USBOH3))
+    sysClockEnable(CLK_USBOH3);
+
   if (config->channel == 0)
   {
-    sysClockEnable(CLK_M4_USB0);
-    sysClockEnable(CLK_USB0);
-    sysResetEnable(RST_USB0);
-
-    device->irq = USB0_IRQ;
-    device->reg = LPC_USB0;
-    device->td.numberOfEndpoints = USB0_ENDPOINT_COUNT;
-
-    LPC_CREG->CREG0 &= ~CREG0_USB0PHY;
-    LPC_USB0->OTGSC = 0;
+    device->irq.phy = USB_PHY1_IRQ;
+    device->irq.usb = USB_OTG1_IRQ;
+    device->phy = IMX_USBPHY1;
+    device->reg = IMX_USB1;
+    device->td.numberOfEndpoints = USB_ENDPOINT_COUNT;
   }
   else
   {
-    sysClockEnable(CLK_M4_USB1);
-    sysClockEnable(CLK_USB1);
-    sysResetEnable(RST_USB1);
-
-    device->irq = USB1_IRQ;
-    device->reg = LPC_USB1;
-    device->td.numberOfEndpoints = USB1_ENDPOINT_COUNT;
-
-    LPC_SCU->SFSUSB = SFSUSB_ESEA | SFSUSB_EPWR | SFSUSB_VBUS;
+    device->irq.phy = USB_PHY2_IRQ;
+    device->irq.usb = USB_OTG2_IRQ;
+    device->phy = IMX_USBPHY2;
+    device->reg = IMX_USB2;
+    device->td.numberOfEndpoints = USB_ENDPOINT_COUNT;
   }
 
   device->channel = config->channel;
   device->handler = NULL;
 
-  device->td.heads =
-      memalign(2048, sizeof(struct QueueHead) * device->td.numberOfEndpoints);
-  if (device->td.heads == NULL)
+  const size_t memoryPoolSize =
+      sizeof(struct QueueHead) * device->td.numberOfEndpoints
+      + sizeof(struct TransferDescriptor) * ENDPOINT_REQUESTS;
+  uint8_t * const memoryPoolPointer = memalign(4096, memoryPoolSize);
+
+  if (memoryPoolPointer == NULL)
     return E_MEMORY;
 
-  device->td.memory =
-      memalign(32, sizeof(struct TransferDescriptor) * ENDPOINT_REQUESTS);
-  if (device->td.memory == NULL)
-    return E_MEMORY;
+  device->td.heads = (struct QueueHead *)memoryPoolPointer;
+
+  struct TransferDescriptor * const descriptors =
+      (struct TransferDescriptor *)(memoryPoolPointer
+          + sizeof(struct QueueHead) * device->td.numberOfEndpoints);
 
   if (!pointerArrayInit(&device->td.descriptors, ENDPOINT_REQUESTS))
     return E_MEMORY;
   for (size_t index = 0; index < ENDPOINT_REQUESTS; ++index)
-    pointerArrayPushBack(&device->td.descriptors, device->td.memory + index);
+    pointerArrayPushBack(&device->td.descriptors, descriptors + index);
+
+#ifdef CONFIG_CORE_CORTEX_DCACHE
+  device->region = mpuAddRegion((uintptr_t)memoryPoolPointer, memoryPoolSize,
+      MPU_REGION_DEVICE, MPU_ACCESS_FULL, false, true);
+  if (device->region < 0)
+    return E_ACCESS;
+#else
+  device->region = -1;
+#endif
 
   return E_OK;
 }
@@ -246,25 +247,17 @@ static void devDeinit(void *object)
 {
   struct UsbBase * const device = object;
 
+#ifdef CONFIG_CORE_CORTEX_DCACHE
+  mpuRemoveRegion(device->region);
+#endif
+
   pointerArrayDeinit(&device->td.descriptors);
-  free(device->td.memory);
   free(device->td.heads);
 
-  if (device->channel == 0)
-  {
-    LPC_CREG->CREG0 |= CREG0_USB0PHY;
-
-    sysClockDisable(CLK_USB0);
-    sysClockDisable(CLK_M4_USB0);
-  }
-  else
-  {
-    LPC_SCU->SFSUSB &= ~(SFSUSB_EPWR | SFSUSB_VBUS);
-
-    sysClockDisable(CLK_USB1);
-    sysClockDisable(CLK_M4_USB1);
-  }
-
   instances[device->channel] = NULL;
+
+  /* Disable clock when the second module is not used */
+  if (instances[device->channel ^ 1] == NULL)
+    sysClockDisable(CLK_USBOH3);
 }
 #endif

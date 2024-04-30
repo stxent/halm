@@ -227,6 +227,12 @@ struct Pin pinInit(PinNumber id)
     pin.number = current.number - begin.number + UNPACK_OFFSET(group->value);
     pin.reg = (void *)calcPortBase(pin.port, pin.number);
   }
+  else
+  {
+    pin.port = current.port;
+    pin.number = current.number;
+    pin.reg = NULL;
+  }
 
   return pin;
 }
