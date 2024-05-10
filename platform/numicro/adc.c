@@ -85,6 +85,8 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static void startCalibration(struct Adc *interface)
 {
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
+
   NM_ADC_Type * const reg = interface->base.reg;
 
   /* Clear pending calibration interrupt flag */
@@ -100,6 +102,8 @@ static void startCalibration(struct Adc *interface)
 /*----------------------------------------------------------------------------*/
 static void startConversion(struct Adc *interface)
 {
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
+
   NM_ADC_Type * const reg = interface->base.reg;
 
   /* Clear pending data interrupt flag */
@@ -187,7 +191,12 @@ static void adcDeinit(void *object)
 {
   struct Adc * const interface = object;
 
-  stopConversion(interface);
+#  ifdef CONFIG_PLATFORM_NUMICRO_ADC_SHARED
+  if (adcGetInstance(interface->base.channel) == &interface->base)
+#  endif
+  {
+    stopConversion(interface);
+  }
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
@@ -252,11 +261,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_NUMICRO_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL, object) ?
+      return adcSetInstance(interface->base.channel, NULL, &interface->base) ?
           E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, NULL);
       return E_OK;
 #endif
 

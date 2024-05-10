@@ -88,6 +88,8 @@ static size_t setupPins(struct Adc *interface, const PinNumber *pins)
 /*----------------------------------------------------------------------------*/
 static void startConversion(struct Adc *interface)
 {
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
+
   LPC_ADC_Type * const reg = interface->base.reg;
 
   irqSetPriority(interface->base.irq, interface->priority);
@@ -156,10 +158,16 @@ static void adcDeinit(void *object)
 {
   struct Adc * const interface = object;
 
-  stopConversion(interface);
+#  ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
+  if (adcGetInstance(interface->base.channel) == &interface->base)
+#  endif
+  {
+    stopConversion(interface);
+  }
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
+
   AdcBase->deinit(interface);
 }
 #endif
@@ -181,10 +189,12 @@ static enum Result adcGetParam(void *object, int parameter, void *)
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
-      if (adcGetInstance(interface->base.channel) == &interface->base)
-        return (reg->CR & (CR_START_MASK | CR_BURST)) ? E_BUSY : E_OK;
-      else
+#ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
+      if (adcGetInstance(interface->base.channel) != &interface->base)
         return E_OK;
+#endif
+
+      return (reg->CR & (CR_START_MASK | CR_BURST)) ? E_BUSY : E_OK;
 
     default:
       return E_INVALID;
@@ -207,11 +217,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL, object) ?
+      return adcSetInstance(interface->base.channel, NULL, &interface->base) ?
           E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, NULL);
       return E_OK;
 #endif
 

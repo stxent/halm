@@ -67,6 +67,8 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static void startConversion(struct Eadc *interface)
 {
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
+
   NM_EADC_Type * const reg = interface->base.reg;
   size_t index = 0;
 
@@ -102,6 +104,7 @@ static void stopConversion(struct Eadc *interface)
 
   reg->CTL = 0;
   reg->INTSRC[0] = 0;
+
   irqDisable(interface->base.irq.p0);
 }
 /*----------------------------------------------------------------------------*/
@@ -175,7 +178,12 @@ static void adcDeinit(void *object)
 {
   struct Eadc * const interface = object;
 
-  stopConversion(interface);
+#  ifdef CONFIG_PLATFORM_NUMICRO_EADC_SHARED
+  if (adcGetInstance(interface->base.channel) == &interface->base)
+#  endif
+  {
+    stopConversion(interface);
+  }
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
@@ -204,10 +212,12 @@ static enum Result adcGetParam(void *object, int parameter, void *)
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
-      if (adcGetInstance(interface->base.channel) == &interface->base)
-        return (reg->CTL & CTL_ADCEN) ? E_BUSY : E_OK;
-      else
+#ifdef CONFIG_PLATFORM_NUMICRO_EADC_SHARED
+      if (adcGetInstance(interface->base.channel) != &interface->base)
         return E_OK;
+#endif
+
+      return (reg->CTL & CTL_ADCEN) ? E_BUSY : E_OK;
 
     default:
       return E_INVALID;
@@ -230,11 +240,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_NUMICRO_EADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL, object) ?
+      return adcSetInstance(interface->base.channel, NULL, &interface->base) ?
           E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, NULL);
       return E_OK;
 #endif
 

@@ -314,21 +314,26 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 {
   struct AdcDmaStream * const interface = object;
 
+#ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
   switch ((enum IfParameter)parameter)
   {
-#ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL, object) ?
+      return adcSetInstance(interface->base.channel, NULL, &interface->base) ?
           E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, NULL);
       return E_OK;
-#endif
 
     default:
       return E_INVALID;
   }
+#else
+  (void)interface;
+  (void)parameter;
+
+  return E_INVALID;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcHandlerInit(void *object, const void *configBase)
@@ -364,6 +369,7 @@ static enum Result adcHandlerEnqueue(void *object,
   struct AdcDmaStreamHandler * const stream = object;
   struct AdcDmaStream * const interface = stream->parent;
 
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
   assert(request != NULL && request->callback != NULL);
   /* Ensure the buffer has enough space and is aligned on the sample size */
   assert(request->capacity / (interface->count * sizeof(uint16_t)) >= 2);
@@ -427,12 +433,13 @@ static void adcDeinit(void *object)
 {
   struct AdcDmaStream * const interface = object;
 
+  for (size_t index = 0; index < interface->count; ++index)
+    adcReleasePin(interface->pins[index]);
+
   deinit(interface->stream);
   deinit(interface->outer);
   deinit(interface->inner);
 
-  for (size_t index = 0; index < interface->count; ++index)
-    adcReleasePin(interface->pins[index]);
   AdcBase->deinit(interface);
 }
 #endif

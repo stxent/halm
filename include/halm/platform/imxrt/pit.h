@@ -16,7 +16,7 @@ extern const struct Timer64Class * const Pit64;
 
 struct PitConfig
 {
-  /** Optional: timer frequency in chained mode. */
+  /** Optional: timer frequency. Used in chained mode only. */
   uint32_t frequency;
   /** Optional: timer interrupt priority. */
   IrqPriority priority;

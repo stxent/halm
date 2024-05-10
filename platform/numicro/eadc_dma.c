@@ -104,6 +104,8 @@ static void resetDmaBuffer(struct EadcDma *interface)
 /*----------------------------------------------------------------------------*/
 static bool startConversion(struct EadcDma *interface)
 {
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
+
   NM_EADC_Type * const reg = interface->base.reg;
   size_t index = 0;
 
@@ -141,6 +143,7 @@ static void stopConversion(struct EadcDma *interface)
 
   reg->CTL = 0;
   reg->PDMACTL = 0;
+
   dmaDisable(interface->dma);
   dmaClear(interface->dma);
 }
@@ -216,12 +219,17 @@ static void adcDeinit(void *object)
 {
   struct EadcDma * const interface = object;
 
-  stopConversion(interface);
-  deinit(interface->dma);
+#  ifdef CONFIG_PLATFORM_NUMICRO_EADC_SHARED
+  if (adcGetInstance(interface->base.channel) == &interface->base)
+#  endif
+  {
+    stopConversion(interface);
+  }
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
 
+  deinit(interface->dma);
   free(interface->pins);
   free(interface->buffer);
 
@@ -267,11 +275,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_NUMICRO_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL, object) ?
+      return adcSetInstance(interface->base.channel, NULL, &interface->base) ?
           E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, NULL);
       return E_OK;
 #endif
 

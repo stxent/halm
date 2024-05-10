@@ -122,6 +122,8 @@ static void resetDmaBuffer(struct AdcDma *interface)
 /*----------------------------------------------------------------------------*/
 static void startCalibration(struct AdcDma *interface)
 {
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
+
   NM_ADC_Type * const reg = interface->base.reg;
 
   /* Clear pending calibration interrupt flag */
@@ -137,6 +139,8 @@ static void startCalibration(struct AdcDma *interface)
 /*----------------------------------------------------------------------------*/
 static bool startConversion(struct AdcDma *interface)
 {
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
+
   NM_ADC_Type * const reg = interface->base.reg;
 
   /* Reset DMA descriptor */
@@ -169,6 +173,7 @@ static void stopConversion(struct AdcDma *interface)
   NM_ADC_Type * const reg = interface->base.reg;
 
   reg->ADCR = 0;
+
   dmaDisable(interface->dma);
   dmaClear(interface->dma);
 }
@@ -229,12 +234,17 @@ static void adcDeinit(void *object)
 {
   struct AdcDma * const interface = object;
 
-  stopConversion(interface);
-  deinit(interface->dma);
+#  ifdef CONFIG_PLATFORM_NUMICRO_ADC_SHARED
+  if (adcGetInstance(interface->base.channel) == &interface->base)
+#  endif
+  {
+    stopConversion(interface);
+  }
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
 
+  deinit(interface->dma);
   free(interface->pins);
   free(interface->buffer);
 
@@ -259,15 +269,15 @@ static enum Result adcGetParam(void *object, int parameter, void *)
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
-      if (adcGetInstance(interface->base.channel) == &interface->base)
-      {
-        if (!(reg->ADCALR & ADCALR_CALEN))
-          return dmaStatus(interface->dma);
-        else
-          return E_BUSY;
-      }
-      else
+#ifdef CONFIG_PLATFORM_NUMICRO_ADC_SHARED
+      if (adcGetInstance(interface->base.channel) != &interface->base)
         return E_OK;
+#endif
+
+      if (!(reg->ADCALR & ADCALR_CALEN))
+        return dmaStatus(interface->dma);
+      else
+        return E_BUSY;
 
     default:
       return E_INVALID;
@@ -299,11 +309,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_NUMICRO_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL, object) ?
+      return adcSetInstance(interface->base.channel, NULL, &interface->base) ?
           E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, NULL);
       return E_OK;
 #endif
 

@@ -103,11 +103,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   switch ((enum IfParameter)parameter)
   {
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL, object) ?
+      return adcSetInstance(interface->base.channel, NULL, &interface->base) ?
           E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, object, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, NULL);
       return E_OK;
 
     default:
@@ -123,14 +123,17 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 /*----------------------------------------------------------------------------*/
 static size_t adcRead(void *object, void *buffer, size_t length)
 {
+  struct AdcOneShot * const interface = object;
+
+  /* ADC should be locked to avoid simultaneous access */
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
   /* Ensure that the buffer has enough space */
   assert(length >= sizeof(uint16_t));
   /* Suppress warning */
   (void)length;
 
-  struct AdcOneShot * const interface = object;
   const uint16_t value = makeChannelConversion(interface);
-
   memcpy(buffer, &value, sizeof(value));
-  return sizeof(uint16_t);
+
+  return sizeof(value);
 }
