@@ -81,7 +81,7 @@ static bool dmaSetup(struct AdcDma *interface,
   };
 
   interface->dma = adcMakeCircularDma(config->channel, config->dma,
-      DMA_PRIORITY_LOW, true);
+      DMA_PRIORITY_MEDIUM, true);
 
   if (interface->dma != NULL)
   {

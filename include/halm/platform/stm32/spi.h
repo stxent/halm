@@ -22,8 +22,8 @@ struct SpiConfig
   PinNumber mosi;
   /** Mandatory: serial clock output. */
   PinNumber sck;
-  /** Optional: interrupt priority. */
-  IrqPriority priority;
+  /** Optional: DMA priority. Low priority is used by default. */
+  enum DmaPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: mode number. */

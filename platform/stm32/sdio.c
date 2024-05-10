@@ -20,7 +20,7 @@
 #define BUSY_READ_DELAY       100 /* Milliseconds */
 #define BUSY_WRITE_DELAY      500 /* Milliseconds */
 /*----------------------------------------------------------------------------*/
-static bool dmaSetup(struct Sdio *, uint8_t);
+static bool dmaSetup(struct Sdio *, enum DmaPriority, uint8_t);
 static void execute(struct Sdio *, uint32_t, uint32_t);
 static void dmaInterruptHandler(void *);
 static void pinInterruptHandler(void *);
@@ -52,7 +52,8 @@ const struct InterfaceClass * const Sdio = &(const struct InterfaceClass){
     .write = sdioWrite
 };
 /*----------------------------------------------------------------------------*/
-static bool dmaSetup(struct Sdio *interface, uint8_t stream)
+static bool dmaSetup(struct Sdio *interface, enum DmaPriority priority,
+    uint8_t stream)
 {
   static const struct DmaSettings rxDmaSettings = {
       .source = {
@@ -79,13 +80,21 @@ static bool dmaSetup(struct Sdio *interface, uint8_t stream)
       }
   };
 
-  interface->rxDma = sdioMakeOneShotDma(stream, DMA_PRIORITY_LOW, DMA_TYPE_P2M);
+  interface->rxDma = sdioMakeOneShotDma(
+      stream,
+      priority,
+      DMA_TYPE_P2M
+  );
   if (interface->rxDma == NULL)
     return false;
   dmaConfigure(interface->rxDma, &rxDmaSettings);
   dmaSetCallback(interface->rxDma, dmaInterruptHandler, interface);
 
-  interface->txDma = sdioMakeOneShotDma(stream, DMA_PRIORITY_LOW, DMA_TYPE_M2P);
+  interface->txDma = sdioMakeOneShotDma(
+      stream,
+      priority,
+      DMA_TYPE_M2P
+  );
   if (interface->txDma == NULL)
     return false;
   dmaConfigure(interface->txDma, &txDmaSettings);
@@ -445,7 +454,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   if ((res = SdioBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  if (!dmaSetup(interface, config->dma))
+  if (!dmaSetup(interface, config->dma.priority, config->dma.stream))
     return E_ERROR;
 
   interface->base.handler = sdioInterruptHandler;

@@ -36,8 +36,14 @@ struct SdioConfig
   PinNumber dat3;
   /** Optional: interrupt priority. */
   IrqPriority priority;
-  /** Mandatory: number of the DMA stream. */
-  uint8_t dma;
+
+  struct
+  {
+    /** Optional: DMA priority. Low priority is used by default. */
+    enum DmaPriority priority;
+    /** Mandatory: number of the DMA stream. */
+    uint8_t stream;
+  } dma;
 };
 
 struct Sdio

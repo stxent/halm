@@ -12,7 +12,7 @@
 #define DUMMY_FRAME 0xFF
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
-static bool dmaSetup(struct Spi *, uint8_t, uint8_t);
+static bool dmaSetup(struct Spi *, enum DmaPriority, uint8_t, uint8_t);
 static void dmaSetupRx(struct Dma *, struct Dma *);
 static void dmaSetupRxTx(struct Dma *, struct Dma *);
 static void dmaSetupTx(struct Dma *, struct Dma *);
@@ -61,12 +61,13 @@ static void dmaHandler(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static bool dmaSetup(struct Spi *interface, uint8_t rxStream, uint8_t txStream)
+static bool dmaSetup(struct Spi *interface, enum DmaPriority priority,
+    uint8_t rxStream, uint8_t txStream)
 {
   interface->rxDma = spiMakeOneShotDma(
       interface->base.channel,
       rxStream,
-      DMA_PRIORITY_LOW,
+      priority,
       DMA_TYPE_P2M
   );
   if (interface->rxDma == NULL)
@@ -75,7 +76,7 @@ static bool dmaSetup(struct Spi *interface, uint8_t rxStream, uint8_t txStream)
   interface->txDma = spiMakeOneShotDma(
       interface->base.channel,
       txStream,
-      DMA_PRIORITY_LOW,
+      priority,
       DMA_TYPE_M2P
   );
   if (interface->txDma == NULL)
@@ -252,7 +253,7 @@ static enum Result spiInit(void *object, const void *configBase)
   if ((res = SpiBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  if (!dmaSetup(interface, config->rxDma, config->txDma))
+  if (!dmaSetup(interface, config->priority, config->rxDma, config->txDma))
     return E_ERROR;
 
   interface->callback = NULL;

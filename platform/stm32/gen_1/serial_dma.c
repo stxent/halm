@@ -131,7 +131,7 @@ static bool dmaSetup(struct SerialDma *interface, uint8_t rxStream,
   interface->rxDma = uartMakeCircularDma(
       interface->base.channel,
       rxStream,
-      DMA_PRIORITY_LOW,
+      DMA_PRIORITY_MEDIUM,
       DMA_TYPE_P2M
   );
   if (interface->rxDma == NULL)
@@ -142,7 +142,7 @@ static bool dmaSetup(struct SerialDma *interface, uint8_t rxStream,
   interface->txDma = uartMakeOneShotDma(
       interface->base.channel,
       txStream,
-      DMA_PRIORITY_LOW,
+      DMA_PRIORITY_MEDIUM,
       DMA_TYPE_M2P
   );
   if (interface->txDma == NULL)
@@ -218,14 +218,24 @@ static void serialInterruptHandler(void *object)
 
   if (dmaResidue(interface->rxDma, &residue) == E_OK)
   {
-    const size_t pending =
-        interface->rxBufferSize - interface->rxPosition - residue;
+    const size_t pending = interface->rxBufferSize - interface->rxPosition;
 
-    if (pending)
+    if (residue > pending)
+    {
+      /*
+       * DMA transfer is completed but DMA interrupt is not yet processed.
+       * Ignore this event and process received bytes later in the DMA callback.
+       */
+      return;
+    }
+
+    const size_t count = pending - residue;
+
+    if (count)
     {
       byteQueuePushArray(&interface->rxQueue,
-          interface->rxBuffer + interface->rxPosition, pending);
-      interface->rxPosition += pending;
+          interface->rxBuffer + interface->rxPosition, count);
+      interface->rxPosition += count;
 
       updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
 

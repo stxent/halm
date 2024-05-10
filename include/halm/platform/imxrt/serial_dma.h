@@ -36,10 +36,10 @@ struct SerialDmaConfig
   PinNumber rx;
   /** Optional: serial output. */
   PinNumber tx;
-  /** Optional: DMA transfer priority. */
-  enum EdmaPriority priority;
   /** Optional: parity bit setting. */
   enum SerialParity parity;
+  /** Optional: DMA transfer priority. */
+  enum EdmaPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: direct memory access channels. */

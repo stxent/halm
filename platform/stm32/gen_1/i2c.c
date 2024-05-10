@@ -85,7 +85,7 @@ static bool dmaSetup(struct I2C *interface, uint8_t rxStream, uint8_t txStream)
   interface->rxDma = i2cMakeOneShotDma(
       interface->base.channel,
       rxStream,
-      DMA_PRIORITY_LOW,
+      DMA_PRIORITY_MEDIUM,
       DMA_TYPE_P2M
   );
   if (interface->rxDma == NULL)
@@ -96,7 +96,7 @@ static bool dmaSetup(struct I2C *interface, uint8_t rxStream, uint8_t txStream)
   interface->txDma = i2cMakeOneShotDma(
       interface->base.channel,
       txStream,
-      DMA_PRIORITY_LOW,
+      DMA_PRIORITY_MEDIUM,
       DMA_TYPE_M2P
   );
   if (interface->txDma == NULL)
