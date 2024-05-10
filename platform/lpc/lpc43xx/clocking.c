@@ -38,6 +38,7 @@ struct GenericPllClass
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcBranchReg(enum ClockBranch);
 static inline volatile uint32_t *calcDividerReg(enum ClockSource);
+static void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);
 static uint32_t getSourceFrequency(enum ClockSource);
 static unsigned int pll0ComputeMdec(unsigned int);
@@ -508,22 +509,31 @@ static inline LPC_CGU_PLL0_Type *calcPllReg(enum ClockSource source)
   return source == CLOCK_AUDIO_PLL ? &LPC_CGU->PLL0AUDIO : &LPC_CGU->PLL0USB;
 }
 /*----------------------------------------------------------------------------*/
+static void flashLatencyReset(void)
+{
+  if (sysFlashAvailable())
+    sysFlashLatencyReset();
+}
+/*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
 {
   static const uint8_t frequencyToClocks[] = {
       21, 43, 64, 86, 107, 129, 150, 172, 193
   };
 
-  const unsigned int encodedFrequency = frequency / 1000000;
-  size_t index;
-
-  for (index = 0; index < ARRAY_SIZE(frequencyToClocks); ++index)
+  if (sysFlashAvailable())
   {
-    if (encodedFrequency <= frequencyToClocks[index])
-      break;
-  }
+    const unsigned int encodedFrequency = frequency / 1000000;
+    size_t index;
 
-  sysFlashLatencyUpdate(index + 1);
+    for (index = 0; index < ARRAY_SIZE(frequencyToClocks); ++index)
+    {
+      if (encodedFrequency <= frequencyToClocks[index])
+        break;
+    }
+
+    sysFlashLatencyUpdate(index + 1);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t getSourceFrequency(enum ClockSource source)
@@ -963,44 +973,14 @@ static enum Result pll1ClockEnable(const void *, const void *configBase)
 
   uint32_t controlValue = BASE_AUTOBLOCK | BASE_CLK_SEL(config->source)
       | PLL1_CTRL_NSEL(nsel - 1) | PLL1_CTRL_MSEL(config->multiplier - 1);
-  const bool direct = psel == 0;
 
-  if (!direct)
+  if (psel == 0)
+    controlValue |= PLL1_CTRL_DIRECT;
+  else
     controlValue |= PLL1_CTRL_PSEL(psel - 1);
 
-  if (expectedFrequency > 110000000)
-  {
-    /* No division allowed */
-    if (!direct)
-      return E_VALUE;
-
-    /* Start at mid-range frequency by dividing output clock */
-    LPC_CGU->PLL1_CTRL |= BASE_PD | BASE_AUTOBLOCK;
-    LPC_CGU->PLL1_CTRL = controlValue;
-
-    /* Wait for PLL to lock */
-    unsigned int timeout = 100000;
-
-    while (!(LPC_CGU->PLL1_STAT & PLL1_STAT_LOCK) && --timeout)
-      udelay(10);
-
-    if (!timeout)
-      return E_ERROR;
-
-    /* User manual recommends to wait for 50 microseconds */
-    udelay(50);
-
-    /* Double the output frequency by enabling direct output */
-    LPC_CGU->PLL1_CTRL |= PLL1_CTRL_DIRECT;
-  }
-  else
-  {
-    if (direct)
-      controlValue |= PLL1_CTRL_FBSEL | PLL1_CTRL_DIRECT;
-
-    LPC_CGU->PLL1_CTRL |= BASE_PD | BASE_AUTOBLOCK;
-    LPC_CGU->PLL1_CTRL = controlValue;
-  }
+  LPC_CGU->PLL1_CTRL |= BASE_PD | BASE_AUTOBLOCK;
+  LPC_CGU->PLL1_CTRL = controlValue;
 
   pll1Frequency = expectedFrequency;
   return E_OK;
@@ -1053,13 +1033,16 @@ static enum Result genericClockEnable(const void *clockBase,
 
   const struct GenericClockClass * const clock = clockBase;
   volatile uint32_t * const reg = calcBranchReg(clock->branch);
+  uint32_t value = *reg | BASE_AUTOBLOCK;
 
   if (clock->branch == CLOCK_BASE_M4)
-    sysFlashLatencyReset();
+    flashLatencyReset();
 
-  *reg |= BASE_AUTOBLOCK;
-  *reg = (*reg & ~BASE_CLK_SEL_MASK) | BASE_CLK_SEL(config->source);
-  *reg &= ~BASE_PD;
+  *reg = value;
+  value = (value & ~BASE_CLK_SEL_MASK) | BASE_CLK_SEL(config->source);
+  *reg = value;
+  value &= ~BASE_PD;
+  *reg = value;
 
   if (clock->branch == CLOCK_BASE_M4)
   {

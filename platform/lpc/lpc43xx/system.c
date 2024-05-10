@@ -5,14 +5,11 @@
  */
 
 #include <halm/platform/lpc/flash_defs.h>
-#include <halm/platform/lpc/iap.h>
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
 /*----------------------------------------------------------------------------*/
 static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch);
-static bool hasFlashBankB(void);
-static bool hasFlashMemory(void);
 /*----------------------------------------------------------------------------*/
 static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch branch)
 {
@@ -20,20 +17,6 @@ static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch branch)
     return &LPC_CCU1->BRANCH[branch];
   else
     return &LPC_CCU2->BRANCH[branch - 0x200];
-}
-/*----------------------------------------------------------------------------*/
-static bool hasFlashBankB(void)
-{
-  const uint32_t type = flashReadConfigId() & FLASH_SIZE_MASK;
-
-  return type == FLASH_SIZE_256_256
-      || type == FLASH_SIZE_384_384
-      || type == FLASH_SIZE_512_512;
-}
-/*----------------------------------------------------------------------------*/
-static bool hasFlashMemory(void)
-{
-  return (flashReadId() & FLASH_AVAILABLE) != 0;
 }
 /*----------------------------------------------------------------------------*/
 void sysClockEnable(enum SysClockBranch branch)
@@ -65,20 +48,32 @@ void sysCoreM0SubRemap(uintptr_t address)
   LPC_CREG->M0SUBMEMMAP = address;
 }
 /*----------------------------------------------------------------------------*/
+void sysCoreM4Remap(uintptr_t address)
+{
+  LPC_CREG->M4MEMMAP = address;
+}
+/*----------------------------------------------------------------------------*/
+bool sysFlashAvailable(void)
+{
+  const uint32_t id = LPC_CREG->CHIPID;
+  return id == CHIPID_LPC43XX_REV_A || id == CHIPID_LPC43XX_REV_DASH;
+}
+/*----------------------------------------------------------------------------*/
+void sysFlashDisable(unsigned int bank)
+{
+  /* Flash bank A or B */
+  LPC_CREG->FLASHCFG[bank] &= ~FLASHCFG_POW;
+}
+/*----------------------------------------------------------------------------*/
 void sysFlashEnable(unsigned int bank)
 {
   /* Flash bank A or B */
   LPC_CREG->FLASHCFG[bank] |= FLASHCFG_POW;
 }
 /*----------------------------------------------------------------------------*/
-void sysFlashDisable(unsigned int bank)
-{
-  LPC_CREG->FLASHCFG[bank] &= ~FLASHCFG_POW;
-}
-/*----------------------------------------------------------------------------*/
 unsigned int sysFlashLatency(void)
 {
-  if (!hasFlashMemory())
+  if (!sysFlashAvailable())
     return 0;
 
   /* Return access time for one of the banks */
@@ -102,16 +97,16 @@ unsigned int sysFlashLatency(void)
  */
 void sysFlashLatencyUpdate(unsigned int value)
 {
-  if (hasFlashMemory())
+  if (FLASHCFG_INT_CONTROL_VALUE(LPC_CREG->FLASHCFGA) != 0)
   {
     LPC_CREG->FLASHCFGA = (LPC_CREG->FLASHCFGA & ~FLASHCFG_FLASHTIM_MASK)
         | FLASHCFG_FLASHTIM(value - 1);
+  }
 
-    if (hasFlashBankB())
-    {
-      LPC_CREG->FLASHCFGB = (LPC_CREG->FLASHCFGB & ~FLASHCFG_FLASHTIM_MASK)
-          | FLASHCFG_FLASHTIM(value - 1);
-    }
+  if (FLASHCFG_INT_CONTROL_VALUE(LPC_CREG->FLASHCFGB) != 0)
+  {
+    LPC_CREG->FLASHCFGB = (LPC_CREG->FLASHCFGB & ~FLASHCFG_FLASHTIM_MASK)
+        | FLASHCFG_FLASHTIM(value - 1);
   }
 }
 /*----------------------------------------------------------------------------*/

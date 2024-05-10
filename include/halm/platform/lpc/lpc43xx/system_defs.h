@@ -19,10 +19,15 @@
 #define CFG_DIV_MASK                    BIT_FIELD(MASK(3), 27)
 #define CFG_DIV_VALUE(reg)              FIELD_VALUE((reg), CFG_DIV_MASK, 27)
 /*------------------Flash Configuration registers-----------------------------*/
+#define FLASHCFG_INT_CONTROL_MASK       BIT_FIELD(MASK(12), 0)
+#define FLASHCFG_INT_CONTROL_VALUE(reg) \
+    FIELD_VALUE((reg), FLASHCFG_INT_CONTROL_MASK, 0)
+
 #define FLASHCFG_FLASHTIM_MASK          BIT_FIELD(MASK(4), 12)
 #define FLASHCFG_FLASHTIM(value)        BIT_FIELD((value), 12)
 #define FLASHCFG_FLASHTIM_VALUE(reg) \
     FIELD_VALUE((reg), FLASHCFG_FLASHTIM_MASK, 12)
+
 #define FLASHCFG_POW                    BIT(31)
 /*------------------Branch clock status registers-----------------------------*/
 #define STAT_RUN                        BIT(0)
@@ -96,5 +101,10 @@ enum
 #define CREG6_I2S1_TX_SCK_IN_SEL        BIT(14)
 #define CREG6_I2S1_RX_SCK_IN_SEL        BIT(15)
 #define CREG6_EMC_CLK_SEL               BIT(16)
+/*------------------Chip ID register------------------------------------------*/
+#define CHIPID_LPC43X0_0                0x5906002BUL
+#define CHIPID_LPC43X0_1                0x6906002BUL
+#define CHIPID_LPC43XX_REV_A            0x7906002BUL
+#define CHIPID_LPC43XX_REV_DASH         0x4906002BUL
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC43XX_SYSTEM_DEFS_H_ */

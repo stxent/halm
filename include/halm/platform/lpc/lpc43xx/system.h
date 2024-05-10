@@ -147,6 +147,8 @@ void sysClockEnable(enum SysClockBranch);
 bool sysClockStatus(enum SysClockBranch);
 void sysCoreM0AppRemap(uintptr_t);
 void sysCoreM0SubRemap(uintptr_t);
+void sysCoreM4Remap(uintptr_t);
+bool sysFlashAvailable(void);
 void sysFlashDisable(unsigned int);
 void sysFlashEnable(unsigned int);
 unsigned int sysFlashLatency(void);

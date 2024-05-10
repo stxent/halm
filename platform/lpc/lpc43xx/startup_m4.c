@@ -6,9 +6,12 @@
 
 #include <halm/core/cortex/fpu.h>
 #include <halm/core/cortex/mpu.h>
+#include <halm/core/cortex/nvic.h>
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
 #include <stddef.h>
+
+extern unsigned long _stext;
 /*----------------------------------------------------------------------------*/
 void platformStartup(void)
 {
@@ -80,4 +83,6 @@ void platformStartup(void)
 #ifdef CONFIG_CORE_CORTEX_MPU
   mpuEnable();
 #endif
+
+  nvicSetVectorTableOffset((uint32_t)&_stext);
 }

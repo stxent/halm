@@ -24,8 +24,8 @@
 
 #define CODE_LPC435X            0xA001C830UL
 #define CODE_LPC433X            0xA001CA30UL
-#define CODE_LPC4325_17         0xA001CB3CUL
-#define CODE_LPC4322_13         0xA00BCB3CUL
+#define CODE_LPC4325_27         0xA001CB3CUL
+#define CODE_LPC4322_23         0xA00BCB3CUL
 #define CODE_LPC4315_17         0xA001CB3FUL
 #define CODE_LPC4312_13         0xA00BCB3FUL
 
