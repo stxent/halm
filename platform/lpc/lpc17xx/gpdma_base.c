@@ -27,7 +27,7 @@ const struct EntityClass * const GpDmaBase = &(const struct EntityClass){
     .deinit = NULL /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static const uint8_t EVENT_MAP[] = {
+static const uint8_t dmaEventMap[] = {
     [GPDMA_SSP0_RX]   = 1,
     [GPDMA_SSP1_RX]   = 3,
     [GPDMA_SSP0_TX]   = 0,
@@ -112,7 +112,7 @@ static void dmaControllerInit(void)
 static unsigned int eventToPeripheral(enum GpDmaEvent event)
 {
   assert(event < GPDMA_MEMORY);
-  return EVENT_MAP[event];
+  return dmaEventMap[event];
 }
 /*----------------------------------------------------------------------------*/
 uint32_t gpDmaBaseCalcControl(const struct GpDmaBase *,

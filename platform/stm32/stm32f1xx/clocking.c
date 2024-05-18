@@ -167,8 +167,8 @@ static inline void flashLatencyReset(void)
 /*----------------------------------------------------------------------------*/
 static void flashLatencyUpdate(uint32_t frequency)
 {
-  static const uint32_t step = 24000000;
-  const unsigned int clocks = (frequency + (step - 1)) / step;
+  static const uint32_t frequencyStep = 24000000;
+  const unsigned int clocks = (frequency + (frequencyStep - 1)) / frequencyStep;
 
   sysFlashLatencyUpdate(MIN(clocks, 3));
 }

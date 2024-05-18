@@ -109,12 +109,12 @@ static bool dmaSetup(struct I2C *interface, uint8_t rxStream, uint8_t txStream)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
-  static const uint16_t ERROR_MASK = SR1_BERR | SR1_ARLO | SR1_AF;
+  static const uint16_t errorMask = SR1_BERR | SR1_ARLO | SR1_AF;
 
   struct I2C * const interface = object;
   STM_I2C_Type * const reg = interface->base.reg;
   const uint16_t status = reg->SR1;
-  bool error = (status & ERROR_MASK) != 0;
+  bool error = (status & errorMask) != 0;
   bool event = false;
 
   reg->SR1 = 0;

@@ -107,7 +107,7 @@ static MpuRegion addAttributedRegion(uintptr_t address, size_t size,
 MpuRegion mpuAddRegion(uintptr_t address, size_t size, enum MpuPreset preset,
     enum MpuAccessPermission access, bool executable, bool shareable)
 {
-  static const uint8_t ACCESS_PERMISSION_MAP[] = {
+  static const uint8_t accessPermissionMap[] = {
       [MPU_ACCESS_FULL] = AP_FULL_ACCESS,
       [MPU_ACCESS_NONE] = AP_NO_ACCESS,
       [MPU_ACCESS_READ_ONLY] = AP_READ_ONLY,
@@ -116,9 +116,9 @@ MpuRegion mpuAddRegion(uintptr_t address, size_t size, enum MpuPreset preset,
       [MPU_ACCESS_RO_NA] = AP_RO_NA
   };
 
-  assert(access < ARRAY_SIZE(ACCESS_PERMISSION_MAP));
+  assert(access < ARRAY_SIZE(accessPermissionMap));
 
-  uint32_t attributes = RASR_AP(ACCESS_PERMISSION_MAP[access]);
+  uint32_t attributes = RASR_AP(accessPermissionMap[access]);
 
   switch (preset)
   {

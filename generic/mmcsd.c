@@ -258,7 +258,6 @@ static enum Result initStepReadCSD(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static enum Result initStepReadExtCSD(struct MMCSD *device)
 {
-  static const uint32_t argument = 0;
   static const uint32_t command = SDIO_COMMAND(CMD8_SEND_EXT_CSD,
       MMCSD_RESPONSE_R1, SDIO_DATA_MODE | SDIO_CHECK_CRC);
 
@@ -268,7 +267,7 @@ static enum Result initStepReadExtCSD(struct MMCSD *device)
   res = ifSetParam(device->interface, IF_SDIO_COMMAND, &command);
   if (res != E_OK)
     return res;
-  res = ifSetParam(device->interface, IF_SDIO_ARGUMENT, &argument);
+  res = ifSetParam(device->interface, IF_SDIO_ARGUMENT, &(uint32_t){0});
   if (res != E_OK)
     return res;
 
@@ -618,9 +617,6 @@ static enum Result identifyCard(struct MMCSD *device)
 /*----------------------------------------------------------------------------*/
 static enum Result initializeCard(struct MMCSD *device)
 {
-  static const uint32_t blockSize = DEFAULT_BLOCK_SIZE;
-  static const uint32_t identRate = RATE_ENUMERATION;
-
   uint32_t workRate;
   enum Result res;
 
@@ -643,12 +639,13 @@ static enum Result initializeCard(struct MMCSD *device)
     goto error;
 
   /* Set data block size */
-  res = ifSetParam(device->interface, IF_SDIO_BLOCK_SIZE, &blockSize);
+  res = ifSetParam(device->interface, IF_SDIO_BLOCK_SIZE,
+      &(uint32_t){DEFAULT_BLOCK_SIZE});
   if (res != E_OK)
     goto error;
 
   /* Set low data rate for enumeration purposes */
-  res = ifSetParam(device->interface, IF_RATE, &identRate);
+  res = ifSetParam(device->interface, IF_RATE, &(uint32_t){RATE_ENUMERATION});
   if (res != E_OK)
     goto error;
 

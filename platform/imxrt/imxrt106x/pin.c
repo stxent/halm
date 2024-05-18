@@ -142,7 +142,7 @@ static uint16_t calcControlIndex(uint8_t port, uint8_t number)
 /*----------------------------------------------------------------------------*/
 static IMX_GPIO_Type *calcPortBase(uint8_t port, uint8_t number)
 {
-  static IMX_GPIO_Type * const GPIO_PORTS[] = {
+  static IMX_GPIO_Type * const gpioPortMap[] = {
       IMX_GPIO1,
       IMX_GPIO2,
       IMX_GPIO3,
@@ -153,7 +153,7 @@ static IMX_GPIO_Type *calcPortBase(uint8_t port, uint8_t number)
   if (port == PORT_USB || (port == PORT_SNVS && number >= PIN_SNVS_TEST_MODE))
     return NULL;
 
-  return GPIO_PORTS[port];
+  return gpioPortMap[port];
 }
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)
@@ -172,12 +172,12 @@ static void commonPinInit(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 static void enablePortClock(struct Pin pin)
 {
-  static const enum SysClockBranch GPIO_CLOCKS[] = {
+  static const enum SysClockBranch gpioClockMap[] = {
       CLK_GPIO1, CLK_GPIO2, CLK_GPIO3, CLK_GPIO4, CLK_GPIO5
   };
 
-  if (pin.reg != NULL && !sysClockStatus(GPIO_CLOCKS[pin.port]))
-    sysClockEnable(GPIO_CLOCKS[pin.port]);
+  if (pin.reg != NULL && !sysClockStatus(gpioClockMap[pin.port]))
+    sysClockEnable(gpioClockMap[pin.port]);
 }
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *getMuxControlReg(struct Pin pin)
@@ -198,10 +198,10 @@ static volatile uint32_t *getPadControlReg(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *getPortRemapReg(struct Pin pin)
 {
-  static const uint8_t REMAP_INDICES[] = {26, 27, 28, 29};
+  static const uint8_t portRemapIndices[] = {26, 27, 28, 29};
 
-  return pin.port < ARRAY_SIZE(REMAP_INDICES) ?
-      &IMX_IOMUXC_GPR->GPR[REMAP_INDICES[pin.port]] : NULL;
+  return pin.port < ARRAY_SIZE(portRemapIndices) ?
+      &IMX_IOMUXC_GPR->GPR[portRemapIndices[pin.port]] : NULL;
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)

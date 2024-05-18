@@ -20,11 +20,11 @@ static const UsbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
 
   if (descriptor != NULL)
   {
-    while (*descriptor)
+    while (*descriptor != NULL)
     {
       struct UsbDescriptor header;
 
-      (*descriptor)(driver, &header, 0);
+      (*descriptor)(driver, &header, NULL);
       if (header.descriptorType == type && !index--)
         return descriptor;
       ++descriptor;
@@ -62,7 +62,7 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
   struct UsbDescriptor header;
   uint16_t length = 0;
 
-  (*entry)(driver, &header, 0);
+  (*entry)(driver, &header, NULL);
 
   if (header.descriptorType == DESCRIPTOR_TYPE_CONFIGURATION)
   {
@@ -82,9 +82,9 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
   *responseLength = length;
   memset(response, 0, length);
 
-  while (length && *entry)
+  while (length > 0 && *entry != NULL)
   {
-    (*entry)(driver, &header, 0);
+    (*entry)(driver, &header, NULL);
 
     if (header.descriptorType != DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION)
     {

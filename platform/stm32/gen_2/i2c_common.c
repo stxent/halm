@@ -74,7 +74,7 @@ void i2cRecoverBus(struct I2CBase *interface)
 /*----------------------------------------------------------------------------*/
 void i2cSetRate(struct I2CBase *interface, uint32_t rate)
 {
-  static const uint32_t PERIOD_MUL = ((1ULL << 32) - 1) / (1000000000 >> 4);
+  static const uint32_t periodMul = ((1ULL << 32) - 1) / (1000000000 >> 4);
 
   STM_I2C_Type * const reg = interface->reg;
   /* APB clock frequency in Hz must not exceed 100 MHz */
@@ -91,7 +91,7 @@ void i2cSetRate(struct I2CBase *interface, uint32_t rate)
    *   multiplier = (2^32 - 1) / (1e9 / 16)
    *   period = (2^32 - 1) / ((frequency / 16) * multiplier)
    */
-  const uint32_t period = ((1ULL << 32) - 1) / ((frequency >> 4) * PERIOD_MUL);
+  const uint32_t period = ((1ULL << 32) - 1) / ((frequency >> 4) * periodMul);
   const uint32_t enabled = reg->CR1 & CR1_PE;
   uint32_t clockHigh;
   uint32_t clockLow;
@@ -104,11 +104,11 @@ void i2cSetRate(struct I2CBase *interface, uint32_t rate)
   if (rate > 400000)
   {
     /* For Fast Mode+ duty cycle 0.52 is used */
-    static const uint32_t DATA_SETUP_TIME = 50;
+    static const uint32_t dataSetupTime = 50;
 
     clockLow = (((frequency + rate - 1) / rate) * 21) >> 5;
     dataHold = 0;
-    dataSetup = (DATA_SETUP_TIME + period - 1) / period;
+    dataSetup = (dataSetupTime + period - 1) / period;
 
     /* SCLL and SCLDEL fields are encoded as (value + 1) */
     if (clockLow / TIMINGR_SCLL_MAX > (dataSetup / TIMINGR_SCLDEL_MAX))
@@ -126,16 +126,16 @@ void i2cSetRate(struct I2CBase *interface, uint32_t rate)
     }
 
     clockHigh = (((scaledClock + rate - 1) / rate) * 11 + 31) >> 5;
-    dataSetup = (DATA_SETUP_TIME + scaledPeriod - 1) / scaledPeriod;
+    dataSetup = (dataSetupTime + scaledPeriod - 1) / scaledPeriod;
   }
   else if (rate > 100000)
   {
     /* For Fast Mode duty cycle 0.52 is used */
-    static const uint32_t DATA_HOLD_TIME = 300;
-    static const uint32_t DATA_SETUP_TIME = 100;
+    static const uint32_t dataHoldTime = 300;
+    static const uint32_t dataSetupTime = 100;
 
     clockLow = (((frequency + rate - 1) / rate) * 21) >> 5;
-    dataHold = (DATA_HOLD_TIME + period - 1) / period;
+    dataHold = (dataHoldTime + period - 1) / period;
 
     /* SCLL field is encoded as (value + 1) and SDADEL is encoded as (value) */
     if (clockLow / TIMINGR_SCLL_MAX > (dataHold / TIMINGR_SDADEL_MAX))
@@ -150,20 +150,20 @@ void i2cSetRate(struct I2CBase *interface, uint32_t rate)
     if (prescaler != 1)
     {
       clockLow = (((scaledClock + rate - 1) / rate) * 21) >> 5;
-      dataHold = (DATA_HOLD_TIME + scaledPeriod - 1) / scaledPeriod;
+      dataHold = (dataHoldTime + scaledPeriod - 1) / scaledPeriod;
     }
 
     clockHigh = (((scaledClock + rate - 1) / rate) * 11 + 31) >> 5;
-    dataSetup = (DATA_SETUP_TIME + scaledPeriod - 1) / scaledPeriod;
+    dataSetup = (dataSetupTime + scaledPeriod - 1) / scaledPeriod;
   }
   else
   {
     /* Standard Mode */
-    static const uint32_t DATA_HOLD_TIME = 300;
-    static const uint32_t DATA_SETUP_TIME = 250;
+    static const uint32_t dataHoldTime = 300;
+    static const uint32_t dataSetupTime = 250;
 
     clockLow = ((frequency + rate - 1) / rate) >> 1;
-    dataHold = (DATA_HOLD_TIME + period - 1) / period;
+    dataHold = (dataHoldTime + period - 1) / period;
 
     /* SCLL field is encoded as (value + 1) and SDADEL is encoded as (value) */
     if (clockLow / TIMINGR_SCLL_MAX > (dataHold / TIMINGR_SDADEL_MAX))
@@ -178,11 +178,11 @@ void i2cSetRate(struct I2CBase *interface, uint32_t rate)
     if (prescaler != 1)
     {
       clockLow = ((scaledClock + rate - 1) / rate) >> 1;
-      dataHold = (DATA_HOLD_TIME + scaledPeriod - 1) / scaledPeriod;
+      dataHold = (dataHoldTime + scaledPeriod - 1) / scaledPeriod;
     }
 
     clockHigh = clockLow;
-    dataSetup = (DATA_SETUP_TIME + scaledPeriod - 1) / scaledPeriod;
+    dataSetup = (dataSetupTime + scaledPeriod - 1) / scaledPeriod;
   }
 
   reg->CR1 &= ~CR1_PE;

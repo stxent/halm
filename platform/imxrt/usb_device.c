@@ -702,7 +702,7 @@ static inline struct UsbRequest *epGetHeadRequest(const struct QueueHead *head)
 /*----------------------------------------------------------------------------*/
 static enum EndpointStatus epGetStatus(const struct UsbEndpoint *ep)
 {
-  static const uint32_t TOKEN_ERROR_MASK = TOKEN_STATUS_HALTED
+  static const uint32_t tokenErrorMask = TOKEN_STATUS_HALTED
       | TOKEN_STATUS_BUFFER_ERROR | TOKEN_STATUS_TRANSACTION_ERROR;
 
   const unsigned int index = EP_TO_DESCRIPTOR_NUMBER(ep->address);
@@ -719,7 +719,7 @@ static enum EndpointStatus epGetStatus(const struct UsbEndpoint *ep)
 
   if (reg->ENDPTSETUPSTAT & ENDPT_BIT(ep->address))
     return STATUS_SETUP_PACKET;
-  else if (status & TOKEN_ERROR_MASK)
+  else if (status & tokenErrorMask)
     return STATUS_ERROR;
   else if (!(status & TOKEN_STATUS_ACTIVE))
     return STATUS_DATA_PACKET;

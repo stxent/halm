@@ -463,11 +463,6 @@ const struct ClockClass * const UsbClock =
     .divider = DIVIDER_USB
 };
 /*----------------------------------------------------------------------------*/
-static const PinNumber X32_IN_PIN = PIN(PORT_F, 5);
-static const PinNumber X32_OUT_PIN = PIN(PORT_F, 4);
-static const PinNumber XT1_IN_PIN = PIN(PORT_F, 3);
-static const PinNumber XT1_OUT_PIN = PIN(PORT_F, 2);
-
 static const struct PinEntry clockOutputPins[] = {
     {
         .key = PIN(PORT_A, 3),
@@ -524,7 +519,7 @@ static const struct PinEntry crystalPins[] = {
     }
 };
 
-static const enum ClockSource sourceMap[GROUP_COUNT][SOURCE_COUNT] = {
+static const enum ClockSource clockSourceMap[GROUP_COUNT][SOURCE_COUNT] = {
     [BRANCH_GROUP_ADC_SPI] = {
         CLOCK_EXTERNAL,
         CLOCK_PLL,
@@ -666,7 +661,7 @@ static bool checkClockSource(enum ClockSource source,
 {
   for (size_t index = 0; index < SOURCE_COUNT; ++index)
   {
-    if ((enum ClockSource)sourceMap[group][index] == source)
+    if ((enum ClockSource)clockSourceMap[group][index] == source)
       return true;
   }
 
@@ -691,16 +686,22 @@ static void configCrystalPin(PinNumber key)
 /*----------------------------------------------------------------------------*/
 static void configExtOscPins(bool bypass)
 {
-  configCrystalPin(XT1_IN_PIN);
+  static const PinNumber xt1InPin = PIN(PORT_F, 3);
+  static const PinNumber xt1OutPin = PIN(PORT_F, 2);
+
+  configCrystalPin(xt1InPin);
   if (!bypass)
-    configCrystalPin(XT1_OUT_PIN);
+    configCrystalPin(xt1OutPin);
 }
 /*----------------------------------------------------------------------------*/
 static void configRtcOscPins(bool bypass)
 {
-  configCrystalPin(X32_IN_PIN);
+  static const PinNumber x32InPin = PIN(PORT_F, 5);
+  static const PinNumber x32OutPin = PIN(PORT_F, 4);
+
+  configCrystalPin(x32InPin);
   if (!bypass)
-    configCrystalPin(X32_OUT_PIN);
+    configCrystalPin(x32OutPin);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t getClockDivider(enum ClockDivider divider)
@@ -717,7 +718,7 @@ static uint32_t getClockFrequency(enum ClockBranch branch,
     enum ClockBranchGroup group)
 {
   const uint8_t value = getClockSource(branch);
-  return getSourceFrequency(branch, sourceMap[group][value]);
+  return getSourceFrequency(branch, clockSourceMap[group][value]);
 }
 /*----------------------------------------------------------------------------*/
 static uint8_t getClockSource(enum ClockBranch branch)
@@ -733,7 +734,7 @@ static uint8_t getClockSource(enum ClockBranch branch)
 static uint32_t getSourceFrequency(enum ClockBranch branch,
     enum ClockSource source)
 {
-  static const enum ClockBranch APB0_BRANCHES[] = {
+  static const enum ClockBranch apb0BranchMap[] = {
       BRANCH_BPWM0,
       BRANCH_PWM0,
       BRANCH_TMR0,
@@ -779,9 +780,9 @@ static uint32_t getSourceFrequency(enum ClockBranch branch,
     }
 
     case CLOCK_APB:
-      for (size_t index = 0; index < ARRAY_SIZE(APB0_BRANCHES); ++index)
+      for (size_t index = 0; index < ARRAY_SIZE(apb0BranchMap); ++index)
       {
-        if (APB0_BRANCHES[index] == branch)
+        if (apb0BranchMap[index] == branch)
           return apbBranchFrequency(Apb0Clock);
       }
 
@@ -799,7 +800,7 @@ static void selectClockSource(enum ClockBranch branch, enum ClockSource source,
 
   for (size_t number = 0; number < SOURCE_COUNT; ++number)
   {
-    if ((enum ClockSource)sourceMap[group][number] == source)
+    if ((enum ClockSource)clockSourceMap[group][number] == source)
     {
       value = (uint32_t)number;
       break;

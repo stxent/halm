@@ -742,10 +742,10 @@ static uint32_t pll3Frequency(const void *clockBase)
 /*----------------------------------------------------------------------------*/
 static bool pll3Ready(const void *clockBase)
 {
-  static const uint32_t READY_MASK = PLL_USB_POWER | PLL_LOCK;
+  static const uint32_t pllReadyMask = PLL_USB_POWER | PLL_LOCK;
   const struct PfdClockClass * const clock = clockBase;
 
-  if ((IMX_CCM_ANALOG->PLL_USB1 & READY_MASK) != READY_MASK)
+  if ((IMX_CCM_ANALOG->PLL_USB1 & pllReadyMask) != pllReadyMask)
     return false;
 
   if (clock->pfd < 4)
@@ -792,8 +792,8 @@ static uint32_t pll7Frequency(const void *)
 /*----------------------------------------------------------------------------*/
 static bool pll7Ready(const void *)
 {
-  static const uint32_t READY_MASK = PLL_USB_POWER | PLL_LOCK;
-  return (IMX_CCM_ANALOG->PLL_USB2 & READY_MASK) == READY_MASK;
+  static const uint32_t pllReadyMask = PLL_USB_POWER | PLL_LOCK;
+  return (IMX_CCM_ANALOG->PLL_USB2 & pllReadyMask) == pllReadyMask;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result flexSpi1ClockEnable(const void *, const void *configBase)

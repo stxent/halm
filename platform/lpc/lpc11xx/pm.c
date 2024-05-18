@@ -40,7 +40,7 @@ void pmPlatformChangeState(enum PmState state)
   if (state == PM_SUSPEND)
   {
     /* Prepare magic number */
-    uint32_t config = 0x000018FF;
+    uint32_t config = 0x000018FFUL;
 
 #ifndef CONFIG_PLATFORM_LPC_PM_DISABLE_BOD
     config &= ~(1UL << PWR_BOD);

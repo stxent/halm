@@ -165,7 +165,7 @@ static uint32_t makeCommand(const struct Spifi *interface)
     PACK_DISABLED
   };
 
-  static const uint8_t FRAMEFORM_NO_OPCODE[] = {
+  static const uint8_t frameformOpcodeMap[] = {
       FRAMEFORM_OPCODE,
       FRAMEFORM_OPCODE_ADDRESS_8,
       FRAMEFORM_OPCODE_ADDRESS_16,
@@ -201,7 +201,7 @@ static uint32_t makeCommand(const struct Spifi *interface)
 
   if (interface->command.length != 0)
   {
-    frameform = FRAMEFORM_NO_OPCODE[interface->address.length];
+    frameform = frameformOpcodeMap[interface->address.length];
     packCommand = interface->command.serial ? PACK_SERIAL : PACK_PARALLEL;
   }
   else
@@ -413,10 +413,8 @@ static enum Result spifiInit(void *object, const void *configBase)
   else
     control |= CTRL_TIMEOUT(CTRL_TIMEOUT_MAX);
 
-  // TODO Configure RFCLK, FBCLK
   if (config->mode == 3)
     control |= CTRL_MODE3;
-
   if (!interface->base.wide)
     control |= CTRL_DUAL;
 

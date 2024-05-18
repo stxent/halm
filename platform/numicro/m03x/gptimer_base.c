@@ -192,7 +192,7 @@ uint32_t gpTimerGetClock(const struct GpTimerBase *timer)
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
-  static NM_TIMER_Type * const TIMER_BLOCKS[] = {
+  static NM_TIMER_Type * const timerBlockMap[] = {
       NM_TIMER0, NM_TIMER1, NM_TIMER2, NM_TIMER3
   };
 
@@ -210,7 +210,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   timer->channel = config->channel;
   timer->handler = NULL;
   timer->irq = TMR0_IRQ + config->channel;
-  timer->reg = TIMER_BLOCKS[config->channel];
+  timer->reg = timerBlockMap[config->channel];
 
   return E_OK;
 }

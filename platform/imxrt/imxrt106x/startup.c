@@ -16,7 +16,7 @@ extern unsigned long _stext;
 void platformStartup(void)
 {
   /* CLK_XBAR1, CLK_XBAR2, CLK_SEMC are disabled by default */
-  static const enum SysClockBranch CLOCKS_TO_DISABLE[] = {
+  static const enum SysClockBranch clocksToDisable[] = {
       CLK_MQS,
       CLK_DCP,
       CLK_LPUART3,
@@ -95,17 +95,17 @@ void platformStartup(void)
       CLK_CAN3_SERIAL,
       CLK_FLEXIO3
   };
-  static const enum SysClockBranch CLOCKS_TO_ENABLE[] = {
+  static const enum SysClockBranch clocksToEnable[] = {
       CLK_IOMUXC_SNVS_GPR,
       CLK_IOMUXC_SNVS,
       CLK_IOMUXC,
       CLK_IOMUXC_GPR
   };
 
-  for (size_t index = 0; index < ARRAY_SIZE(CLOCKS_TO_DISABLE); ++index)
-    sysClockDisable(CLOCKS_TO_DISABLE[index]);
-  for (size_t index = 0; index < ARRAY_SIZE(CLOCKS_TO_ENABLE); ++index)
-    sysClockEnable(CLOCKS_TO_ENABLE[index]);
+  for (size_t index = 0; index < ARRAY_SIZE(clocksToDisable); ++index)
+    sysClockDisable(clocksToDisable[index]);
+  for (size_t index = 0; index < ARRAY_SIZE(clocksToEnable); ++index)
+    sysClockEnable(clocksToEnable[index]);
 
 #ifdef CONFIG_CORE_CORTEX_FPU
   fpuEnable();

@@ -204,10 +204,10 @@ void ethConfigPins(struct EthernetBase *interface,
     INTERFACE_MII
   };
 
-  static const uint32_t MIIM_MINIMAL_MASK =
+  static const uint32_t miimMinimalMask =
       1UL << CHANNEL_MDC
       | 1UL << CHANNEL_MDIO;
-  static const uint32_t MII_MINIMAL_MASK =
+  static const uint32_t miiMinimalMask =
       1UL << CHANNEL_RX_CLK
       | 1UL << CHANNEL_TX_CLK
       | 1UL << CHANNEL_CRS
@@ -220,7 +220,7 @@ void ethConfigPins(struct EthernetBase *interface,
       | 1UL << CHANNEL_TXD1
       | 1UL << CHANNEL_TXD2
       | 1UL << CHANNEL_TXD3;
-  static const uint32_t RMII_MINIMAL_MASK =
+  static const uint32_t rmiiMinimalMask =
       1UL << CHANNEL_TX_CLK
       | 1UL << CHANNEL_RX_DV
       | 1UL << CHANNEL_RXD0
@@ -270,14 +270,14 @@ void ethConfigPins(struct EthernetBase *interface,
 
   enum InterfaceType type = INTERFACE_UNDEFINED;
 
-  if ((used & MII_MINIMAL_MASK) == MII_MINIMAL_MASK)
+  if ((used & miiMinimalMask) == miiMinimalMask)
     type = INTERFACE_MII;
-  else if ((used & RMII_MINIMAL_MASK) == RMII_MINIMAL_MASK)
+  else if ((used & rmiiMinimalMask) == rmiiMinimalMask)
     type = INTERFACE_RMII;
 
   assert(type != INTERFACE_UNDEFINED);
 
-  interface->miim = ((used & MIIM_MINIMAL_MASK) == MIIM_MINIMAL_MASK);
+  interface->miim = ((used & miimMinimalMask) == miimMinimalMask);
   interface->rmii = type == INTERFACE_RMII;
 }
 /*----------------------------------------------------------------------------*/

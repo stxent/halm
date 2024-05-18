@@ -45,7 +45,7 @@ enum State
   STATE_ERROR,
   STATE_SUSPEND
 };
-/*----------------------------------------------------------------------------*/
+
 struct StateEntry
 {
   enum State (*enter)(struct Msc *);

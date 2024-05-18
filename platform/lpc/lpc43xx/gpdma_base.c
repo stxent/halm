@@ -39,7 +39,7 @@ const struct EntityClass * const GpDmaBase = &(const struct EntityClass){
     .deinit = channelDeinit
 };
 /*----------------------------------------------------------------------------*/
-static const enum GpDmaEvent EVENT_MAP[EVENT_COUNT][EVENT_SOURCES] = {
+static const enum GpDmaEvent dmaEventMap[EVENT_COUNT][EVENT_SOURCES] = {
     {GPDMA_SPIFI,   GPDMA_SCT_OUT2,   GPDMA_SGPIO14,    GPDMA_MAT3_1},
     {GPDMA_MAT0_0,  GPDMA_UART0_TX,   GPDMA_EVENT_END,  GPDMA_EVENT_END},
     {GPDMA_MAT0_1,  GPDMA_UART0_RX,   GPDMA_EVENT_END,  GPDMA_EVENT_END},
@@ -204,7 +204,7 @@ static unsigned int dmaControllerAllocate(struct GpDmaBase *channel,
 
     do
     {
-      if (EVENT_MAP[index][entry] == event)
+      if (dmaEventMap[index][entry] == event)
       {
         allowed = true;
         break;

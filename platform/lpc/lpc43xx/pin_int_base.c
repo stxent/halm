@@ -31,7 +31,7 @@ static IrqNumber findIrqNumber(uint8_t channel)
 {
   /* In M0APP and M0SUB cores only one interrupt vector is implemented */
 
-  static const IrqNumber IRQ_TABLE[] = {
+  static const IrqNumber irqVectorMap[] = {
       PIN_INT0_IRQ,
       PIN_INT1_IRQ,
       PIN_INT2_IRQ,
@@ -42,7 +42,7 @@ static IrqNumber findIrqNumber(uint8_t channel)
       PIN_INT7_IRQ
   };
 
-  return IRQ_TABLE[channel];
+  return irqVectorMap[channel];
 }
 /*----------------------------------------------------------------------------*/
 static int setInstance(struct PinIntBase *interrupt)

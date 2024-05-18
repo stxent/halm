@@ -203,7 +203,7 @@ static void pinIntHandlerDetach(struct PinInt *interrupt)
 /*----------------------------------------------------------------------------*/
 static enum Result pinIntHandlerInit(void *object, const void *configBase)
 {
-  static const IrqNumber IRQ_MAP[] = {
+  static const IrqNumber irqVectorMap[] = {
       GPA_IRQ, GPB_IRQ, GPC_IRQ, GPD_IRQ,
       GPE_IRQ, GPF_IRQ, GPG_IRQ, GPH_IRQ
   };
@@ -212,7 +212,7 @@ static enum Result pinIntHandlerInit(void *object, const void *configBase)
   struct PinIntHandler * const handler = object;
 
   pointerListInit(&handler->list);
-  irqEnable(IRQ_MAP[config->port]);
+  irqEnable(irqVectorMap[config->port]);
 
   return E_OK;
 }

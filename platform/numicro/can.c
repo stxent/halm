@@ -198,8 +198,8 @@ static bool calcSegments(uint8_t width, uint8_t *tseg1, uint8_t *tseg2)
 static bool calcTimings(const struct Can *interface, uint32_t rate,
     uint32_t *result, uint32_t *extension)
 {
-  static const uint8_t MAX_WIDTH = BTIME_TSEG1_MAX + BTIME_TSEG2_MAX + 3;
-  static const uint8_t MIN_WIDTH = BTIME_TSEG1_MIN + 3;
+  static const uint8_t maxWidth = BTIME_TSEG1_MAX + BTIME_TSEG2_MAX + 3;
+  static const uint8_t minWidth = BTIME_TSEG1_MIN + 3;
 
   if (!rate)
     return false;
@@ -212,7 +212,7 @@ static bool calcTimings(const struct Can *interface, uint32_t rate,
   uint8_t currentSeg1;
   uint8_t currentSeg2;
 
-  for (uint8_t width = MAX_WIDTH; width >= MIN_WIDTH; --width)
+  for (uint8_t width = maxWidth; width >= minWidth; --width)
   {
     const uint32_t clock = rate * width;
     const uint32_t error = apbClock % clock;

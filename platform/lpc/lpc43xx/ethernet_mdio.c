@@ -125,8 +125,8 @@ static enum Result mdioSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t mdioRead(void *object, void *buffer, size_t length)
 {
-  static const uint32_t ADDR_MASK = MAC_MII_ADDR_GR_MASK | MAC_MII_ADDR_PA_MASK
-      | MAC_MII_ADDR_W;
+  static const uint32_t miiAddrMask =
+      MAC_MII_ADDR_GR_MASK | MAC_MII_ADDR_PA_MASK | MAC_MII_ADDR_W;
 
   if (length < sizeof(uint16_t))
     return 0;
@@ -134,7 +134,7 @@ static size_t mdioRead(void *object, void *buffer, size_t length)
   struct MDIO * const interface = object;
   LPC_ETHERNET_Type * const reg = interface->parent->base.reg;
 
-  reg->MAC_MII_ADDR = (reg->MAC_MII_ADDR & ~ADDR_MASK)
+  reg->MAC_MII_ADDR = (reg->MAC_MII_ADDR & ~miiAddrMask)
       | MAC_MII_ADDR_PA(interface->address)
       | MAC_MII_ADDR_GR(interface->position);
 
@@ -152,7 +152,8 @@ static size_t mdioRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t mdioWrite(void *object, const void *buffer, size_t length)
 {
-  static const uint32_t ADDR_MASK = MAC_MII_ADDR_GR_MASK | MAC_MII_ADDR_PA_MASK;
+  static const uint32_t miiAddrMask =
+      MAC_MII_ADDR_GR_MASK | MAC_MII_ADDR_PA_MASK;
 
   if (length < sizeof(uint16_t))
     return 0;
@@ -160,7 +161,7 @@ static size_t mdioWrite(void *object, const void *buffer, size_t length)
   struct MDIO * const interface = object;
   LPC_ETHERNET_Type * const reg = interface->parent->base.reg;
 
-  reg->MAC_MII_ADDR = (reg->MAC_MII_ADDR & ~ADDR_MASK)
+  reg->MAC_MII_ADDR = (reg->MAC_MII_ADDR & ~miiAddrMask)
       | MAC_MII_ADDR_PA(interface->address)
       | MAC_MII_ADDR_GR(interface->position)
       | MAC_MII_ADDR_W;
