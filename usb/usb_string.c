@@ -1,24 +1,19 @@
 /*
  * usb_string.c
- * Copyright (C) 2016 xent
+ * Copyright (C) 2016, 2024 xent
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/usb/usb_control_defs.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_string.h>
 #include <xcore/memory.h>
 #include <xcore/unicode.h>
 #include <assert.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
-struct UsbStringDescriptor
-{
-  uint8_t length;
-  uint8_t descriptorType;
-  uint16_t data[];
-};
-
-static_assert(offsetof(struct UsbStringDescriptor, data) ==
-    offsetof(struct UsbDescriptor, data), "Incorrect type declaration");
+#define MAX_STRING_LENGTH \
+    (MIN(STRING_DESCRIPTOR_TEXT_LIMIT, DATA_BUFFER_SIZE - 2) / 2)
 /*----------------------------------------------------------------------------*/
 struct UsbString usbStringBuild(UsbStringFunctor functor, const void *argument,
     enum UsbStringType type, unsigned int number)
@@ -50,45 +45,73 @@ struct UsbString usbStringBuildCustom(UsbStringFunctor functor,
 void usbStringHeader(struct UsbDescriptor *header, void *payload,
     enum UsbLangId langid)
 {
-  header->length = sizeof(struct UsbStringDescriptor) + sizeof(uint16_t);
-  header->descriptorType = DESCRIPTOR_TYPE_STRING;
+  const struct UsbDescriptor descriptor = {
+      .length = sizeof(struct UsbDescriptor) + sizeof(uint16_t),
+      .descriptorType = DESCRIPTOR_TYPE_STRING
+  };
+
+  memcpy(header, &descriptor, sizeof(descriptor));
 
   if (payload != NULL)
   {
-    struct UsbStringDescriptor * const descriptor = payload;
-    descriptor->data[0] = toLittleEndian16(langid);
+    const uint16_t value = toLittleEndian16(langid);
+    uint8_t *buffer = payload;
+
+    memcpy(buffer, &descriptor, sizeof(descriptor));
+    memcpy(buffer + sizeof(descriptor), &value, sizeof(value));
+    buffer += sizeof(descriptor);
   }
 }
 /*----------------------------------------------------------------------------*/
 void usbStringMultiHeader(struct UsbDescriptor *header, void *payload,
     const enum UsbLangId *languages, size_t count)
 {
-  assert(count >= 1);
+  assert(count >= 1 && count <= MAX_STRING_LENGTH);
 
-  header->length = sizeof(struct UsbStringDescriptor)
-      + sizeof(uint16_t) * count;
-  header->descriptorType = DESCRIPTOR_TYPE_STRING;
+  const struct UsbDescriptor descriptor = {
+      .length = sizeof(struct UsbDescriptor) + sizeof(uint16_t) * count,
+      .descriptorType = DESCRIPTOR_TYPE_STRING
+  };
+
+  memcpy(header, &descriptor, sizeof(descriptor));
 
   if (payload != NULL)
   {
-    struct UsbStringDescriptor * const descriptor = payload;
+    uint8_t *buffer = payload;
+
+    memcpy(buffer, &descriptor, sizeof(descriptor));
+    buffer += sizeof(descriptor);
 
     for (size_t index = 0; index < count; ++index)
-      descriptor->data[index] = toLittleEndian16(languages[index]);
+    {
+      const uint16_t value = toLittleEndian16(languages[index]);
+
+      memcpy(buffer, &value, sizeof(value));
+      buffer += sizeof(value);
+    }
   }
 }
 /*----------------------------------------------------------------------------*/
 void usbStringWrap(struct UsbDescriptor *header, void *payload,
     const char *text)
 {
-  const size_t textLength = uLengthToUtf16(text);
+  const size_t length = uLengthToUtf16(text);
+  assert(length + 1 <= MAX_STRING_LENGTH);
 
-  header->length = sizeof(struct UsbDescriptor) + textLength * 2;
-  header->descriptorType = DESCRIPTOR_TYPE_STRING;
+  const struct UsbDescriptor descriptor = {
+      .length = sizeof(struct UsbDescriptor) + sizeof(char16_t) * length,
+      .descriptorType = DESCRIPTOR_TYPE_STRING
+  };
+
+  memcpy(header, &descriptor, sizeof(descriptor));
 
   if (payload != NULL)
   {
-    struct UsbStringDescriptor * const descriptor = payload;
-    uToUtf16((char16_t *)descriptor->data, text, textLength + 1);
+    char16_t converted[MAX_STRING_LENGTH];
+    uint8_t *buffer = payload;
+
+    uToUtf16(converted, text, length + 1);
+    memcpy(buffer, &descriptor, sizeof(descriptor));
+    memcpy(buffer + sizeof(descriptor), converted, sizeof(char16_t) * length);
   }
 }

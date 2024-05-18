@@ -96,15 +96,24 @@ static void deviceDescriptor(const void *, struct UsbDescriptor *header,
 
   if (payload != NULL)
   {
-    struct UsbDeviceDescriptor * const descriptor = payload;
+    const struct UsbDeviceDescriptor descriptor = {
+        .length = sizeof(struct UsbDeviceDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_DEVICE,
+        .usb = TO_LITTLE_ENDIAN_16(0x0200),
+        .deviceClass = USB_CLASS_MISCELLANEOUS,
+        .deviceSubClass = 0x02, /* Required for multiple IAD */
+        .deviceProtocol = 0x01, /* Required for multiple IAD */
+        .maxPacketSize = TO_LITTLE_ENDIAN_16(COMPOSITE_CONTROL_EP_SIZE),
+        .idVendor = 0,
+        .idProduct = 0,
+        .device = TO_LITTLE_ENDIAN_16(0x0100),
+        .manufacturer = 0,
+        .product = 0,
+        .serialNumber = 0,
+        .numConfigurations = 1
+    };
 
-    descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
-    descriptor->deviceClass = USB_CLASS_MISCELLANEOUS;
-    descriptor->deviceSubClass = 0x02; /* Required for multiple IAD */
-    descriptor->deviceProtocol = 0x01; /* Required for multiple IAD */
-    descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(COMPOSITE_CONTROL_EP_SIZE);
-    descriptor->device = TO_LITTLE_ENDIAN_16(0x0100);
-    descriptor->numConfigurations = 1;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -120,14 +129,20 @@ static void configDescriptor(const void *object, struct UsbDescriptor *header,
   if (payload == NULL)
     return;
 
-  struct UsbConfigurationDescriptor * const descriptor = payload;
+  const struct UsbConfigurationDescriptor descriptor = {
+      .length = sizeof(struct UsbConfigurationDescriptor),
+      .descriptorType = DESCRIPTOR_TYPE_CONFIGURATION,
+      .totalLength = toLittleEndian16(device->configurationLength),
+      .numInterfaces = device->interfaceCount,
+      .configurationValue = 1,
+      .configuration = 0,
+      .attributes = 0,
+      .maxPower = 0
+  };
+  uint8_t *payloadPosition = payload;
 
-  descriptor->totalLength = toLittleEndian16(device->configurationLength);
-  descriptor->numInterfaces = device->interfaceCount;
-  descriptor->configurationValue = 1;
-
-  uint8_t *payloadPosition = (uint8_t *)payload
-      + sizeof(struct UsbConfigurationDescriptor);
+  memcpy(payloadPosition, &descriptor, sizeof(descriptor));
+  payloadPosition += sizeof(descriptor);
 
   PointerListNode *current = pointerListFront(&driver->owner->entries);
 

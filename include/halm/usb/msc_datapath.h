@@ -7,44 +7,13 @@
 #ifndef HALM_USB_MSC_DATAPATH_H_
 #define HALM_USB_MSC_DATAPATH_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/generic/pointer_array.h>
-#include <halm/generic/pointer_queue.h>
-#include <halm/usb/msc_defs.h>
-#include <halm/usb/usb_request.h>
-#include <halm/usb/usb.h>
+#include <xcore/error.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 struct Msc;
-
-struct MscQuery
-{
-  uint64_t position;
-  uintptr_t data;
-  size_t capacity;
-  size_t length;
-  size_t offset;
-};
-
-struct MscQueryHandler
-{
-  struct Msc *driver;
-  void (*trampoline)(struct Msc *);
-
-  PointerArray usbPool;
-  PointerQueue usbQueue;
-
-  size_t currentQueryLength;
-  uint64_t currentQueryPosition;
-  enum Result currentStatus;
-
-  PointerArray queryPool;
-  PointerQueue storageQueries;
-  PointerQueue usbQueries;
-
-  /* Preallocated data */
-  struct CSW csw;
-  struct MscQuery queries[2];
-  struct UsbRequest headers[DATA_QUEUE_SIZE];
-};
+struct MscQueryHandler;
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 

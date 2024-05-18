@@ -65,13 +65,24 @@ static void deviceDescriptor(const void *, struct UsbDescriptor *header,
 
   if (payload != NULL)
   {
-    struct UsbDeviceDescriptor * const descriptor = payload;
+    static const struct UsbDeviceDescriptor descriptor = {
+        .length = sizeof(struct UsbDeviceDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_DEVICE,
+        .usb = TO_LITTLE_ENDIAN_16(0x0200),
+        .deviceClass = USB_CLASS_PER_INTERFACE,
+        .deviceSubClass = 0,
+        .deviceProtocol = 0,
+        .maxPacketSize = TO_LITTLE_ENDIAN_16(HID_CONTROL_EP_SIZE),
+        .idVendor = 0,
+        .idProduct = 0,
+        .device = TO_LITTLE_ENDIAN_16(0x0100),
+        .manufacturer = 0,
+        .product = 0,
+        .serialNumber = 0,
+        .numConfigurations = 1
+    };
 
-    descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
-    descriptor->deviceClass = USB_CLASS_PER_INTERFACE;
-    descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(HID_CONTROL_EP_SIZE);
-    descriptor->device = TO_LITTLE_ENDIAN_16(0x0100);
-    descriptor->numConfigurations = 1;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -83,15 +94,22 @@ static void configDescriptor(const void *, struct UsbDescriptor *header,
 
   if (payload != NULL)
   {
-    struct UsbConfigurationDescriptor * const descriptor = payload;
+    static const struct UsbConfigurationDescriptor descriptor = {
+        .length = sizeof(struct UsbConfigurationDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_CONFIGURATION,
+        .totalLength = TO_LITTLE_ENDIAN_16(
+            sizeof(struct UsbConfigurationDescriptor)
+            + sizeof(struct UsbInterfaceDescriptor)
+            + sizeof(struct SingleHidDescriptor)
+            + sizeof(struct UsbEndpointDescriptor)),
+        .numInterfaces = 1,
+        .configurationValue = 1,
+        .configuration = 0,
+        .attributes = 0,
+        .maxPower = 0
+    };
 
-    descriptor->totalLength = TO_LITTLE_ENDIAN_16(
-        sizeof(struct UsbConfigurationDescriptor)
-        + sizeof(struct UsbInterfaceDescriptor)
-        + sizeof(struct SingleHidDescriptor)
-        + sizeof(struct UsbEndpointDescriptor));
-    descriptor->numInterfaces = 1;
-    descriptor->configurationValue = 1;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -105,13 +123,19 @@ static void interfaceDescriptor(const void *object,
 
   if (payload != NULL)
   {
-    struct UsbInterfaceDescriptor * const descriptor = payload;
+    const struct UsbInterfaceDescriptor descriptor = {
+        .length = sizeof(struct UsbInterfaceDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_INTERFACE,
+        .interfaceNumber = driver->interfaceIndex,
+        .alternateSettings = 0,
+        .numEndpoints = 1,
+        .interfaceClass = USB_CLASS_HID,
+        .interfaceSubClass = HID_SUBCLASS_NONE,
+        .interfaceProtocol = HID_PROTOCOL_NONE,
+        .interface = 0
+    };
 
-    descriptor->interfaceNumber = driver->interfaceIndex;
-    descriptor->numEndpoints = 1;
-    descriptor->interfaceClass = USB_CLASS_HID;
-    descriptor->interfaceSubClass = HID_SUBCLASS_NONE;
-    descriptor->interfaceProtocol = HID_PROTOCOL_NONE;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -125,13 +149,23 @@ static void hidDescriptor(const void *object,
 
   if (payload != NULL)
   {
-    struct SingleHidDescriptor * const descriptor = payload;
+    struct SingleHidDescriptor descriptor = {
+        .base = {
+            .length = sizeof(struct SingleHidDescriptor),
+            .descriptorType = DESCRIPTOR_TYPE_HID,
+            .hid = TO_LITTLE_ENDIAN_16(0x0100),
+            .countryCode = 0,
+            .numDescriptors = 1
+        },
+        .entries = {
+            {
+                .type = DESCRIPTOR_TYPE_HID_REPORT,
+                .length = toLittleEndian16(driver->reportDescriptorSize)
+            }
+        }
+    };
 
-    descriptor->base.hid = TO_LITTLE_ENDIAN_16(0x0100);
-    descriptor->base.numDescriptors = 1;
-    descriptor->entries[0].type = DESCRIPTOR_TYPE_HID_REPORT;
-    descriptor->entries[0].length =
-        toLittleEndian16(driver->reportDescriptorSize);
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -145,12 +179,16 @@ static void endpointDescriptor(const void *object,
 
   if (payload != NULL)
   {
-    struct UsbEndpointDescriptor * const descriptor = payload;
+    const struct UsbEndpointDescriptor descriptor = {
+        .length = sizeof(struct UsbEndpointDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_ENDPOINT,
+        .endpointAddress = driver->endpointAddress,
+        .attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_INTERRUPT),
+        .maxPacketSize = toLittleEndian16(driver->reportDescriptorSize),
+        .interval = 0x20 /* TODO */
+    };
 
-    descriptor->endpointAddress = driver->endpointAddress;
-    descriptor->attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_INTERRUPT);
-    descriptor->maxPacketSize = toLittleEndian16(driver->reportDescriptorSize);
-    descriptor->interval = 0x20; /* TODO */
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/

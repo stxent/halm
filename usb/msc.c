@@ -7,6 +7,7 @@
 #include <halm/irq.h>
 #include <halm/usb/msc.h>
 #include <halm/usb/msc_datapath.h>
+#include <halm/usb/msc_private.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_trace.h>
 #include <xcore/memory.h>
@@ -183,14 +184,14 @@ static enum State stateIdleRun(struct Msc *driver)
   driver->context.cbw.tag = cbw->tag;
   driver->context.cbw.flags = cbw->flags;
   driver->context.cbw.lun = cbw->lun;
-  memcpy(driver->context.cbw.cb, cbw->cb, sizeof(driver->context.cbw.cb));
+  memcpy(driver->context.cbw.cb.raw, cbw->cb, sizeof(cbw->cb));
 
   driver->context.left = cbw->dataTransferLength;
 
   if (driver->context.cbw.lun >= ARRAY_SIZE(driver->lun))
     return STATE_FAILURE;
 
-  switch (driver->context.cbw.cb[0])
+  switch (driver->context.cbw.cb.raw[0])
   {
     case SCSI_TEST_UNIT_READY:
       return STATE_TEST_UNIT_READY;
@@ -233,7 +234,8 @@ static enum State stateIdleRun(struct Msc *driver)
       driver->lun[driver->context.cbw.lun].sense = SCSI_SK_ILLEGAL_REQUEST;
       driver->lun[driver->context.cbw.lun].asc = SCSI_ASC_IR_INVALIDCOMMAND;
 
-      usbTrace("msc: unsupported command 0x%02X", driver->context.cbw.cb[0]);
+      usbTrace("msc: unsupported command 0x%02X",
+          driver->context.cbw.cb.raw[0]);
       return STATE_FAILURE;
   }
 }
@@ -272,36 +274,37 @@ static enum State stateRequestSenseEnter(struct Msc *driver)
   if (!isInputDataValid(driver->context.cbw.length, driver->context.cbw.flags))
     return STATE_ERROR;
 
-  struct RequestSenseData * const buffer = driver->buffer;
+  struct RequestSenseData response;
   const size_t index = driver->context.cbw.lun;
 
-  memset(buffer, 0, sizeof(struct RequestSenseData));
-  buffer->responseCode = 0x70;
-  buffer->additionalSenseLength = sizeof(struct RequestSenseData) - 8;
+  memset(&response, 0, sizeof(response));
+  response.responseCode = 0x70;
+  response.additionalSenseLength = sizeof(struct RequestSenseData) - 8;
 
   if (index >= ARRAY_SIZE(driver->lun))
   {
-    buffer->flags = SCSI_SK_ILLEGAL_REQUEST;
-    buffer->additionalSenseCode = (uint8_t)(SCSI_ASC_IR_INVALIDLUN >> 8);
-    buffer->additionalSenseCodeQualifier = (uint8_t)SCSI_ASC_IR_INVALIDLUN;
+    response.flags = SCSI_SK_ILLEGAL_REQUEST;
+    response.additionalSenseCode = (uint8_t)(SCSI_ASC_IR_INVALIDLUN >> 8);
+    response.additionalSenseCodeQualifier = (uint8_t)SCSI_ASC_IR_INVALIDLUN;
   }
   else
   {
-    buffer->flags = driver->lun[index].sense;
-    buffer->additionalSenseCode = (uint8_t)(driver->lun[index].asc >> 8);
-    buffer->additionalSenseCodeQualifier = (uint8_t)driver->lun[index].asc;
+    response.flags = driver->lun[index].sense;
+    response.additionalSenseCode = (uint8_t)(driver->lun[index].asc >> 8);
+    response.additionalSenseCodeQualifier = (uint8_t)driver->lun[index].asc;
 
     /* Clear error */
     driver->lun[index].sense = SCSI_SK_NO_SENSE;
     driver->lun[index].asc = SCSI_ASC_NOSENSE;
   }
 
-  usbTrace("msc: request sense 0x%06X", buffer->flags << 16
-      | buffer->additionalSenseCode << 8
-      | buffer->additionalSenseCodeQualifier);
+  usbTrace("msc: request sense 0x%06X", response.flags << 16
+      | response.additionalSenseCode << 8
+      | response.additionalSenseCodeQualifier);
 
+  memcpy(driver->buffer, &response, sizeof(response));
   return sendResponse(driver, driver->context.cbw.tag,
-      driver->context.cbw.length, buffer, sizeof(struct RequestSenseData));
+      driver->context.cbw.length, driver->buffer, sizeof(response));
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateInquiryEnter(struct Msc *driver)
@@ -310,38 +313,39 @@ static enum State stateInquiryEnter(struct Msc *driver)
     return STATE_ERROR;
 
   static const char version[] = "1.00";
-  struct InquiryData * const buffer = driver->buffer;
+  struct InquiryData response;
 
-  memset(buffer, 0, sizeof(struct InquiryData));
+  memset(&response, 0, sizeof(response));
 
-  buffer->peripheralDeviceType = PDT_DIRECT_ACCESS_BLOCK_DEVICE;
-  buffer->version = 0;
-  buffer->additionalLength = 32;
+  response.peripheralDeviceType = PDT_DIRECT_ACCESS_BLOCK_DEVICE;
+  response.version = 0;
+  response.additionalLength = 32;
 
-  buffer->flags0 = INQUIRY_FLAGS_0_RMB;
+  response.flags0 = INQUIRY_FLAGS_0_RMB;
   /* Response Data Format should be set to a fixed value of 2 */
-  buffer->flags1 = INQUIRY_FLAGS_1_RDF(2);
-  buffer->flags2 = INQUIRY_FLAGS_2_SCCS;
-  buffer->flags3 = 0x00;
-  buffer->flags4 = 0x00;
+  response.flags1 = INQUIRY_FLAGS_1_RDF(2);
+  response.flags2 = INQUIRY_FLAGS_2_SCCS;
+  response.flags3 = 0x00;
+  response.flags4 = 0x00;
 
-  memset(buffer->vendorIdentification, ' ',
-      sizeof(buffer->vendorIdentification));
-  memset(buffer->productIdentification, ' ',
-      sizeof(buffer->productIdentification));
-  memcpy(buffer->productRevisionLevel, version,
-      sizeof(buffer->productRevisionLevel));
+  memset(response.vendorIdentification, ' ',
+      sizeof(response.vendorIdentification));
+  memset(response.productIdentification, ' ',
+      sizeof(response.productIdentification));
+  memcpy(response.productRevisionLevel, version,
+      sizeof(response.productRevisionLevel));
 
   usbTrace("msc: inquiry");
 
+  memcpy(driver->buffer, &response, sizeof(response));
   return sendResponse(driver, driver->context.cbw.tag,
-      driver->context.cbw.length, buffer, sizeof(struct InquiryData));
+      driver->context.cbw.length, driver->buffer, sizeof(response));
 }
 /*----------------------------------------------------------------------------*/
 static enum State stateMediumRemovalEnter(struct Msc *driver)
 {
   const struct PreventAllowMediumRemovalCommand * const command =
-      (const struct PreventAllowMediumRemovalCommand *)driver->context.cbw.cb;
+      &driver->context.cbw.cb.mediumRemoval;
   const size_t index = driver->context.cbw.lun;
 
   if (driver->lun[index].interface)
@@ -379,33 +383,35 @@ static enum State stateModeSenseEnter(struct Msc *driver)
 
   size_t length;
 
-  if (driver->context.cbw.cb[0] == SCSI_MODE_SENSE6)
+  if (driver->context.cbw.cb.raw[0] == SCSI_MODE_SENSE6)
   {
-    struct ModeParameterHeader6 * const buffer = driver->buffer;
+    struct ModeParameterHeader6 response;
 
-    length = sizeof(struct ModeParameterHeader6);
-
-    buffer->modeDataLength = 3;
-    buffer->mediumType = 0;
-    buffer->deviceSpecificParameter = 0;
-    buffer->blockDescriptorLength = 0;
+    response.modeDataLength = 3;
+    response.mediumType = 0;
+    response.deviceSpecificParameter = 0;
+    response.blockDescriptorLength = 0;
 
     usbTrace("msc: mode sense 6");
+
+    memcpy(driver->buffer, &response, sizeof(response));
+    length = sizeof(response);
   }
   else
   {
-    struct ModeParameterHeader10 * const buffer = driver->buffer;
+    struct ModeParameterHeader10 response;
 
-    length = sizeof(struct ModeParameterHeader10);
-    memset(buffer, 0, length); /* Clear reserved fields */
-
-    buffer->modeDataLength = TO_BIG_ENDIAN_16(6);
-    buffer->mediumType = 0;
-    buffer->deviceSpecificParameter = 0;
-    buffer->flags = 0;
-    buffer->blockDescriptorLength = TO_BIG_ENDIAN_16(0);
+    memset(&response, 0, sizeof(response)); /* Clear reserved fields */
+    response.modeDataLength = TO_BIG_ENDIAN_16(6);
+    response.mediumType = 0;
+    response.deviceSpecificParameter = 0;
+    response.flags = 0;
+    response.blockDescriptorLength = TO_BIG_ENDIAN_16(0);
 
     usbTrace("msc: mode sense 10");
+
+    memcpy(driver->buffer, &response, sizeof(response));
+    length = sizeof(response);
   }
 
   return sendResponse(driver, driver->context.cbw.tag,
@@ -459,22 +465,23 @@ static enum State stateReadFormatCapacitiesEnter(struct Msc *driver)
   if (driver->lun[index].interface)
   {
     /* TODO MSC constants */
-    struct ReadFormatCapacitiesData * const buffer = driver->buffer;
+    struct ReadFormatCapacitiesData response;
 
-    memset(buffer->header.reserved, 0, sizeof(buffer->header.reserved));
-    buffer->header.capacityListLength = 8;
+    memset(response.header.reserved, 0, sizeof(response.header.reserved));
+    response.header.capacityListLength = 8;
 
-    buffer->descriptors[0].numberOfBlocks =
+    response.descriptors[0].numberOfBlocks =
         toBigEndian32(driver->lun[index].blocks);
-    buffer->descriptors[0].flags = 0x02; /* Descriptor Type: Formatted Medium */
-    toBigEndian24(buffer->descriptors[0].blockLength, driver->blockSize);
+    /* Descriptor Type: Formatted Medium */
+    response.descriptors[0].flags = 0x02;
+    toBigEndian24(response.descriptors[0].blockLength, driver->blockSize);
 
     usbTrace("msc: read format capacity, %"PRIu32" blocks",
         driver->lun[index].blocks);
 
-    return sendResponse(driver,  driver->context.cbw.tag,
-        driver->context.cbw.length, buffer,
-        sizeof(struct ReadFormatCapacitiesData));
+    memcpy(driver->buffer, &response, sizeof(response));
+    return sendResponse(driver, driver->context.cbw.tag,
+        driver->context.cbw.length, driver->buffer, sizeof(response));
   }
   else
   {
@@ -490,7 +497,7 @@ static enum State stateReadCapacityEnter(struct Msc *driver)
     return STATE_ERROR;
 
   const struct ReadCapacity10Command * const command =
-      (const struct ReadCapacity10Command *)driver->context.cbw.cb;
+      &driver->context.cbw.cb.readCapacity10;
   const size_t index = driver->context.cbw.lun;
 
   if ((!(command->flags1 & READCAPACITY10_FLAGS_1_PMI) && command->lba)
@@ -503,18 +510,18 @@ static enum State stateReadCapacityEnter(struct Msc *driver)
 
   if (driver->lun[index].interface)
   {
-    struct ReadCapacityData * const buffer = driver->buffer;
+    struct ReadCapacityData response;
 
-    buffer->lastLogicalBlockAddress =
+    response.lastLogicalBlockAddress =
         toBigEndian32(driver->lun[index].blocks - 1);
-    buffer->blockLength = toBigEndian32(driver->blockSize);
+    response.blockLength = toBigEndian32(driver->blockSize);
 
     usbTrace("msc: read capacity, %"PRIu32" blocks",
         driver->lun[index].blocks);
 
+    memcpy(driver->buffer, &response, sizeof(response));
     return sendResponse(driver, driver->context.cbw.tag,
-        driver->context.cbw.length, buffer,
-        sizeof(struct ReadCapacityData));
+        driver->context.cbw.length, driver->buffer, sizeof(response));
   }
   else
   {
@@ -538,12 +545,12 @@ static enum State stateReadSetupEnter(struct Msc *driver)
   uint32_t logicalBlockAddress = 0;
   uint32_t numberOfBlocks = 0;
 
-  switch (driver->context.cbw.cb[0])
+  switch (driver->context.cbw.cb.raw[0])
   {
     case SCSI_READ6:
     {
       const struct Read6Command * const command =
-          (const struct Read6Command *)driver->context.cbw.cb;
+          &driver->context.cbw.cb.read6;
 
       logicalBlockAddress =
           fromBigEndian24(command->logicalBlockAddress, READ6_LBA_MASK);
@@ -554,7 +561,7 @@ static enum State stateReadSetupEnter(struct Msc *driver)
     case SCSI_READ10:
     {
       const struct Read10Command * const command =
-          (const struct Read10Command *)driver->context.cbw.cb;
+          &driver->context.cbw.cb.read10;
 
       logicalBlockAddress = fromBigEndian32(command->logicalBlockAddress);
       numberOfBlocks = fromBigEndian16(command->transferLength);
@@ -564,7 +571,7 @@ static enum State stateReadSetupEnter(struct Msc *driver)
     case SCSI_READ12:
     {
       const struct Read12Command * const command =
-          (const struct Read12Command *)driver->context.cbw.cb;
+          &driver->context.cbw.cb.read12;
 
       logicalBlockAddress = fromBigEndian32(command->logicalBlockAddress);
       numberOfBlocks = fromBigEndian32(command->transferLength);
@@ -632,7 +639,7 @@ static enum State stateVerifyEnter(struct Msc *driver)
   }
 
   const struct Verify10Command * const command =
-      (const struct Verify10Command *)driver->context.cbw.cb;
+      &driver->context.cbw.cb.verify10;
 
   if ((command->flags & VERIFY10_BYTCHK_MASK) == 0)
   {
@@ -674,12 +681,12 @@ static enum State stateWriteSetupEnter(struct Msc *driver)
   uint32_t logicalBlockAddress = 0;
   uint32_t numberOfBlocks = 0;
 
-  switch (driver->context.cbw.cb[0])
+  switch (driver->context.cbw.cb.raw[0])
   {
     case SCSI_WRITE6:
     {
       const struct Write6Command * const command =
-          (const struct Write6Command *)driver->context.cbw.cb;
+          &driver->context.cbw.cb.write6;
 
       logicalBlockAddress =
           fromBigEndian24(command->logicalBlockAddress, 0x1FFFFF);
@@ -690,7 +697,7 @@ static enum State stateWriteSetupEnter(struct Msc *driver)
     case SCSI_WRITE10:
     {
       const struct Write10Command * const command =
-          (const struct Write10Command *)driver->context.cbw.cb;
+          &driver->context.cbw.cb.write10;
 
       logicalBlockAddress = fromBigEndian32(command->logicalBlockAddress);
       numberOfBlocks = fromBigEndian16(command->transferLength);
@@ -700,7 +707,7 @@ static enum State stateWriteSetupEnter(struct Msc *driver)
     case SCSI_WRITE12:
     {
       const struct Write12Command * const command =
-          (const struct Write12Command *)driver->context.cbw.cb;
+          &driver->context.cbw.cb.write12;
 
       logicalBlockAddress = fromBigEndian32(command->logicalBlockAddress);
       numberOfBlocks = fromBigEndian32(command->transferLength);
@@ -909,13 +916,24 @@ static void deviceDescriptor(const void *, struct UsbDescriptor *header,
 
   if (payload != NULL)
   {
-    struct UsbDeviceDescriptor * const descriptor = payload;
+    static const struct UsbDeviceDescriptor descriptor = {
+        .length = sizeof(struct UsbDeviceDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_DEVICE,
+        .usb = TO_LITTLE_ENDIAN_16(0x0200),
+        .deviceClass = USB_CLASS_PER_INTERFACE,
+        .deviceSubClass = 0,
+        .deviceProtocol = 0,
+        .maxPacketSize = TO_LITTLE_ENDIAN_16(MSC_CONTROL_EP_SIZE),
+        .idVendor = 0,
+        .idProduct = 0,
+        .device = TO_LITTLE_ENDIAN_16(0x0100),
+        .manufacturer = 0,
+        .product = 0,
+        .serialNumber = 0,
+        .numConfigurations = 1
+    };
 
-    descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
-    descriptor->deviceClass = USB_CLASS_PER_INTERFACE;
-    descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(MSC_CONTROL_EP_SIZE);
-    descriptor->device = TO_LITTLE_ENDIAN_16(0x0100);
-    descriptor->numConfigurations = 1;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -927,14 +945,21 @@ static void configDescriptor(const void *, struct UsbDescriptor *header,
 
   if (payload != NULL)
   {
-    struct UsbConfigurationDescriptor * const descriptor = payload;
+    static const struct UsbConfigurationDescriptor descriptor = {
+        .length = sizeof(struct UsbConfigurationDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_CONFIGURATION,
+        .totalLength = TO_LITTLE_ENDIAN_16(
+            sizeof(struct UsbConfigurationDescriptor)
+            + sizeof(struct UsbInterfaceDescriptor)
+            + sizeof(struct UsbEndpointDescriptor) * 2),
+        .numInterfaces = 1,
+        .configurationValue = 1,
+        .configuration = 0,
+        .attributes = 0,
+        .maxPower = 0
+    };
 
-    descriptor->totalLength = TO_LITTLE_ENDIAN_16(
-        sizeof(struct UsbConfigurationDescriptor)
-        + sizeof(struct UsbInterfaceDescriptor)
-        + sizeof(struct UsbEndpointDescriptor) * 2);
-    descriptor->numInterfaces = 1;
-    descriptor->configurationValue = 1;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -948,13 +973,19 @@ static void interfaceDescriptor(const void *object,
 
   if (payload != NULL)
   {
-    struct UsbInterfaceDescriptor * const descriptor = payload;
+    const struct UsbInterfaceDescriptor descriptor = {
+        .length = sizeof(struct UsbInterfaceDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_INTERFACE,
+        .interfaceNumber = driver->interfaceIndex,
+        .alternateSettings = 0,
+        .numEndpoints = 2,
+        .interfaceClass = USB_CLASS_MASS_STORAGE,
+        .interfaceSubClass = MSC_SUBCLASS_SCSI,
+        .interfaceProtocol = MSC_PROTOCOL_BBB,
+        .interface = 0
+    };
 
-    descriptor->interfaceNumber = driver->interfaceIndex;
-    descriptor->numEndpoints = 2;
-    descriptor->interfaceClass = USB_CLASS_MASS_STORAGE;
-    descriptor->interfaceSubClass = MSC_SUBCLASS_SCSI;
-    descriptor->interfaceProtocol = MSC_PROTOCOL_BBB;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -968,12 +999,16 @@ static void rxEndpointDescriptor(const void *object,
 
   if (payload != NULL)
   {
-    struct UsbEndpointDescriptor * const descriptor = payload;
+    const struct UsbEndpointDescriptor descriptor = {
+        .length = sizeof(struct UsbEndpointDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_ENDPOINT,
+        .endpointAddress = driver->endpoints.rx,
+        .attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK),
+        .maxPacketSize = toLittleEndian16(driver->packetSize),
+        .interval = 0
+    };
 
-    descriptor->endpointAddress = driver->endpoints.rx;
-    descriptor->attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
-    descriptor->maxPacketSize = toLittleEndian16(driver->packetSize);
-    descriptor->interval = 0;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -987,12 +1022,16 @@ static void txEndpointDescriptor(const void *object,
 
   if (payload != NULL)
   {
-    struct UsbEndpointDescriptor * const descriptor = payload;
+    const struct UsbEndpointDescriptor descriptor = {
+        .length = sizeof(struct UsbEndpointDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_ENDPOINT,
+        .endpointAddress = driver->endpoints.tx,
+        .attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK),
+        .maxPacketSize = toLittleEndian16(driver->packetSize),
+        .interval = 0
+    };
 
-    descriptor->endpointAddress = driver->endpoints.tx;
-    descriptor->attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_BULK);
-    descriptor->maxPacketSize = toLittleEndian16(driver->packetSize);
-    descriptor->interval = 0;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/

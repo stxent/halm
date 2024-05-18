@@ -12,6 +12,7 @@
 #include <xcore/memory.h>
 #include <assert.h>
 #include <limits.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
 static void deviceDescriptor(const void *, struct UsbDescriptor *, void *);
 static void configDescriptor(const void *, struct UsbDescriptor *, void *);
@@ -25,7 +26,6 @@ static enum Result processUploadRequest(struct Dfu *, uint16_t, void *,
     uint16_t *);
 static void resetDriver(struct Dfu *);
 static void setStatus(struct Dfu *, enum DfuStatus);
-static inline void toLittleEndian24(uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *, const void *);
 static void driverDeinit(void *);
@@ -60,13 +60,24 @@ static void deviceDescriptor(const void *, struct UsbDescriptor *header,
 
   if (payload != NULL)
   {
-    struct UsbDeviceDescriptor * const descriptor = payload;
+    static const struct UsbDeviceDescriptor descriptor = {
+        .length = sizeof(struct UsbDeviceDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_DEVICE,
+        .usb = TO_LITTLE_ENDIAN_16(0x0200),
+        .deviceClass = USB_CLASS_PER_INTERFACE,
+        .deviceSubClass = 0,
+        .deviceProtocol = 0,
+        .maxPacketSize = TO_LITTLE_ENDIAN_16(DFU_CONTROL_EP_SIZE),
+        .idVendor = 0,
+        .idProduct = 0,
+        .device = TO_LITTLE_ENDIAN_16(0x0100),
+        .manufacturer = 0,
+        .product = 0,
+        .serialNumber = 0,
+        .numConfigurations = 1
+    };
 
-    descriptor->usb = TO_LITTLE_ENDIAN_16(0x0200);
-    descriptor->deviceClass = USB_CLASS_PER_INTERFACE;
-    descriptor->maxPacketSize = TO_LITTLE_ENDIAN_16(DFU_CONTROL_EP_SIZE);
-    descriptor->device = TO_LITTLE_ENDIAN_16(0x0100);
-    descriptor->numConfigurations = 1;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -78,14 +89,21 @@ static void configDescriptor(const void *, struct UsbDescriptor *header,
 
   if (payload != NULL)
   {
-    struct UsbConfigurationDescriptor * const descriptor = payload;
+    static const struct UsbConfigurationDescriptor descriptor = {
+        .length = sizeof(struct UsbConfigurationDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_CONFIGURATION,
+        .totalLength = TO_LITTLE_ENDIAN_16(
+            sizeof(struct UsbConfigurationDescriptor)
+            + sizeof(struct UsbInterfaceDescriptor)
+            + sizeof(struct DfuFunctionalDescriptor)),
+        .numInterfaces = 1,
+        .configurationValue = 1,
+        .configuration = 0,
+        .attributes = 0,
+        .maxPower = 0
+    };
 
-    descriptor->totalLength = TO_LITTLE_ENDIAN_16(
-        sizeof(struct UsbConfigurationDescriptor)
-        + sizeof(struct UsbInterfaceDescriptor)
-        + sizeof(struct DfuFunctionalDescriptor));
-    descriptor->numInterfaces = 1;
-    descriptor->configurationValue = 1;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -99,13 +117,19 @@ static void interfaceDescriptor(const void *object,
 
   if (payload != NULL)
   {
-    struct UsbInterfaceDescriptor * const descriptor = payload;
+    const struct UsbInterfaceDescriptor descriptor = {
+        .length = sizeof(struct UsbInterfaceDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_INTERFACE,
+        .interfaceNumber = driver->interfaceIndex,
+        .alternateSettings = 0,
+        .numEndpoints = 0,
+        .interfaceClass = USB_CLASS_APP_SPEC,
+        .interfaceSubClass = APP_SPEC_SUBCLASS_DFU,
+        .interfaceProtocol = APP_SPEC_PROTOCOL_DFU_MODE,
+        .interface = 0
+    };
 
-    descriptor->interfaceNumber = driver->interfaceIndex;
-    descriptor->numEndpoints = 0;
-    descriptor->interfaceClass = USB_CLASS_APP_SPEC;
-    descriptor->interfaceSubClass = APP_SPEC_SUBCLASS_DFU;
-    descriptor->interfaceProtocol = APP_SPEC_PROTOCOL_DFU_MODE;
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -119,20 +143,24 @@ static void functionalDescriptor(const void *object,
 
   if (payload != NULL)
   {
-    struct DfuFunctionalDescriptor * const descriptor = payload;
+    struct DfuFunctionalDescriptor descriptor = {
+        .length = sizeof(struct DfuFunctionalDescriptor),
+        .descriptorType = DESCRIPTOR_TYPE_DFU_FUNCTIONAL,
+        .attributes = 0,
+        .detachTimeout = TO_LITTLE_ENDIAN_16(USHRT_MAX),
+        .transferSize = toLittleEndian16(driver->transferSize),
+        .dfuVersion = TO_LITTLE_ENDIAN_16(0x0110)
+    };
 
-    descriptor->attributes = DFU_MANIFESTATION_TOLERANT;
+    descriptor.attributes = DFU_MANIFESTATION_TOLERANT;
     if (driver->onDetachRequest != NULL)
-      descriptor->attributes |= DFU_WILL_DETACH;
+      descriptor.attributes |= DFU_WILL_DETACH;
     if (driver->onDownloadRequest != NULL)
-      descriptor->attributes |= DFU_CAN_DNLOAD;
+      descriptor.attributes |= DFU_CAN_DNLOAD;
     if (driver->onUploadRequest != NULL)
-      descriptor->attributes |= DFU_CAN_UPLOAD;
+      descriptor.attributes |= DFU_CAN_UPLOAD;
 
-    descriptor->detachTimeout = TO_LITTLE_ENDIAN_16(USHRT_MAX);
-    descriptor->dfuVersion = TO_LITTLE_ENDIAN_16(0x0110);
-
-    descriptor->transferSize = toLittleEndian16(driver->transferSize);
+    memcpy(payload, &descriptor, sizeof(descriptor));
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -222,13 +250,19 @@ static void processGetStatusRequest(struct Dfu *driver, void *response,
       break;
   }
 
-  struct DfuGetStatusResponse * const statusResponse = response;
+  const struct DfuGetStatusResponse statusResponse = {
+      .status = driver->status,
+      .pollTimeout = {
+            driver->timeout,
+            driver->timeout >> 8,
+            driver->timeout >> 16
+      },
+      .state = driver->state,
+      .string = 0
+  };
 
-  toLittleEndian24(statusResponse->pollTimeout, driver->timeout);
-  statusResponse->status = driver->status;
-  statusResponse->state = driver->state;
-  statusResponse->string = 0;
-  *responseLength = sizeof(struct DfuGetStatusResponse);
+  memcpy(response, &statusResponse, sizeof(statusResponse));
+  *responseLength = sizeof(statusResponse);
 
   usbTrace("dfu at %u: state %u, status %u, timeout %u",
       driver->interfaceIndex, driver->state, driver->status, driver->timeout);
@@ -288,13 +322,6 @@ static void setStatus(struct Dfu *driver, enum DfuStatus status)
   if (status != DFU_STATUS_OK)
     driver->state = STATE_DFU_ERROR;
   driver->status = status;
-}
-/*----------------------------------------------------------------------------*/
-static inline void toLittleEndian24(uint8_t *output, uint32_t input)
-{
-  output[0] = (uint8_t)input;
-  output[1] = (uint8_t)(input >> 8);
-  output[2] = (uint8_t)(input >> 16);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *object, const void *configBase)

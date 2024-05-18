@@ -7,6 +7,7 @@
 #include <halm/generic/pointer_array.h>
 #include <halm/usb/usb.h>
 #include <halm/usb/usb_control.h>
+#include <halm/usb/usb_control_defs.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
@@ -15,10 +16,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-/*----------------------------------------------------------------------------*/
-#define EP0_BUFFER_SIZE   64
-#define DATA_BUFFER_SIZE  (CONFIG_USB_DEVICE_CONTROL_REQUESTS * EP0_BUFFER_SIZE)
-#define REQUEST_POOL_SIZE (CONFIG_USB_DEVICE_CONTROL_REQUESTS)
 /*----------------------------------------------------------------------------*/
 DEFINE_LIST(struct UsbString, String, string)
 /*----------------------------------------------------------------------------*/
@@ -47,8 +44,10 @@ struct UsbControl
   /* Single OUT request */
   struct UsbRequest *outRequest;
 
+#ifdef CONFIG_USB_DEVICE_STRINGS
   /* List of descriptor strings */
   StringList strings;
+#endif
 
   /* Maximum current drawn by the device in mA */
   uint16_t current;
@@ -65,7 +64,7 @@ struct UsbControl
 
     /* Setup packet header */
     struct UsbSetupPacket packet;
-    /* Packet payload */
+    /* Control packet payload */
     uint8_t payload[DATA_BUFFER_SIZE];
   } context;
 
@@ -167,35 +166,57 @@ static enum Result driverControl(struct UsbControl *control,
 }
 /*----------------------------------------------------------------------------*/
 static void fillConfigurationDescriptor(struct UsbControl *control,
-    void *buffer)
+    void *payload)
 {
-  struct UsbConfigurationDescriptor * const descriptor = buffer;
-
-  descriptor->configuration = usbControlStringFind(control,
+  const uint8_t configuration = usbControlStringFind(control,
       USB_STRING_CONFIGURATION, DEFAULT_DEVICE_CONFIGURATION);
+  const uint8_t power = (control->current + 1) >> 1;
+  uint8_t attributes = CONFIGURATION_DESCRIPTOR_DEFAULT;
 
-  descriptor->attributes = CONFIGURATION_DESCRIPTOR_DEFAULT;
   if (!control->current)
-    descriptor->attributes |= CONFIGURATION_DESCRIPTOR_SELF_POWERED;
+    attributes |= CONFIGURATION_DESCRIPTOR_SELF_POWERED;
   if (control->rwu)
-    descriptor->attributes |= CONFIGURATION_DESCRIPTOR_REMOTE_WAKEUP;
+    attributes |= CONFIGURATION_DESCRIPTOR_REMOTE_WAKEUP;
 
-  descriptor->maxPower = ((control->current + 1) >> 1);
+  uint8_t *descriptor = payload;
+  uintptr_t offset;
+
+  offset = offsetof(struct UsbConfigurationDescriptor, configuration);
+  descriptor[offset] = configuration;
+  offset = offsetof(struct UsbConfigurationDescriptor, attributes);
+  descriptor[offset] = attributes;
+  offset = offsetof(struct UsbConfigurationDescriptor, maxPower);
+  descriptor[offset] = power;
 }
 /*----------------------------------------------------------------------------*/
-static void fillDeviceDescriptor(struct UsbControl *control, void *buffer)
+static void fillDeviceDescriptor(struct UsbControl *control, void *payload)
 {
-  struct UsbDeviceDescriptor * const descriptor = buffer;
+  uint8_t *descriptor = payload;
+  uintptr_t offset;
 
-  descriptor->idVendor = toLittleEndian16(control->vid);
-  descriptor->idProduct = toLittleEndian16(control->pid);
+  const uint16_t vendorId = toLittleEndian16(control->vid);
+  const uint16_t productId = toLittleEndian16(control->pid);
 
-  descriptor->manufacturer = usbControlStringFind(control,
+  offset = offsetof(struct UsbDeviceDescriptor, idVendor);
+  memcpy(descriptor + offset, &vendorId, sizeof(vendorId));
+  offset = offsetof(struct UsbDeviceDescriptor, idProduct);
+  memcpy(descriptor + offset, &productId, sizeof(productId));
+
+#ifdef CONFIG_USB_DEVICE_STRINGS
+  const uint8_t manufacturerStr = usbControlStringFind(control,
       USB_STRING_VENDOR, 0);
-  descriptor->product = usbControlStringFind(control,
+  const uint8_t productStr = usbControlStringFind(control,
       USB_STRING_PRODUCT, 0);
-  descriptor->serialNumber = usbControlStringFind(control,
+  const uint8_t serialNumberStr = usbControlStringFind(control,
       USB_STRING_SERIAL, 0);
+
+  offset = offsetof(struct UsbDeviceDescriptor, manufacturer);
+  descriptor[offset] = manufacturerStr;
+  offset = offsetof(struct UsbDeviceDescriptor, product);
+  descriptor[offset] = productStr;
+  offset = offsetof(struct UsbDeviceDescriptor, serialNumber);
+  descriptor[offset] = serialNumberStr;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static enum Result handleDescriptorRequest(struct UsbControl *control,
@@ -496,14 +517,11 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 static void copySetupPacket(struct UsbSetupPacket *packet,
     const struct UsbRequest *request)
 {
-  const struct UsbSetupPacket * const received =
-      (const struct UsbSetupPacket *)request->buffer;
+  memcpy(packet, request->buffer, sizeof(struct UsbSetupPacket));
 
-  packet->requestType = received->requestType;
-  packet->request = received->request;
-  packet->value = fromLittleEndian16(received->value);
-  packet->index = fromLittleEndian16(received->index);
-  packet->length = fromLittleEndian16(received->length);
+  packet->value = fromLittleEndian16(packet->value);
+  packet->index = fromLittleEndian16(packet->index);
+  packet->length = fromLittleEndian16(packet->length);
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_USB_DEVICE_STRINGS
@@ -715,8 +733,10 @@ static enum Result controlInit(void *object, const void *configBase)
   if (!pointerArrayInit(&control->inRequestPool, REQUEST_POOL_SIZE))
     return E_MEMORY;
 
+#ifdef CONFIG_USB_DEVICE_STRINGS
   /* Initialize list of device strings */
   stringListInit(&control->strings);
+#endif
 
   /* Initialize requests */
   struct ControlUsbRequest *request = control->requests;
@@ -743,10 +763,13 @@ static void controlDeinit(void *object)
   usbEpClear(control->ep0in);
   usbEpClear(control->ep0out);
 
-  assert(pointerArraySize(&control->inRequestPool) == REQUEST_POOL_SIZE);
-
+#ifdef CONFIG_USB_DEVICE_STRINGS
   stringListDeinit(&control->strings);
+#endif
+
+  assert(pointerArraySize(&control->inRequestPool) == REQUEST_POOL_SIZE);
   pointerArrayDeinit(&control->inRequestPool);
+
   deinit(control->ep0out);
   deinit(control->ep0in);
 }

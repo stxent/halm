@@ -7,6 +7,7 @@
 #include <halm/irq.h>
 #include <halm/usb/msc.h>
 #include <halm/usb/msc_datapath.h>
+#include <halm/usb/msc_private.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_trace.h>
 #include <inttypes.h>

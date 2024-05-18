@@ -7,6 +7,7 @@
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
+#include <xcore/memory.h>
 #include <assert.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
@@ -47,6 +48,9 @@ void usbRequestInit(struct UsbRequest *request, void *buffer, uint16_t capacity,
 enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
     void *response, uint16_t *responseLength, uint16_t maxResponseLength)
 {
+  static const uintptr_t lengthOffset =
+      offsetof(struct UsbConfigurationDescriptor, totalLength);
+
   const uint8_t descriptorIndex = DESCRIPTOR_INDEX(keyword);
   const uint8_t descriptorType = DESCRIPTOR_TYPE(keyword);
   const UsbDescriptorFunctor *entry = findEntry(driver,
@@ -60,27 +64,25 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
   }
 
   struct UsbDescriptor header;
-  uint16_t length = 0;
+  uint16_t length;
 
   (*entry)(driver, &header, NULL);
 
   if (header.descriptorType == DESCRIPTOR_TYPE_CONFIGURATION)
   {
-    assert(header.length && header.length <= maxResponseLength);
-
     /* Extract total length from the Configuration Descriptor */
-    memset(response, 0, sizeof(struct UsbConfigurationDescriptor));
-    (*entry)(driver, response, response);
-    length = ((const struct UsbConfigurationDescriptor *)response)->totalLength;
+    (*entry)(driver, &header, response);
+    memcpy(&length, (const uint8_t *)response + lengthOffset, sizeof(length));
+    length = fromLittleEndian16(length);
   }
   else
     length = header.length;
 
-  assert(length && length <= maxResponseLength);
+  assert(length > 0 && length <= maxResponseLength);
   (void)maxResponseLength;
 
+  assert(responseLength != NULL);
   *responseLength = length;
-  memset(response, 0, length);
 
   while (length > 0 && *entry != NULL)
   {
@@ -88,11 +90,11 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
 
     if (header.descriptorType != DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION)
     {
-      struct UsbDescriptor * const entryHeader = response;
+      assert(length >= header.length);
+      (*entry)(driver, &header, response);
 
-      (*entry)(driver, entryHeader, response);
-      response = (void *)((uintptr_t)response + entryHeader->length);
-      length -= entryHeader->length;
+      response = (void *)((uintptr_t)response + header.length);
+      length -= (int32_t)header.length;
     }
     ++entry;
   }
