@@ -418,6 +418,10 @@ static enum Result spifiInit(void *object, const void *configBase)
   if (!interface->base.wide)
     control |= CTRL_DUAL;
 
+  /* Disable interrupts */
+  irqDisable(interface->base.irq);
+
+  /* Reconfigure the peripheral */
   reg->CTRL = control;
 
   /* Enable SPIFI interrupts in NVIC */
@@ -431,11 +435,10 @@ static void spifiDeinit(void *object)
 {
   struct Spifi * const interface = object;
 
+  /* Disable interrupts */
+  irqDisable(interface->base.irq);
   /* Disable memory-mapped mode or stop current command */
   resetMode(interface);
-
-  /* Disable SPIFI interrupts */
-  irqDisable(interface->base.irq);
 
   deinit(interface->txDma);
   deinit(interface->rxDma);

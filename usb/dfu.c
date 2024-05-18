@@ -433,7 +433,7 @@ static enum Result driverControl(void *object,
         case STATE_DFU_UPLOAD_IDLE:
           usbTrace("dfu at %u: aborted", driver->interfaceIndex);
 
-          driver->state = STATE_DFU_IDLE;
+          resetDriver(driver);
           res = E_OK;
           break;
 

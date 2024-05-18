@@ -672,6 +672,10 @@ static enum Result spimInit(void *object, const void *configBase)
       config->timeout : DMMCTL_DESELTIM_MAX;
   NM_SPIM_Type * const reg = interface->base.reg;
 
+  /* Disable interrupts */
+  irqDisable(interface->base.irq);
+
+  /* Reconfigure the peripheral */
   reg->CTL0 = CTL0_CIPHOFF;
   reg->CTL1 = CTL1_IDLETIME(delay);
   reg->CTL2 = CTL2_USETEN;
@@ -704,7 +708,7 @@ static void spimDeinit(void *object)
   timerDisable(interface->timer);
   timerSetCallback(interface->timer, NULL, NULL);
 
-  /* Disable SPIM interrupts */
+  /* Disable interrupts */
   irqDisable(interface->base.irq);
   /* Disable memory-mapped mode or stop current command */
   resetMode(interface);

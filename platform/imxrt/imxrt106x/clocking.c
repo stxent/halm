@@ -643,7 +643,8 @@ static uint32_t pll2Frequency(const void *clockBase)
     if (pfdControl & PLL_PFD_PFDn_CLKGATE(clock->pfd))
       return 0;
 
-    return OSC_FREQUENCY * pllDivisor / pfdDivisor * 18;
+    /* Source: OSC_FREQUENCY * PLL_DIV * 18 / PFD_FRAC */
+    return (((OSC_FREQUENCY >> 2) * 18 * pllDivisor) / pfdDivisor) << 2;
   }
   else
     return OSC_FREQUENCY * pllDivisor;
@@ -734,7 +735,8 @@ static uint32_t pll3Frequency(const void *clockBase)
     if (pfdControl & PLL_PFD_PFDn_CLKGATE(clock->pfd))
       return 0;
 
-    return OSC_FREQUENCY * pllDivisor / pfdDivisor * 18;
+    /* Source: OSC_FREQUENCY * PLL_DIV * 18 / PFD_FRAC */
+    return (((OSC_FREQUENCY >> 2) * 18 * pllDivisor) / pfdDivisor) << 2;
   }
   else
     return OSC_FREQUENCY * pllDivisor;
