@@ -11,7 +11,7 @@ endif()
 
 # Library configuration
 
-set(HALM_CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE STRING "Path to the config file.")
+set(HALM_CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE FILEPATH "Path to the config file.")
 
 # Default compiler flags
 

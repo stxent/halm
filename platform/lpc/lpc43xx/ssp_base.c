@@ -106,7 +106,7 @@ const struct PinEntry sspPins[] = {
     }, {
         .key = PIN(PORT_3, 0), /* SSP0_SCK */
         .channel = CHANNEL_SCK(0),
-        .value = 5
+        .value = 4
     }, {
         .key = PIN(PORT_3, 3), /* SSP0_SCK */
         .channel = CHANNEL_SCK(0),
