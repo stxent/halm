@@ -40,12 +40,6 @@ static enum Result wdtInit(void *object, const void *configBase)
   const struct WdtConfig * const config = configBase;
   assert(config != NULL);
 
-  const uint64_t clock = (((1ULL << 32) + 3999) / 4000) * wdtGetClock(object);
-  const uint32_t timeout = (clock * config->period) >> 32;
-
-  if (timeout > (0xFFFFFFFFUL >> (32 - WDT_TIMER_RESOLUTION)))
-    return E_VALUE;
-
   const struct WdtBaseConfig baseConfig = {
       .source = config->source
   };
@@ -55,6 +49,12 @@ static enum Result wdtInit(void *object, const void *configBase)
   const enum Result res = WdtBase->init(timer, &baseConfig);
   if (res != E_OK)
     return res;
+
+  const uint64_t clock = (((1ULL << 32) + 3999) / 4000) * wdtGetClock(object);
+  const uint32_t timeout = (clock * config->period) >> 32;
+
+  if (timeout > (0xFFFFFFFFUL >> (32 - WDT_TIMER_RESOLUTION)))
+    return E_VALUE;
 
   timer->fired = (LPC_WDT->MOD & MOD_WDTOF) != 0;
 

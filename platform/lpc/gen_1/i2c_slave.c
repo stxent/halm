@@ -61,13 +61,17 @@ static void interruptHandler(void *object)
       if (interface->state == STATE_ADDRESS)
       {
         interface->external = reg->DAT;
+
+        if (interface->external >= interface->size)
+          interface->external = 0;
+
         interface->state = STATE_DATA;
       }
       else
       {
-        interface->cache[interface->external] = reg->DAT;
+        interface->cache[interface->external++] = reg->DAT;
 
-        if (++interface->external >= interface->size)
+        if (interface->external >= interface->size)
           interface->external = 0;
       }
       break;
@@ -87,7 +91,8 @@ static void interruptHandler(void *object)
     case STATUS_STOP_RECEIVED:
     case STATUS_SLAVE_DATA_TRANSMITTED_NACK:
     case STATUS_LAST_TRANSMITTED_ACK:
-      event = interface->state == STATE_DATA;
+      if (interface->state == STATE_DATA)
+        event = true;
       interface->state = STATE_IDLE;
       break;
 
