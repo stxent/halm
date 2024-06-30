@@ -44,8 +44,8 @@ endif()
 
 add_library(halm_core OBJECT ${SOURCE_FILES})
 
-if(DEFINED IRQ_THRESHOLD)
+if(DEFINED HALM_IRQ_THRESHOLD)
     target_compile_definitions(halm_core
-            PUBLIC -DCONFIG_IRQ_THRESHOLD=${IRQ_THRESHOLD}
+            PUBLIC -DCONFIG_IRQ_THRESHOLD=${HALM_IRQ_THRESHOLD}
     )
 endif()

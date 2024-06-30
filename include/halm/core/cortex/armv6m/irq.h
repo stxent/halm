@@ -12,6 +12,7 @@
 #define HALM_CORE_CORTEX_ARMV6M_IRQ_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/core/core_defs.h>
+#include <halm/core/cortex/scb_defs.h>
 #include <xcore/asm.h>
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
@@ -74,6 +75,16 @@ static inline void irqSetPending(IrqNumber irq)
 static inline bool irqStatus(IrqNumber irq)
 {
   return (NVIC->ISER & (1UL << (irq & 0x1F))) != 0;
+}
+
+static inline void irqSupervisorClearPending(void)
+{
+  SCB->ICSR = ICSR_PENDSVCLR;
+}
+
+static inline void irqSupervisorSetPending(void)
+{
+  SCB->ICSR = ICSR_PENDSVSET;
 }
 
 END_DECLS

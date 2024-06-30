@@ -49,6 +49,8 @@ struct GpTimerPwmConfig
   struct GpTimerPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
+  /** Optional: enable output inversion */
+  bool inversion;
 };
 
 struct GpTimerPwm
@@ -61,11 +63,13 @@ struct GpTimerPwm
   volatile uint32_t *value;
   /* Match channel number */
   uint8_t channel;
+  /* Enable output inversion */
+  bool inversion;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void *gpTimerPwmCreate(void *, PinNumber);
+void *gpTimerPwmCreate(void *, PinNumber, bool);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

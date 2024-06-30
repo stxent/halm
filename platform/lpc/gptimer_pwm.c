@@ -284,21 +284,37 @@ static enum Result channelInit(void *object, const void *configBase)
   struct GpTimerPwm * const pwm = object;
   struct GpTimerPwmUnit * const unit = config->parent;
 
-  /* Initialize output pin */
-  pwm->channel = gpTimerConfigMatchPin(unit->base.channel, config->pin);
+  const uint8_t channel = gpTimerGetMatchChannel(unit->base.channel,
+      config->pin);
 
-  /* Allocate channel */
-  if (unitAllocateChannel(unit, pwm->channel))
+  /* Allocate match channel */
+  if (!unitAllocateChannel(unit, channel))
+    return E_BUSY;
+
+  const uint32_t resolution = unit->resolution;
+  LPC_TIMER_Type * const reg = unit->base.reg;
+
+  pwm->unit = unit;
+  pwm->value = &reg->MR[channel];
+  pwm->channel = channel;
+  pwm->inversion = config->inversion;
+
+  /* Update match state to avoid undefined output level */
+  if (pwm->inversion)
   {
-    LPC_TIMER_Type * const reg = unit->base.reg;
-
-    pwm->unit = unit;
-    pwm->value = reg->MR + pwm->channel;
-
-    return E_OK;
+    reg->EMR |= EMR_EXTERNAL_MATCH(channel);
+    *pwm->value = 0;
   }
   else
-    return E_BUSY;
+  {
+    reg->EMR &= ~EMR_EXTERNAL_MATCH(channel);
+    *pwm->value = resolution + 1;
+  }
+
+  /* Initialize output pin after match state configuration */
+  gpTimerConfigMatchPin(unit->base.channel, config->pin);
+
+  return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_GPTIMER_NO_DEINIT
@@ -323,10 +339,15 @@ static void channelDisable(void *object)
 {
   struct GpTimerPwm * const pwm = object;
   LPC_TIMER_Type * const reg = pwm->unit->base.reg;
+  const uint8_t channel = pwm->channel;
 
-  reg->PWMC &= ~PWMC_ENABLE(pwm->channel);
-  /* Clear match value to avoid undefined output level */
-  reg->EMR &= ~EMR_EXTERNAL_MATCH(pwm->channel);
+  reg->PWMC &= ~PWMC_ENABLE(channel);
+
+  /* Overwrite match output state to avoid undefined output level */
+  if (pwm->inversion)
+    reg->EMR |= EMR_EXTERNAL_MATCH(channel);
+  else
+    reg->EMR &= ~EMR_EXTERNAL_MATCH(channel);
 }
 /*----------------------------------------------------------------------------*/
 static void channelSetDuration(void *object, uint32_t duration)
@@ -336,22 +357,35 @@ static void channelSetDuration(void *object, uint32_t duration)
 
   if (duration)
   {
-    /* The output is inverted */
-    duration = duration <= resolution ? resolution - duration : 0;
+    if (duration > resolution)
+      duration = resolution;
+
+    if (!pwm->inversion)
+    {
+      /* The output itself is inverted */
+      duration = resolution - duration;
+    }
   }
   else
   {
-    /*
-     * If match register is set to a value greater or equal to resolution,
-     * then the output stays low during all cycle.
-     */
-    duration = resolution + 1;
+    if (!pwm->inversion)
+    {
+      /*
+       * If a match register is set to a value greater or equal to
+       * the resolution, then the output stays low during all cycle.
+       */
+      duration = resolution + 1;
+    }
+    else
+    {
+      /*
+       * If a match register is set to zero, than the output goes high
+       * and will stay in this state indefinitely.
+       */
+      duration = 0;
+    }
   }
 
-  /*
-   * If a match register is set to zero, than output pin goes high
-   * and will stay in this state continuously.
-   */
   *pwm->value = duration;
 }
 /*----------------------------------------------------------------------------*/
@@ -366,13 +400,15 @@ static void channelSetEdges(void *object, [[maybe_unused]] uint32_t leading,
  * Create single edge PWM channel.
  * @param unit Pointer to a GpTimerPwmUnit object.
  * @param pin Pin used as a signal output.
+ * @param inversion Enable output inversion.
  * @return Pointer to a new Pwm object on success or zero on error.
  */
-void *gpTimerPwmCreate(void *unit, PinNumber pin)
+void *gpTimerPwmCreate(void *unit, PinNumber pin, bool inversion)
 {
   const struct GpTimerPwmConfig channelConfig = {
       .parent = unit,
-      .pin = pin
+      .pin = pin,
+      .inversion = inversion
   };
 
   return init(GpTimerPwm, &channelConfig);

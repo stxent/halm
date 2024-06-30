@@ -53,6 +53,15 @@ uint8_t gpTimerConfigMatchPin(uint8_t channel, PinNumber key)
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
+uint8_t gpTimerGetMatchChannel(uint8_t channel, PinNumber key)
+{
+  const struct PinEntry * const pinEntry =
+      pinFind(gpTimerMatchPins, key, channel);
+  assert(pinEntry != NULL);
+
+  return UNPACK_CHANNEL(pinEntry->value);
+}
+/*----------------------------------------------------------------------------*/
 void gpTimerSetFrequency(struct GpTimerBase *timer, uint32_t frequency)
 {
   LPC_TIMER_Type * const reg = timer->reg;
