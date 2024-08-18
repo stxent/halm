@@ -386,7 +386,7 @@ static enum Result oneWireInit(void *object, const void *configBase)
   LPC_SSP_Type * const reg = interface->base.reg;
 
   /* Set frame size to 16 bit and SPI mode 0 */
-  reg->CR0 = CR0_FRF_TI | CR0_DSS(16);
+  reg->CR0 = CR0_FRF(FRF_TI) | CR0_DSS(16);
   /* Disable all interrupts */
   reg->IMSC = 0;
 

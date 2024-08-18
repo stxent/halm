@@ -22,7 +22,7 @@
 #define CR_START_VALUE(reg)             FIELD_VALUE((reg), CR_START_MASK, 24)
 #define CR_EDGE                         BIT(27)
 /* Device-specific bits */
-#define CR_CLKS_MASK                    BIT_FIELD(MASK(2), 17)
+#define CR_CLKS_MASK                    BIT_FIELD(MASK(3), 17)
 #define CR_CLKS(value)                  BIT_FIELD((value), 17)
 #define CR_CLKS_VALUE(reg)              FIELD_VALUE((reg), CR_CLKS_MASK, 17)
 #define CR_PDN                          BIT(21)

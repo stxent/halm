@@ -9,15 +9,21 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
 /*------------------Control Register 0----------------------------------------*/
+enum
+{
+  FRF_SPI       = 0,
+  FRF_TI        = 1,
+  FRF_MICROWIRE = 2
+};
+
 /* Data Size Select */
 #define CR0_DSS_MASK                    BIT_FIELD(MASK(4), 0)
 /* Possible values are from 4 to 16 bit */
 #define CR0_DSS(size)                   BIT_FIELD((size) - 1, 0)
 /* Frame Format */
 #define CR0_FRF_MASK                    BIT_FIELD(MASK(2), 4)
-#define CR0_FRF_SPI                     BIT_FIELD(0, 4)
-#define CR0_FRF_TI                      BIT_FIELD(1, 4)
-#define CR0_FRF_MICROWIRE               BIT_FIELD(2, 4)
+#define CR0_FRF(format)                 BIT_FIELD((format), 4)
+#define CR0_FRF_VALUE(reg)              FIELD_VALUE((reg), CR0_FRF_MASK, 4)
 /* Clock Out Polarity, only for SPI format */
 /* When set, controller maintains clock high between frames */
 #define CR0_CPOL                        BIT(6)

@@ -666,16 +666,29 @@ static enum Result spimInit(void *object, const void *configBase)
   interface->uncached = config->uncached;
   resetContext(interface);
 
-  const uint32_t delay = config->delay ?
-      config->delay : CTL1_IDLETIME_MAX;
-  const uint32_t timeout = config->timeout ?
-      config->timeout : DMMCTL_DESELTIM_MAX;
-  NM_SPIM_Type * const reg = interface->base.reg;
+  /* Configure polling timer */
+  const uint32_t overflow = timerGetFrequency(interface->timer)
+      / (!config->poll ? DEFAULT_POLL_RATE : config->poll);
+
+  if (!overflow)
+    return E_VALUE;
+
+  timerSetAutostop(interface->timer, true);
+  timerSetCallback(interface->timer, timerInterruptHandler, interface);
+  timerSetOverflow(interface->timer, overflow);
 
   /* Disable interrupts */
   irqDisable(interface->base.irq);
 
+  /* Calculate interface delays */
+  const uint32_t delay = config->delay ?
+      config->delay : CTL1_IDLETIME_MAX;
+  const uint32_t timeout = config->timeout ?
+      config->timeout : DMMCTL_DESELTIM_MAX;
+
   /* Reconfigure the peripheral */
+  NM_SPIM_Type * const reg = interface->base.reg;
+
   reg->CTL0 = CTL0_CIPHOFF;
   reg->CTL1 = CTL1_IDLETIME(delay);
   reg->CTL2 = CTL2_USETEN;
@@ -685,14 +698,6 @@ static enum Result spimInit(void *object, const void *configBase)
 
   /* Configure Clock Divider in the CTL1 register */
   setSerialRate(interface, config->rate);
-
-  /* Configure polling timer */
-  const uint32_t overflow = timerGetFrequency(interface->timer)
-      / (!config->poll ? DEFAULT_POLL_RATE : config->poll);
-
-  timerSetAutostop(interface->timer, true);
-  timerSetCallback(interface->timer, timerInterruptHandler, interface);
-  timerSetOverflow(interface->timer, overflow);
 
   /* Enable SPIM interrupts in the NVIC */
   irqSetPriority(interface->base.irq, config->priority);
