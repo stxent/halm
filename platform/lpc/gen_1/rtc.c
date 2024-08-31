@@ -107,12 +107,12 @@ static enum Result clkInit(void *object, const void *configBase)
   LPC_RTC_Type * const reg = clock->base.reg;
 
   /* Disable interrupts */
+  reg->AMR = AMR_MASK;
   reg->CIIR = 0;
   reg->ILR = ILR_RTCCIF | ILR_RTCALF;
 
   if (config->timestamp)
   {
-    reg->AMR = AMR_MASK;
     reg->CALIBRATION = 0;
 
     /* Reinitialize current time */
@@ -120,7 +120,6 @@ static enum Result clkInit(void *object, const void *configBase)
   }
   else if (!(reg->CCR & CCR_CLKEN))
   {
-    reg->AMR = AMR_MASK;
     reg->CALIBRATION = 0;
 
     /* Set default time */
