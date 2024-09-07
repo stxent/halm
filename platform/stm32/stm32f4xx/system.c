@@ -130,8 +130,10 @@ void sysFlashLatencyUpdate(unsigned int value)
 
   if (value > 1)
   {
+    /* Disable instruction and data caches before cache clearing */
+    STM_FLASH->ACR &= ~(FLASH_ACR_ICEN | FLASH_ACR_DCEN);
     /* Clear instruction and data caches */
-    STM_FLASH->ACR = FLASH_ACR_ICRST | FLASH_ACR_DCRST;
+    STM_FLASH->ACR |= FLASH_ACR_ICRST | FLASH_ACR_DCRST;
 
     /* Enable prefetch buffer, instruction and data caches */
     acr |= FLASH_ACR_PRFTEN | FLASH_ACR_ICEN | FLASH_ACR_DCEN;
