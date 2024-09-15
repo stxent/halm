@@ -251,7 +251,7 @@ static void txDmaHandler(void *object)
   struct SerialDma * const interface = object;
   bool event = false;
 
-  if (dmaStatus(interface->rxDma) != E_ERROR)
+  if (dmaStatus(interface->txDma) != E_ERROR)
     byteQueueAbandon(&interface->txQueue, interface->txBufferSize);
   interface->txBufferSize = 0;
 

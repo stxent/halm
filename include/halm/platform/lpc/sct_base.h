@@ -66,7 +66,8 @@ BEGIN_DECLS
 
 /* Common functions */
 uint8_t sctConfigInputPin(uint8_t, PinNumber, enum PinPull);
-uint8_t sctConfigOutputPin(uint8_t, PinNumber);
+uint8_t sctConfigOutputPin(uint8_t, PinNumber, bool);
+uint8_t sctGetOutputChannel(uint8_t, PinNumber);
 void sctSetFrequency(struct SctBase *, uint32_t);
 
 /* Platform-specific functions */

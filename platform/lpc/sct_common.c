@@ -28,15 +28,23 @@ uint8_t sctConfigInputPin(uint8_t channel, PinNumber key, enum PinPull pull)
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
-uint8_t sctConfigOutputPin(uint8_t channel, PinNumber key)
+uint8_t sctConfigOutputPin(uint8_t channel, PinNumber key, bool value)
 {
   const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, channel);
   assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 
-  pinOutput(pin, false);
+  pinOutput(pin, value);
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
+
+  return UNPACK_CHANNEL(pinEntry->value);
+}
+/*----------------------------------------------------------------------------*/
+uint8_t sctGetOutputChannel(uint8_t channel, PinNumber key)
+{
+  const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, channel);
+  assert(pinEntry != NULL);
 
   return UNPACK_CHANNEL(pinEntry->value);
 }

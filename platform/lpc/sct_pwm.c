@@ -320,8 +320,7 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   if (!sctAllocateEvent(&unit->base, &pwm->event))
     return E_BUSY;
 
-  /* Initialize output pin */
-  pwm->channel = sctConfigOutputPin(unit->base.channel, config->pin);
+  pwm->channel = sctGetOutputChannel(unit->base.channel, config->pin);
   pwm->unit = unit;
   pwm->inversion = config->inversion;
 
@@ -358,11 +357,24 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
       | RES_OUTPUT(pwm->channel, pwm->inversion ? OUTPUT_SET : OUTPUT_CLEAR);
 
   /* Disable modulation by default */
-  reg->OUT[pwm->channel].CLR = 1 << unit->event;
-  reg->OUT[pwm->channel].SET = 0;
+  if (pwm->inversion)
+  {
+    reg->OUT[pwm->channel].CLR = 0;
+    reg->OUT[pwm->channel].SET = 1 << unit->event;
+    reg->OUTPUT |= 1 << pwm->channel;
+  }
+  else
+  {
+    reg->OUT[pwm->channel].CLR = 1 << unit->event;
+    reg->OUT[pwm->channel].SET = 0;
+    reg->OUTPUT &= ~(1 << pwm->channel);
+  }
 
   /* Enable allocated event in state 0 */
   reg->EV[pwm->event].STATE = 0x00000001;
+
+  /* Initialize output pin after channel configuration */
+  sctConfigOutputPin(unit->base.channel, config->pin, pwm->inversion);
 
   return E_OK;
 }
@@ -374,14 +386,23 @@ static void singleEdgeDeinit(void *object)
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
 
-  /* Disable output */
-  reg->OUT[pwm->channel].SET = 0;
+  /* Disable allocated event */
+  reg->EV[pwm->event].STATE = 0;
+
+  /* Disable the output and overwrite output state to avoid undefined level */
   reg->OUT[pwm->channel].CLR = 0;
+  reg->OUT[pwm->channel].SET = 0;
+  if (pwm->inversion)
+    reg->OUTPUT |= 1 << pwm->channel;
+  else
+    reg->OUTPUT &= ~(1 << pwm->channel);
+
+  /* Restore default state of other registers */
+  reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(pwm->channel);
   reg->RES &= ~RES_OUTPUT_MASK(pwm->channel);
 
   /* Release allocated event */
   reg->EV[pwm->event].CTRL = 0;
-  reg->EV[pwm->event].STATE = 0;
   sctReleaseEvent(&unit->base, pwm->event);
 }
 #endif
@@ -410,9 +431,17 @@ static void singleEdgeDisable(void *object)
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
 
-  /* Clear synchronously */
-  reg->OUT[pwm->channel].SET = 0;
-  reg->OUT[pwm->channel].CLR = 1 << unit->event;
+  /* Set or clear synchronously */
+  if (pwm->inversion)
+  {
+    reg->OUT[pwm->channel].SET = 0;
+    reg->OUT[pwm->channel].CLR = 1 << unit->event;
+  }
+  else
+  {
+    reg->OUT[pwm->channel].SET = 1 << unit->event;
+    reg->OUT[pwm->channel].CLR = 0;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void singleEdgeSetDuration(void *object, uint32_t duration)
@@ -469,8 +498,7 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   if (!sctAllocateEvent(&unit->base, &pwm->trailingEvent))
     return E_BUSY;
 
-  /* Initialize output pin */
-  pwm->channel = sctConfigOutputPin(unit->base.channel, config->pin);
+  pwm->channel = sctGetOutputChannel(unit->base.channel, config->pin);
   pwm->unit = unit;
   pwm->inversion = config->inversion;
 
@@ -527,12 +555,25 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
       | RES_OUTPUT(pwm->channel, pwm->inversion ? OUTPUT_SET : OUTPUT_CLEAR);
 
   /* Disable modulation by default */
-  reg->OUT[pwm->channel].CLR = 1 << unit->event;
-  reg->OUT[pwm->channel].SET = 0;
+  if (pwm->inversion)
+  {
+    reg->OUT[pwm->channel].CLR = 0;
+    reg->OUT[pwm->channel].SET = 1 << unit->event;
+    reg->OUTPUT |= 1 << pwm->channel;
+  }
+  else
+  {
+    reg->OUT[pwm->channel].CLR = 1 << unit->event;
+    reg->OUT[pwm->channel].SET = 0;
+    reg->OUTPUT &= ~(1 << pwm->channel);
+  }
 
   /* Enable allocated events in state 0 */
   reg->EV[pwm->leadingEvent].STATE = 0x00000001;
   reg->EV[pwm->trailingEvent].STATE = 0x00000001;
+
+  /* Initialize output pin after channel configuration */
+  sctConfigOutputPin(unit->base.channel, config->pin, pwm->inversion);
 
   return E_OK;
 }
@@ -544,14 +585,25 @@ static void doubleEdgeDeinit(void *object)
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
 
-  /* Disable output */
-  reg->OUT[pwm->channel].SET = 0;
+  /* Disable allocated events */
+  reg->EV[pwm->leadingEvent].STATE = 0;
+  reg->EV[pwm->trailingEvent].STATE = 0;
+
+  /* Disable the output and overwrite output state to avoid undefined level */
   reg->OUT[pwm->channel].CLR = 0;
+  reg->OUT[pwm->channel].SET = 0;
+  if (pwm->inversion)
+    reg->OUTPUT |= 1 << pwm->channel;
+  else
+    reg->OUTPUT &= ~(1 << pwm->channel);
+
+  /* Restore default state of other registers */
+  reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(pwm->channel);
   reg->RES &= ~RES_OUTPUT_MASK(pwm->channel);
 
   /* Release allocated events */
+  reg->EV[pwm->leadingEvent].CTRL = 0;
   reg->EV[pwm->trailingEvent].CTRL = 0;
-  reg->EV[pwm->leadingEvent].STATE = 0;
   sctReleaseEvent(&unit->base, pwm->trailingEvent);
   sctReleaseEvent(&unit->base, pwm->leadingEvent);
 }
@@ -581,9 +633,17 @@ static void doubleEdgeDisable(void *object)
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
 
-  /* Clear synchronously */
-  reg->OUT[pwm->channel].SET = 0;
-  reg->OUT[pwm->channel].CLR = 1 << unit->event;
+  /* Set or clear synchronously */
+  if (pwm->inversion)
+  {
+    reg->OUT[pwm->channel].SET = 0;
+    reg->OUT[pwm->channel].CLR = 1 << unit->event;
+  }
+  else
+  {
+    reg->OUT[pwm->channel].SET = 1 << unit->event;
+    reg->OUT[pwm->channel].CLR = 0;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void doubleEdgeSetDuration(void *object, uint32_t duration)
