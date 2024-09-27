@@ -164,7 +164,7 @@ static enum Result streamEnable(void *object)
     reg->CNDTR = stream->transfers;
 
     /* Start the transfer */
-    __dsb();
+    __dmb();
     reg->CCR = stream->base.config | CCR_EN;
 
     return E_OK;

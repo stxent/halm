@@ -212,7 +212,7 @@ static enum Result streamEnable(void *object)
     reg->PAR = stream->periphAddress;
 
     /* Start the transfer */
-    __dsb();
+    __dmb();
     reg->CR = stream->base.config | SCR_EN;
 
     return E_OK;

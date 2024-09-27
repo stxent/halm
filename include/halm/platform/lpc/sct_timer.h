@@ -35,7 +35,7 @@ struct SctTimerConfig
 {
   /**
    * Optional: desired timer tick rate. An actual peripheral frequency is used
-   * when option is set to zero.
+   * when this parameter is set to zero.
    */
   uint32_t frequency;
   /** Optional: timer interrupt priority. */

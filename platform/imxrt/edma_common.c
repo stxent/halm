@@ -40,7 +40,7 @@ void edmaStartTransfer(struct EdmaBase *channel)
   /* Enable error interrupt */
   reg->SEEI = SEEI_SEEI(number);
 
-  __dsb();
+  __dmb();
 
   /* Enable request processing */
   reg->SERQ = SERQ_SERQ(number);

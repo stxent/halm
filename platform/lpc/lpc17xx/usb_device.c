@@ -1021,7 +1021,7 @@ static void dmaEpUpdateChain(struct UsbDmaEndpoint *ep)
     if (!(ep->address & USB_EP_DIRECTION_IN) ^ !(status & SELECT_ENDPOINT_FE))
       reg->USBDMARSet = mask; /* Initiate a transfer */
 
-    __dsb();
+    __dmb();
     reg->USBEpDMAEn = mask;
   }
 }

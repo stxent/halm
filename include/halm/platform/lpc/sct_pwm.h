@@ -14,7 +14,10 @@ extern const struct TimerClass * const SctPwmUnit;
 
 struct SctPwmUnitConfig
 {
-  /** Mandatory: timer frequency. */
+  /**
+   * Optional: desired timer tick rate. An actual peripheral frequency is used
+   * when this parameter is set to zero.
+   */
   uint32_t frequency;
   /** Mandatory: cycle resolution. */
   uint32_t resolution;
@@ -22,7 +25,7 @@ struct SctPwmUnitConfig
   IrqPriority priority;
   /** Optional: clock input. */
   enum SctInput clock;
-  /** Optional: timer part. */
+  /** Mandatory: timer part. */
   enum SctPart part;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;

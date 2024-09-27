@@ -116,7 +116,7 @@ static void startTransfer(struct GpDmaList *channel,
   reg->CONTROL = entry->control;
   reg->LLI = entry->next;
 
-  __dsb();
+  __dmb();
   reg->CONFIG = channel->base.config | CONFIG_ENABLE;
 }
 /*----------------------------------------------------------------------------*/

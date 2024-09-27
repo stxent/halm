@@ -58,7 +58,7 @@ void pdmaStartTransfer(struct PdmaBase *channel, uint32_t control,
   entry->SA = source;
   entry->DA = destination;
   entry->NEXT = DSCT_NEXT_NEXT(next);
-  __dsb();
+  __dmb();
 
   /* Start the transfer */
   const IrqState state = irqSave();

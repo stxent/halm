@@ -6,6 +6,7 @@
 
 #include <halm/core/core_defs.h>
 #include <halm/core/cortex/armv7em/fpu_defs.h>
+#include <xcore/asm.h>
 /*----------------------------------------------------------------------------*/
 void fpuDisable(void)
 {
@@ -15,4 +16,6 @@ void fpuDisable(void)
 void fpuEnable(void)
 {
   SCB->CPACR |= CPACR_CP10(CPACR_FULL_ACCESS) | CPACR_CP11(CPACR_FULL_ACCESS);
+  __dsb();
+  __isb();
 }

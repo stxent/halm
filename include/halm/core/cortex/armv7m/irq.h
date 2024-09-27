@@ -67,11 +67,14 @@ static inline IrqState irqSave(void)
 
 static inline void irqEnable(IrqNumber irq)
 {
+  barrier();
   NVIC->ISER[irq >> 5] = 1UL << (irq & 0x1F);
+  barrier();
 }
 
 static inline void irqDisable(IrqNumber irq)
 {
+  barrier();
   NVIC->ICER[irq >> 5] = 1UL << (irq & 0x1F);
   __dsb();
   __isb();

@@ -266,11 +266,10 @@ void iCacheDisable(void)
 {
 #ifdef CONFIG_CORE_CORTEX_ICACHE
   __dsb();
-  __isb();
 
   /* Disable the I-Cache */
   SCB->CCR &= ~CCR_IC;
-  /* Enable the entire I-Cache */
+  /* Invalidate the entire I-Cache */
   SCB->ICIALLU = 0;
 
   __dsb();
@@ -282,9 +281,8 @@ void iCacheEnable(void)
 {
 #ifdef CONFIG_CORE_CORTEX_ICACHE
   __dsb();
-  __isb();
 
-  /* Enable the entire I-Cache */
+  /* Invalidate the entire I-Cache */
   SCB->ICIALLU = 0;
   /* Enable the I-Cache */
   SCB->CCR |= CCR_IC;
@@ -298,9 +296,8 @@ void iCacheInvalidateAll(void)
 {
 #ifdef CONFIG_CORE_CORTEX_ICACHE
   __dsb();
-  __isb();
 
-  /* Enable the entire I-Cache */
+  /* Invalidate the entire I-Cache */
   SCB->ICIALLU = 0;
 
   __dsb();

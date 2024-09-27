@@ -8,6 +8,7 @@
 #include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/asm.h>
 /*----------------------------------------------------------------------------*/
 static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch);
 /*----------------------------------------------------------------------------*/
@@ -41,16 +42,22 @@ bool sysClockStatus(enum SysClockBranch branch)
 void sysCoreM0AppRemap(uintptr_t address)
 {
   LPC_CREG->M0APPMEMMAP = address;
+  __dsb();
+  __isb();
 }
 /*----------------------------------------------------------------------------*/
 void sysCoreM0SubRemap(uintptr_t address)
 {
   LPC_CREG->M0SUBMEMMAP = address;
+  __dsb();
+  __isb();
 }
 /*----------------------------------------------------------------------------*/
 void sysCoreM4Remap(uintptr_t address)
 {
   LPC_CREG->M4MEMMAP = address;
+  __dsb();
+  __isb();
 }
 /*----------------------------------------------------------------------------*/
 bool sysFlashAvailable(void)

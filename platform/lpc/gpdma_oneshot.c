@@ -143,7 +143,7 @@ static enum Result channelEnable(void *object)
   LPC_GPDMA->INTERRCLEAR = mask;
 
   /* Start the transfer */
-  __dsb();
+  __dmb();
   reg->CONFIG = channel->base.config | CONFIG_ENABLE;
 
   return E_OK;

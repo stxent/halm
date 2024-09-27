@@ -66,9 +66,9 @@ void pdmaStartTransfer(struct PdmaBase *channel, uint32_t control,
   entry->SA = source;
   entry->DA = destination;
   entry->NEXT = DSCT_NEXT_NEXT(next);
-  __dsb();
 
   /* Start the transfer */
+  __dmb();
   reg->CHCTL = enabled | (1 << channel->number);
 
   irqRestore(state);
