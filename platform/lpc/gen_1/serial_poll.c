@@ -112,11 +112,17 @@ static void serialDeinit(void *object)
 /*----------------------------------------------------------------------------*/
 static enum Result serialGetParam(void *object, int parameter, void *data)
 {
+  const struct SerialPoll * const interface = object;
+
 #ifdef CONFIG_PLATFORM_LPC_UART_RC
   switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_PARITY:
-      *(uint8_t *)data = (uint8_t)uartGetParity(object);
+      *(uint8_t *)data = (uint8_t)uartGetParity(&interface->base);
+      return E_OK;
+
+    case IF_SERIAL_STOPBITS:
+      *(uint8_t *)data = (uint8_t)uartGetStopBits(&interface->base);
       return E_OK;
 
     default:
@@ -126,7 +132,7 @@ static enum Result serialGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_RATE:
-      *(uint32_t *)data = uartGetRate(object);
+      *(uint32_t *)data = uartGetRate(&interface->base);
       return E_OK;
 
     default:
@@ -149,8 +155,20 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
   switch ((enum SerialParameter)parameter)
   {
     case IF_SERIAL_PARITY:
-      uartSetParity(&interface->base, (enum SerialParity)(*(const uint8_t *)data));
+    {
+      const enum SerialParity parity = *(const uint8_t *)data;
+
+      uartSetParity(&interface->base, parity);
       return E_OK;
+    }
+
+    case IF_SERIAL_STOPBITS:
+    {
+      const enum SerialStopBits number = *(const uint8_t *)data;
+
+      uartSetStopBits(&interface->base, number);
+      return E_OK;
+    }
 
     default:
       break;

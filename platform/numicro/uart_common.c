@@ -77,6 +77,12 @@ uint32_t uartGetRate(const struct UartBase *interface)
   }
 }
 /*----------------------------------------------------------------------------*/
+enum SerialStopBits uartGetStopBits(const struct UartBase *interface)
+{
+  const NM_UART_Type * const reg = interface->reg;
+  return (reg->LINE & LINE_NSB) ? SERIAL_STOPBITS_2 : SERIAL_STOPBITS_1;
+}
+/*----------------------------------------------------------------------------*/
 void uartSetParity(struct UartBase *interface, enum SerialParity parity)
 {
   NM_UART_Type * const reg = interface->reg;
@@ -109,4 +115,16 @@ bool uartSetRate(struct UartBase *interface, uint32_t rate)
   }
   else
     return false;
+}
+/*----------------------------------------------------------------------------*/
+void uartSetStopBits(struct UartBase *interface, enum SerialStopBits number)
+{
+  assert(number == SERIAL_STOPBITS_1 || number == SERIAL_STOPBITS_2);
+
+  NM_UART_Type * const reg = interface->reg;
+
+  if (number == SERIAL_STOPBITS_2)
+    reg->LINE |= LINE_NSB;
+  else
+    reg->LINE &= ~LINE_NSB;
 }

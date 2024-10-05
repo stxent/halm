@@ -43,8 +43,10 @@ void uartConfigPins(const struct LpUartBaseConfig *,
     enum PinDaisyIndex, enum PinDaisyIndex);
 enum SerialParity uartGetParity(const struct LpUartBase *);
 uint32_t uartGetRate(const struct LpUartBase *);
+enum SerialStopBits uartGetStopBits(const struct LpUartBase *);
 void uartSetParity(struct LpUartBase *, enum SerialParity);
 bool uartSetRate(struct LpUartBase *, uint32_t);
+void uartSetStopBits(struct LpUartBase *, enum SerialStopBits);
 
 /* Platform-specific functions */
 uint32_t uartGetClock(const struct LpUartBase *);

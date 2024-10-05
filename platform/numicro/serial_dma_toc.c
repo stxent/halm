@@ -421,6 +421,10 @@ static enum Result serialGetParam(void *object, int parameter, void *data)
       *(uint8_t *)data = (uint8_t)uartGetParity(&interface->base);
       return E_OK;
 
+    case IF_SERIAL_STOPBITS:
+      *(uint8_t *)data = (uint8_t)uartGetStopBits(&interface->base);
+      return E_OK;
+
     default:
       break;
   }
@@ -479,6 +483,14 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
       const enum SerialParity parity = *(const uint8_t *)data;
 
       uartSetParity(&interface->base, parity);
+      return E_OK;
+    }
+
+    case IF_SERIAL_STOPBITS:
+    {
+      const enum SerialStopBits number = *(const uint8_t *)data;
+
+      uartSetStopBits(&interface->base, number);
       return E_OK;
     }
 

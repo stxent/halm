@@ -62,6 +62,12 @@ uint32_t uartGetRate(const struct LpUartBase *interface)
   return divisor ? (uartGetClock(interface) / divisor) : 0;
 }
 /*----------------------------------------------------------------------------*/
+enum SerialStopBits uartGetStopBits(const struct LpUartBase *interface)
+{
+  const IMX_LPUART_Type * const reg = interface->reg;
+  return (reg->BAUD & BAUD_SBNS) ? SERIAL_STOPBITS_2 : SERIAL_STOPBITS_1;
+}
+/*----------------------------------------------------------------------------*/
 void uartSetParity(struct LpUartBase *interface, enum SerialParity parity)
 {
   IMX_LPUART_Type * const reg = interface->reg;
@@ -100,4 +106,17 @@ bool uartSetRate(struct LpUartBase *interface, uint32_t rate)
   }
   else
     return false;
+}
+/*----------------------------------------------------------------------------*/
+void uartSetStopBits(struct LpUartBase *interface, enum SerialStopBits number)
+{
+  assert(number == SERIAL_STOPBITS_1 || number == SERIAL_STOPBITS_2);
+
+  IMX_LPUART_Type * const reg = interface->reg;
+  const uint32_t baud = reg->BAUD & ~BAUD_SBNS;
+  const uint32_t enabled = reg->CTRL & (CTRL_RE | CTRL_TE);
+
+  reg->CTRL &= ~(CTRL_RE | CTRL_TE);
+  reg->BAUD = baud | (number == SERIAL_STOPBITS_2 ? BAUD_SBNS : 0);
+  reg->CTRL |= enabled;
 }

@@ -16,6 +16,14 @@ enum [[gnu::packed]] SerialParity
   SERIAL_PARITY_EVEN
 };
 
+enum [[gnu::packed]] SerialStopBits
+{
+  SERIAL_STOPBITS_1,
+  SERIAL_STOPBITS_2,
+  SERIAL_STOPBITS_0P5,
+  SERIAL_STOPBITS_1P5
+};
+
 enum SerialParameter
 {
   /**
@@ -23,6 +31,12 @@ enum SerialParameter
    * Parameter type is \a uint8_t.
    */
   IF_SERIAL_PARITY = IF_PARAMETER_END,
+
+  /**
+   * Set stop bit count for the transmitter or read current stop bit settings.
+   * Parameter type is \a uint8_t.
+   */
+  IF_SERIAL_STOPBITS,
 
   /**
    * Read the CTS status line. Parameter type is \a uint8_t. Possible values:

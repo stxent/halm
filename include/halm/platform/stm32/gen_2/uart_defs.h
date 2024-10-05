@@ -76,6 +76,14 @@
 /* Word length */
 #define CR1_M1                          BIT(28)
 /*------------------Control Register 2----------------------------------------*/
+enum
+{
+  STOP_1_BIT,
+  STOP_0_5_BIT,
+  STOP_2_BITS,
+  STOP_1_5_BITS
+};
+
 /* 7-bit Address Detection or 4-bit Address Detection */
 #define CR2_ADDM7                       BIT(4)
 /* LIN break detection length */

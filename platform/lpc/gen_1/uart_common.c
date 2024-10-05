@@ -99,6 +99,12 @@ uint32_t uartGetRate(const struct UartBase *interface)
   return !config.divisor ? 0 : rate / config.divisor;
 }
 /*----------------------------------------------------------------------------*/
+enum SerialStopBits uartGetStopBits(const struct UartBase *interface)
+{
+  const LPC_UART_Type * const reg = interface->reg;
+  return (reg->LCR & LCR_SBS_2BIT) ? SERIAL_STOPBITS_2 : SERIAL_STOPBITS_1;
+}
+/*----------------------------------------------------------------------------*/
 void uartSetParity(struct UartBase *interface, enum SerialParity parity)
 {
   LPC_UART_Type * const reg = interface->reg;
@@ -122,4 +128,16 @@ void uartSetRate(struct UartBase *interface, struct UartRateConfig config)
   reg->DLM = config.divisor >> 8;
   reg->FDR = config.fraction;
   reg->LCR &= ~LCR_DLAB; /* Disable DLAB access */
+}
+/*----------------------------------------------------------------------------*/
+void uartSetStopBits(struct UartBase *interface, enum SerialStopBits number)
+{
+  assert(number == SERIAL_STOPBITS_1 || number == SERIAL_STOPBITS_2);
+
+  LPC_UART_Type * const reg = interface->reg;
+
+  if (number == SERIAL_STOPBITS_2)
+    reg->LCR |= LCR_SBS_2BIT;
+  else
+    reg->LCR &= ~LCR_SBS_2BIT;
 }
