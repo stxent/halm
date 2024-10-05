@@ -88,6 +88,8 @@ struct SdioSpi
     uint8_t status;
   } command;
 
+  /* Bus rate */
+  uint32_t rate;
   /* Retries for a last command or transfer step */
   unsigned short retries;
   /* Size of each block in multi-block data transfers */
