@@ -333,13 +333,29 @@ static enum PinDriveType detectPinDriveType(volatile uint32_t *reg)
   bool highDrive = false;
   bool highSpeed = false;
 
-  highDrive |= pin.port == PORT_1 && pin.number == 17;
-  highDrive |= pin.port == PORT_2 && pin.number >= 3 && pin.number <= 5;
-  highDrive |= pin.port == PORT_8 && pin.number <= 2;
-  highDrive |= pin.port == PORT_A && pin.number >= 1 && pin.number <= 3;
-
-  highSpeed |= pin.port == PORT_3 && pin.number == 3;
-  highSpeed |= pin.port == PORT_CLK && pin.number <= 3;
+  switch (pin.port)
+  {
+    case PORT_1:
+      highDrive = pin.number == 17;
+      break;
+    case PORT_2:
+      highDrive = pin.number >= 3 && pin.number <= 5;
+      break;
+    case PORT_3:
+      highSpeed = pin.number == 3;
+      break;
+    case PORT_8:
+      highDrive = pin.number <= 2;
+      break;
+    case PORT_A:
+      highDrive = pin.number >= 1 && pin.number <= 3;
+      break;
+    case PORT_CLK:
+      highSpeed = pin.number <= 3;
+      break;
+    default:
+      break;
+  }
 
   if (highDrive)
     return HIGH_DRIVE_PIN;
