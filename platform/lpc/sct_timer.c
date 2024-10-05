@@ -161,7 +161,7 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
 
   /* Configure event */
   reg->EV[timer->event].CTRL = EVCTRL_MATCHSEL(timer->event)
-      | EVCTRL_COMBMODE(COMBMODE_MATCH) | EVCTRL_MATCHMEM
+      | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
   if (timer->base.part == SCT_HIGH)

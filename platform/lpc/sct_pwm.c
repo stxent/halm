@@ -202,7 +202,7 @@ static enum Result unitInit(void *object, const void *configBase)
 
   /* Configure event */
   reg->EV[unit->event].CTRL = EVCTRL_MATCHSEL(unit->event)
-      | EVCTRL_COMBMODE(COMBMODE_MATCH) | EVCTRL_MATCHMEM
+      | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
   if (unit->base.part == SCT_HIGH)
     reg->EV[unit->event].CTRL |= EVCTRL_HEVENT;

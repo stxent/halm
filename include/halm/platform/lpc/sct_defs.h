@@ -115,8 +115,10 @@ enum
 
 #define EVCTRL_MATCHSEL_MASK            BIT_FIELD(MASK(4), 0)
 #define EVCTRL_MATCHSEL(value)          BIT_FIELD((value), 0)
-#define EVCTRL_HEVENT                   BIT(4) /* Select L/H counter */
-#define EVCTRL_OUTSEL                   BIT(5) /* Input/output select */
+/* Select L counter when cleared and select H counter when set */
+#define EVCTRL_HEVENT                   BIT(4)
+/* Select the input when cleared and select the output when set */
+#define EVCTRL_OUTSEL                   BIT(5)
 #define EVCTRL_IOSEL_MASK               BIT_FIELD(MASK(4), 6)
 #define EVCTRL_IOSEL(value)             BIT_FIELD((value), 6)
 #define EVCTRL_IOCOND_MASK              BIT_FIELD(MASK(2), 10)
@@ -126,7 +128,9 @@ enum
 #define EVCTRL_STATELD                  BIT(14)
 #define EVCTRL_STATEV_MASK              BIT_FIELD(MASK(5), 15)
 #define EVCTRL_STATEV(value)            BIT_FIELD((value), 15)
+/* Enable GE or LE instead of EQ, available on flash-based parts only */
 #define EVCTRL_MATCHMEM                 BIT(20)
+/* Direction qualifier for BIDIR mode, available on flash-based parts only */
 #define EVCTRL_DIRECTION_MASK           BIT_FIELD(MASK(2), 21)
 #define EVCTRL_DIRECTION(value)         BIT_FIELD((value), 21)
 /*----------------------------------------------------------------------------*/
