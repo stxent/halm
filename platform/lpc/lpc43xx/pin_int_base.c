@@ -115,9 +115,10 @@ static enum Result pinIntInit(void *object, const void *configBase)
   interrupt->irq = findIrqNumber(interrupt->channel);
 
   volatile uint32_t * const reg = LPC_SCU->PINTSEL + (interrupt->channel >> 2);
+  const uint32_t offset = interrupt->channel & 3;
 
-  *reg = (*reg & ~PINTSEL_CHANNEL_MASK(interrupt->channel))
-      | PINTSEL_CHANNEL(interrupt->channel, config->port, config->number);
+  *reg = (*reg & ~PINTSEL_CHANNEL_MASK(offset))
+      | PINTSEL_CHANNEL(offset, config->port, config->number);
 
   return E_OK;
 }
