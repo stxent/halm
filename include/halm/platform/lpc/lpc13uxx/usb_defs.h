@@ -74,7 +74,7 @@
 #define INTSTAT_FRAME_INT               BIT(30)
 #define INTSTAT_DEV_INT                 BIT(31)
 #define INTSTAT_MASK \
-    (INTSTAT_EP_INT_MASK | BIT(30) | BIT(31))
+    (INTSTAT_EP_INT_MASK | INTSTAT_FRAME_INT | INTSTAT_DEV_INT)
 /*------------------Interrupt Enable register---------------------------------*/
 #define INTEN_EP_INT_EN(index)          BIT(index)
 #define INTEN_FRAME_INT_EN              BIT(30)

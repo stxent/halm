@@ -420,6 +420,13 @@ config PLATFORM_USB_HS
 	help
 	  This enables support for USB High Speed mode.
 
+config PLATFORM_USB_SOF
+	bool "USB SOF"
+	default y
+	depends on PLATFORM_USB
+	help
+	  This enables support for USB Start of Frame events.
+
 config PLATFORM_USB_DEVICE_EP_COUNT
 	int
 	default 8 if FAMILY_M03X

@@ -212,6 +212,10 @@ static void interruptHandler(void *object)
   {
     usbControlNotify(device->control, USB_DEVICE_EVENT_PORT_CHANGE);
   }
+  if (intStatus & BUSINTSTS_SOFIF)
+  {
+    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
+  }
 
   /* Control Endpoint interrupt */
   if (epStatus & GINTSTS_CEPIF)
@@ -466,6 +470,10 @@ static void devSetConnected(void *object, bool state)
     reg->BUSINTSTS = BUSINTSTS_MASK;
     reg->BUSINTEN = BUSINTEN_RSTIEN | BUSINTEN_HISPDIEN
         | BUSINTEN_RESUMEIEN | BUSINTEN_SUSPENDIEN;
+
+#ifdef CONFIG_PLATFORM_USB_SOF
+    reg->BUSINTEN |= BUSINTEN_SOFIEN;
+#endif
 
     reg->GINTEN = GINTEN_USBIEN | GINTEN_CEPIEN | GINTEN_EPIEN_MASK;
     reg->PHYCTL |= PHYCTL_DPPUEN | PHYCTL_PHYEN;
@@ -874,15 +882,6 @@ static void controlEpSetStalled(void *object, bool stalled)
     reg->CEPCTL = (reg->CEPCTL & ~CEPCTL_NAKCLR) | CEPCTL_STALLEN;
   else
     reg->CEPCTL = reg->CEPCTL & ~(CEPCTL_NAKCLR | CEPCTL_STALLEN);
-
-  // TODO
-  // /* Write pending IN request to the endpoint buffer */
-  // if (!stalled && (ep->address & USB_EP_DIRECTION_IN)
-  //     && !pointerQueueEmpty(&ep->requests))
-  // {
-  //   struct UsbRequest * const request = pointerQueueFront(&ep->requests);
-  //   epWriteData(ep, request->buffer, request->length);
-  // }
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dataEpInit(void *object, const void *configBase)
@@ -1062,32 +1061,9 @@ static void dataEpSetStalled(void *object, bool stalled)
 {
   struct UsbEndpoint * const ep = object;
   NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
-  // const bool in = (ep->address & USB_EP_DIRECTION_IN) != 0;
 
   if (stalled)
     channel->EPRSPCTL |= EPRSPCTL_HALT;
   else
     channel->EPRSPCTL &= ~EPRSPCTL_HALT;
-
-  // TODO Is flushing needed during unstall?
-  // if (!stalled)
-  // {
-  //   if (in)
-  //   {
-  //     /* Flush TX FIFO */
-  //     channel->EPRSPCTL |= EPRSPCTL_FLUSH;
-  //     while (channel->EPRSPCTL & EPRSPCTL_FLUSH);
-  //   }
-
-  //   channel->EPRSPCTL &= ~EPRSPCTL_HALT;
-
-  //   /* Write pending IN request to the endpoint buffer */
-  //   if (in && !pointerQueueEmpty(&ep->requests))
-  //   {
-  //     struct UsbRequest * const request = pointerQueueFront(&ep->requests);
-  //     epWriteData(ep, request->buffer, request->length);
-  //   }
-  // }
-  // else
-  //   channel->EPRSPCTL |= EPRSPCTL_HALT;
 }

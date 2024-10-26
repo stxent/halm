@@ -4,7 +4,9 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/timer.h>
 #include <halm/usb/usb_trace.h>
+#include <xcore/interface.h>
 #include <assert.h>
 #include <inttypes.h>
 #include <stdarg.h>

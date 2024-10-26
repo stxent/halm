@@ -180,6 +180,12 @@ static void interruptHandler(void *object)
     }
   }
 
+  /* Start of Frame interrupt */
+  if (intStatus & INTSTS_SOFIF)
+  {
+    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
+  }
+
   /* Endpoint interrupt */
   if (intStatus & INTSTS_USBIF)
   {
@@ -274,7 +280,8 @@ static enum Result devInit(void *object, const void *configBase)
 
   /* Disable interrupts and clear pending interrupt flags */
   reg->INTEN = 0;
-  reg->INTSTS = INTSTS_BUSIF | INTSTS_USBIF | INTSTS_VBDETIF | INTSTS_NEVWKIF;
+  reg->INTSTS = INTSTS_BUSIF | INTSTS_USBIF | INTSTS_VBDETIF
+      | INTSTS_NEVWKIF | INTSTS_SOFIF;
 
   reg->ATTR = ATTR_PWRDN;
   reg->FADDR = 0;
@@ -354,9 +361,13 @@ static void devSetConnected(void *object, bool state)
   {
     /* Clear pending interrupt flags and enable interrupts */
     reg->INTSTS = INTSTS_BUSIF | INTSTS_USBIF | INTSTS_VBDETIF
-        | INTSTS_NEVWKIF;
+        | INTSTS_NEVWKIF | INTSTS_SOFIF;
     reg->INTEN = INTEN_BUSIEN | INTEN_USBIEN | INTEN_VBDETIEN
         | INTEN_NEVWKIEN | INTEN_WKEN;
+
+#ifdef CONFIG_PLATFORM_USB_SOF
+    reg->INTEN |= INTEN_SOFIEN;
+#endif
 
     reg->ATTR |= ATTR_PHYEN | ATTR_DPPUEN;
     reg->SE0 = 0;

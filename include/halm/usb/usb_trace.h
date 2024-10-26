@@ -7,8 +7,7 @@
 #ifndef HALM_USB_USB_TRACE_H_
 #define HALM_USB_USB_TRACE_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/timer.h>
-#include <xcore/interface.h>
+#include <xcore/error.h>
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
@@ -18,7 +17,7 @@ void usbTraceDeinit(void);
 #ifdef CONFIG_USB_TRACE
 void usbTrace(const char *, ...);
 #else
-#define usbTrace(...) do {} while (0)
+#  define usbTrace(...) do {} while (0)
 #endif
 
 END_DECLS

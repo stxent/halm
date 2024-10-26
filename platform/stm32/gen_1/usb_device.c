@@ -188,6 +188,12 @@ static void interruptHandler(void *object)
     usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
   }
 
+  if (intStatus & (ISTR_ESOF | ISTR_SOF))
+  {
+    reg->ISTR = ISTR_MASK & ~(ISTR_ESOF | ISTR_SOF);
+    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
+  }
+
   if (intStatus & ISTR_SUSP)
   {
     reg->ISTR = ISTR_MASK & ~ISTR_SUSP;
@@ -293,6 +299,10 @@ static enum Result devInit(void *object, const void *configBase)
   reg->BTABLE = 0;
   reg->ISTR = 0;
   reg->CNTR = CNTR_RESETM | CNTR_CTRM | CNTR_SUSPM | CNTR_WKUPM;
+
+#ifdef CONFIG_PLATFORM_USB_SOF
+  reg->CNTR |= CNTR_ESOFM | CNTR_SOFM;
+#endif
 
   irqSetPriority(device->base.irq, config->priority);
   irqEnable(device->base.irq);

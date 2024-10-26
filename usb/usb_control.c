@@ -616,11 +616,9 @@ void usbControlUnbindDriver(struct UsbControl *control)
 /*----------------------------------------------------------------------------*/
 void usbControlNotify(struct UsbControl *control, unsigned int event)
 {
-  assert(control->driver != NULL);
-
   if (event == USB_DEVICE_EVENT_RESET)
     resetDevice(control);
-  else
+  else if (control->driver != NULL)
     usbDriverNotify(control->driver, event);
 }
 /*----------------------------------------------------------------------------*/

@@ -193,6 +193,12 @@ static void interruptHandler(void *object)
     usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
   }
 
+  if (intStatus & GINTSTS_SOF)
+  {
+    reg->GLOBAL.GINTSTS = GINTSTS_SOF;
+    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
+  }
+
   if (intStatus & GINTSTS_ENUMDNE)
   {
     reg->GLOBAL.GINTSTS = GINTSTS_ENUMDNE;
@@ -386,6 +392,10 @@ static enum Result devInit(void *object, const void *configBase)
   reg->DEV.DAINTMSK = 0;
   reg->DEV.DIEPMSK = DIEPMSK_XFRCM;
   reg->DEV.DOEPMSK = DOEPMSK_XFRCM;
+
+#ifdef CONFIG_PLATFORM_USB_SOF
+  reg->GLOBAL.GINTMSK |= GINTMSK_SOFM;
+#endif
 
   irqSetPriority(device->base.irq, config->priority);
   irqEnable(device->base.irq);

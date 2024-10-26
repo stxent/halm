@@ -174,6 +174,12 @@ static void interruptHandler(void *object)
     }
   }
 
+  /* Start of Frame interrupt */
+  if (intStatus & INTSTAT_FRAME_INT)
+  {
+    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
+  }
+
   uint32_t epStatus = intStatus & INTSTAT_EP_INT_MASK;
 
   /* EP interrupts */
@@ -215,8 +221,12 @@ static void resetDevice(struct UsbDevice *device)
   reg->DEVCMDSTAT |= DEVCMDSTAT_DEV_EN;
   /* Clear all interrupts */
   reg->INTSTAT = INTSTAT_MASK;
-  /* Enable device interrupt only */
+  /* Enable device interrupt */
   reg->INTEN = INTEN_DEV_INT_EN;
+
+#ifdef CONFIG_PLATFORM_USB_SOF
+  reg->INTEN |= INTEN_FRAME_INT_EN;
+#endif
 
   devSetAddress(device, 0);
 
