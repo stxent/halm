@@ -18,20 +18,20 @@ config USB_DEVICE_COMPOSITE
 	default y
 	depends on USB_DEVICE
 
-config USB_DEVICE_CDC
-	bool "CDC driver"
+config USB_DEVICE_CDC_ACM
+	bool "CDC ACM driver"
 	default y
 	depends on USB_DEVICE
 
-config USB_DEVICE_CDC_INTERRUPTS
+config USB_DEVICE_CDC_ACM_INTERRUPTS
 	bool "State notifications"
 	default y
-	depends on USB_DEVICE_CDC
+	depends on USB_DEVICE_CDC_ACM
 
-config USB_DEVICE_CDC_WATERMARK
+config USB_DEVICE_CDC_ACM_WATERMARK
 	bool "Watermark calculation"
 	default n
-	depends on USB_DEVICE_CDC
+	depends on USB_DEVICE_CDC_ACM
 
 config USB_DEVICE_DFU
 	bool "DFU driver"

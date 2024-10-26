@@ -15,7 +15,7 @@ if(CONFIG_USB_DEVICE_COMPOSITE)
     list(APPEND SOURCE_FILES "composite_device.c")
 endif()
 
-if(CONFIG_USB_DEVICE_CDC)
+if(CONFIG_USB_DEVICE_CDC_ACM)
     list(APPEND SOURCE_FILES "cdc_acm.c")
     list(APPEND SOURCE_FILES "cdc_acm_base.c")
 endif()

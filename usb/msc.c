@@ -1125,10 +1125,10 @@ static enum Result driverInit(void *object, const void *configBase)
   memset(&driver->context.cbw, 0, sizeof(driver->context.cbw));
   driver->context.state = STATE_SUSPEND;
 
-  driver->rxEp = usbDevCreateEndpoint(config->device, config->endpoints.rx);
+  driver->rxEp = usbDevCreateEndpoint(driver->device, driver->endpoints.rx);
   if (driver->rxEp == NULL)
     return E_ERROR;
-  driver->txEp = usbDevCreateEndpoint(config->device, config->endpoints.tx);
+  driver->txEp = usbDevCreateEndpoint(driver->device, driver->endpoints.tx);
   if (driver->txEp == NULL)
     return E_ERROR;
 

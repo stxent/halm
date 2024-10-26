@@ -172,6 +172,7 @@ static void configDescriptor(const void *, struct UsbDescriptor *header,
         .descriptorType = DESCRIPTOR_TYPE_CONFIGURATION,
         .totalLength = TO_LITTLE_ENDIAN_16(
             sizeof(struct UsbConfigurationDescriptor)
+            + sizeof(struct UsbInterfaceAssociationDescriptor)
             + sizeof(struct UsbInterfaceDescriptor) * 2
             + sizeof(struct UsbEndpointDescriptor) * 3
             + sizeof(struct CdcHeaderDescriptor)

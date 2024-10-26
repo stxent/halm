@@ -48,7 +48,7 @@ struct CdcAcm
   /* Link configuration message received */
   bool updated;
 
-#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_WATERMARK
   /* Maximum available bytes in the receive queue */
   size_t rxWatermark;
   /* Maximum pending bytes in the transmit queue */
@@ -65,7 +65,7 @@ static bool resetEndpoints(struct CdcAcm *);
 static void updateRxWatermark(struct CdcAcm *, size_t);
 static void updateTxWatermark(struct CdcAcm *, size_t);
 
-#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_INTERRUPTS
 static void cdcNotificationSent(void *, struct UsbRequest *,
     enum UsbRequestStatus);
 static void sendStateNotification(struct CdcAcm *, uint16_t);
@@ -173,7 +173,7 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   }
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_INTERRUPTS
 static void cdcNotificationSent(void *argument, struct UsbRequest *request,
     enum UsbRequestStatus status)
 {
@@ -207,7 +207,7 @@ static inline size_t getPacketSize(const struct CdcAcm *interface)
 /*----------------------------------------------------------------------------*/
 static inline bool isTxPoolEmpty(const struct CdcAcm *interface)
 {
-#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_INTERRUPTS
   return pointerArraySize(&interface->txRequestPool) <= 1;
 #else
   return pointerArrayEmpty(&interface->txRequestPool);
@@ -255,7 +255,7 @@ static bool resetEndpoints(struct CdcAcm *interface)
   return completed;
 }
 /*----------------------------------------------------------------------------*/
-#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_INTERRUPTS
 static void sendStateNotification(struct CdcAcm *interface, uint16_t data)
 {
   const struct CdcSerialState packet = {
@@ -297,7 +297,7 @@ static void sendStateNotification(struct CdcAcm *interface, uint16_t data)
 /*----------------------------------------------------------------------------*/
 static void updateRxWatermark(struct CdcAcm *interface, size_t level)
 {
-#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_WATERMARK
   if (level > interface->rxWatermark)
     interface->rxWatermark = level;
 #else
@@ -308,7 +308,7 @@ static void updateRxWatermark(struct CdcAcm *interface, size_t level)
 /*----------------------------------------------------------------------------*/
 static void updateTxWatermark(struct CdcAcm *interface, size_t level)
 {
-#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_WATERMARK
   if (level > interface->txWatermark)
     interface->txWatermark = level;
 #else
@@ -385,7 +385,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   interface->suspended = true;
   interface->updated = false;
 
-#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_WATERMARK
   interface->rxWatermark = 0;
   interface->txWatermark = 0;
 #endif
@@ -525,7 +525,7 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
       *(size_t *)data = interface->suspended ? 0 : interface->queuedTxBytes;
       return E_OK;
 
-#ifdef CONFIG_USB_DEVICE_CDC_WATERMARK
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_WATERMARK
     case IF_RX_WATERMARK:
       *(size_t *)data = interface->rxWatermark;
       return E_OK;
@@ -545,7 +545,7 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
 
   switch ((enum SerialParameter)parameter)
   {
-#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_INTERRUPTS
     case IF_SERIAL_CTS:
     {
       const uint8_t state = cdcAcmBaseGetState(interface->driver);
@@ -604,14 +604,14 @@ static enum Result interfaceSetParam(void *object, int parameter,
 {
   struct CdcAcm * const interface = object;
 
-#ifndef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+#ifndef CONFIG_USB_DEVICE_CDC_ACM_INTERRUPTS
   (void)data;
   (void)interface;
 #endif
 
   switch ((enum SerialParameter)parameter)
   {
-#ifdef CONFIG_USB_DEVICE_CDC_INTERRUPTS
+#ifdef CONFIG_USB_DEVICE_CDC_ACM_INTERRUPTS
     case IF_SERIAL_RTS:
     case IF_SERIAL_DTR:
     {

@@ -86,16 +86,12 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
 
   while (length > 0 && *entry != NULL)
   {
-    (*entry)(driver, &header, NULL);
+    assert(((*entry)(driver, &header, NULL), length >= header.length));
+    (*entry)(driver, &header, response);
 
-    if (header.descriptorType != DESCRIPTOR_TYPE_INTERFACE_ASSOCIATION)
-    {
-      assert(length >= header.length);
-      (*entry)(driver, &header, response);
+    response = (void *)((uintptr_t)response + header.length);
+    length -= (int32_t)header.length;
 
-      response = (void *)((uintptr_t)response + header.length);
-      length -= (int32_t)header.length;
-    }
     ++entry;
   }
 
