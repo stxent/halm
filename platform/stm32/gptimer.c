@@ -56,10 +56,13 @@ static void interruptHandler(void *object)
   struct GpTimer * const timer = object;
   STM_TIM_Type * const reg = timer->base.reg;
 
-  /* Clear all pending interrupts */
-  reg->SR = 0;
+  if (reg->SR & SR_UIF)
+  {
+    /* Clear all pending interrupts */
+    reg->SR = 0;
 
-  timer->callback(timer->callbackArgument);
+    timer->callback(timer->callbackArgument);
+  }
 }
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_GPTIMER_PM
