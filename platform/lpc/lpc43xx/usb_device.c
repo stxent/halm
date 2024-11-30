@@ -198,13 +198,11 @@ static void interruptHandler(void *object)
     usbControlNotify(device->control, USB_DEVICE_EVENT_PORT_CHANGE);
   }
 
-  const bool suspended = (intStatus & USBSTS_D_SLI) != 0;
-
-  if (suspended != device->suspended)
+  /* Device suspend event */
+  if ((intStatus & USBSTS_D_SLI) && !device->suspended)
   {
-    usbControlNotify(device->control, suspended ?
-        USB_DEVICE_EVENT_SUSPEND : USB_DEVICE_EVENT_RESUME);
-    device->suspended = suspended;
+    usbControlNotify(device->control, USB_DEVICE_EVENT_SUSPEND);
+    device->suspended = true;
   }
 
   /* Handle setup packets */

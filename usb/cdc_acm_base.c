@@ -39,10 +39,10 @@ struct CdcAcmBase
     uint8_t tx;
   } endpoints;
 
-  /* Interface index in configurations with multiple interfaces */
+  /* Number of the first interface in the device */
   uint8_t controlInterfaceIndex;
   /* Speed of the USB interface */
-  uint8_t speed;
+  enum UsbSpeed speed;
 };
 /*----------------------------------------------------------------------------*/
 static void interfaceAssociationDescriptor(const void *, struct UsbDescriptor *,
@@ -456,39 +456,18 @@ static enum Result handleClassRequest(struct CdcAcmBase *driver,
   return res;
 }
 /*----------------------------------------------------------------------------*/
-uint8_t cdcAcmBaseGetInterfaceIndex(const struct CdcAcmBase *driver)
-{
-  return driver->controlInterfaceIndex;
-}
-/*----------------------------------------------------------------------------*/
-uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *driver)
-{
-  return driver->state.lineCoding.dteRate;
-}
-/*----------------------------------------------------------------------------*/
-uint8_t cdcAcmBaseGetState(const struct CdcAcmBase *driver)
-{
-  return driver->state.controlLineState;
-}
-/*----------------------------------------------------------------------------*/
-uint8_t cdcAcmBaseGetUsbSpeed(const struct CdcAcmBase *driver)
-{
-  return driver->speed;
-}
-/*----------------------------------------------------------------------------*/
 static enum Result driverInit(void *object, const void *configBase)
 {
   const struct CdcAcmBaseConfig * const config = configBase;
   assert(config->owner != NULL);
-  assert(config->device != NULL);
 
   struct CdcAcmBase * const driver = object;
 
   driver->owner = config->owner;
+  driver->device = config->device;
   driver->endpoints.interrupt = config->endpoints.interrupt;
   driver->endpoints.tx = config->endpoints.tx;
   driver->endpoints.rx = config->endpoints.rx;
-  driver->device = config->device;
   driver->speed = USB_FS;
 
   driver->state.lineCoding = (struct CdcLineCoding){115200, 0, 0, 8};
@@ -544,4 +523,24 @@ static void driverNotify(void *object, unsigned int event)
     default:
       break;
   }
+}
+/*----------------------------------------------------------------------------*/
+uint8_t cdcAcmBaseGetInterfaceIndex(const struct CdcAcmBase *driver)
+{
+  return driver->controlInterfaceIndex;
+}
+/*----------------------------------------------------------------------------*/
+uint32_t cdcAcmBaseGetRate(const struct CdcAcmBase *driver)
+{
+  return driver->state.lineCoding.dteRate;
+}
+/*----------------------------------------------------------------------------*/
+uint8_t cdcAcmBaseGetState(const struct CdcAcmBase *driver)
+{
+  return driver->state.controlLineState;
+}
+/*----------------------------------------------------------------------------*/
+enum UsbSpeed cdcAcmBaseGetUsbSpeed(const struct CdcAcmBase *driver)
+{
+  return driver->speed;
 }

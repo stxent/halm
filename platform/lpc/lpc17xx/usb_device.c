@@ -18,7 +18,7 @@
 #include <malloc.h>
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
-#define CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
+#  define CONFIG_PLATFORM_USB_DEVICE_POOL_SIZE
 #endif
 
 struct DmaDescriptorPool
@@ -258,6 +258,13 @@ static void interruptHandler(void *object)
     }
   }
 
+  /* Start of Frame */
+  if (intStatus & USBDevInt_FRAME)
+  {
+    reg->USBDevIntClr = USBDevInt_FRAME;
+    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
+  }
+
   /* SIE endpoint interrupt */
   if (intStatus & USBDevInt_EP_SLOW)
   {
@@ -334,6 +341,10 @@ static void resetDevice(struct UsbDevice *device)
 
   reg->USBDMAIntEn = USBDMAIntEn_EOT | USBDMAIntEn_NDDR | USBDMAIntEn_ERR;
   reg->USBDevIntEn = USBDevInt_DEV_STAT | USBDevInt_EP_SLOW;
+
+#ifdef CONFIG_PLATFORM_USB_SOF
+  reg->USBDevIntEn |= USBDevInt_FRAME;
+#endif
 
   devSetAddress(device, 0);
 

@@ -146,6 +146,12 @@ static void interruptHandler(void *object)
     }
   }
 
+  /* Start of Frame */
+  if (intStatus & USBDevInt_FRAME)
+  {
+    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
+  }
+
   /* Endpoint interrupt */
   if (intStatus & USBDevInt_EP_MASK)
   {
@@ -334,6 +340,10 @@ static void devSetConnected(void *object, bool state)
   {
     reg->USBDevIntClr = USBDevInt_DEV_STAT;
     reg->USBDevIntEn = USBDevInt_DEV_STAT;
+
+#ifdef CONFIG_PLATFORM_USB_SOF
+    reg->USBDevIntEn |= USBDevInt_FRAME;
+#endif
 
     usbCommandWrite(device, USB_CMD_SET_DEVICE_STATUS, DEVICE_STATUS_CON);
   }

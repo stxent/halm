@@ -295,7 +295,6 @@ static enum Result driverInit(void *object, const void *configBase)
 {
   const struct HidBaseConfig * const config = configBase;
   assert(config->owner != NULL);
-  assert(config->device != NULL);
 
   struct HidBase * const driver = object;
 

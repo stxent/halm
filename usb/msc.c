@@ -1098,6 +1098,7 @@ static enum Result driverInit(void *object, const void *configBase)
   struct Msc * const driver = object;
 
   driver->callback = NULL;
+  driver->callbackArgument = NULL;
   driver->bufferSize = config->size;
   driver->device = config->device;
   driver->blockSize = MSC_BLOCK_SIZE;

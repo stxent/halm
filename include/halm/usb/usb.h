@@ -29,7 +29,7 @@ struct UsbSetupPacket;
 typedef void (*UsbDescriptorFunctor)(const void *,
     struct UsbDescriptor *, void *);
 
-enum UsbDeviceEvent
+enum [[gnu::packed]] UsbDeviceEvent
 {
   USB_DEVICE_EVENT_RESET,
   USB_DEVICE_EVENT_SUSPEND,
@@ -38,7 +38,7 @@ enum UsbDeviceEvent
   USB_DEVICE_EVENT_PORT_CHANGE
 };
 
-enum UsbRequestStatus
+enum [[gnu::packed]] UsbRequestStatus
 {
   /** Request completed successfully. */
   USB_REQUEST_COMPLETED,
@@ -52,7 +52,7 @@ enum UsbRequestStatus
   USB_REQUEST_CANCELLED
 };
 
-enum UsbSpeed
+enum [[gnu::packed]] UsbSpeed
 {
   USB_LS,
   USB_FS,

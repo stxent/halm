@@ -317,46 +317,6 @@ static void updateTxWatermark(struct CdcAcm *interface, size_t level)
 #endif
 }
 /*----------------------------------------------------------------------------*/
-void cdcAcmOnParametersChanged(struct CdcAcm *interface)
-{
-  interface->updated = true;
-
-  if (interface->callback != NULL)
-    interface->callback(interface->callbackArgument);
-}
-/*----------------------------------------------------------------------------*/
-void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
-{
-  switch ((enum UsbDeviceEvent)event)
-  {
-    case USB_DEVICE_EVENT_RESET:
-      if (resetEndpoints(interface))
-      {
-        interface->suspended = false;
-        usbTrace("cdc_acm: reset completed");
-      }
-      else
-        usbTrace("cdc_acm: reset failed");
-      break;
-
-    case USB_DEVICE_EVENT_SUSPEND:
-      interface->suspended = true;
-      usbTrace("cdc_acm: suspended");
-      break;
-
-    case USB_DEVICE_EVENT_RESUME:
-      interface->suspended = false;
-      usbTrace("cdc_acm: resumed");
-      break;
-
-    default:
-      break;
-  }
-
-  if (interface->callback != NULL)
-    interface->callback(interface->callbackArgument);
-}
-/*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *object, const void *configBase)
 {
   const struct CdcAcmConfig * const config = configBase;
@@ -365,8 +325,8 @@ static enum Result interfaceInit(void *object, const void *configBase)
 
   struct CdcAcm * const interface = object;
   const struct CdcAcmBaseConfig driverConfig = {
-      .device = config->device,
       .owner = interface,
+      .device = config->device,
       .endpoints = {
           .interrupt = config->endpoints.interrupt,
           .rx = config->endpoints.rx,
@@ -380,6 +340,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
     return E_MEMORY;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->queuedRxBytes = 0;
   interface->queuedTxBytes = 0;
   interface->suspended = true;
@@ -449,7 +410,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
 
   /* Lower half of the driver should be initialized after all other parts */
   interface->driver = init(CdcAcmBase, &driverConfig);
-  return interface->driver ? E_OK : E_ERROR;
+  return interface->driver != NULL ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static void interfaceDeinit(void *object)
@@ -585,7 +546,7 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
       else
       {
         if (interface->queuedRxBytes)
-          status |= CDC_ACM_RX_AVAILABLE;
+          status |= CDC_ACM_RX_READY;
         if (!interface->queuedTxBytes)
           status |= CDC_ACM_TX_EMPTY;
       }
@@ -723,4 +684,44 @@ static size_t interfaceWrite(void *object, const void *buffer, size_t length)
   }
 
   return bufferPosition - (const uint8_t *)buffer;
+}
+/*----------------------------------------------------------------------------*/
+void cdcAcmOnParametersChanged(struct CdcAcm *interface)
+{
+  interface->updated = true;
+
+  if (interface->callback != NULL)
+    interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
+{
+  switch ((enum UsbDeviceEvent)event)
+  {
+    case USB_DEVICE_EVENT_RESET:
+      if (resetEndpoints(interface))
+      {
+        interface->suspended = false;
+        usbTrace("cdc_acm: reset completed");
+      }
+      else
+        usbTrace("cdc_acm: reset failed");
+      break;
+
+    case USB_DEVICE_EVENT_SUSPEND:
+      interface->suspended = true;
+      usbTrace("cdc_acm: suspended");
+      break;
+
+    case USB_DEVICE_EVENT_RESUME:
+      interface->suspended = false;
+      usbTrace("cdc_acm: resumed");
+      break;
+
+    default:
+      break;
+  }
+
+  if (interface->callback != NULL)
+    interface->callback(interface->callbackArgument);
 }

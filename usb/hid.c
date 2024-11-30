@@ -41,12 +41,13 @@ static enum Result deviceInit(void *object, const void *configBase)
   };
 
   device->driver = init(HidBase, &driverConfig);
-  return device->driver ? E_OK : E_ERROR;
+  return device->driver != NULL ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static void deviceDeinit(void *object)
 {
-  deinit(object);
+  struct Hid * const device = object;
+  deinit(device->driver);
 }
 /*----------------------------------------------------------------------------*/
 enum Result hidBind(struct Hid *device)

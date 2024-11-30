@@ -660,7 +660,7 @@ config PLATFORM_USB_HS
 config PLATFORM_USB_SOF
 	bool "USB SOF"
 	default y
-	depends on PLATFORM_USB && (FAMILY_LPC13UXX || FAMILY_LPC43XX)
+	depends on PLATFORM_USB
 	help
 	  This enables support for USB Start of Frame events.
 

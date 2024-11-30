@@ -16,15 +16,14 @@ enum CdcAcmParameter
   /**
    * Retrieve extended information about current interface status.
    * Interface status is a bitmask, possible values are defined in the
-   * \a enum \a CdcAcmFlags.
-   * Parameter type is \a uint8_t.
+   * \a enum \a CdcAcmFlags. Parameter type is \a uint8_t.
    */
   IF_CDC_ACM_STATUS = IF_SERIAL_PARAMETER_END
 };
 
 enum CdcAcmFlags
 {
-  CDC_ACM_RX_AVAILABLE = 0x01,
+  CDC_ACM_RX_READY     = 0x01,
   CDC_ACM_TX_EMPTY     = 0x02,
   CDC_ACM_SUSPENDED    = 0x04,
   CDC_ACM_LINE_CHANGED = 0x08
