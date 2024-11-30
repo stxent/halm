@@ -34,6 +34,11 @@ if(CONFIG_USB_DEVICE_MSC)
     list(APPEND SOURCE_FILES "msc_datapath.c")
 endif()
 
+if(CONFIG_USB_DEVICE_UAC)
+    list(APPEND SOURCE_FILES "uac.c")
+    list(APPEND SOURCE_FILES "uac_base.c")
+endif()
+
 if(SOURCE_FILES)
     add_library(halm_usb OBJECT ${SOURCE_FILES})
 endif()

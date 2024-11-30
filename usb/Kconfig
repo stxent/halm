@@ -13,6 +13,13 @@ config USB_DEVICE_HS
 	help
 	  This enables support for the High Speed mode in USB device drivers.
 
+config USB_DEVICE_UAC
+	bool "Audio driver"
+	default y
+	depends on USB_DEVICE
+	help
+	  This enables support for the USB Audio 2.0 driver.
+
 config USB_DEVICE_COMPOSITE
 	bool "Composite device"
 	default y
