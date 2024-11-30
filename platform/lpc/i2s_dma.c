@@ -42,8 +42,9 @@ static enum Result i2sGetParam(void *, int, void *);
 static enum Result i2sSetParam(void *, int, const void *);
 
 static enum Result i2sStreamInit(void *, const void *);
-static void i2sStreamClear(void *);
+static void i2sRxStreamClear(void *);
 static enum Result i2sRxStreamEnqueue(void *, struct StreamRequest *);
+static void i2sTxStreamClear(void *);
 static enum Result i2sTxStreamEnqueue(void *, struct StreamRequest *);
 
 #ifndef CONFIG_PLATFORM_LPC_I2S_NO_DEINIT
@@ -71,7 +72,7 @@ const struct StreamClass * const I2SDmaRxStream = &(const struct StreamClass){
     .init = i2sStreamInit,
     .deinit = i2sStreamDeinit,
 
-    .clear = i2sStreamClear,
+    .clear = i2sRxStreamClear,
     .enqueue = i2sRxStreamEnqueue
 };
 
@@ -80,7 +81,7 @@ const struct StreamClass * const I2SDmaTxStream = &(const struct StreamClass){
     .init = i2sStreamInit,
     .deinit = i2sStreamDeinit,
 
-    .clear = i2sStreamClear,
+    .clear = i2sTxStreamClear,
     .enqueue = i2sTxStreamEnqueue
 };
 /*----------------------------------------------------------------------------*/
@@ -559,9 +560,23 @@ static enum Result i2sStreamInit(void *object, const void *configBase)
     return E_MEMORY;
 }
 /*----------------------------------------------------------------------------*/
-static void i2sStreamClear(void *object)
+static void i2sRxStreamClear(void *object)
 {
   struct I2SDmaStream * const stream = object;
+  struct I2SDma * const interface = stream->parent;
+  const IrqState state = irqSave();
+
+  if (dmaStatus(interface->rxDma) == E_BUSY)
+  {
+    LPC_I2S_Type * const reg = interface->base.reg;
+
+    reg->DAI |= DAI_STOP;
+    reg->DMA1 &= ~DMA_RX_ENABLE;
+
+    dmaDisable(interface->rxDma);
+    dmaClear(interface->rxDma);
+  }
+  irqRestore(state);
 
   while (!pointerQueueEmpty(&stream->requests))
   {
@@ -583,10 +598,10 @@ static enum Result i2sRxStreamEnqueue(void *object,
   assert(request->capacity >> interface->sampleSize >= 2);
   assert(request->capacity % (1 << interface->sampleSize) == 0);
 
-  const size_t parts[] = {
-      request->capacity >> 1,
-      request->capacity - (request->capacity >> 1)
-  };
+  size_t parts[2];
+
+  parts[0] = (request->capacity >> 1) & ~((1 << interface->sampleSize) - 1);
+  parts[1] = request->capacity - parts[0];
 
   enum Result res = E_OK;
   const IrqState state = irqSave();
@@ -628,6 +643,33 @@ static enum Result i2sRxStreamEnqueue(void *object,
   return res;
 }
 /*----------------------------------------------------------------------------*/
+static void i2sTxStreamClear(void *object)
+{
+  struct I2SDmaStream * const stream = object;
+  struct I2SDma * const interface = stream->parent;
+  const IrqState state = irqSave();
+
+  if (dmaStatus(interface->txDma) == E_BUSY)
+  {
+    LPC_I2S_Type * const reg = interface->base.reg;
+
+    reg->DAO |= DAO_STOP;
+    reg->DMA2 &= ~DMA_TX_ENABLE;
+
+    dmaDisable(interface->txDma);
+    dmaClear(interface->txDma);
+  }
+  irqRestore(state);
+
+  while (!pointerQueueEmpty(&stream->requests))
+  {
+    struct StreamRequest * const request = pointerQueueFront(&stream->requests);
+    pointerQueuePopFront(&stream->requests);
+
+    request->callback(request->argument, request, STREAM_REQUEST_CANCELLED);
+  }
+}
+/*----------------------------------------------------------------------------*/
 static enum Result i2sTxStreamEnqueue(void *object,
     struct StreamRequest *request)
 {
@@ -639,10 +681,10 @@ static enum Result i2sTxStreamEnqueue(void *object,
   assert(request->length >> interface->sampleSize >= 2);
   assert(request->length % (1 << interface->sampleSize) == 0);
 
-  const size_t parts[] = {
-      request->length >> 1,
-      request->length - (request->length >> 1)
-  };
+  size_t parts[2];
+
+  parts[0] = (request->length >> 1) & ~((1 << interface->sampleSize) - 1);
+  parts[1] = request->length - parts[0];
 
   enum Result res = E_OK;
   const IrqState state = irqSave();
