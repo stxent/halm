@@ -200,12 +200,15 @@ static enum Result unitInit(void *object, const void *configBase)
   /* Match value should be configured after event initialization */
   setUnitResolution(unit, unit->event, unit->resolution);
 
+  /* Enable match mode for match/capture registers */
+  reg->REGMODE_PART[part] &= ~(1 << unit->event);
+
   /* Configure event */
-  reg->EV[unit->event].CTRL = EVCTRL_MATCHSEL(unit->event)
+  reg->EV[unit->event].CTRL =
+      (unit->base.part == SCT_HIGH ? EVCTRL_HEVENT : 0)
+      | EVCTRL_MATCHSEL(unit->event)
       | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
-  if (unit->base.part == SCT_HIGH)
-    reg->EV[unit->event].CTRL |= EVCTRL_HEVENT;
 
   /* Reset current state and enable allocated event in state 0 */
   reg->STATE_PART[part] = 0;
@@ -325,19 +328,22 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   pwm->inversion = config->inversion;
 
   LPC_SCT_Type * const reg = unit->base.reg;
+  const unsigned int part = unit->base.part == SCT_HIGH;
 
   if (unit->base.part == SCT_UNIFIED)
     pwm->value = &reg->MATCHREL[pwm->event];
   else
     pwm->value = &reg->MATCHREL_PART[pwm->event][unit->base.part];
 
+  /* Enable match mode for match/capture registers */
+  reg->REGMODE_PART[part] &= ~(1 << pwm->event);
+
   /* Configure event */
-  reg->EV[pwm->event].CTRL = EVCTRL_MATCHSEL(pwm->event)
+  reg->EV[pwm->event].CTRL =
+      (unit->base.part == SCT_HIGH ? EVCTRL_HEVENT : 0)
+      | EVCTRL_MATCHSEL(pwm->event)
       | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
-
-  if (unit->base.part == SCT_HIGH)
-    reg->EV[pwm->event].CTRL |= EVCTRL_HEVENT;
 
   /* Configure bidirectional output control */
   uint32_t outputdirctrl =
@@ -503,6 +509,7 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   pwm->inversion = config->inversion;
 
   LPC_SCT_Type * const reg = unit->base.reg;
+  const unsigned int part = unit->base.part == SCT_HIGH;
 
   if (unit->base.part == SCT_UNIFIED)
   {
@@ -515,20 +522,20 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
     pwm->trailing = &reg->MATCHREL_PART[pwm->trailingEvent][unit->base.part];
   }
 
+  /* Enable match mode for match/capture registers */
+  reg->REGMODE_PART[part] &=
+      ~((1 << pwm->leadingEvent) | (1 << pwm->trailingEvent));
+
   /* Configure event */
-  const uint32_t controlValue = EVCTRL_COMBMODE(COMBMODE_MATCH)
+  const uint32_t controlValue =
+      (unit->base.part == SCT_HIGH ? EVCTRL_HEVENT : 0)
+      | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
-  reg->EV[pwm->leadingEvent].CTRL = EVCTRL_MATCHSEL(pwm->leadingEvent)
-      | controlValue;
-  reg->EV[pwm->trailingEvent].CTRL = EVCTRL_MATCHSEL(pwm->trailingEvent)
-      | controlValue;
-
-  if (unit->base.part == SCT_HIGH)
-  {
-    reg->EV[pwm->leadingEvent].CTRL |= EVCTRL_HEVENT;
-    reg->EV[pwm->trailingEvent].CTRL |= EVCTRL_HEVENT;
-  }
+  reg->EV[pwm->leadingEvent].CTRL = controlValue
+      | EVCTRL_MATCHSEL(pwm->leadingEvent);
+  reg->EV[pwm->trailingEvent].CTRL = controlValue
+      | EVCTRL_MATCHSEL(pwm->trailingEvent);
 
   /* Configure bidirectional output control */
   uint32_t outputdirctrl = reg->OUTPUTDIRCTRL

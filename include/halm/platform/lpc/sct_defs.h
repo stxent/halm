@@ -119,6 +119,8 @@ enum
 #define EVCTRL_HEVENT                   BIT(4)
 /* Select the input when cleared and select the output when set */
 #define EVCTRL_OUTSEL                   BIT(5)
+#define EVCTRL_OUTSEL_IN                0
+#define EVCTRL_OUTSEL_OUT               EVCTRL_OUTSEL
 #define EVCTRL_IOSEL_MASK               BIT_FIELD(MASK(4), 6)
 #define EVCTRL_IOSEL(value)             BIT_FIELD((value), 6)
 #define EVCTRL_IOCOND_MASK              BIT_FIELD(MASK(2), 10)

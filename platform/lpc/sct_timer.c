@@ -159,13 +159,15 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
   else
     reg->MATCH[timer->event] = 0xFFFFFFFFUL;
 
+  /* Enable match mode for match/capture registers */
+  reg->REGMODE_PART[part] &= ~(1 << timer->event);
+
   /* Configure event */
-  reg->EV[timer->event].CTRL = EVCTRL_MATCHSEL(timer->event)
+  reg->EV[timer->event].CTRL =
+      (timer->base.part == SCT_HIGH ? EVCTRL_HEVENT : 0)
+      | EVCTRL_MATCHSEL(timer->event)
       | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
-
-  if (timer->base.part == SCT_HIGH)
-    reg->EV[timer->event].CTRL |= EVCTRL_HEVENT;
 
   /* Reset current state and enable allocated event in state 0 */
   reg->STATE_PART[part] = 0;
