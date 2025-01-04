@@ -92,7 +92,7 @@ static void powerStateHandler(void *object, enum PmState state)
   if (state == PM_ACTIVE)
   {
     struct GpTimerPwmUnit * const unit = object;
-    gpTimerSetFrequency(&unit->base, unit->frequency * unit->resolution);
+    gpTimerSetFrequency(&unit->base, unit->frequency);
   }
 }
 #endif

@@ -342,6 +342,11 @@ static void workQueueStatistics(void *object, struct WqInfo *statistics)
       wq->latency.min : 0;
 
   irqRestore(state);
+#else
+  statistics->watermark = 0;
+  statistics->uptime = 0;
+  statistics->latency.max = 0;
+  statistics->latency.min = 0;
 #endif
 
 #ifdef CONFIG_GENERIC_WQ_LOAD
@@ -349,6 +354,8 @@ static void workQueueStatistics(void *object, struct WqInfo *statistics)
 
   statistics->loops = loops - wq->previous;
   wq->previous = loops;
+#else
+  statistics->loops = 0;
 #endif
 }
 #endif

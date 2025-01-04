@@ -254,6 +254,7 @@ static void workQueueStatistics(void *object, struct WqInfo *statistics)
   const IrqState state = irqSave();
 
   statistics->watermark = wq->watermark;
+  statistics->loops = 0;
   statistics->uptime = wqGetTime() - wq->timestamp;
   statistics->latency.max = wq->latency.max;
   statistics->latency.min = wq->latency.min != WQ_COUNTER_MAX ?
