@@ -15,8 +15,13 @@
 #include <halm/usb/usb_trace.h>
 #include <xcore/memory.h>
 #include <assert.h>
+#include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+#  define MEM_ALIGNMENT CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+#endif
 /*----------------------------------------------------------------------------*/
 struct CdcAcm
 {
@@ -56,6 +61,7 @@ struct CdcAcm
 #endif
 };
 /*----------------------------------------------------------------------------*/
+static void *allocBufferMemory(size_t, size_t, size_t *);
 static void cdcDataReceived(void *, struct UsbRequest *, enum UsbRequestStatus);
 static void cdcDataSent(void *, struct UsbRequest *, enum UsbRequestStatus);
 static inline size_t getMaxPacketSize(void);
@@ -90,6 +96,28 @@ const struct InterfaceClass * const CdcAcm = &(const struct InterfaceClass){
     .read = interfaceRead,
     .write = interfaceWrite
 };
+/*----------------------------------------------------------------------------*/
+static void *allocBufferMemory(size_t requestCount, size_t bufferCount,
+    size_t *padding)
+{
+  const size_t size = getMaxPacketSize();
+  size_t requestMemorySize = requestCount * sizeof(struct UsbRequest);
+
+#ifdef MEM_ALIGNMENT
+  requestMemorySize += MEM_ALIGNMENT - 1;
+  requestMemorySize -= requestMemorySize % MEM_ALIGNMENT;
+
+  if (padding != NULL)
+    *padding = requestMemorySize;
+
+  return memalign(MEM_ALIGNMENT, requestMemorySize + bufferCount * size);
+#else
+  if (padding != NULL)
+    *padding = requestMemorySize;
+
+  return malloc(requestCount * sizeof(struct UsbRequest) + bufferCount * size);
+#endif
+}
 /*----------------------------------------------------------------------------*/
 static void cdcDataReceived(void *argument, struct UsbRequest *request,
     enum UsbRequestStatus status)
@@ -192,11 +220,20 @@ static void cdcNotificationSent(void *argument, struct UsbRequest *request,
 /*----------------------------------------------------------------------------*/
 static inline size_t getMaxPacketSize(void)
 {
+  size_t size;
+
 #ifdef CONFIG_USB_DEVICE_HS
-  return CDC_DATA_EP_SIZE_HS;
+  size = CDC_DATA_EP_SIZE_HS;
 #else
-  return CDC_DATA_EP_SIZE;
+  size = CDC_DATA_EP_SIZE;
 #endif
+
+#ifdef MEM_ALIGNMENT
+  size += MEM_ALIGNMENT - 1;
+  size -= size % MEM_ALIGNMENT;
+#endif
+
+  return size;
 }
 /*----------------------------------------------------------------------------*/
 static inline size_t getPacketSize(const struct CdcAcm *interface)
@@ -371,7 +408,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   /* Allocate requests */
   if (config->arena != NULL)
   {
-    interface->requests = malloc(count * sizeof(struct UsbRequest));
+    interface->requests = allocBufferMemory(count, 0, NULL);
     if (interface->requests == NULL)
       return E_MEMORY;
 
@@ -379,11 +416,13 @@ static enum Result interfaceInit(void *object, const void *configBase)
   }
   else
   {
-    interface->requests = malloc(count * (sizeof(struct UsbRequest) + size));
+    size_t padding;
+
+    interface->requests = allocBufferMemory(count, count, &padding);
     if (interface->requests == NULL)
       return E_MEMORY;
 
-    arena = (uint8_t *)interface->requests + count * sizeof(struct UsbRequest);
+    arena = (uint8_t *)interface->requests + padding;
   }
 
   /* Add requests to containers */

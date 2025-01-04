@@ -15,7 +15,12 @@
 #include <halm/usb/usb_trace.h>
 #include <xcore/memory.h>
 #include <limits.h>
+#include <malloc.h>
 #include <string.h>
+/*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+#  define MEM_ALIGNMENT CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+#endif
 /*----------------------------------------------------------------------------*/
 struct Uac
 {
@@ -68,7 +73,9 @@ static void audioDataSent(void *, struct UsbRequest *,
 static void feedbackDataSent(void *, struct UsbRequest *,
     enum UsbRequestStatus);
 
+static void *allocBufferMemory(size_t, size_t, size_t, size_t *);
 static inline size_t getBufferSize(uint32_t);
+static inline size_t getMaxBufferSize(uint32_t);
 static uint32_t getMaxSampleRate(const struct Uac *);
 static bool parseSampleRates(struct Uac *, const uint32_t *);
 static bool resetEndpoints(struct Uac *);
@@ -155,6 +162,28 @@ static void feedbackDataSent(void *argument, struct UsbRequest *request,
   }
 }
 /*----------------------------------------------------------------------------*/
+static void *allocBufferMemory(size_t requestCount, size_t bufferCount,
+    size_t bufferSize, size_t *padding)
+{
+  size_t requestMemorySize = requestCount * sizeof(struct UsbRequest);
+
+#ifdef MEM_ALIGNMENT
+  requestMemorySize += MEM_ALIGNMENT - 1;
+  requestMemorySize -= requestMemorySize % MEM_ALIGNMENT;
+
+  if (padding != NULL)
+    *padding = requestMemorySize;
+
+  return memalign(MEM_ALIGNMENT, requestMemorySize + bufferCount * bufferSize);
+#else
+  if (padding != NULL)
+    *padding = requestMemorySize;
+
+  return malloc(requestCount * sizeof(struct UsbRequest)
+      + bufferCount * bufferSize);
+#endif
+}
+/*----------------------------------------------------------------------------*/
 static inline size_t getBufferSize(uint32_t rate)
 {
   /*
@@ -162,6 +191,18 @@ static inline size_t getBufferSize(uint32_t rate)
    * stereo configuration with S16_LE samples.
    */
   return ((rate + 999) / 1000) * sizeof(int16_t) * 2;
+}
+/*----------------------------------------------------------------------------*/
+static inline size_t getMaxBufferSize(uint32_t rate)
+{
+  size_t size = getBufferSize(rate);
+
+#ifdef MEM_ALIGNMENT
+  size += MEM_ALIGNMENT - 1;
+  size -= size % MEM_ALIGNMENT;
+#endif
+
+  return size;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t getMaxSampleRate(const struct Uac *interface)
@@ -361,7 +402,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   interface->events.rate = false;
   interface->events.sof = false;
 
-  const size_t size = getBufferSize(getMaxSampleRate(interface));
+  const size_t size = getMaxBufferSize(getMaxSampleRate(interface));
   const size_t fbBuffers = interface->fbDataEp != NULL ? 1 : 0;
   const size_t rxBuffers = interface->rxDataEp != NULL ? config->rxBuffers : 0;
   const size_t txBuffers = interface->txDataEp != NULL ? config->txBuffers : 0;
@@ -371,7 +412,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   /* Allocate requests */
   if (config->arena)
   {
-    interface->requests = malloc(count * sizeof(struct UsbRequest));
+    interface->requests = allocBufferMemory(count, 0, 0, NULL);
     if (!interface->requests)
       return E_MEMORY;
 
@@ -379,11 +420,13 @@ static enum Result interfaceInit(void *object, const void *configBase)
   }
   else
   {
-    interface->requests = malloc(count * (sizeof(struct UsbRequest) + size));
+    size_t padding;
+
+    interface->requests = allocBufferMemory(count, count, size, &padding);
     if (!interface->requests)
       return E_MEMORY;
 
-    arena = (uint8_t *)interface->requests + count * sizeof(struct UsbRequest);
+    arena = (uint8_t *)interface->requests + padding;
   }
 
   /* Add requests to queues */

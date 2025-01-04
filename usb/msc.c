@@ -13,6 +13,7 @@
 #include <xcore/memory.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
@@ -53,6 +54,7 @@ struct StateEntry
   enum State (*run)(struct Msc *);
 };
 /*----------------------------------------------------------------------------*/
+static inline void *allocBufferMemory(size_t);
 static inline uint32_t fromBigEndian24(const uint8_t *, uint32_t);
 static inline void toBigEndian24(uint8_t *, uint32_t);
 /*----------------------------------------------------------------------------*/
@@ -145,6 +147,15 @@ static const struct StateEntry stateTable[] = {
     [STATE_ERROR]                   = {stateErrorEnter, stateErrorRun},
     [STATE_SUSPEND]                 = {stateSuspendEnter, NULL}
 };
+/*----------------------------------------------------------------------------*/
+static inline void *allocBufferMemory(size_t size)
+{
+#ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+  return memalign(CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT, size);
+#else
+  return malloc(size);
+#endif
+}
 /*----------------------------------------------------------------------------*/
 static inline uint32_t fromBigEndian24(const uint8_t *input, uint32_t mask)
 {
@@ -1108,7 +1119,7 @@ static enum Result driverInit(void *object, const void *configBase)
 
   if (config->arena == NULL)
   {
-    driver->buffer = malloc(driver->bufferSize);
+    driver->buffer = allocBufferMemory(driver->bufferSize);
     if (driver->buffer == NULL)
       return E_MEMORY;
     driver->preallocated = false;

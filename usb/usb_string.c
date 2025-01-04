@@ -13,7 +13,7 @@
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 #define MAX_STRING_LENGTH \
-    (MIN(STRING_DESCRIPTOR_TEXT_LIMIT, DATA_BUFFER_SIZE - 2) / 2)
+    (MIN(STRING_DESCRIPTOR_TEXT_LIMIT, STRING_BUFFER_SIZE - 2) / 2)
 /*----------------------------------------------------------------------------*/
 struct UsbString usbStringBuild(UsbStringFunctor functor, const void *argument,
     enum UsbStringType type, unsigned int number)
