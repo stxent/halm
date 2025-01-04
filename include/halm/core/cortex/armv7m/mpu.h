@@ -19,6 +19,12 @@
 /*----------------------------------------------------------------------------*/
 typedef int8_t MpuRegion;
 
+struct MpuRegionConfig
+{
+  uint32_t address;
+  uint32_t control;
+};
+
 enum [[gnu::packed]] MpuAccessPermission
 {
   MPU_ACCESS_FULL,
@@ -43,9 +49,14 @@ BEGIN_DECLS
 
 MpuRegion mpuAddRegion(uintptr_t, size_t, enum MpuPreset,
     enum MpuAccessPermission, bool, bool);
+bool mpuComputeRegion(uintptr_t, size_t, enum MpuPreset,
+    enum MpuAccessPermission, bool, bool, struct MpuRegionConfig *);
+void mpuReconfigureRegion(MpuRegion, const struct MpuRegionConfig *);
 void mpuRemoveRegion(MpuRegion);
+MpuRegion mpuReserveRegion(void);
 void mpuDisable(void);
 void mpuEnable(void);
+
 void mpuReset(void);
 
 END_DECLS

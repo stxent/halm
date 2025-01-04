@@ -11,10 +11,12 @@
 #include <xcore/asm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static MpuRegion addAttributedRegion(uintptr_t, size_t, uint32_t);
+static bool computeAttributedRegion(uintptr_t, size_t, uint32_t,
+    struct MpuRegionConfig *);
+static MpuRegion findFreeRegion(void);
 /*----------------------------------------------------------------------------*/
-static MpuRegion addAttributedRegion(uintptr_t address, size_t size,
-    uint32_t attributes)
+static bool computeAttributedRegion(uintptr_t address, size_t size,
+    uint32_t attributes, struct MpuRegionConfig *config)
 {
   uint32_t regionSizePow = 31 - countLeadingZeros32((uint32_t)size);
 
@@ -27,7 +29,7 @@ static MpuRegion addAttributedRegion(uintptr_t address, size_t size,
   if (regionSizePow < 5)
   {
     /* Region size is lower than 32 bytes */
-    return -1;
+    return false;
   }
 
   uint32_t regionBegAddress = address & ~((1UL << regionSizePow) - 1);
@@ -64,8 +66,16 @@ static MpuRegion addAttributedRegion(uintptr_t address, size_t size,
     subregions |= 0xFF ^ ((1 << sub) - 1);
   }
 
+  config->address = regionBegAddress;
+  config->control = RASR_ENABLE | RASR_SIZE(regionSizePow - 1)
+      | RASR_SRD(subregions) | attributes;
+
+  return true;
+}
+/*----------------------------------------------------------------------------*/
+static MpuRegion findFreeRegion(void)
+{
   const unsigned int count = TYPE_DREGION_VALUE(MPU->TYPE);
-  unsigned int region = count;
 
   __dsb();
 
@@ -73,25 +83,11 @@ static MpuRegion addAttributedRegion(uintptr_t address, size_t size,
   {
     MPU->RNR = index;
 
-    if (!(MPU->RASR & RASR_ENABLE))
-    {
-      region = index;
-      break;
-    }
+    if (!(MPU->RASR & (RASR_ENABLE | RASR_SIZE_MASK)))
+      return index;
   }
 
-  if (region == count)
-    return -1;
-
-  MPU->RNR = region;
-  MPU->RBAR = regionBegAddress;
-  MPU->RASR = RASR_ENABLE | RASR_SIZE(regionSizePow - 1) | RASR_SRD(subregions)
-      | attributes;
-
-  __dsb();
-  __isb();
-
-  return (MpuRegion)region;
+  return -1;
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -106,6 +102,41 @@ static MpuRegion addAttributedRegion(uintptr_t address, size_t size,
  */
 MpuRegion mpuAddRegion(uintptr_t address, size_t size, enum MpuPreset preset,
     enum MpuAccessPermission access, bool executable, bool shareable)
+{
+  struct MpuRegionConfig config;
+  MpuRegion region = -1;
+
+  if (mpuComputeRegion(address, size, preset, access, executable, shareable,
+      &config))
+  {
+    if ((region = findFreeRegion()) != -1)
+    {
+      /* RNR register is already initialized */
+      MPU->RBAR = config.address;
+      MPU->RASR = config.control;
+
+      __dsb();
+      __isb();
+    }
+  }
+
+  return region;
+}
+/*----------------------------------------------------------------------------*/
+/**
+ * Compute an MPU configuration.
+ * @param address Starting address of the region.
+ * @param size Region size in bytes.
+ * @param preset MPU configuration preset for the region.
+ * @param access Privileged and unprivileged access permissions.
+ * @param executable Enable instruction fetches for the region.
+ * @param shareabe Mark the region as shared, used in multiprocessor systems.
+ * @param config Pointer to an MPU region configration structure.
+ * @return Status of the operation.
+ */
+bool mpuComputeRegion(uintptr_t address, size_t size, enum MpuPreset preset,
+    enum MpuAccessPermission access, bool executable, bool shareable,
+    struct MpuRegionConfig *config)
 {
   static const uint8_t accessPermissionMap[] = {
       [MPU_ACCESS_FULL] = AP_FULL_ACCESS,
@@ -152,7 +183,21 @@ MpuRegion mpuAddRegion(uintptr_t address, size_t size, enum MpuPreset preset,
   if (!executable)
     attributes |= RASR_XN;
 
-  return addAttributedRegion(address, size, attributes);
+  return computeAttributedRegion(address, size, attributes, config);
+}
+/*----------------------------------------------------------------------------*/
+void mpuReconfigureRegion(MpuRegion region,
+    const struct MpuRegionConfig *config)
+{
+  __dsb();
+
+  MPU->RNR = region;
+  MPU->RASR = 0;
+  MPU->RBAR = config->address;
+  MPU->RASR = config->control;
+
+  __dsb();
+  __isb();
 }
 /*----------------------------------------------------------------------------*/
 void mpuRemoveRegion(MpuRegion region)
@@ -167,6 +212,22 @@ void mpuRemoveRegion(MpuRegion region)
 
   __dsb();
   __isb();
+}
+/*----------------------------------------------------------------------------*/
+MpuRegion mpuReserveRegion(void)
+{
+  const MpuRegion region = findFreeRegion();
+
+  if (region != -1)
+  {
+    /* RNR register is already initialized */
+    MPU->RASR = RASR_SIZE_RESERVED;
+
+    __dsb();
+    __isb();
+  }
+
+  return region;
 }
 /*----------------------------------------------------------------------------*/
 void mpuDisable(void)

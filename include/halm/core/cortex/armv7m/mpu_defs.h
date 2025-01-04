@@ -48,6 +48,7 @@ enum
 #define RASR_SIZE_MASK                  BIT_FIELD(MASK(5), 1)
 #define RASR_SIZE(value)                BIT_FIELD((value), 1)
 #define RASR_SIZE_VALUE(reg)            FIELD_VALUE((reg), RASR_SIZE_MASK, 1)
+#define RASR_SIZE_RESERVED              RASR_SIZE(1)
 
 /* Sub-Region Disable field */
 #define RASR_SRD_MASK                   BIT_FIELD(MASK(8), 8)
