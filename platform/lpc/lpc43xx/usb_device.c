@@ -257,6 +257,8 @@ static void resetDevice(struct UsbDevice *device)
   reg->ENDPTFLUSH = 0xFFFFFFFFUL;
   while (reg->ENDPTFLUSH);
 
+  /* Set USB HS virtual frame length to 1 microframe */
+  reg->BINTERVAL = 0;
   /* Set the Interrupt Threshold control interval to 0 */
   reg->USBCMD_D &= ~USBCMD_D_ITC_MASK;
 

@@ -558,6 +558,9 @@ struct QueueHead
 #define QH_MAX_PACKET_LENGTH_VALUE(reg) \
     FIELD_VALUE((reg), QH_MAX_PACKET_LENGTH_MASK, 16)
 #define QH_ZLT                          BIT(29)
+#define QH_MULT(value)                  BIT_FIELD((value), 30)
+#define QH_MULT_MASK                    BIT_FIELD(MASK(2), 30)
+#define QH_MULT_VALUE(reg)              FIELD_VALUE((reg), QH_MULT_MASK, 30)
 
 #define TD_NEXT_TERMINATE               BIT(0)
 

@@ -196,6 +196,12 @@ static void interruptHandler(void *object)
     usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
   }
 
+  /* Start of Frame */
+  if (intStatus & USBSTS_D_SRI)
+  {
+    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
+  }
+
   /* Port change detect */
   if (intStatus & USBSTS_D_PCI)
   {
@@ -286,9 +292,16 @@ static void resetDevice(struct UsbDevice *device)
   reg->ENDPTLISTADDR = (uint32_t)device->base.td.heads;
 
   /* Enable interrupts */
-  reg->USBINTR = USBINTR_D_UE | USBINTR_D_UEE | USBINTR_D_PCE
-      | USBINTR_D_URE | USBINTR_D_SLE;
+  uint32_t mask = USBINTR_D_UE | USBINTR_D_UEE
+      | USBINTR_D_PCE | USBINTR_D_URE | USBINTR_D_SLE;
 
+#ifdef CONFIG_PLATFORM_USB_SOF
+  mask |= USBINTR_D_SRE;
+#endif
+
+  reg->USBINTR = mask;
+
+  /* Reset device address */
   devSetAddress(device, 0);
 
   /* Reset all enabled endpoints except for Control Endpoints */
@@ -550,8 +563,7 @@ static struct TransferDescriptor *epAllocDescriptor(struct UsbEndpoint *ep,
 
     /* Setup status and size, enable interrupt on completion */
     descriptor->token = TD_TOKEN_STATUS(TOKEN_STATUS_ACTIVE)
-        | TD_TOKEN_IOC
-        | TD_TOKEN_TOTAL_BYTES(length);
+        | TD_TOKEN_IOC | TD_TOKEN_TOTAL_BYTES(length);
 
     /* Store pointer to the USB Request structure in reserved field */
     descriptor->listNode = (uint32_t)node;
@@ -895,17 +907,19 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 
   struct QueueHead * const head = &device->base.td.heads[index];
 
-  // TODO Different sequence for Control and Common endpoints
-  /* Set endpoint type */
-  if (type != ENDPOINT_TYPE_ISOCHRONOUS)
-  {
-    head->capabilities = QH_MAX_PACKET_LENGTH(size) | QH_IOS | QH_ZLT;
-  }
-  else
-  {
-    // TODO Configure MultO
-    head->capabilities = QH_MAX_PACKET_LENGTH(0x400) | QH_ZLT;
-  }
+  /* Configure endpoint type */
+
+  uint32_t capabilities = QH_MAX_PACKET_LENGTH(size);
+
+  if (type == ENDPOINT_TYPE_CONTROL)
+    capabilities |= QH_IOS;
+
+  if (type == ENDPOINT_TYPE_ISOCHRONOUS)
+    capabilities |= QH_MULT(1);
+   else
+    capabilities |= QH_ZLT;
+
+  head->capabilities = capabilities;
 
   /* Setup endpoint control register */
 
