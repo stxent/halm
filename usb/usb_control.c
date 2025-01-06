@@ -60,14 +60,18 @@ struct UsbControl
     /* Setup packet header */
     struct UsbSetupPacket packet;
     /* Control packet payload */
-    uint8_t payload[REQUEST_POOL_SIZE * EP0_BUFFER_SIZE];
+    uint8_t payload[(REQUEST_POOL_SIZE - 1) * EP0_PACKET_SIZE];
   } context;
 
   struct UsbRequest requestPool[REQUEST_POOL_SIZE];
-  void *requestArena;
+
+#ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+  uint8_t *requestArena;
+#else
+  uint8_t requestArena[REQUEST_POOL_SIZE * EP0_BUFFER_SIZE];
+#endif
 };
 /*----------------------------------------------------------------------------*/
-static inline void *allocBufferMemory(size_t);
 static enum Result driverControl(struct UsbControl *,
     const struct UsbSetupPacket *, void *, uint16_t *, uint16_t);
 static void fillConfigurationDescriptor(struct UsbControl *, void *);
@@ -109,15 +113,6 @@ const struct EntityClass * const UsbControl = &(const struct EntityClass){
     .init = controlInit,
     .deinit = controlDeinit
 };
-/*----------------------------------------------------------------------------*/
-static inline void *allocBufferMemory(size_t size)
-{
-#ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
-  return memalign(CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT, size);
-#else
-  return malloc(size);
-#endif
-}
 /*----------------------------------------------------------------------------*/
 static enum Result driverControl(struct UsbControl *control,
     const struct UsbSetupPacket *packet, void *buffer, uint16_t *responseLength,
@@ -555,8 +550,8 @@ static void resetDevice(struct UsbControl *control)
   usbEpClear(control->ep0in);
   usbEpClear(control->ep0out);
 
-  usbEpEnable(control->ep0out, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
-  usbEpEnable(control->ep0in, ENDPOINT_TYPE_CONTROL, EP0_BUFFER_SIZE);
+  usbEpEnable(control->ep0out, ENDPOINT_TYPE_CONTROL, EP0_PACKET_SIZE);
+  usbEpEnable(control->ep0in, ENDPOINT_TYPE_CONTROL, EP0_PACKET_SIZE);
 
   usbEpEnqueue(control->ep0out, control->outRequest);
 }
@@ -564,10 +559,10 @@ static void resetDevice(struct UsbControl *control)
 static void sendResponse(struct UsbControl *control, const uint8_t *data,
     uint16_t length)
 {
-  size_t chunkCount = (length + (EP0_BUFFER_SIZE - 1)) / EP0_BUFFER_SIZE;
+  size_t chunkCount = (length + (EP0_PACKET_SIZE - 1)) / EP0_PACKET_SIZE;
 
   /* Send zero-length packet to finalize transfer */
-  if (length % EP0_BUFFER_SIZE == 0)
+  if (length % EP0_PACKET_SIZE == 0)
     ++chunkCount;
 
   if (pointerArraySize(&control->inRequestPool) < chunkCount)
@@ -579,7 +574,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
         pointerArrayBack(&control->inRequestPool);
     pointerArrayPopBack(&control->inRequestPool);
 
-    const size_t chunk = MIN(length, EP0_BUFFER_SIZE);
+    const size_t chunk = MIN(length, EP0_PACKET_SIZE);
 
     if (chunk)
       memcpy(request->buffer, data, chunk);
@@ -724,6 +719,7 @@ static enum Result controlInit(void *object, const void *configBase)
   memset(&control->context.packet, 0, sizeof(control->context.packet));
 
   /* Create control endpoints */
+
   control->ep0in = usbDevCreateEndpoint(control->owner,
       USB_EP_DIRECTION_IN | USB_EP_ADDRESS(0));
   if (control->ep0in == NULL)
@@ -732,24 +728,31 @@ static enum Result controlInit(void *object, const void *configBase)
   if (control->ep0out == NULL)
     return E_MEMORY;
 
-  /* Initialize request pools */
-  control->requestArena = allocBufferMemory(REQUEST_POOL_ARENA);
-  if (control->requestArena == NULL)
-    return E_MEMORY;
-  if (!pointerArrayInit(&control->inRequestPool, REQUEST_POOL_SIZE - 1))
-    return E_MEMORY;
+  /* Initialize list of device strings */
 
 #ifdef CONFIG_USB_DEVICE_STRINGS
-  /* Initialize list of device strings */
   stringListInit(&control->strings);
 #endif
 
+  /* Initialize request pools */
+
+#ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+  control->requestArena = memalign(CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT,
+      REQUEST_POOL_SIZE * EP0_BUFFER_SIZE);
+  if (control->requestArena == NULL)
+    return E_MEMORY;
+#endif
+
+  if (!pointerArrayInit(&control->inRequestPool, REQUEST_POOL_SIZE - 1))
+    return E_MEMORY;
+
   /* Initialize requests */
+
   uint8_t *payload = control->requestArena;
 
   for (size_t index = 0; index < REQUEST_POOL_SIZE - 1; ++index)
   {
-    usbRequestInit(&control->requestPool[index], payload, EP0_BUFFER_SIZE,
+    usbRequestInit(&control->requestPool[index], payload, EP0_PACKET_SIZE,
         controlInHandler, control);
     pointerArrayPushBack(&control->inRequestPool, &control->requestPool[index]);
 
@@ -757,7 +760,7 @@ static enum Result controlInit(void *object, const void *configBase)
   }
 
   control->outRequest = &control->requestPool[REQUEST_POOL_SIZE - 1];
-  usbRequestInit(control->outRequest, payload, EP0_BUFFER_SIZE,
+  usbRequestInit(control->outRequest, payload, EP0_PACKET_SIZE,
       controlOutHandler, control);
 
   return E_OK;
@@ -770,13 +773,16 @@ static void controlDeinit(void *object)
   usbEpClear(control->ep0in);
   usbEpClear(control->ep0out);
 
+  assert(pointerArraySize(&control->inRequestPool) == REQUEST_POOL_SIZE - 1);
+  pointerArrayDeinit(&control->inRequestPool);
+
+#ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+  free(control->requestArena);
+#endif
+
 #ifdef CONFIG_USB_DEVICE_STRINGS
   stringListDeinit(&control->strings);
 #endif
-
-  assert(pointerArraySize(&control->inRequestPool) == REQUEST_POOL_SIZE - 1);
-  pointerArrayDeinit(&control->inRequestPool);
-  free(control->requestArena);
 
   deinit(control->ep0out);
   deinit(control->ep0in);

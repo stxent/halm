@@ -17,6 +17,10 @@
 #include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+#  define MEM_ALIGNMENT CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
+#endif
+
 enum Flags
 {
   FLAG_LOCKED     = 0x01,
@@ -150,8 +154,8 @@ static const struct StateEntry stateTable[] = {
 /*----------------------------------------------------------------------------*/
 static inline void *allocBufferMemory(size_t size)
 {
-#ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
-  return memalign(CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT, size);
+#ifdef MEM_ALIGNMENT
+  return memalign(MEM_ALIGNMENT, size);
 #else
   return malloc(size);
 #endif
@@ -1195,6 +1199,11 @@ static const UsbDescriptorFunctor *driverDescribe(const void *)
 static void driverNotify(void *object, unsigned int event)
 {
   struct Msc * const driver = object;
+
+#ifdef MEM_ALIGNMENT
+  static_assert(!(MSC_DATA_EP_SIZE_HS % MEM_ALIGNMENT)
+      && !(MSC_DATA_EP_SIZE % MEM_ALIGNMENT), "Incorrect buffer size");
+#endif
 
 #ifdef CONFIG_USB_DEVICE_HS
   if (event == USB_DEVICE_EVENT_PORT_CHANGE)

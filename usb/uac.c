@@ -73,8 +73,9 @@ static void audioDataSent(void *, struct UsbRequest *,
 static void feedbackDataSent(void *, struct UsbRequest *,
     enum UsbRequestStatus);
 
-static void *allocBufferMemory(size_t, size_t, size_t, size_t *);
+static void *allocBufferMemory(size_t, size_t, size_t, size_t, size_t *);
 static inline size_t getBufferSize(uint32_t);
+static inline size_t getFeedbackBufferSize(void);
 static inline size_t getMaxBufferSize(uint32_t);
 static uint32_t getMaxSampleRate(const struct Uac *);
 static bool parseSampleRates(struct Uac *, const uint32_t *);
@@ -162,25 +163,26 @@ static void feedbackDataSent(void *argument, struct UsbRequest *request,
   }
 }
 /*----------------------------------------------------------------------------*/
-static void *allocBufferMemory(size_t requestCount, size_t bufferCount,
-    size_t bufferSize, size_t *padding)
+static void *allocBufferMemory(size_t requestCount, size_t audioBufferCount,
+    size_t audioBufferSize, size_t feedbackBufferCount, size_t *padding)
 {
-  size_t requestMemorySize = requestCount * sizeof(struct UsbRequest);
+  const size_t dataMemorySize = audioBufferCount * audioBufferSize
+      + feedbackBufferCount * getFeedbackBufferSize();
+  size_t headerMemorySize = requestCount * sizeof(struct UsbRequest);
 
 #ifdef MEM_ALIGNMENT
-  requestMemorySize += MEM_ALIGNMENT - 1;
-  requestMemorySize -= requestMemorySize % MEM_ALIGNMENT;
+  headerMemorySize += MEM_ALIGNMENT - 1;
+  headerMemorySize -= headerMemorySize % MEM_ALIGNMENT;
 
   if (padding != NULL)
-    *padding = requestMemorySize;
+    *padding = headerMemorySize;
 
-  return memalign(MEM_ALIGNMENT, requestMemorySize + bufferCount * bufferSize);
+  return memalign(MEM_ALIGNMENT, headerMemorySize + dataMemorySize);
 #else
   if (padding != NULL)
-    *padding = requestMemorySize;
+    *padding = headerMemorySize;
 
-  return malloc(requestCount * sizeof(struct UsbRequest)
-      + bufferCount * bufferSize);
+  return malloc(headerMemorySize + dataMemorySize);
 #endif
 }
 /*----------------------------------------------------------------------------*/
@@ -191,6 +193,15 @@ static inline size_t getBufferSize(uint32_t rate)
    * stereo configuration with S16_LE samples.
    */
   return ((rate + 999) / 1000) * sizeof(int16_t) * 2;
+}
+/*----------------------------------------------------------------------------*/
+static inline size_t getFeedbackBufferSize(void)
+{
+#if defined(MEM_ALIGNMENT) && MEM_ALIGNMENT >= UAC_FEEDBACK_EP_SIZE
+  return MEM_ALIGNMENT;
+#else
+  return UAC_FEEDBACK_EP_SIZE;
+#endif
 }
 /*----------------------------------------------------------------------------*/
 static inline size_t getMaxBufferSize(uint32_t rate)
@@ -402,17 +413,19 @@ static enum Result interfaceInit(void *object, const void *configBase)
   interface->events.rate = false;
   interface->events.sof = false;
 
-  const size_t size = getMaxBufferSize(getMaxSampleRate(interface));
+  const uint32_t maxSampleRate = getMaxSampleRate(interface);
+  const size_t audioBufferSize = getMaxBufferSize(maxSampleRate);
+  const size_t audioPacketSize = getBufferSize(maxSampleRate);
   const size_t fbBuffers = interface->fbDataEp != NULL ? 1 : 0;
   const size_t rxBuffers = interface->rxDataEp != NULL ? config->rxBuffers : 0;
   const size_t txBuffers = interface->txDataEp != NULL ? config->txBuffers : 0;
-  const size_t count = fbBuffers + rxBuffers + txBuffers;
   uint8_t *arena;
 
   /* Allocate requests */
   if (config->arena)
   {
-    interface->requests = allocBufferMemory(count, 0, 0, NULL);
+    interface->requests = allocBufferMemory(fbBuffers + rxBuffers + txBuffers,
+        0, 0, 0, NULL);
     if (!interface->requests)
       return E_MEMORY;
 
@@ -422,7 +435,8 @@ static enum Result interfaceInit(void *object, const void *configBase)
   {
     size_t padding;
 
-    interface->requests = allocBufferMemory(count, count, size, &padding);
+    interface->requests = allocBufferMemory(fbBuffers + rxBuffers + txBuffers,
+        rxBuffers + txBuffers, audioBufferSize, fbBuffers, &padding);
     if (!interface->requests)
       return E_MEMORY;
 
@@ -435,29 +449,32 @@ static enum Result interfaceInit(void *object, const void *configBase)
 
   for (size_t index = 0; index < fbBuffers; ++index)
   {
-    usbRequestInit(request, payload, size, feedbackDataSent, interface);
+    usbRequestInit(request, payload, UAC_FEEDBACK_EP_SIZE,
+        feedbackDataSent, interface);
     pointerArrayPushBack(&interface->fbRequestPool, request);
 
     ++request;
-    payload += size; // TODO Reduce FB request size
+    payload += getFeedbackBufferSize();
   }
 
   for (size_t index = 0; index < rxBuffers; ++index)
   {
-    usbRequestInit(request, payload, size, audioDataReceived, interface);
+    usbRequestInit(request, payload, audioPacketSize,
+        audioDataReceived, interface);
     pointerQueuePushBack(&interface->rxRequestQueue, request);
 
     ++request;
-    payload += size;
+    payload += audioBufferSize;
   }
 
   for (size_t index = 0; index < txBuffers; ++index)
   {
-    usbRequestInit(request, payload, size, audioDataSent, interface);
+    usbRequestInit(request, payload, audioPacketSize,
+        audioDataSent, interface);
     pointerArrayPushBack(&interface->txRequestPool, request);
 
     ++request;
-    payload += size;
+    payload += audioBufferSize;
   }
 
   /* Lower half of the driver should be initialized after all other parts */
@@ -469,7 +486,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
           .rx = config->endpoints.rx,
           .tx = config->endpoints.tx
       },
-      .packet = size
+      .packet = audioPacketSize
   };
 
   interface->driver = init(UacBase, &driverConfig);
