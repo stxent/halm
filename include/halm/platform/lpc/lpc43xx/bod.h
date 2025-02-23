@@ -1,7 +1,7 @@
 /*
  * halm/platform/lpc/lpc43xx/bod.h
  * Copyright (C) 2022 xent
- * Project is distributed under the terms of the GNU General Public License v3.0
+ * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_BOD_H_

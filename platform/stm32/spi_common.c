@@ -87,7 +87,7 @@ bool spiSetRate(struct SpiBase *interface, uint32_t rate)
     return false;
 
   const uint32_t clock = spiGetClock(interface);
-  uint32_t divisor = (clock + (rate - 1)) / rate;
+  const uint32_t divisor = (clock + (rate - 1)) / rate;
   uint32_t prescalerExp = 31 - countLeadingZeros32(divisor);
 
   if (prescalerExp && !(divisor & (divisor - 1)))
