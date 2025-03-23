@@ -6,6 +6,7 @@ string(FIND ${CMAKE_SYSTEM_PROCESSOR} "x86" CPU_IS_X86)
 
 if(${CPU_IS_CORTEX} EQUAL 0)
     add_subdirectory(cortex)
-elseif(${CPU_IS_X86} EQUAL 0)
+else()
+    # Default architecture is x86
     add_subdirectory(x86)
 endif()

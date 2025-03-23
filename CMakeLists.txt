@@ -2,7 +2,7 @@
 # Project is distributed under the terms of the MIT License
 
 cmake_minimum_required(VERSION 3.21)
-project(halm C)
+project(halm C ASM)
 
 find_package(xcore QUIET)
 if(xcore_FOUND)

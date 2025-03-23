@@ -39,7 +39,7 @@
 /*----------------------------------------------------------------------------*/
 extern unsigned long _stack; /* Initial stack pointer */
 /*----------------------------------------------------------------------------*/
-[[gnu::section(".vectors")]] void (* const vectorTable[])(void) = {
+[[gnu::section(".vectors")]] void (* const vector_table[])(void) = {
     /* The top of the stack */
     (void (*)(void))(unsigned long)&_stack,
     /* Core interrupts */

@@ -16,8 +16,8 @@ extern void platformStartup(void);
 /*----------------------------------------------------------------------------*/
 void RESET_ISR(void)
 {
-  register unsigned long *dst __asm__ ("r0");
-  register unsigned long *src __asm__ ("r1");
+  register unsigned long *dst;
+  register unsigned long *src;
 
 #ifdef CONFIG_CORE_CORTEX_MEMORY_DEBUG
   /* Fill the RAM with a predefined pattern */
@@ -25,7 +25,7 @@ void RESET_ISR(void)
     *dst++ = CONFIG_CORE_CORTEX_MEMORY_PATTERN;
 #endif
 
-  /* Copy the data segment initializers from flash to the RAM */
+  /* Copy the data segment initializers from Flash to RAM */
   for (dst = &_sdata, src = &_sidata; dst < &_edata;)
     *dst++ = *src++;
 
