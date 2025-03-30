@@ -73,9 +73,12 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   if (setInstance(timer))
   {
+    timer->callback = NULL;
+
     /* Configure the timer but leave it in the disabled state */
     SYSTICK->CTRL = CTRL_CLKSOURCE;
     SYSTICK->LOAD = TIMER_RESOLUTION;
+    SYSTICK->VAL = 0;
 
     if (config != NULL)
       irqSetPriority(SYSTICK_IRQ, config->priority);
@@ -144,8 +147,9 @@ static uint32_t tmrGetValue(const void *)
   return SYSTICK->LOAD - SYSTICK->VAL;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetValue(void *, uint32_t value)
+static void tmrSetValue(void *, [[maybe_unused]] uint32_t value)
 {
-  assert(value <= SYSTICK->LOAD);
-  SYSTICK->VAL = SYSTICK->LOAD - value;
+  /* Write of any value clears the counter to zero */
+  assert(value == 0);
+  SYSTICK->VAL = 0;
 }
