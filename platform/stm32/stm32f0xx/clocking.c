@@ -18,7 +18,9 @@
 #define HSI_OSC_14_FREQUENCY  14000000
 #define HSI_OSC_48_FREQUENCY  48000000
 #define LSI_OSC_FREQUENCY     40000
-#define TICK_RATE(frequency)  ((frequency) / 1000)
+
+#define TICK_RATE(frequency) \
+    (((frequency) * 4398046ULL + (1ULL << 31)) >> 32)
 /*----------------------------------------------------------------------------*/
 struct UsartClockClass
 {

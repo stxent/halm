@@ -12,9 +12,11 @@
 #include <xcore/accel.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-#define HSI_OSC_FREQUENCY     16000000
-#define LSI_OSC_FREQUENCY     32000
-#define TICK_RATE(frequency)  ((frequency) / 1000)
+#define HSI_OSC_FREQUENCY 16000000
+#define LSI_OSC_FREQUENCY 32000
+
+#define TICK_RATE(frequency) \
+    (((frequency) * 4398046ULL + (1ULL << 31)) >> 32)
 /*----------------------------------------------------------------------------*/
 static uint32_t ahbPrescalerToValue(uint32_t);
 static uint32_t apbPrescalerToValue(uint32_t);

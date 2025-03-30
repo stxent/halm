@@ -10,10 +10,12 @@
 #include <assert.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY     24000000
-#define EXT_OSC_FREQUENCY     24000000
-#define OSC_FREQUENCY         (EXT_OSC_FREQUENCY)
-#define TICK_RATE(frequency)  ((frequency) / 1000)
+#define INT_OSC_FREQUENCY 24000000
+#define EXT_OSC_FREQUENCY 24000000
+#define OSC_FREQUENCY     (EXT_OSC_FREQUENCY)
+
+#define TICK_RATE(frequency) \
+    (((frequency) * 4398046ULL + (1ULL << 31)) >> 32)
 /*----------------------------------------------------------------------------*/
 struct PfdClockClass
 {

@@ -13,11 +13,13 @@
 #include <assert.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
-#define HIRC_FREQUENCY        48000000
-#define LIRC_FREQUENCY        38400
-#define RTC_FREQUENCY         32768
-#define USB_FREQUENCY         48000000
-#define TICK_RATE(frequency)  ((frequency) / 1000)
+#define HIRC_FREQUENCY  48000000
+#define LIRC_FREQUENCY  38400
+#define RTC_FREQUENCY   32768
+#define USB_FREQUENCY   48000000
+
+#define TICK_RATE(frequency) \
+    (((frequency) * 4398046ULL + (1ULL << 31)) >> 32)
 /*----------------------------------------------------------------------------*/
 struct ApbClockClass
 {

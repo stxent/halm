@@ -14,9 +14,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
-#define HSI_OSC_FREQUENCY     8000000
-#define LSI_OSC_FREQUENCY     40000
-#define TICK_RATE(frequency)  ((frequency) / 1000)
+#define HSI_OSC_FREQUENCY 8000000
+#define LSI_OSC_FREQUENCY 40000
+
+#define TICK_RATE(frequency) \
+    (((frequency) * 4398046ULL + (1ULL << 31)) >> 32)
 /*----------------------------------------------------------------------------*/
 static uint32_t adcPrescalerToValue(uint32_t);
 static uint32_t ahbPrescalerToValue(uint32_t);

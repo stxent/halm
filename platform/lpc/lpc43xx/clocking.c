@@ -32,9 +32,11 @@ struct GenericPllClass
   enum ClockSource channel;
 };
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY     12000000
-#define RTC_OSC_FREQUENCY     32768
-#define TICK_RATE(frequency)  ((frequency) / 1000)
+#define INT_OSC_FREQUENCY 12000000
+#define RTC_OSC_FREQUENCY 32768
+
+#define TICK_RATE(frequency) \
+    (((frequency) * 4398046ULL + (1ULL << 31)) >> 32)
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcBranchReg(enum ClockBranch);
 static inline volatile uint32_t *calcDividerReg(enum ClockSource);

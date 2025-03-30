@@ -36,13 +36,14 @@ static inline void delayTicks(uint32_t count)
 static inline void mdelay(uint32_t period)
 {
   extern uint32_t ticksPerSecond;
+  const uint32_t cyclesPerQuanta = ticksPerSecond * 1000 >> 12;
 
   while (period)
   {
-    uint32_t count = period > (1 << 12) ? (1 << 12) : period;
+    uint32_t count = MIN(period, 4000);
 
     period -= count;
-    count = (ticksPerSecond * count) >> 2;
+    count = cyclesPerQuanta * count;
     __delay(count);
   }
 }
@@ -50,13 +51,14 @@ static inline void mdelay(uint32_t period)
 static inline void udelay(uint32_t period)
 {
   extern uint32_t ticksPerSecond;
+  const uint32_t cyclesPerQuanta = ticksPerSecond;
 
   while (period)
   {
-    uint32_t count = period > (1 << 12) ? (1 << 12) : period;
+    uint32_t count = MIN(period, 4000);
 
     period -= count;
-    count = (ticksPerSecond * count) / 4000;
+    count = cyclesPerQuanta * count >> 12;
     __delay(count);
   }
 }

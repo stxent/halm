@@ -11,10 +11,12 @@
 #include <xcore/accel.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY     4000000
-#define RTC_OSC_FREQUENCY     32768
-#define USB_FREQUENCY         48000000
-#define TICK_RATE(frequency)  ((frequency) / 1000)
+#define INT_OSC_FREQUENCY 4000000
+#define RTC_OSC_FREQUENCY 32768
+#define USB_FREQUENCY     48000000
+
+#define TICK_RATE(frequency) \
+    (((frequency) * 4398046ULL + (1ULL << 31)) >> 32)
 /*----------------------------------------------------------------------------*/
 static inline void flashLatencyReset(void);
 static void flashLatencyUpdate(uint32_t);

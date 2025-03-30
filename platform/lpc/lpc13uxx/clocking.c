@@ -13,9 +13,11 @@
 #include <assert.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY             12000000
-#define USB_FREQUENCY                 48000000
-#define TICK_RATE(frequency, latency) ((frequency) / (latency) / 1000)
+#define INT_OSC_FREQUENCY 12000000
+#define USB_FREQUENCY     48000000
+
+#define TICK_RATE(frequency, latency) \
+    (((frequency) / (latency) * 4398046ULL + (1ULL << 31)) >> 32)
 /*----------------------------------------------------------------------------*/
 struct ClockDescriptor
 {
