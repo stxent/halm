@@ -25,3 +25,8 @@ void sysFlashLatencyUpdate(unsigned int value)
   LPC_FMC->FLASHCFG = (LPC_FMC->FLASHCFG & ~FLASHCFG_FLASHTIM_MASK)
       | FLASHCFG_FLASHTIM(value - 1);
 }
+/*----------------------------------------------------------------------------*/
+void sysMemoryRemap(enum MemoryRemap value)
+{
+  LPC_SYSCON->SYSMEMREMAP = SYSMEMREMAP_MAP(value);
+}

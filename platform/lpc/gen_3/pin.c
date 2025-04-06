@@ -33,8 +33,8 @@ static void commonPinInit(struct Pin pin)
 {
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
-  pinSetType(pin, PIN_PUSHPULL);
   pinSetSlewRate(pin, PIN_SLEW_NORMAL);
+  pinSetType(pin, PIN_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
 static bool isI2CPin(struct Pin pin)

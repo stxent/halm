@@ -18,22 +18,31 @@
 #define PRESETCTRL_I2C                  BIT(1)
 #define PRESETCTRL_SSP1                 BIT(2)
 /*------------------Power Control register------------------------------------*/
+enum
+{
+  PCON_PM_DEFAULT       = 0,
+  PCON_PM_DEEPSLEEP     = 1,
+  PCON_PM_POWERDOWN     = 2,
+  PCON_PM_DEEPPOWERDOWN = 3
+};
+
 #define PCON_PM_MASK                    BIT_FIELD(MASK(3), 0)
 #define PCON_PM(value)                  BIT_FIELD((value), 0)
 #define PCON_PM_VALUE(reg)              FIELD_VALUE((reg), PCON_PM_MASK, 0)
-#define PCON_PM_DEFAULT                 0
-#define PCON_PM_DEEPSLEEP               1
-#define PCON_PM_POWERDOWN               2
-#define PCON_PM_DEEPPOWERDOWN           3
 
-#define PCON_PM_NODPD                   BIT(3)
-#define PCON_PM_SLEEPFLAG               BIT(8)
-#define PCON_PM_DPDFLAG                 BIT(11)
+#define PCON_NODPD                      BIT(3)
+#define PCON_SLEEPFLAG                  BIT(8)
+#define PCON_DPDFLAG                    BIT(11)
 /*------------------Interrupt wake-up enable registers------------------------*/
+enum
+{
+  STARTERP1_WWDT      = 12,
+  STARTERP1_BOD       = 13,
+  STARTERP1_USB       = 19,
+  STARTERP1_GPIOINT0  = 20,
+  STARTERP1_GPIOINT1  = 21
+};
+
 #define STARTERP0_PINT(channel)         BIT(channel)
-#define STARTERP1_WWDTINT               BIT(12)
-#define STARTERP1_BODINT                BIT(13)
-#define STARTERP1_USB_WAKEUP            BIT(19)
-#define STARTERP1_GPIOINT(channel)      BIT((channel) + 20)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC13UXX_SYSTEM_DEFS_H_ */

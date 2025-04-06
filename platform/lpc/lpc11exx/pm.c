@@ -13,26 +13,25 @@ void pmPlatformChangeState(enum PmState);
 /*----------------------------------------------------------------------------*/
 void pmPlatformChangeState(enum PmState state)
 {
-  static const uint32_t mask =
-      ~(PCON_PM_MASK | PCON_PM_SLEEPFLAG | PCON_PM_DPDFLAG);
+  static const uint32_t mask = ~(PCON_NODPD | PCON_SLEEPFLAG | PCON_DPDFLAG);
   uint32_t value;
 
   switch (state)
   {
     case PM_SLEEP:
-      value = PCON_PM_SLEEPFLAG | PCON_PM(PCON_PM_DEFAULT);
+      value = PCON_SLEEPFLAG | PCON_PM(PCON_PM_DEFAULT);
       break;
 
     case PM_SUSPEND:
 #if defined(CONFIG_PLATFORM_LPC_PM_PD)
-      value = PCON_PM_SLEEPFLAG | PCON_PM(PCON_PM_POWERDOWN);
+      value = PCON_SLEEPFLAG | PCON_PM(PCON_PM_POWERDOWN);
 #else
-      value = PCON_PM_SLEEPFLAG | PCON_PM(PCON_PM_DEEPSLEEP);
+      value = PCON_SLEEPFLAG | PCON_PM(PCON_PM_DEEPSLEEP);
 #endif
       break;
 
     case PM_SHUTDOWN:
-      value = PCON_PM_DPDFLAG | PCON_PM(PCON_PM_DEEPPOWERDOWN);
+      value = PCON_DPDFLAG | PCON_PM(PCON_PM_DEEPPOWERDOWN);
       break;
 
     default:

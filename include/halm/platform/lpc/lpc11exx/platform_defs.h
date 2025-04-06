@@ -55,12 +55,12 @@ typedef struct
   /* Offset 0x0100 */
   __rw__ uint32_t PIOPORCAP0;
   __rw__ uint32_t PIOPORCAP1;
-  __ne__ uint32_t RESERVED10[18];
+  __ne__ uint32_t RESERVED8[18];
 
   /* Offset 0x0150 */
   __rw__ uint32_t BODCTRL;
   __rw__ uint32_t SYSTCKCAL;
-  __ne__ uint32_t RESERVED11[6];
+  __ne__ uint32_t RESERVED9[6];
 
   /* Offset 0x0170 */
   __rw__ uint32_t IRQLATENCY;
@@ -80,20 +80,20 @@ typedef struct
       __rw__ uint32_t PINTSEL7;
     };
   };
-  __ne__ uint32_t RESERVED12[26];
+  __ne__ uint32_t RESERVED10[26];
 
   /* Offset 0x0200 */
-  __ne__ uint32_t RESERVED13;
+  __ne__ uint32_t RESERVED11;
   __rw__ uint32_t STARTERP0;
-  __ne__ uint32_t RESERVED14[3];
+  __ne__ uint32_t RESERVED12[3];
   __rw__ uint32_t STARTERP1;
-  __ne__ uint32_t RESERVED15[6];
+  __ne__ uint32_t RESERVED13[6];
 
   /* Offset 0x0230 */
   __rw__ uint32_t PDSLEEPCFG;
   __rw__ uint32_t PDAWAKECFG;
   __rw__ uint32_t PDRUNCFG;
-  __ne__ uint32_t RESERVED16[110];
+  __ne__ uint32_t RESERVED14[110];
   __ro__ uint32_t DEVICE_ID;
 } LPC_SYSCON_Type;
 /*------------------Flash Memory Configuration--------------------------------*/

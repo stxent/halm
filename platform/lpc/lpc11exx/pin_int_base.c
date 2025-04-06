@@ -117,6 +117,11 @@ static enum Result pinIntInit(void *object, const void *configBase)
 static void pinIntDeinit(void *object)
 {
   const struct PinIntBase * const interrupt = object;
+
+#ifdef CONFIG_PM
+  LPC_SYSCON->STARTERP0 &= ~STARTERP0_PINT(interrupt->channel);
+#endif
+
   instances[interrupt->channel] = NULL;
 }
 #endif

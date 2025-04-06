@@ -76,7 +76,7 @@ static enum Result wdtInit(void *object, const void *configBase)
 
 #ifdef CONFIG_PM
     /* Watchdog interrupt will wake the controller from low-power modes */
-    LPC_SYSCON->STARTERP1 |= STARTERP1_WWDTINT;
+    LPC_SYSCON->STARTERP1 |= BIT(STARTERP1_WWDT);
 #endif
 
     return E_OK;

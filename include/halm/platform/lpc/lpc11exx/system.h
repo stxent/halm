@@ -16,6 +16,13 @@
 #include <xcore/helpers.h>
 #include <stdbool.h>
 /*----------------------------------------------------------------------------*/
+enum [[gnu::packed]] MemoryRemap
+{
+  REMAP_BOOT  = 0,
+  REMAP_SRAM  = 1,
+  REMAP_FLASH = 2
+};
+
 /* Power-down configuration register */
 enum [[gnu::packed]] SysBlockPower
 {
