@@ -121,6 +121,7 @@ unsigned int sysFlashLatency(void);
 void sysFlashLatencyUpdate(unsigned int);
 void sysResetDisable(enum SysBlockReset);
 void sysResetEnable(enum SysBlockReset);
+void sysResetPulse(enum SysBlockReset);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

@@ -97,8 +97,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   /* Enable clocks to register interface and peripheral */
   sysClockEnable(CLK_SDIO);
   /* Reset registers to default values */
-  sysResetEnable(RST_SDIO);
-  sysResetDisable(RST_SDIO);
+  sysResetPulse(RST_SDIO);
 
   interface->handler = NULL;
   interface->irq = SDIO_IRQ;

@@ -237,8 +237,7 @@ static enum Result devInit(void *object, const void *configBase)
     /* Enable clocks to the register interface and peripheral */
     sysClockEnable(CLK_OTGFS);
     /* Reset registers to default values */
-    sysResetEnable(RST_OTGFS);
-    sysResetDisable(RST_OTGFS);
+    sysResetPulse(RST_OTGFS);
 
     device->reg = STM_USB_OTG_FS;
     device->handler = NULL;
@@ -256,8 +255,7 @@ static enum Result devInit(void *object, const void *configBase)
     /* Enable clocks to the register interface and peripheral */
     sysClockEnable(CLK_OTGHS);
     /* Reset registers to default values */
-    sysResetEnable(RST_OTGHS);
-    sysResetDisable(RST_OTGHS);
+    sysResetPulse(RST_OTGHS);
 
     device->reg = STM_USB_OTG_HS;
     device->handler = NULL;

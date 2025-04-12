@@ -586,8 +586,7 @@ static enum Result adcClockEnable(const void *, const void *configBase)
   if (!sysClockStatus(CLK_ADC))
   {
     sysClockEnable(CLK_ADC);
-    sysResetEnable(RST_ADC);
-    sysResetDisable(RST_ADC);
+    sysResetPulse(RST_ADC);
   }
 
   uint32_t cfgr2 = STM_ADC->CFGR2 & ~ADC_CFGR2_CKMODE_MASK;

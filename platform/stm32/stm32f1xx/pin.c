@@ -56,8 +56,7 @@ static void commonPinInit(struct Pin pin)
     const enum SysBlockReset reset = portToBlockReset(pin.port);
 
     sysClockEnable(branch);
-    sysResetEnable(reset);
-    sysResetDisable(reset);
+    sysResetPulse(reset);
   }
 
   pinSetFunction(pin, PIN_DEFAULT);

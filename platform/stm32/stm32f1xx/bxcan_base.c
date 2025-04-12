@@ -250,8 +250,7 @@ static enum Result canInit(void *object, const void *configBase)
   /* Enable clocks to register interface and peripheral */
   sysClockEnable(entry->clock);
   /* Reset registers to default values */
-  sysResetEnable(entry->reset);
-  sysResetDisable(entry->reset);
+  sysResetPulse(entry->reset);
 
   interface->channel = config->channel;
   interface->handler = NULL;

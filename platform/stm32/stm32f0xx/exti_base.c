@@ -198,8 +198,7 @@ static enum Result extiInit(void *object, const void *configBase)
   if (!sysClockStatus(CLK_SYSCFG))
   {
     sysClockEnable(CLK_SYSCFG);
-    sysResetEnable(RST_SYSCFG);
-    sysResetDisable(RST_SYSCFG);
+    sysResetPulse(RST_SYSCFG);
   }
 
   /* Configure event multiplexor */

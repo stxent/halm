@@ -29,8 +29,7 @@ static void commonPinInit(uint8_t port)
     const enum SysBlockReset reset = portToBlockReset(port);
 
     sysClockEnable(branch);
-    sysResetEnable(reset);
-    sysResetDisable(reset);
+    sysResetPulse(reset);
   }
 }
 /*----------------------------------------------------------------------------*/

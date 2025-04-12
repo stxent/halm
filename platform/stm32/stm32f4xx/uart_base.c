@@ -429,8 +429,7 @@ static enum Result uartInit(void *object, const void *configBase)
   uartConfigPins(config);
 
   sysClockEnable(entry->clock);
-  sysResetEnable(entry->reset);
-  sysResetDisable(entry->reset);
+  sysResetPulse(entry->reset);
 
   interface->channel = config->channel;
   interface->handler = NULL;

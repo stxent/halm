@@ -117,8 +117,7 @@ static enum Result canInit(void *object, const void *configBase)
   configPins(config);
 
   sysClockEnable(CLK_CAN);
-  sysResetEnable(RST_CAN);
-  sysResetDisable(RST_CAN);
+  sysResetPulse(RST_CAN);
 
   interface->channel = 0;
   interface->handler = NULL;

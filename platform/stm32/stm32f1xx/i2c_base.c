@@ -195,8 +195,7 @@ static enum Result i2cInit(void *object, const void *configBase)
     return E_BUSY;
 
   sysClockEnable(entry->clock);
-  sysResetEnable(entry->reset);
-  sysResetDisable(entry->reset);
+  sysResetPulse(entry->reset);
 
   interface->channel = config->channel;
   interface->handler = NULL;

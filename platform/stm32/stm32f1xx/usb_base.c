@@ -136,8 +136,7 @@ static enum Result devInit(void *object, const void *configBase)
   /* Enable clocks to the register interface and peripheral */
   sysClockEnable(CLK_USB);
   /* Reset registers to default values */
-  sysResetEnable(RST_USB);
-  sysResetDisable(RST_USB);
+  sysResetPulse(RST_USB);
 
   device->channel = 0;
   device->handler = NULL;

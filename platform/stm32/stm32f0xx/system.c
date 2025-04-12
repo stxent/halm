@@ -149,3 +149,27 @@ void sysResetDisable(enum SysBlockReset block)
       break;
   }
 }
+/*----------------------------------------------------------------------------*/
+void sysResetPulse(enum SysBlockReset block)
+{
+  const unsigned int index = block >> 5;
+  const uint32_t value = 1UL << (block & 0x1F);
+
+  switch (index)
+  {
+    case INDEX_AHB:
+      STM_RCC->AHBRSTR |= value;
+      STM_RCC->AHBRSTR &= ~value;
+      break;
+
+    case INDEX_APB1:
+      STM_RCC->APB1RSTR |= value;
+      STM_RCC->APB1RSTR &= ~value;
+      break;
+
+    case INDEX_APB2:
+      STM_RCC->APB2RSTR |= value;
+      STM_RCC->APB2RSTR &= ~value;
+      break;
+  }
+}

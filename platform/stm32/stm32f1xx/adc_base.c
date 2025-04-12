@@ -258,8 +258,7 @@ static enum Result adcInit(void *object, const void *configBase)
   if (!sysClockStatus(entry->clock))
   {
     sysClockEnable(entry->clock);
-    sysResetEnable(entry->reset);
-    sysResetDisable(entry->reset);
+    sysResetPulse(entry->reset);
   }
 
   interface->channel = config->channel;
