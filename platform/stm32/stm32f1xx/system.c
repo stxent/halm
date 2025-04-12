@@ -8,6 +8,7 @@
 #include <halm/platform/stm32/stm32f1xx/clocking_defs.h>
 #include <halm/platform/stm32/stm32f1xx/system_defs.h>
 #include <halm/platform/stm32/system.h>
+#include <stddef.h>
 /*----------------------------------------------------------------------------*/
 enum
 {
@@ -16,70 +17,67 @@ enum
   INDEX_APB2
 };
 /*----------------------------------------------------------------------------*/
-void sysClockDisable(enum SysClockBranch branch)
+static inline volatile uint32_t *blockToResetReg(enum SysBlockReset);
+static inline volatile uint32_t *branchToEnableReg(enum SysClockBranch);
+/*----------------------------------------------------------------------------*/
+static inline volatile uint32_t *blockToResetReg(enum SysBlockReset block)
 {
-  const unsigned int index = branch >> 5;
-  const uint32_t mask = ~(1UL << (branch & 0x1F));
-
-  switch (index)
+  switch (block >> 5)
   {
     case INDEX_AHB:
-      STM_RCC->AHBENR &= mask;
-      break;
+      return &STM_RCC->AHBRSTR;
 
     case INDEX_APB1:
-      STM_RCC->APB1ENR &= mask;
-      break;
+      return &STM_RCC->APB1RSTR;
 
     case INDEX_APB2:
-      STM_RCC->APB2ENR &= mask;
-      break;
+      return &STM_RCC->APB2RSTR;
+
+    default:
+      return NULL;
   }
+}
+/*----------------------------------------------------------------------------*/
+static inline volatile uint32_t *branchToEnableReg(enum SysClockBranch branch)
+{
+  switch (branch >> 5)
+  {
+    case INDEX_AHB:
+      return &STM_RCC->AHBENR;
+
+    case INDEX_APB1:
+      return &STM_RCC->APB1ENR;
+
+    case INDEX_APB2:
+      return &STM_RCC->APB2ENR;
+
+    default:
+      return NULL;
+  }
+}
+/*----------------------------------------------------------------------------*/
+void sysClockDisable(enum SysClockBranch branch)
+{
+  volatile uint32_t * const reg = branchToEnableReg(branch);
+  const uint32_t mask = 1UL << (branch & 0x1F);
+
+  *reg &= ~mask;
 }
 /*----------------------------------------------------------------------------*/
 void sysClockEnable(enum SysClockBranch branch)
 {
-  const unsigned int index = branch >> 5;
-  const uint32_t value = 1UL << (branch & 0x1F);
+  volatile uint32_t * const reg = branchToEnableReg(branch);
+  const uint32_t mask = 1UL << (branch & 0x1F);
 
-  switch (index)
-  {
-    case INDEX_AHB:
-      STM_RCC->AHBENR |= value;
-      break;
-
-    case INDEX_APB1:
-      STM_RCC->APB1ENR |= value;
-      break;
-
-    case INDEX_APB2:
-      STM_RCC->APB2ENR |= value;
-      break;
-  }
+  *reg |= mask;
 }
 /*----------------------------------------------------------------------------*/
 bool sysClockStatus(enum SysClockBranch branch)
 {
-  const unsigned int index = branch >> 5;
+  volatile uint32_t * const reg = branchToEnableReg(branch);
   const uint32_t mask = 1UL << (branch & 0x1F);
-  uint32_t value = 0;
 
-  switch (index)
-  {
-    case INDEX_AHB:
-      value = STM_RCC->AHBENR;
-      break;
-
-    case INDEX_APB1:
-      value = STM_RCC->APB1ENR;
-      break;
-
-    case INDEX_APB2:
-      value = STM_RCC->APB2ENR;
-      break;
-  }
-
-  return (value & mask) != 0;
+  return (*reg & mask) != 0;
 }
 /*----------------------------------------------------------------------------*/
 unsigned int sysFlashLatency(void)
@@ -117,66 +115,25 @@ void sysFlashLatencyUpdate(unsigned int value)
 /*----------------------------------------------------------------------------*/
 void sysResetEnable(enum SysBlockReset block)
 {
-  const unsigned int index = block >> 5;
-  const uint32_t value = 1UL << (block & 0x1F);
+  volatile uint32_t * const reg = blockToResetReg(block);
+  const uint32_t mask = 1UL << (block & 0x1F);
 
-  switch (index)
-  {
-    case INDEX_AHB:
-      STM_RCC->AHBRSTR |= value;
-      break;
-
-    case INDEX_APB1:
-      STM_RCC->APB1RSTR |= value;
-      break;
-
-    case INDEX_APB2:
-      STM_RCC->APB2RSTR |= value;
-      break;
-  }
+  *reg |= mask;
 }
 /*----------------------------------------------------------------------------*/
 void sysResetDisable(enum SysBlockReset block)
 {
-  const unsigned int index = block >> 5;
-  const uint32_t mask = ~(1UL << (block & 0x1F));
+  volatile uint32_t * const reg = blockToResetReg(block);
+  const uint32_t mask = 1UL << (block & 0x1F);
 
-  switch (index)
-  {
-    case INDEX_AHB:
-      STM_RCC->AHBRSTR &= mask;
-      break;
-
-    case INDEX_APB1:
-      STM_RCC->APB1RSTR &= mask;
-      break;
-
-    case INDEX_APB2:
-      STM_RCC->APB2RSTR &= mask;
-      break;
-  }
+  *reg &= ~mask;
 }
 /*----------------------------------------------------------------------------*/
 void sysResetPulse(enum SysBlockReset block)
 {
-  const unsigned int index = block >> 5;
-  const uint32_t value = 1UL << (block & 0x1F);
+  volatile uint32_t * const reg = blockToResetReg(block);
+  const uint32_t mask = 1UL << (block & 0x1F);
 
-  switch (index)
-  {
-    case INDEX_AHB:
-      STM_RCC->AHBRSTR |= value;
-      STM_RCC->AHBRSTR &= ~value;
-      break;
-
-    case INDEX_APB1:
-      STM_RCC->APB1RSTR |= value;
-      STM_RCC->APB1RSTR &= ~value;
-      break;
-
-    case INDEX_APB2:
-      STM_RCC->APB2RSTR |= value;
-      STM_RCC->APB2RSTR &= ~value;
-      break;
-  }
+  *reg |= mask;
+  *reg &= ~mask;
 }
