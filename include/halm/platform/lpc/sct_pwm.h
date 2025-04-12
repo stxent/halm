@@ -44,6 +44,8 @@ struct SctPwmUnit
   uint32_t frequency;
   /* Cycle width measured in timer ticks */
   uint32_t resolution;
+  /* Clock input */
+  enum SctInput input;
   /* Match channel used for counter reset */
   uint8_t event;
   /** Enable center-aligned mode. */
@@ -71,8 +73,8 @@ struct SctPwm
   struct SctPwmUnit *unit;
   /* Pointer to a match register */
   volatile void *value;
-  /* Output channel number */
-  uint8_t channel;
+  /* Output channel */
+  enum SctOutput channel;
   /* Event number */
   uint8_t event;
   /* Enable output inversion */
@@ -102,8 +104,8 @@ struct SctPwmDoubleEdge
   volatile void *leading;
   /* Pointer to a match register containing trailing edge time */
   volatile void *trailing;
-  /* Output channel number */
-  uint8_t channel;
+  /* Output channel */
+  enum SctOutput channel;
   /* Event number for leading edge */
   uint8_t leadingEvent;
   /* Event number for trailing edge */

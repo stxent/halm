@@ -13,6 +13,8 @@
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define PACK_VALUE(function, channel) (((channel) << 4) | (function))
+#define UNPACK_CHANNEL(value)         (((value) >> 4) & 0x0F)
+#define UNPACK_FUNCTION(value)        ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
 struct TimerHandler
 {
@@ -144,7 +146,7 @@ const struct PinEntry sctInputPins[] = {
         .key = 0 /* End of pin function association list */
     }
 };
-/*----------------------------------------------------------------------------*/
+
 const struct PinEntry sctOutputPins[] = {
     {
         .key = PIN(PORT_1, 1), /* CTOUT_7 */
@@ -378,10 +380,10 @@ const struct PinEntry sctOutputPins[] = {
         .key = 0 /* End of pin function association list */
     }
 };
-/*----------------------------------------------------------------------------*/
+
 static struct TimerHandler instance = {
     .parts = {NULL, NULL},
-    .events = 0xFFFF
+    .events = MASK(SCT_EVENT_COUNT)
 };
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(void)
@@ -449,6 +451,49 @@ bool sctAllocateEvent(struct SctBase *, uint8_t *event)
     return false;
 }
 /*----------------------------------------------------------------------------*/
+enum SctInput sctAllocateInputChannel(struct SctBase *, PinNumber key)
+{
+  const struct PinEntry * const pinEntry = pinFind(sctInputPins, key, 0);
+
+  if (pinEntry != NULL)
+    return (enum SctInput)(UNPACK_CHANNEL(pinEntry->value) + 1);
+  else
+    return SCT_INPUT_NONE;
+}
+/*----------------------------------------------------------------------------*/
+enum SctOutput sctAllocateOutputChannel(struct SctBase *, PinNumber key)
+{
+  const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, 0);
+
+  if (pinEntry != NULL)
+    return (enum SctOutput)(UNPACK_CHANNEL(pinEntry->value) + 1);
+  else
+    return SCT_OUTPUT_NONE;
+}
+/*----------------------------------------------------------------------------*/
+void sctConfigInputPin(struct SctBase *, enum SctInput, PinNumber key,
+    enum PinPull pull)
+{
+  const struct PinEntry * const pinEntry = pinFind(sctInputPins, key, 0);
+  assert(pinEntry != NULL);
+
+  const struct Pin pin = pinInit(key);
+  pinInput(pin);
+  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
+  pinSetPull(pin, pull);
+}
+/*----------------------------------------------------------------------------*/
+void sctConfigOutputPin(struct SctBase *, enum SctOutput, PinNumber key,
+    bool value)
+{
+  const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, 0);
+  assert(pinEntry != NULL);
+
+  const struct Pin pin = pinInit(key);
+  pinOutput(pin, value);
+  pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
+}
+/*----------------------------------------------------------------------------*/
 uint32_t sctGetClock(const struct SctBase *)
 {
   return clockFrequency(MainClock);
@@ -459,29 +504,23 @@ void sctReleaseEvent(struct SctBase *, uint8_t event)
   instance.events |= 1 << event;
 }
 /*----------------------------------------------------------------------------*/
+void sctReleaseInputChannel(struct SctBase *, enum SctInput)
+{
+}
+/*----------------------------------------------------------------------------*/
+void sctReleaseOutputChannel(struct SctBase *, enum SctOutput)
+{
+}
+/*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SctBaseConfig * const config = configBase;
-  assert(config->edge == INPUT_RISING || config->edge == INPUT_FALLING);
-  assert(config->input < SCT_INPUT_END);
-
   struct SctBase * const timer = object;
   uint32_t value = 0;
 
   /* Check whether the timer is divided into two separate parts */
   if (config->part == SCT_UNIFIED)
     value |= CONFIG_UNIFY;
-
-  /* Configure timer clock source */
-  if (config->input != SCT_INPUT_NONE)
-  {
-    value |= CONFIG_CLKMODE(CLKMODE_INPUT_HP);
-
-    if (config->edge == INPUT_RISING)
-      value |= CONFIG_CKSEL_RISING(config->input - 1);
-    else
-      value |= CONFIG_CKSEL_FALLING(config->input - 1);
-  }
 
   const bool enabled = timerHandlerActive();
   LPC_SCT_Type * const reg = LPC_SCT;

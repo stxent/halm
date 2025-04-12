@@ -161,8 +161,6 @@ static enum Result unitInit(void *object, const void *configBase)
 
   const struct SctBaseConfig baseConfig = {
       .channel = config->channel,
-      .edge = INPUT_RISING,
-      .input = config->clock,
       .part = config->part
   };
   struct SctPwmUnit * const unit = object;
@@ -179,6 +177,7 @@ static enum Result unitInit(void *object, const void *configBase)
   unit->callback = NULL;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
+  unit->input = config->clock;
   unit->centered = config->centered;
 
   LPC_SCT_Type * const reg = unit->base.reg;
@@ -196,6 +195,13 @@ static enum Result unitInit(void *object, const void *configBase)
 
   /* Automatic reload feature is not supported on all parts */
   reg->CONFIG &= ~(CONFIG_AUTOLIMIT(part) | CONFIG_NORELOAD(part));
+
+  /* Configure timer clock source */
+  if (unit->input != SCT_INPUT_NONE)
+  {
+    reg->CONFIG |= CONFIG_CLKMODE(CLKMODE_INPUT_HP)
+        | CONFIG_CKSEL_RISING(unit->input - 1);
+  }
 
   /* Match value should be configured after event initialization */
   setUnitResolution(unit, unit->event, unit->resolution);
@@ -323,12 +329,16 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   if (!sctAllocateEvent(&unit->base, &pwm->event))
     return E_BUSY;
 
-  pwm->channel = sctGetOutputChannel(unit->base.channel, config->pin);
+  pwm->channel = sctAllocateOutputChannel(&unit->base, config->pin);
+  if (pwm->channel == SCT_OUTPUT_NONE)
+    return E_BUSY;
+
   pwm->unit = unit;
   pwm->inversion = config->inversion;
 
-  LPC_SCT_Type * const reg = unit->base.reg;
+  const unsigned int offset = pwm->channel - 1;
   const unsigned int part = unit->base.part == SCT_HIGH;
+  LPC_SCT_Type * const reg = unit->base.reg;
 
   if (unit->base.part == SCT_UNIFIED)
     pwm->value = &reg->MATCHREL[pwm->event];
@@ -347,40 +357,40 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
 
   /* Configure bidirectional output control */
   uint32_t outputdirctrl =
-      reg->OUTPUTDIRCTRL & ~OUTPUTDIRCTRL_SETCLR_MASK(pwm->channel);
+      reg->OUTPUTDIRCTRL & ~OUTPUTDIRCTRL_SETCLR_MASK(offset);
 
   if (unit->centered)
   {
     if (unit->base.part == SCT_HIGH)
-      outputdirctrl |= OUTPUTDIRCTRL_SETCLR(pwm->channel, SETCLR_H_REVERSE);
+      outputdirctrl |= OUTPUTDIRCTRL_SETCLR(offset, SETCLR_H_REVERSE);
     else
-      outputdirctrl |= OUTPUTDIRCTRL_SETCLR(pwm->channel, SETCLR_L_REVERSE);
+      outputdirctrl |= OUTPUTDIRCTRL_SETCLR(offset, SETCLR_L_REVERSE);
   }
   reg->OUTPUTDIRCTRL = outputdirctrl;
 
   /* Set or clear the output when both events occur in the same clock cycle */
-  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(pwm->channel))
-      | RES_OUTPUT(pwm->channel, pwm->inversion ? OUTPUT_SET : OUTPUT_CLEAR);
+  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(offset))
+      | RES_OUTPUT(offset, pwm->inversion ? OUTPUT_SET : OUTPUT_CLEAR);
 
   /* Disable modulation by default */
   if (pwm->inversion)
   {
-    reg->OUT[pwm->channel].CLR = 0;
-    reg->OUT[pwm->channel].SET = 1 << unit->event;
-    reg->OUTPUT |= 1 << pwm->channel;
+    reg->OUT[offset].CLR = 0;
+    reg->OUT[offset].SET = 1 << unit->event;
+    reg->OUTPUT |= 1 << offset;
   }
   else
   {
-    reg->OUT[pwm->channel].CLR = 1 << unit->event;
-    reg->OUT[pwm->channel].SET = 0;
-    reg->OUTPUT &= ~(1 << pwm->channel);
+    reg->OUT[offset].CLR = 1 << unit->event;
+    reg->OUT[offset].SET = 0;
+    reg->OUTPUT &= ~(1 << offset);
   }
 
   /* Enable allocated event in state 0 */
   reg->EV[pwm->event].STATE = 0x00000001;
 
   /* Initialize output pin after channel configuration */
-  sctConfigOutputPin(unit->base.channel, config->pin, pwm->inversion);
+  sctConfigOutputPin(&unit->base, pwm->channel, config->pin, pwm->inversion);
 
   return E_OK;
 }
@@ -390,26 +400,30 @@ static void singleEdgeDeinit(void *object)
 {
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
+  const unsigned int offset = pwm->channel - 1;
   LPC_SCT_Type * const reg = unit->base.reg;
 
   /* Disable allocated event */
   reg->EV[pwm->event].STATE = 0;
 
   /* Disable the output and overwrite output state to avoid undefined level */
-  reg->OUT[pwm->channel].CLR = 0;
-  reg->OUT[pwm->channel].SET = 0;
+  reg->OUT[offset].CLR = 0;
+  reg->OUT[offset].SET = 0;
   if (pwm->inversion)
-    reg->OUTPUT |= 1 << pwm->channel;
+    reg->OUTPUT |= 1 << offset;
   else
-    reg->OUTPUT &= ~(1 << pwm->channel);
+    reg->OUTPUT &= ~(1 << offset);
 
   /* Restore default state of other registers */
-  reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(pwm->channel);
-  reg->RES &= ~RES_OUTPUT_MASK(pwm->channel);
+  reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(offset);
+  reg->RES &= ~RES_OUTPUT_MASK(offset);
 
   /* Release allocated event */
   reg->EV[pwm->event].CTRL = 0;
   sctReleaseEvent(&unit->base, pwm->event);
+
+  /* Release allocated output */
+  sctReleaseOutputChannel(&unit->base, pwm->channel);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -417,17 +431,18 @@ static void singleEdgeEnable(void *object)
 {
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
+  const unsigned int offset = pwm->channel - 1;
   LPC_SCT_Type * const reg = unit->base.reg;
 
   if (pwm->inversion)
   {
-    reg->OUT[pwm->channel].SET = 1 << pwm->event;
-    reg->OUT[pwm->channel].CLR = 1 << unit->event;
+    reg->OUT[offset].SET = 1 << pwm->event;
+    reg->OUT[offset].CLR = 1 << unit->event;
   }
   else
   {
-    reg->OUT[pwm->channel].CLR = 1 << pwm->event;
-    reg->OUT[pwm->channel].SET = 1 << unit->event;
+    reg->OUT[offset].CLR = 1 << pwm->event;
+    reg->OUT[offset].SET = 1 << unit->event;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -435,18 +450,19 @@ static void singleEdgeDisable(void *object)
 {
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
+  const unsigned int offset = pwm->channel - 1;
   LPC_SCT_Type * const reg = unit->base.reg;
 
   /* Set or clear synchronously */
   if (pwm->inversion)
   {
-    reg->OUT[pwm->channel].SET = 0;
-    reg->OUT[pwm->channel].CLR = 1 << unit->event;
+    reg->OUT[offset].SET = 0;
+    reg->OUT[offset].CLR = 1 << unit->event;
   }
   else
   {
-    reg->OUT[pwm->channel].SET = 1 << unit->event;
-    reg->OUT[pwm->channel].CLR = 0;
+    reg->OUT[offset].SET = 1 << unit->event;
+    reg->OUT[offset].CLR = 0;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -504,12 +520,16 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   if (!sctAllocateEvent(&unit->base, &pwm->trailingEvent))
     return E_BUSY;
 
-  pwm->channel = sctGetOutputChannel(unit->base.channel, config->pin);
+  pwm->channel = sctAllocateOutputChannel(&unit->base, config->pin);
+  if (pwm->channel == SCT_OUTPUT_NONE)
+    return E_BUSY;
+
   pwm->unit = unit;
   pwm->inversion = config->inversion;
 
-  LPC_SCT_Type * const reg = unit->base.reg;
+  const unsigned int offset = pwm->channel - 1;
   const unsigned int part = unit->base.part == SCT_HIGH;
+  LPC_SCT_Type * const reg = unit->base.reg;
 
   if (unit->base.part == SCT_UNIFIED)
   {
@@ -558,21 +578,21 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   reg->OUTPUTDIRCTRL = outputdirctrl;
 
   /* Set or clear the output when both events occur in the same clock cycle */
-  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(pwm->channel))
-      | RES_OUTPUT(pwm->channel, pwm->inversion ? OUTPUT_SET : OUTPUT_CLEAR);
+  reg->RES = (reg->RES & ~RES_OUTPUT_MASK(offset))
+      | RES_OUTPUT(offset, pwm->inversion ? OUTPUT_SET : OUTPUT_CLEAR);
 
   /* Disable modulation by default */
   if (pwm->inversion)
   {
-    reg->OUT[pwm->channel].CLR = 0;
-    reg->OUT[pwm->channel].SET = 1 << unit->event;
-    reg->OUTPUT |= 1 << pwm->channel;
+    reg->OUT[offset].CLR = 0;
+    reg->OUT[offset].SET = 1 << unit->event;
+    reg->OUTPUT |= 1 << offset;
   }
   else
   {
-    reg->OUT[pwm->channel].CLR = 1 << unit->event;
-    reg->OUT[pwm->channel].SET = 0;
-    reg->OUTPUT &= ~(1 << pwm->channel);
+    reg->OUT[offset].CLR = 1 << unit->event;
+    reg->OUT[offset].SET = 0;
+    reg->OUTPUT &= ~(1 << offset);
   }
 
   /* Enable allocated events in state 0 */
@@ -580,7 +600,7 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   reg->EV[pwm->trailingEvent].STATE = 0x00000001;
 
   /* Initialize output pin after channel configuration */
-  sctConfigOutputPin(unit->base.channel, config->pin, pwm->inversion);
+  sctConfigOutputPin(&unit->base, pwm->channel, config->pin, pwm->inversion);
 
   return E_OK;
 }
@@ -590,6 +610,7 @@ static void doubleEdgeDeinit(void *object)
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
+  const unsigned int offset = pwm->channel - 1;
   LPC_SCT_Type * const reg = unit->base.reg;
 
   /* Disable allocated events */
@@ -597,22 +618,25 @@ static void doubleEdgeDeinit(void *object)
   reg->EV[pwm->trailingEvent].STATE = 0;
 
   /* Disable the output and overwrite output state to avoid undefined level */
-  reg->OUT[pwm->channel].CLR = 0;
-  reg->OUT[pwm->channel].SET = 0;
+  reg->OUT[offset].CLR = 0;
+  reg->OUT[offset].SET = 0;
   if (pwm->inversion)
-    reg->OUTPUT |= 1 << pwm->channel;
+    reg->OUTPUT |= 1 << offset;
   else
-    reg->OUTPUT &= ~(1 << pwm->channel);
+    reg->OUTPUT &= ~(1 << offset);
 
   /* Restore default state of other registers */
-  reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(pwm->channel);
-  reg->RES &= ~RES_OUTPUT_MASK(pwm->channel);
+  reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(offset);
+  reg->RES &= ~RES_OUTPUT_MASK(offset);
 
   /* Release allocated events */
   reg->EV[pwm->leadingEvent].CTRL = 0;
   reg->EV[pwm->trailingEvent].CTRL = 0;
   sctReleaseEvent(&unit->base, pwm->trailingEvent);
   sctReleaseEvent(&unit->base, pwm->leadingEvent);
+
+  /* Release allocated output */
+  sctReleaseOutputChannel(&unit->base, pwm->channel);
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -620,17 +644,18 @@ static void doubleEdgeEnable(void *object)
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
+  const unsigned int offset = pwm->channel - 1;
   LPC_SCT_Type * const reg = unit->base.reg;
 
   if (pwm->inversion)
   {
-    reg->OUT[pwm->channel].CLR = 1 << pwm->leadingEvent;
-    reg->OUT[pwm->channel].SET = 1 << pwm->trailingEvent;
+    reg->OUT[offset].CLR = 1 << pwm->leadingEvent;
+    reg->OUT[offset].SET = 1 << pwm->trailingEvent;
   }
   else
   {
-    reg->OUT[pwm->channel].SET = 1 << pwm->leadingEvent;
-    reg->OUT[pwm->channel].CLR = 1 << pwm->trailingEvent;
+    reg->OUT[offset].SET = 1 << pwm->leadingEvent;
+    reg->OUT[offset].CLR = 1 << pwm->trailingEvent;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -638,18 +663,19 @@ static void doubleEdgeDisable(void *object)
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
+  const unsigned int offset = pwm->channel - 1;
   LPC_SCT_Type * const reg = unit->base.reg;
 
   /* Set or clear synchronously */
   if (pwm->inversion)
   {
-    reg->OUT[pwm->channel].SET = 0;
-    reg->OUT[pwm->channel].CLR = 1 << unit->event;
+    reg->OUT[offset].SET = 0;
+    reg->OUT[offset].CLR = 1 << unit->event;
   }
   else
   {
-    reg->OUT[pwm->channel].SET = 1 << unit->event;
-    reg->OUT[pwm->channel].CLR = 0;
+    reg->OUT[offset].SET = 1 << unit->event;
+    reg->OUT[offset].CLR = 0;
   }
 }
 /*----------------------------------------------------------------------------*/

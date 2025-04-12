@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/gen_3/pin_defs.h>
 #include <halm/platform/lpc/pin_int.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/

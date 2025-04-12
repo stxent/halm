@@ -19,7 +19,7 @@ extern const struct TimerClass * const SctUnifiedTimer;
 
 struct SctCounterConfig
 {
-  /** Mandatory: pin used as an input. */
+  /** Mandatory: pin used as a clock input. */
   PinNumber pin;
   /** Optional: timer interrupt priority. */
   IrqPriority priority;
@@ -55,6 +55,8 @@ struct SctTimer
 
   /* Desired timer frequency */
   uint32_t frequency;
+  /* Clock input */
+  enum SctInput input;
   /* Match channel used for counter reset */
   uint8_t event;
 };

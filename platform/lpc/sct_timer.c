@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static enum Result genericTimerInit(void *, uint8_t, enum SctPart,
-    enum SctInput, enum InputEvent, IrqPriority, uint32_t);
+    PinNumber, enum InputEvent, IrqPriority, uint32_t);
 
 #ifdef CONFIG_PLATFORM_LPC_SCT_PM
 static void powerStateHandler(void *, enum PmState);
@@ -117,13 +117,11 @@ static void interruptHandler(void *object)
 }
 /*----------------------------------------------------------------------------*/
 static enum Result genericTimerInit(void *object, uint8_t channel,
-    enum SctPart segment, enum SctInput input, enum InputEvent edge,
+    enum SctPart segment, PinNumber clock, enum InputEvent edge,
     IrqPriority priority, uint32_t frequency)
 {
   const struct SctBaseConfig baseConfig = {
       .channel = channel,
-      .edge = edge,
-      .input = input,
       .part = segment
   };
   struct SctTimer * const timer = object;
@@ -138,6 +136,30 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
 
   if (!sctAllocateEvent(&timer->base, &timer->event))
     return E_BUSY;
+
+  /* Configure clock input */
+  if (clock)
+  {
+    timer->input = sctAllocateInputChannel(&timer->base, clock);
+    if (timer->input == SCT_INPUT_NONE)
+      return E_BUSY;
+
+    sctConfigInputPin(object, timer->input, clock, PIN_NOPULL);
+
+    /* Configure timer clock source */
+    if (edge == INPUT_RISING)
+    {
+      reg->CONFIG |= CONFIG_CLKMODE(CLKMODE_INPUT_HP)
+          | CONFIG_CKSEL_RISING(timer->input - 1);
+    }
+    else
+    {
+      reg->CONFIG |= CONFIG_CLKMODE(CLKMODE_INPUT_HP)
+          | CONFIG_CKSEL_FALLING(timer->input - 1);
+    }
+  }
+  else
+    timer->input = SCT_INPUT_NONE;
 
   timer->base.handler = interruptHandler;
   timer->base.mask = 1 << timer->event;
@@ -214,12 +236,8 @@ static enum Result tmrInitCounter(void *object, const void *configBase)
   assert(config != NULL);
   assert(config->part != SCT_UNIFIED);
 
-  /* Configure clock input */
-  const uint8_t input = sctConfigInputPin(config->channel, config->pin,
-      PIN_NOPULL);
-
   return genericTimerInit(object, config->channel, config->part,
-      (enum SctInput)(input + 1), config->edge, config->priority, 0);
+      config->pin, config->edge, config->priority, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInitUnified(void *object, const void *configBase)
@@ -238,12 +256,8 @@ static enum Result tmrInitUnifiedCounter(void *object, const void *configBase)
   assert(config != NULL);
   assert(config->part == SCT_UNIFIED);
 
-  /* Configure clock input */
-  const uint8_t input = sctConfigInputPin(config->channel, config->pin,
-      PIN_NOPULL);
-
   return genericTimerInit(object, config->channel, SCT_UNIFIED,
-      (enum SctInput)(input + 1), config->edge, config->priority, 0);
+      config->pin, config->edge, config->priority, 0);
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
@@ -262,6 +276,10 @@ static void tmrDeinit(void *object)
   reg->EV[timer->event].CTRL = 0;
   reg->EV[timer->event].STATE = 0;
   sctReleaseEvent(&timer->base, timer->event);
+
+  /* Release allocated input */
+  if (timer->input != SCT_INPUT_NONE)
+    sctReleaseInputChannel(&timer->base, timer->input);
 
   /* Reset to default state */
   reg->CONFIG &= ~CONFIG_NORELOAD(part);
