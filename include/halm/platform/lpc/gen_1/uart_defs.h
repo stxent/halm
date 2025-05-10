@@ -40,23 +40,37 @@ enum
 #define IER_THREINTEN                   BIT(1)
 #define IER_RLSINTEN                    BIT(2)
 #define IER_MSINTEN                     BIT(3)
+#define IER_CTSIE                       BIT(7)
 #define IER_ABEOINTEN                   BIT(8)
 #define IER_ABTOINTEN                   BIT(9)
 /*------------------Interrupt Identification Register-------------------------*/
+/* Possible interrupt identification values */
+enum
+{
+  /* Modem Status interrupt */
+  INTID_MS    = 0,
+  /* Transmitter Holding Register Empty interrupt */
+  INTID_THRE  = 1,
+  /* Receive Data Available */
+  INTID_RDA   = 2,
+  /* Receive Line Status */
+  INTID_RLS   = 3,
+  /* Character Timeout Interrupt */
+  INTID_CTI   = 6
+};
+
 /* Status, active low */
 #define IIR_INTSTATUS                   BIT(0)
-/* Mask for interrupt identification value */
+
+/* Interrupt identification value */
 #define IIR_INTID_MASK                  BIT_FIELD(MASK(3), 1)
-/* Receive Line Status */
-#define IIR_INTID_RLS                   BIT_FIELD(3, 1)
-/* Receive Data Available */
-#define IIR_INTID_RDA                   BIT_FIELD(2, 1)
-/* Character Timeout Interrupt */
-#define IIR_INTID_CTI                   BIT_FIELD(6, 1)
-/* Transmitter Holding Register Empty interrupt */
-#define IIR_INTID_THRE                  BIT_FIELD(1, 1)
-/* Modem Status interrupt */
-#define IIR_INTID_MS                    BIT_FIELD(0, 1)
+#define IIR_INTID_VALUE(reg)            FIELD_VALUE((reg), IIR_INTID_MASK, 1)
+
+/* FIFO control bits */
+#define IIR_FIFOENABLE_MASK             BIT_FIELD(MASK(2), 6)
+#define IIR_FIFOENABLE_VALUE(reg) \
+    FIELD_VALUE((reg), IIR_FIFOENABLE_MASK, 6)
+
 /* End of auto-baud interrupt */
 #define IIR_ABEOINT                     BIT(8)
 /* Auto-baud timeout interrupt */

@@ -173,6 +173,9 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
 
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
+  if (interface->txBufferSize > EDMA_MAX_TRANSFER_SIZE)
+    interface->txBufferSize = EDMA_MAX_TRANSFER_SIZE;
+
   dmaAppend(interface->txDma, (void *)&reg->DATA, address,
       interface->txBufferSize);
 

@@ -17,6 +17,9 @@
 #include HEADER_PATH
 #undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
+#define EDMA_MAX_TRANSFER_SIZE        ((1 << 15) - 1)
+#define EDMA_MAX_TRANSFER_SIZE_LINKED ((1 << 9) - 1)
+/*----------------------------------------------------------------------------*/
 enum [[gnu::packed]] EdmaPriority
 {
   /** Low-priority group of channels will be used. */

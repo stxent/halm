@@ -186,6 +186,9 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
 
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
+  if (interface->txBufferSize > GPDMA_MAX_TRANSFER_SIZE)
+    interface->txBufferSize = GPDMA_MAX_TRANSFER_SIZE;
+
   dmaAppend(interface->txDma, (void *)&reg->THR, address,
       interface->txBufferSize);
 
@@ -313,6 +316,7 @@ static enum Result serialInit(void *object, const void *configBase)
   const struct SerialDmaConfig * const config = configBase;
   assert(config != NULL);
   assert(config->rxChunks > 0 && config->rxLength > 0 && config->txLength > 0);
+  assert(config->rxLength / config->rxChunks <= GPDMA_MAX_TRANSFER_SIZE);
   assert(config->rxLength % config->rxChunks == 0);
 
   const struct UartBaseConfig baseConfig = {

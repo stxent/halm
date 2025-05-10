@@ -82,7 +82,7 @@ static void interruptHandler(void *object)
   const uint32_t state = reg->IIR;
 
   /* Call user handler when receive timeout occurs */
-  event = (state & IIR_INTID_MASK) == IIR_INTID_CTI;
+  event = IIR_INTID_VALUE(state) == INTID_CTI;
 
   /* Byte will be removed from FIFO after reading from RBR register */
   while (reg->LSR & LSR_RDR)
