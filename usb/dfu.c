@@ -403,20 +403,23 @@ static enum Result driverControl(void *object,
 
     case DFU_REQUEST_CLRSTATUS:
     {
-      if ((enum DfuState)driver->state == STATE_DFU_ERROR)
+      switch ((enum DfuState)driver->state)
       {
-        usbTrace("dfu at %u: status cleared", driver->interfaceIndex);
+        case STATE_DFU_IDLE:
+        case STATE_DFU_ERROR:
+          usbTrace("dfu at %u: status cleared", driver->interfaceIndex);
 
-        driver->status = DFU_STATUS_OK;
-        driver->state = STATE_DFU_IDLE;
-        res = E_OK;
-      }
-      else
-      {
-        usbTrace("dfu at %u: clear failed", driver->interfaceIndex);
+          driver->status = DFU_STATUS_OK;
+          driver->state = STATE_DFU_IDLE;
+          res = E_OK;
+          break;
 
-        setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
-        res = E_INVALID;
+        default:
+          usbTrace("dfu at %u: clear failed", driver->interfaceIndex);
+
+          setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
+          res = E_INVALID;
+          break;
       }
 
       break;
