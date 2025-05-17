@@ -314,7 +314,7 @@ static size_t channelQueued(const void *object)
   const struct GpDmaCircular * const channel = object;
 
   if (channel->state != STATE_IDLE && channel->state != STATE_READY)
-    return channel->queued;
+    return channel->queued - getCurrentEntry(channel);
 
   return 0;
 }

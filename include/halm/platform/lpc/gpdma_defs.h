@@ -54,12 +54,12 @@ enum
 
 #define CONFIG_SRC_PERIPH_MASK          BIT_FIELD(MASK(4), 1)
 #define CONFIG_SRC_PERIPH(periph)       BIT_FIELD((periph), 1)
-#define CONFIG_SRC_PERIPH_VALUE \
+#define CONFIG_SRC_PERIPH_VALUE(reg) \
     FIELD_VALUE((reg), CONFIG_SRC_PERIPH_MASK, 1)
 
 #define CONFIG_DST_PERIPH_MASK          BIT_FIELD(MASK(4), 6)
 #define CONFIG_DST_PERIPH(periph)       BIT_FIELD((periph), 6)
-#define CONFIG_DST_PERIPH_VALUE \
+#define CONFIG_DST_PERIPH_VALUE(reg) \
     FIELD_VALUE((reg), CONFIG_DST_PERIPH_MASK, 6)
 
 /* Transfer type */
