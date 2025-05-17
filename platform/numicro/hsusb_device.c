@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/delay.h>
 #include <halm/generic/pointer_queue.h>
 #include <halm/platform/numicro/hsusb_base.h>
 #include <halm/platform/numicro/hsusb_defs.h>
@@ -82,6 +81,8 @@ struct UsbDevice
   bool configured;
   /* Device is enabled */
   bool enabled;
+  /* Zero-length control transfer is pending */
+  bool zlp;
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
@@ -212,7 +213,7 @@ static void interruptHandler(void *object)
   {
     usbControlNotify(device->control, USB_DEVICE_EVENT_PORT_CHANGE);
   }
-  if (intStatus & BUSINTSTS_SOFIF)
+  if ((intStatus & BUSINTSTS_SOFIF) && (reg->BUSINTEN & BUSINTEN_SOFIEN))
   {
     usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
   }
@@ -220,33 +221,12 @@ static void interruptHandler(void *object)
   /* Control Endpoint interrupt */
   if (epStatus & GINTSTS_CEPIF)
   {
-    const uint32_t controlIntEnable = reg->CEPINTEN;
-    const uint32_t controlIntStatus = reg->CEPINTSTS;
+    const uint32_t controlIntStatus = reg->CEPINTSTS & reg->CEPINTEN;
 
     reg->CEPINTSTS = controlIntStatus;
 
-    if ((controlIntEnable & CEPINTEN_SETUPPKIEN)
-        && (controlIntStatus & CEPINTSTS_SETUPPKIF))
+    if (controlIntStatus & CEPINTSTS_STSDONEIF)
     {
-      epHandleSetupPacket(&device->controlEpOut);
-    }
-
-    if ((controlIntEnable & CEPINTEN_RXPKIEN)
-        && (controlIntStatus & CEPINTSTS_RXPKIF))
-    {
-      epHandleControlPacket(&device->controlEpOut);
-    }
-
-    if (controlIntStatus & CEPINTSTS_TXPKIF)
-    {
-      epHandleControlPacket(&device->controlEpIn);
-    }
-
-    if ((controlIntEnable & CEPINTEN_STSDONEIEN)
-        && (controlIntStatus & CEPINTSTS_STSDONEIF))
-    {
-      reg->CEPINTEN &= ~CEPINTEN_STSDONEIEN;
-
       if (device->scheduledAddress != 0)
       {
         /*
@@ -257,27 +237,37 @@ static void interruptHandler(void *object)
         device->scheduledAddress = 0;
       }
 
-      epHandleControlPacket(&device->controlEpIn);
+      if (device->zlp)
+      {
+        device->zlp = false;
+        epHandleControlPacket(&device->controlEpIn);
+      }
     }
+
+    if (controlIntStatus & CEPINTSTS_TXPKIF)
+      epHandleControlPacket(&device->controlEpIn);
+
+    if (controlIntStatus & CEPINTSTS_SETUPPKIF)
+    {
+      controlEpClear(&device->controlEpIn);
+      epHandleSetupPacket(&device->controlEpOut);
+    }
+
+    if (controlIntStatus & CEPINTSTS_RXPKIF)
+      epHandleControlPacket(&device->controlEpOut);
   }
 
   if (epStatus & GINTSTS_EPIF_MASK)
   {
-    uint32_t status = reverseBits32(GINTEN_EPIEN_VALUE(epStatus));
+    uint32_t status = GINTEN_EPIEN_VALUE(epStatus);
 
     while (status)
     {
-      const unsigned int index = countLeadingZeros32(status);
+      const unsigned int index = 31 - countLeadingZeros32(status);
 
       epHandlePacket(device->endpoints[index]);
-      status -= (1UL << 31) >> index;
+      status -= 1UL << index;
     }
-  }
-
-  if (intStatus & BUSINTSTS_SOFIF)
-  {
-    // TODO SOF handling
-    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -299,6 +289,8 @@ static void resetDevice(struct UsbDevice *device)
 
   /* Reset buffer allocation */
   device->position = 0;
+  /* Reset zero-length packet state */
+  device->zlp = false;
 
   devSetAddress(device, 0);
 
@@ -362,6 +354,7 @@ static enum Result devInit(void *object, const void *configBase)
   device->scheduledAddress = 0;
   device->configured = false;
   device->enabled = false;
+  device->zlp = false;
 
   for (size_t index = 0; index < EP_COUNT; ++index)
     device->endpoints[index] = NULL;
@@ -575,65 +568,65 @@ static void epHandlePacket(struct UsbEndpoint *ep)
 /*----------------------------------------------------------------------------*/
 static void epHandleControlPacket(struct ControlUsbEndpoint *ep)
 {
-  if (pointerQueueEmpty(&ep->requests))
-    return;
-
-  struct UsbDevice * const device = ep->device;
-  NM_HSUSBD_Type * const reg = device->base.reg;
-
   if (ep->address == USB_EP_DIRECTION_IN)
   {
-    struct UsbRequest *req = pointerQueueFront(&ep->requests);
-    pointerQueuePopFront(&ep->requests);
-
-    req->callback(req->argument, req, USB_REQUEST_COMPLETED);
-
     if (!pointerQueueEmpty(&ep->requests))
     {
-      req = pointerQueueFront(&ep->requests);
-      epWriteControlData(ep, req->buffer, req->length);
+      struct UsbRequest *req = pointerQueueFront(&ep->requests);
+      pointerQueuePopFront(&ep->requests);
+
+      req->callback(req->argument, req, USB_REQUEST_COMPLETED);
+
+      if (!pointerQueueEmpty(&ep->requests))
+      {
+        req = pointerQueueFront(&ep->requests);
+        epWriteControlData(ep, req->buffer, req->length);
+      }
     }
   }
   else
   {
-    struct UsbRequest *req = pointerQueueFront(&ep->requests);
-    size_t read;
-
-    if (epReadControlData(ep, req->buffer, req->capacity, &read))
+    if (!pointerQueueEmpty(&ep->requests))
     {
-      pointerQueuePopFront(&ep->requests);
-      req->length = read;
-      req->callback(req->argument, req, USB_REQUEST_COMPLETED);
+      struct UsbRequest *req = pointerQueueFront(&ep->requests);
+      size_t read;
+
+      if (epReadControlData(ep, req->buffer, req->capacity, &read))
+      {
+        pointerQueuePopFront(&ep->requests);
+        req->length = read;
+        req->callback(req->argument, req, USB_REQUEST_COMPLETED);
+      }
     }
 
-    /* Trigger reception of a next packet */
     if (pointerQueueEmpty(&ep->requests))
-      reg->CEPINTEN &= ~(CEPINTEN_SETUPPKIEN | CEPINTEN_RXPKIEN);
-  }
+    {
+      NM_HSUSBD_Type * const reg = ep->device->base.reg;
 
-  reg->CEPCTL &= ~CEPCTL_NAKCLR;
+      /* Disable RX interrupts when the RX queue is empty */
+      reg->CEPINTEN &= ~(CEPINTEN_SETUPPKIEN | CEPINTEN_RXPKIEN);
+    }
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void epHandleSetupPacket(struct ControlUsbEndpoint *ep)
 {
   NM_HSUSBD_Type * const reg = ep->device->base.reg;
+  uint16_t buffer[ARRAY_SIZE(reg->SETUP)];
+
+  /* Only 16 LSB are used from each SETUP register */
+  for (size_t index = 0; index < ARRAY_SIZE(buffer); ++index)
+    buffer[index] = reg->SETUP[index];
 
   if (!pointerQueueEmpty(&ep->requests))
   {
     struct UsbRequest * const req = pointerQueueFront(&ep->requests);
     pointerQueuePopFront(&ep->requests);
 
-    uint16_t * const buffer = req->buffer;
-
-    /* Only 16 LSB are used from each SETUP register */
-    for (size_t index = 0; index < ARRAY_SIZE(reg->SETUP); ++index)
-      buffer[index] = reg->SETUP[index];
-
-    req->length = sizeof(uint16_t) * ARRAY_SIZE(reg->SETUP);
+    memcpy(req->buffer, buffer, sizeof(buffer));
+    req->length = sizeof(buffer);
     req->callback(req->argument, req, USB_REQUEST_SETUP);
   }
-
-  reg->CEPCTL &= ~CEPCTL_NAKCLR;
 }
 /*----------------------------------------------------------------------------*/
 static bool epReadData(struct UsbEndpoint *ep, uint8_t *buffer,
@@ -662,16 +655,16 @@ static bool epReadControlData(struct ControlUsbEndpoint *ep, uint8_t *buffer,
 {
   const NM_HSUSBD_Type * const reg = ep->device->base.reg;
   const uint32_t available = reg->CEPRXCNT;
+  bool ok = false;
 
   if (available <= length)
   {
     epReadPacketData(buffer, &reg->CEPDAT, available);
     *read = available;
-
-    return true;
+    ok = true;
   }
-  else
-    return false;
+
+  return ok;
 }
 /*----------------------------------------------------------------------------*/
 static void epReadPacketData(void *memory, volatile const void *peripheral,
@@ -725,13 +718,12 @@ static void epWriteControlData(struct ControlUsbEndpoint *ep,
   {
     epWritePacketData(&reg->CEPDAT, (const uint32_t *)buffer, length);
     reg->CEPTXCNT = length;
+    reg->CEPCTL = 0;
   }
   else
   {
-    reg->CEPINTSTS = CEPINTSTS_STSDONEIF;
-    reg->CEPINTEN |= CEPINTEN_STSDONEIEN;
-
-    reg->CEPCTL |= CEPCTL_ZEROLEN;
+    device->zlp = true;
+    reg->CEPCTL = CEPCTL_ZEROLEN;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -751,7 +743,7 @@ static void epWritePacketData(volatile void *peripheral, const void *memory,
 
   if (length)
   {
-    const uint8_t *bytes = (uint8_t *)source;
+    const uint8_t *bytes = (const uint8_t *)source;
 
     while (length--)
       *(volatile uint8_t *)peripheral = *bytes++;
@@ -827,7 +819,7 @@ static void controlEpEnable(void *object, uint8_t, uint16_t size)
   reg->CEPCTL = CEPCTL_FLUSH;
 
   reg->CEPINTSTS = EPINTSTS_MASK;
-  reg->CEPINTEN = CEPINTEN_TXPKIEN;
+  reg->CEPINTEN = CEPINTEN_TXPKIEN | CEPINTEN_STSDONEIEN;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result controlEpEnqueue(void *object, struct UsbRequest *request)
@@ -878,10 +870,7 @@ static void controlEpSetStalled(void *object, bool stalled)
   struct ControlUsbEndpoint * const ep = object;
   NM_HSUSBD_Type * const reg = ep->device->base.reg;
 
-  if (stalled)
-    reg->CEPCTL = (reg->CEPCTL & ~CEPCTL_NAKCLR) | CEPCTL_STALLEN;
-  else
-    reg->CEPCTL = reg->CEPCTL & ~(CEPCTL_NAKCLR | CEPCTL_STALLEN);
+  reg->CEPCTL = stalled ? CEPCTL_STALLEN : 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result dataEpInit(void *object, const void *configBase)
