@@ -155,9 +155,9 @@ void DMA_ERROR_ISR(void)
     const unsigned int index = countLeadingZeros32(errors);
     struct EdmaBase * const descriptor = instances[index];
 
-    descriptor->handler(descriptor, E_ERROR);
     IMX_EDMA->CERR = CERR_CERR(index);
 
+    descriptor->handler(descriptor, E_ERROR);
     errors -= (1UL << 31) >> index;
   }
   while (errors);

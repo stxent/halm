@@ -98,15 +98,13 @@ static void processInterrupt(uint8_t channel)
   /* Synchronizer logic causes a delay of 2 clocks */
   reg->IC = state;
 
-  state = reverseBits32(state);
-
   while (state)
   {
-    const unsigned int index = countLeadingZeros32(state);
+    const unsigned int index = 31 - countLeadingZeros32(state);
     struct PinInt * const interrupt = interrupts[index];
 
-    state -= (1UL << 31) >> index;
     interrupt->callback(interrupt->callbackArgument);
+    state -= 1UL << index;
   }
 }
 /*----------------------------------------------------------------------------*/

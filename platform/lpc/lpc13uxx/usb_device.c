@@ -195,11 +195,12 @@ static void interruptHandler(void *object)
       const unsigned int index = countLeadingZeros32(epStatus);
       const bool controlEpSetup = (index == 0) && setup;
 
-      epStatus -= (1UL << 31) >> index;
       epHandler((struct SbUsbEndpoint *)epArray[index], controlEpSetup);
 
       if (controlEpSetup)
         reg->DEVCMDSTAT |= DEVCMDSTAT_SETUP;
+
+      epStatus -= (1UL << 31) >> index;
     }
     while (epStatus);
   }

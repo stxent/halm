@@ -77,22 +77,19 @@ void pdmaStartTransfer(struct PdmaBase *channel, uint32_t control,
 void PDMA_ISR(void)
 {
   const uint32_t tdsts = NM_PDMA->TDSTS;
-  uint32_t abtsts = NM_PDMA->ABTSTS;
-  uint32_t reqtof = INTSTS_REQTOF_VALUE(NM_PDMA->INTSTS);
-  uint32_t status = reverseBits32(abtsts | reqtof | tdsts);
+  const uint32_t abtsts = NM_PDMA->ABTSTS;
+  const uint32_t reqtof = INTSTS_REQTOF_VALUE(NM_PDMA->INTSTS);
+  uint32_t status = abtsts | reqtof | tdsts;
 
   NM_PDMA->ABTSTS = abtsts;
   NM_PDMA->TDSTS = tdsts;
 
-  abtsts = reverseBits32(abtsts);
-  reqtof = reverseBits32(reqtof);
-
   do
   {
-    const unsigned int index = countLeadingZeros32(status);
+    const unsigned int index = 31 - countLeadingZeros32(status);
     struct PdmaBase * const descriptor = instances[index];
     NM_PDMA_CHANNEL_Type * const entry = &NM_PDMA->CHANNELS[index];
-    const uint32_t mask = (1UL << 31) >> index;
+    const uint32_t mask = 1UL << index;
     enum Result res = E_OK;
 
     if (abtsts & mask)

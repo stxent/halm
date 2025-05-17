@@ -228,23 +228,17 @@ static void interruptHandler(void *object)
   /* Handle completion interrupts */
   uint32_t epStatus = reg->ENDPTCOMPLETE;
 
-  if (epStatus)
+  while (epStatus)
   {
-    struct UsbEndpoint ** const epArray = device->endpoints;
+    /* Convert interrupt flag position to physical endpoint number */
+    const unsigned int position = 31 - countLeadingZeros32(epStatus);
+    const unsigned int number = ((position & 0xF) << 1) + (position >> 4);
+    const uint32_t mask = 1UL << position;
 
-    epStatus = reverseBits32(epStatus);
+    reg->ENDPTCOMPLETE = mask;
 
-    while (epStatus)
-    {
-      /* Convert interrupt flag position to physical endpoint number */
-      const unsigned int position = countLeadingZeros32(epStatus);
-      const unsigned int number = ((position & 0xF) << 1) + (position >> 4);
-
-      epStatus -= (1UL << 31) >> position;
-      reg->ENDPTCOMPLETE = 1UL << position;
-
-      epCommonHandler((struct UsbEndpoint *)epArray[number]);
-    }
+    epCommonHandler((struct UsbEndpoint *)device->endpoints[number]);
+    epStatus -= mask;
   }
 }
 /*----------------------------------------------------------------------------*/

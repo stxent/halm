@@ -103,8 +103,8 @@ static void processInterrupt(uint8_t channel)
     const unsigned int index = countLeadingZeros32(state);
     struct PinInt * const interrupt = interruptArray[index];
 
-    state -= (1UL << 31) >> index;
     interrupt->callback(interrupt->callbackArgument);
+    state -= (1UL << 31) >> index;
   }
   while (state);
 }

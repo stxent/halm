@@ -78,7 +78,7 @@ void PDMA_ISR(void)
 
   for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
   {
-    const uint32_t mask = 1 << index;
+    const uint32_t mask = 1UL << index;
 
     if (status & mask)
     {

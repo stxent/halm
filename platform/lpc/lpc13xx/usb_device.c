@@ -164,8 +164,8 @@ static void interruptHandler(void *object)
       const uint8_t status = usbCommandRead(device,
           USB_CMD_CLEAR_INTERRUPT | index);
 
-      epIntStatus -= (1UL << 31) >> index;
       epHandler((struct UsbEndpoint *)epArray[index], status);
+      epIntStatus -= (1UL << 31) >> index;
     }
     while (epIntStatus);
   }

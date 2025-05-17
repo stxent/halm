@@ -270,47 +270,51 @@ static void interruptHandler(void *object)
   {
     reg->USBDevIntClr = USBDevInt_EP_SLOW;
 
-    struct UsbEndpoint ** const epArray = device->endpoints;
-    uint32_t epIntStatus = reverseBits32(reg->USBEpIntSt);
+    uint32_t epIntStatus = reg->USBEpIntSt;
 
     while (epIntStatus)
     {
-      const unsigned int index = countLeadingZeros32(epIntStatus);
+      const unsigned int index = 31 - countLeadingZeros32(epIntStatus);
+      struct UsbSieEndpoint * const ep =
+          (struct UsbSieEndpoint *)device->endpoints[index];
       const uint8_t status = usbStatusRead(device, index);
 
-      epIntStatus -= (1UL << 31) >> index;
-      sieEpHandler((struct UsbSieEndpoint *)epArray[index], status);
+      sieEpHandler(ep, status);
+      epIntStatus -= 1UL << index;
     }
   }
 
   /* DMA End of Transfer interrupt */
-  uint32_t dmaIntStatus = reverseBits32(reg->USBEoTIntSt);
+  uint32_t dmaIntStatus = reg->USBEoTIntSt;
 
   while (dmaIntStatus)
   {
-    const unsigned int index = countLeadingZeros32(dmaIntStatus);
+    const unsigned int index = 31 - countLeadingZeros32(dmaIntStatus);
+    struct UsbDmaEndpoint * const ep =
+        (struct UsbDmaEndpoint *)device->endpoints[index];
+    const uint32_t mask = 1UL << index;
 
-    dmaIntStatus -= (1UL << 31) >> index;
-    reg->USBEoTIntClr = 1UL << index;
+    reg->USBEoTIntClr = mask;
 
-    dmaEpHandler((struct UsbDmaEndpoint *)device->endpoints[index]);
+    dmaEpHandler(ep);
+    dmaIntStatus -= mask;
   }
 
   /* DMA New DD Request interrupt */
-  uint32_t nddrIntStatus = reverseBits32(reg->USBNDDRIntSt);
+  uint32_t nddrIntStatus = reg->USBNDDRIntSt;
 
   while (nddrIntStatus)
   {
-    const unsigned int index = countLeadingZeros32(nddrIntStatus);
-
-    nddrIntStatus -= (1UL << 31) >> index;
-    reg->USBNDDRIntClr = 1UL << index;
-
+    const unsigned int index = 31 - countLeadingZeros32(nddrIntStatus);
     struct UsbDmaEndpoint * const ep =
         (struct UsbDmaEndpoint *)device->endpoints[index];
+    const uint32_t mask = 1UL << index;
+
+    reg->USBNDDRIntClr = mask;
 
     dmaEpHandler(ep);
     dmaEpUpdateChain(ep);
+    nddrIntStatus -= mask;
   }
 
   /* DMA System Error interrupt */

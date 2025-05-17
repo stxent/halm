@@ -244,18 +244,18 @@ static void interruptHandler(void *object)
 
   if (intStatus & GINTSTS_IEPINT)
   {
-    uint32_t epIntStatus = reverseBits32(DAINT_IEPINT_VALUE(reg->DEV.DAINT));
+    uint32_t epIntStatus = DAINT_IEPINT_VALUE(reg->DEV.DAINT);
 
     while (epIntStatus)
     {
-      const unsigned int index = countLeadingZeros32(epIntStatus);
+      const unsigned int index = 31 - countLeadingZeros32(epIntStatus);
       struct UsbEndpoint * const ep =
           device->endpoints[EP_TO_INDEX(index | USB_EP_DIRECTION_IN)];
 
-      epIntStatus -= (1UL << 31) >> index;
       reg->DEV_EP_IN[index].DIEPINT = DIEPINT_XFRC;
 
       ep->subclass->isr(ep, 0, false);
+      epIntStatus -= 1UL << index;
     }
   }
 }

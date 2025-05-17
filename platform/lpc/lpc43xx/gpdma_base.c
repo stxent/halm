@@ -154,22 +154,19 @@ void gpDmaSetMux(struct GpDmaBase *descriptor)
 void GPDMA_ISR(void)
 {
   const uint32_t terminalStatus = LPC_GPDMA->INTTCSTAT;
-  uint32_t errorStatus = LPC_GPDMA->INTERRSTAT;
+  const uint32_t errorStatus = LPC_GPDMA->INTERRSTAT;
 
   LPC_GPDMA->INTTCCLEAR = terminalStatus;
   LPC_GPDMA->INTERRCLEAR = errorStatus;
-  errorStatus = reverseBits32(errorStatus);
 
-  uint32_t intStatus = errorStatus | reverseBits32(terminalStatus);
+  uint32_t intStatus = errorStatus | terminalStatus;
 
   do
   {
-    const unsigned int index = countLeadingZeros32(intStatus);
+    const unsigned int index = 31 - countLeadingZeros32(intStatus);
     struct GpDmaBase * const descriptor = controller.instances[index];
-    const uint32_t mask = (1UL << 31) >> index;
+    const uint32_t mask = 1UL << index;
     enum Result res = E_OK;
-
-    intStatus -= mask;
 
     if (errorStatus & mask)
     {
@@ -184,6 +181,7 @@ void GPDMA_ISR(void)
     }
 
     descriptor->handler(descriptor, res);
+    intStatus -= mask;
   }
   while (intStatus);
 }

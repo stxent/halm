@@ -420,7 +420,7 @@ static void sendMessage(struct Can *interface,
   }
 
   LPC_CAN_Type * const reg = interface->base.reg;
-  const unsigned int position = countLeadingZeros32(reverseBits32(*status));
+  const unsigned int position = 31 - countLeadingZeros32(*status);
   const unsigned int index = SR_TBS_VALUE_TO_CHANNEL(position);
 
   if (!(message->flags & CAN_RTR))
