@@ -139,9 +139,11 @@ static void enableMemoryMappingMode(struct Spim *interface)
 
     cycles *= interface->delay.length;
   }
+
+  assert(cycles <= CTL2_DCNUM_MAX);
   ctl2 |= CTL2_DCNUM(cycles);
 
-  // TODO
+  // TODO Burst mode in abstract SPIM interface
   // if (interface->command.value == 0xEB || interface->command.value == 0xE7)
   //   dmmctl |= DMMCTL_BWEN;
 
@@ -237,7 +239,7 @@ static void executeDirectCommand(struct Spim *interface, uintptr_t buffer,
   if (interface->delay.length)
   {
     uint32_t bitmode;
-    uint8_t pattern[CTL2_DCNUM_MAX + 1];
+    uint8_t pattern[CTL2_DCNUM_MAX];
 
     /* Send dummy bytes */
     if (interface->delay.serial)
@@ -386,6 +388,8 @@ static void executeDmaCommand(struct Spim *interface, uintptr_t buffer,
 
     if (interface->ddr)
       ctl2 |= CTL2_DTRMPOFF;
+
+    assert(cycles <= CTL2_DCNUM_MAX);
     ctl2 |= CTL2_DCNUM(cycles);
   }
 
@@ -844,9 +848,8 @@ static enum Result spimSetParam(void *object, int parameter, const void *data)
     {
       const uint8_t value = *(const uint8_t *)data;
 
-      if (value + interface->post.length <= CTL2_DCNUM_MAX)
+      if (value < CTL2_DCNUM_MAX)
       {
-        // TODO Convert to cycles
         interface->delay.length = value;
         return E_OK;
       }
@@ -865,6 +868,11 @@ static enum Result spimSetParam(void *object, int parameter, const void *data)
     case IF_SPIM_DELAY_SERIAL:
       interface->delay.serial = true;
       return E_OK;
+
+    case IF_SPIM_ADDRESS_8:
+    case IF_SPIM_ADDRESS_16:
+      /* Unsupported operand type */
+      return E_VALUE;
 
     case IF_SPIM_ADDRESS_24:
       interface->address.length = 3;
@@ -889,14 +897,9 @@ static enum Result spimSetParam(void *object, int parameter, const void *data)
       return E_OK;
 
     case IF_SPIM_POST_ADDRESS_8:
-      if (interface->delay.length + 1 <= CTL2_DCNUM_MAX)
-      {
-        interface->post.length = 1;
-        interface->post.value = *(const uint32_t *)data;
-        return E_OK;
-      }
-      else
-        return E_VALUE;
+      interface->post.length = 1;
+      interface->post.value = *(const uint32_t *)data;
+      return E_OK;
 
     case IF_SPIM_POST_ADDRESS_NONE:
       interface->post.length = 0;

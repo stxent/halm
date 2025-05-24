@@ -149,10 +149,12 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcBaseConfig * const config = configBase;
   assert(config->channel == 0);
   assert(!config->accuracy || config->accuracy == 12);
-  assert(clockFrequency(AdcClock) <= MAX_FREQUENCY);
 
   struct AdcBase * const interface = object;
+  const uint32_t frequency = clockFrequency(AdcClock);
 
+  if (!frequency || frequency > MAX_FREQUENCY)
+    return E_ERROR;
   if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;
 

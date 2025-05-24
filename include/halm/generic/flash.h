@@ -23,7 +23,11 @@ enum FlashParameter
   /** Erase sector at a relative address. Parameter type is \a uint32_t. */
   IF_FLASH_ERASE_SECTOR,
   /** Erase page at a relative address. Parameter type is \a uint32_t. */
-  IF_FLASH_ERASE_PAGE
+  IF_FLASH_ERASE_PAGE,
+  /** Place memory device in a power down mode. */
+  IF_FLASH_SUSPEND,
+  /** Release memory device from a power down mode. */
+  IF_FLASH_RESUME
 };
 
 struct FlashGeometry

@@ -201,12 +201,6 @@ static void interruptHandler(void *object)
         INTSTS_EPEVT_VALUE(intStatus));
   }
 
-  if (intStatus & INTSTS_SOFIF)
-  {
-    // TODO SOF handling
-    usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
-  }
-
   if (intStatus & INTSTS_NEVWKIF)
   {
     // TODO USB wakeup handling

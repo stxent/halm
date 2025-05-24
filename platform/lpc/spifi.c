@@ -214,7 +214,8 @@ static uint32_t makeCommand(const struct Spifi *interface)
 
   if (interface->address.length != 0)
     packAddress = interface->address.serial ? PACK_SERIAL : PACK_PARALLEL;
-  packData = interface->data.serial ? PACK_SERIAL : PACK_PARALLEL;
+  if (interface->data.length != 0 || interface->poll)
+    packData = interface->data.serial ? PACK_SERIAL : PACK_PARALLEL;
 
   assert(
       (
@@ -588,6 +589,16 @@ static enum Result spifiSetParam(void *object, int parameter, const void *data)
 
     case IF_SPIM_DELAY_SERIAL:
       interface->delay.serial = true;
+      return E_OK;
+
+    case IF_SPIM_ADDRESS_8:
+      interface->address.length = 1;
+      interface->address.value = *(const uint32_t *)data;
+      return E_OK;
+
+    case IF_SPIM_ADDRESS_16:
+      interface->address.length = 2;
+      interface->address.value = *(const uint32_t *)data;
       return E_OK;
 
     case IF_SPIM_ADDRESS_24:

@@ -282,10 +282,10 @@ static enum Result adcInit(void *object, const void *configBase)
   if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
     return E_BUSY;
 
-  enum SysClockBranch clock;
-  enum SysBlockReset reset;
   NM_EADC_Type *reg = NULL;
   uint32_t frequency = 0;
+  enum SysClockBranch clock;
+  enum SysBlockReset reset;
 
   switch (config->channel)
   {
@@ -315,7 +315,28 @@ static enum Result adcInit(void *object, const void *configBase)
       break;
 #endif
   }
-  assert(frequency > 0 && frequency <= MAX_FREQUENCY);
+
+  if (!frequency || frequency > MAX_FREQUENCY)
+    return E_ERROR;
+
+  if (!sysClockStatus(clock))
+  {
+    /* Enable clock to peripheral */
+    sysClockEnable(clock);
+    /* Reset registers to default values */
+    sysResetBlock(reset);
+
+    /* Reset the peripheral */
+    sysUnlockReg();
+    reg->CTL = CTL_ADCRST;
+    sysLockReg();
+
+    /* Enable deep power-down mode, set LDO start-up time to 20 us */
+    reg->PWRM = PWRM_PWUCALEN | PWRM_PWDMOD(PWDMOD_DEEP_POWER_DOWN)
+        | PWRM_LDOSUT(frequency / 50000);
+    /* Calibrate on each power up */
+    reg->CALCTL = CALCTL_CALSEL;
+  }
 
   uint32_t control = CTL_ADCEN;
 
@@ -336,25 +357,6 @@ static enum Result adcInit(void *object, const void *configBase)
     default:
       control |= CTL_RESSEL(RESSEL_12BIT);
       break;
-  }
-
-  if (!sysClockStatus(clock))
-  {
-    /* Enable clock to peripheral */
-    sysClockEnable(clock);
-    /* Reset registers to default values */
-    sysResetBlock(reset);
-
-    /* Reset the peripheral */
-    sysUnlockReg();
-    reg->CTL = CTL_ADCRST;
-    sysLockReg();
-
-    /* Enable deep power-down mode, set LDO start-up time to 20 us */
-    reg->PWRM = PWRM_PWUCALEN | PWRM_PWDMOD(PWDMOD_DEEP_POWER_DOWN)
-        | PWRM_LDOSUT(frequency / 50000);
-    /* Calibrate on each power up */
-    reg->CALCTL = CALCTL_CALSEL;
   }
 
   interface->channel = config->channel;

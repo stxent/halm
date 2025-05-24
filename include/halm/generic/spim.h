@@ -58,6 +58,16 @@ enum SPIMParameter
   /** Enable serial mode for dummy-cycles phase. */
   IF_SPIM_DELAY_SERIAL,
 
+  /**
+   * Set 8-bit memory address. This address length is non-standard and may be
+   * unsupported on some platforms. Parameter type is \a uint32_t.
+   */
+  IF_SPIM_ADDRESS_8,
+  /**
+   * Set 16-bit memory address. This address length is non-standard and may be
+   * unsupported on some platforms. Parameter type is \a uint32_t.
+   */
+  IF_SPIM_ADDRESS_16,
   /** Set 24-bit memory address. Parameter type is \a uint32_t. */
   IF_SPIM_ADDRESS_24,
   /** Set 32-bit memory address. Parameter type is \a uint32_t. */

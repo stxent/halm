@@ -261,115 +261,93 @@ typedef struct
 /*------------------Cryptographic Accelerator-----------------------------------*/
 typedef struct
 {
-  // TODO Def length
-  __rw__ uint32_t INTEN;          /* Crypto Interrupt Enable Control register */
-  __rw__ uint32_t INTSTS;         /* Crypto Interrupt Flag */
-  __rw__ uint32_t PRNG_CTL;       /* PRNG Control register */
-  __wo__ uint32_t PRNG_SEED;      /* Seed for PRNG */
-  __ro__ uint32_t PRNG_KEY[8];    /* PRNG Generated Key0 ~ Key7 */
+  /* Offset 0x000 */
+  __rw__ uint32_t INTEN; /* Crypto Interrupt Enable Control register */
+  __rw__ uint32_t INTSTS; /* Crypto Interrupt Flags */
+  __rw__ uint32_t PRNG_CTL; /* PRNG Control register */
+  __wo__ uint32_t PRNG_SEED; /* Seed for PRNG */
+  __ro__ uint32_t PRNG_KEY[8]; /* PRNG Generated Key 0~7 */
   __ne__ uint32_t RESERVED0[8];
-  __ro__ uint32_t AES_FDBCK[4];   /* AES Engine Output Feedback Data after Cryptographic Operation */
-  __ro__ uint32_t TDES_FDBCKH;    /* TDES/DES Engine Output Feedback High Word Data after Cryptographic Operation */
-  __ro__ uint32_t TDES_FDBCKL;    /* TDES/DES Engine Output Feedback Low Word Data after Cryptographic Operation */
+
+  /* Offset 0x050 */
+  __ro__ uint32_t AES_FDBCK[4]; /* AES Engine Output Feedback Data */
+  __ro__ uint32_t TDES_FDBCKH; /* TDES/DES Engine Output Feedback High Word */
+  __ro__ uint32_t TDES_FDBCKL; /* TDES/DES Engine Output Feedback Low Word */
   __ne__ uint32_t RESERVED1[38];
-  __rw__ uint32_t AES_CTL;        /* AES Control register */
-  __ro__ uint32_t AES_STS;        /* AES Engine Flag */
-  __rw__ uint32_t AES_DATIN;      /* AES Engine Data Input Port register */
-  __ro__ uint32_t AES_DATOUT;     /* AES Engine Data Output Port register */
-  __rw__ uint32_t AES0_KEY[8];    /* AES Key Word 0~7 registers for Channel 0 */
-  __rw__ uint32_t AES0_IV[4];     /* AES Initial Vector Word 0~3 registers for Channel 0 */
-  __rw__ uint32_t AES0_SADDR;     /* AES DMA Source Address register for Channel 0 */
-  __rw__ uint32_t AES0_DADDR;     /* AES DMA Destination Address register for Channel 0 */
-  __rw__ uint32_t AES0_CNT;       /* AES Byte Count register for Channel 0 */
-  __rw__ uint32_t AES1_KEY[8];    /* AES Key Word 0~7 registers for Channel 1 */
-  __rw__ uint32_t AES1_IV[4];     /* AES Initial Vector Word 0~3 registers for Channel 1 */
-  __rw__ uint32_t AES1_SADDR;     /* AES DMA Source Address register for Channel 1 */
-  __rw__ uint32_t AES1_DADDR;     /* AES DMA Destination Address register for Channel 1 */
-  __rw__ uint32_t AES1_CNT;       /* AES Byte Count register for Channel 1 */
-  __rw__ uint32_t AES2_KEY[8];    /* AES Key Word 0~7 registers for Channel 2 */
-  __rw__ uint32_t AES2_IV[4];     /* AES Initial Vector Word 0~3 registers for Channel 2 */
-  __rw__ uint32_t AES2_SADDR;     /* AES DMA Source Address register for Channel 2 */
-  __rw__ uint32_t AES2_DADDR;     /* AES DMA Destination Address register for Channel 2 */
-  __rw__ uint32_t AES2_CNT;       /* AES Byte Count register for Channel 2 */
-  __rw__ uint32_t AES3_KEY[8];    /* AES Key Word 0~7 registers for Channel 3 */
-  __rw__ uint32_t AES3_IV[4];     /* AES Initial Vector Word 0~3 registers for Channel 3 */
-  __rw__ uint32_t AES3_SADDR;     /* AES DMA Source Address register for Channel 3 */
-  __rw__ uint32_t AES3_DADDR;     /* AES DMA Destination Address register for Channel 3 */
-  __rw__ uint32_t AES3_CNT;       /* AES Byte Count register for Channel 3 */
-  __rw__ uint32_t TDES_CTL;       /* TDES/DES Control register */
-  __ro__ uint32_t TDES_STS;       /* TDES/DES Engine Flag */
-  __rw__ uint32_t TDES0_KEY1H;    /* TDES/DES Key 1 High Word register for Channel 0 */
-  __rw__ uint32_t TDES0_KEY1L;    /* TDES/DES Key 1 Low Word register for Channel 0 */
-  __rw__ uint32_t TDES0_KEY2H;    /* TDES Key 2 High Word register for Channel 0 */
-  __rw__ uint32_t TDES0_KEY2L;    /* TDES Key 2 Low Word register for Channel 0 */
-  __rw__ uint32_t TDES0_KEY3H;    /* TDES Key 3 High Word register for Channel 0 */
-  __rw__ uint32_t TDES0_KEY3L;    /* TDES Key 3 Low Word register for Channel 0 */
-  __rw__ uint32_t TDES0_IVH;      /* TDES/DES Initial Vector High Word register for Channel 0 */
-  __rw__ uint32_t TDES0_IVL;      /* TDES/DES Initial Vector Low Word register for Channel 0 */
-  __rw__ uint32_t TDES0_SA;       /* TDES/DES DMA Source Address register for Channel 0 */
-  __rw__ uint32_t TDES0_DA;       /* TDES/DES DMA Destination Address register for Channel 0 */
-  __rw__ uint32_t TDES0_CNT;      /* TDES/DES Byte Count register for Channel 0 */
-  __rw__ uint32_t TDES_DATIN;     /* TDES/DES Engine Input data Word register */
-  __ro__ uint32_t TDES_DATOUT;    /* TDES/DES Engine Output data Word register */
-  __ne__ uint32_t RESERVED2[3];
-  __rw__ uint32_t TDES1_KEY1H;    /* TDES/DES Key 1 High Word register for Channel 1 */
-  __rw__ uint32_t TDES1_KEY1L;    /* TDES/DES Key 1 Low Word register for Channel 1 */
-  __rw__ uint32_t TDES1_KEY2H;    /* TDES Key 2 High Word register for Channel 1 */
-  __rw__ uint32_t TDES1_KEY2L;    /* TDES Key 2 Low Word register for Channel 1 */
-  __rw__ uint32_t TDES1_KEY3H;    /* TDES Key 3 High Word register for Channel 1 */
-  __rw__ uint32_t TDES1_KEY3L;    /* TDES Key 3 Low Word register for Channel 1 */
-  __rw__ uint32_t TDES1_IVH;      /* TDES/DES Initial Vector High Word register for Channel 1 */
-  __rw__ uint32_t TDES1_IVL;      /* TDES/DES Initial Vector Low Word register for Channel 1 */
-  __rw__ uint32_t TDES1_SA;       /* TDES/DES DMA Source Address register for Channel 1 */
-  __rw__ uint32_t TDES1_DA;       /* TDES/DES DMA Destination Address register for Channel 1 */
-  __rw__ uint32_t TDES1_CNT;      /* TDES/DES Byte Count register for Channel 1 */
-  __ne__ uint32_t RESERVED3[5];
-  __rw__ uint32_t TDES2_KEY1H;    /* TDES/DES Key 1 High Word register for Channel 2 */
-  __rw__ uint32_t TDES2_KEY1L;    /* TDES/DES Key 1 Low Word register for Channel 2 */
-  __rw__ uint32_t TDES2_KEY2H;    /* TDES Key 2 High Word register for Channel 2 */
-  __rw__ uint32_t TDES2_KEY2L;    /* TDES Key 2 Low Word register for Channel 2 */
-  __rw__ uint32_t TDES2_KEY3H;    /* TDES Key 3 High Word register for Channel 2 */
-  __rw__ uint32_t TDES2_KEY3L;    /* TDES Key 3 Low Word register for Channel 2 */
-  __rw__ uint32_t TDES2_IVH;      /* TDES/DES Initial Vector High Word register for Channel 2 */
-  __rw__ uint32_t TDES2_IVL;      /* TDES/DES Initial Vector Low Word register for Channel 2 */
-  __rw__ uint32_t TDES2_SA;       /* TDES/DES DMA Source Address register for Channel 2 */
-  __rw__ uint32_t TDES2_DA;       /* TDES/DES DMA Destination Address register for Channel 2 */
-  __rw__ uint32_t TDES2_CNT;      /* TDES/DES Byte Count register for Channel 2 */
-  __ne__ uint32_t RESERVED4[5];
-  __rw__ uint32_t TDES3_KEY1H;    /* TDES/DES Key 1 High Word register for Channel 3 */
-  __rw__ uint32_t TDES3_KEY1L;    /* TDES/DES Key 1 Low Word register for Channel 3 */
-  __rw__ uint32_t TDES3_KEY2H;    /* TDES Key 2 High Word register for Channel 3 */
-  __rw__ uint32_t TDES3_KEY2L;    /* TDES Key 2 Low Word register for Channel 3 */
-  __rw__ uint32_t TDES3_KEY3H;    /* TDES Key 3 High Word register for Channel 3 */
-  __rw__ uint32_t TDES3_KEY3L;    /* TDES Key 3 Low Word register for Channel 3 */
-  __rw__ uint32_t TDES3_IVH;      /* TDES/DES Initial Vector High Word register for Channel 3 */
-  __rw__ uint32_t TDES3_IVL;      /* TDES/DES Initial Vector Low Word register for Channel 3 */
-  __rw__ uint32_t TDES3_SA;       /* TDES/DES DMA Source Address register for Channel 3 */
-  __rw__ uint32_t TDES3_DA;       /* TDES/DES DMA Destination Address register for Channel 3 */
-  __rw__ uint32_t TDES3_CNT;      /* TDES/DES Byte Count register for Channel 3 */
-  __ne__ uint32_t RESERVED5[3];
-  __rw__ uint32_t HMAC_CTL;       /* SHA/HMAC Control register */
-  __ro__ uint32_t HMAC_STS;       /* SHA/HMAC Status Flag */
-  __ro__ uint32_t HMAC_DGST[16];  /* SHA/HMAC Digest Message 0~15 */
-  __rw__ uint32_t HMAC_KEYCNT;    /* SHA/HMAC Key Byte Count register */
-  __rw__ uint32_t HMAC_SADDR;     /* SHA/HMAC DMA Source Address register */
-  __rw__ uint32_t HMAC_DMACNT;    /* SHA/HMAC Byte Count register */
-  __rw__ uint32_t HMAC_DATIN;     /* SHA/HMAC Engine Non-DMA Mode Data Input Port register */
-  __ne__ uint32_t RESERVED6[298];
-  __rw__ uint32_t ECC_CTL;        /* ECC Control register */
-  __ro__ uint32_t ECC_STS;        /* ECC Status register */
-  __rw__ uint32_t ECC_X1[18];     /* ECC The X-coordinate word 0~17 of the first point */
-  __rw__ uint32_t ECC_Y1[18];     /* ECC The Y-coordinate word 0~17 of the first point */
-  __rw__ uint32_t ECC_X2[18];     /* ECC The X-coordinate word 0~17 of the second point */
-  __rw__ uint32_t ECC_Y2[18];     /* ECC The Y-coordinate word 0~17 of the second point */
-  __rw__ uint32_t ECC_A[18];      /* ECC The parameter CURVEA word 0~17 of elliptic curve */
-  __rw__ uint32_t ECC_B[18];      /* ECC The parameter CURVEB word 0~17 of elliptic curve */
-  __rw__ uint32_t ECC_N[18];      /* ECC The parameter CURVEN word 0~17 of elliptic curve */
-  __wo__ uint32_t ECC_K[18];      /* ECC The scalar SCALARK word 0~17 of point multiplication */
-  __rw__ uint32_t ECC_SADDR;      /* ECC DMA Source Address register */
-  __rw__ uint32_t ECC_DADDR;      /* ECC DMA Destination Address register */
-  __rw__ uint32_t ECC_STARTREG;   /* ECC Starting Address of Updated registers */
-  __rw__ uint32_t ECC_WORDCNT;    /* ECC DMA Word Count */
+
+  /* Offset 0x100 */
+  __rw__ uint32_t AES_CTL; /* AES Control register */
+  __ro__ uint32_t AES_STS; /* AES Engine Flags */
+  __rw__ uint32_t AES_DATIN; /* AES Engine Data Input Port */
+  __ro__ uint32_t AES_DATOUT; /* AES Engine Data Output Port */
+
+  struct
+  {
+    __rw__ uint32_t AES_KEY[8]; /* AES Key Word 0~7 registers */
+    __rw__ uint32_t AES_IV[4]; /* AES Initial Vector Word 0~3 registers */
+    __rw__ uint32_t AES_SADDR; /* AES DMA Source Address register */
+    __rw__ uint32_t AES_DADDR; /* AES DMA Destination Address register */
+    __rw__ uint32_t AES_CNT; /* AES Byte Count register */
+  } AES_CHANNEL[4];
+
+  /* Offset 0x200 */
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t TDES_CTL; /* TDES/DES Control register */
+      __ro__ uint32_t TDES_STS; /* TDES/DES Engine Flags */
+      __ne__ uint32_t RESERVED2[11];
+      __rw__ uint32_t TDES_DATIN; /* TDES/DES Engine Data Input Port */
+      __ro__ uint32_t TDES_DATOUT; /* TDES/DES Engine Data Output Port */
+      __ne__ uint32_t RESERVED3[49];
+    };
+
+    struct
+    {
+      __ne__ uint32_t RESERVED0[2];
+      __rw__ uint32_t TDES2_KEY1H; /* TDES/DES Key 1 High Word */
+      __rw__ uint32_t TDES2_KEY1L; /* TDES/DES Key 1 Low Word */
+      __rw__ uint32_t TDES2_KEY2H; /* TDES Key 2 High Word */
+      __rw__ uint32_t TDES2_KEY2L; /* TDES Key 2 Low Word */
+      __rw__ uint32_t TDES2_KEY3H; /* TDES Key 3 High Word */
+      __rw__ uint32_t TDES2_KEY3L; /* TDES Key 3 Low Word */
+      __rw__ uint32_t TDES2_IVH; /* TDES/DES Initial Vector High Word */
+      __rw__ uint32_t TDES2_IVL; /* TDES/DES Initial Vector Low Word */
+      __rw__ uint32_t TDES2_SA; /* TDES/DES DMA Source Address register */
+      __rw__ uint32_t TDES2_DA; /* TDES/DES DMA Destination Address register */
+      __rw__ uint32_t TDES2_CNT; /* TDES/DES Byte Count register */
+      __ne__ uint32_t RESERVED1[3];
+    } TDES_CHANNEL[4];
+  };
+
+  /* Offset 0x300 */
+  __rw__ uint32_t HMAC_CTL; /* SHA/HMAC Control register */
+  __ro__ uint32_t HMAC_STS; /* SHA/HMAC Status Flags */
+  __ro__ uint32_t HMAC_DGST[16]; /* SHA/HMAC Digest Message 0~15 */
+  __rw__ uint32_t HMAC_KEYCNT; /* SHA/HMAC Key Byte Count register */
+  __rw__ uint32_t HMAC_SADDR; /* SHA/HMAC DMA Source Address register */
+  __rw__ uint32_t HMAC_DMACNT; /* SHA/HMAC Byte Count register */
+  __rw__ uint32_t HMAC_DATIN; /* SHA/HMAC Engine Data Input Port */
+  __ne__ uint32_t RESERVED4[298];
+
+  /* Offset 0x800 */
+  __rw__ uint32_t ECC_CTL; /* ECC Control register */
+  __ro__ uint32_t ECC_STS; /* ECC Status register */
+  __rw__ uint32_t ECC_X1[18]; /* ECC First Point X-coordinate Word 0~17 */
+  __rw__ uint32_t ECC_Y1[18]; /* ECC First Point Y-coordinate Word 0~17 */
+  __rw__ uint32_t ECC_X2[18]; /* ECC Second Point X-coordinate Word 0~17 */
+  __rw__ uint32_t ECC_Y2[18]; /* ECC Second Point Y-coordinate Word 0~17 */
+  __rw__ uint32_t ECC_A[18]; /* ECC CURVEA Parameter Word 0~17 */
+  __rw__ uint32_t ECC_B[18]; /* ECC CURVEB Parameter Word 0~17 */
+  __rw__ uint32_t ECC_N[18]; /* ECC CURVEN Parameter Word 0~17 */
+  __wo__ uint32_t ECC_K[18]; /* ECC SCALARK Scalar Word 0~17 */
+
+  /* Offset 0xA48 */
+  __rw__ uint32_t ECC_SADDR; /* ECC DMA Source Address register */
+  __rw__ uint32_t ECC_DADDR; /* ECC DMA Destination Address register */
+  __rw__ uint32_t ECC_STARTREG; /* ECC Starting Address of updated registers */
+  __rw__ uint32_t ECC_WORDCNT; /* ECC DMA Word Count */
 } NM_CRYPTO_Type;
 /*------------------Digital to Analog Converter-------------------------------*/
 typedef struct
@@ -433,72 +411,46 @@ typedef struct
 /*------------------Ethernet MAC Controller-----------------------------------*/
 typedef struct
 {
-  // TODO Def length
-  __rw__ uint32_t CAMCTL;     /* CAM Comparison Control register */
-  __rw__ uint32_t CAMEN;      /* CAM Enable register */
-  __rw__ uint32_t CAM0M;      /* CAM0 Most Significant Word register */
-  __rw__ uint32_t CAM0L;      /* CAM0 Least Significant Word register */
-  __rw__ uint32_t CAM1M;      /* CAM1 Most Significant Word register */
-  __rw__ uint32_t CAM1L;      /* CAM1 Least Significant Word register */
-  __rw__ uint32_t CAM2M;      /* CAM2 Most Significant Word register */
-  __rw__ uint32_t CAM2L;      /* CAM2 Least Significant Word register */
-  __rw__ uint32_t CAM3M;      /* CAM3 Most Significant Word register */
-  __rw__ uint32_t CAM3L;      /* CAM3 Least Significant Word register */
-  __rw__ uint32_t CAM4M;      /* CAM4 Most Significant Word register */
-  __rw__ uint32_t CAM4L;      /* CAM4 Least Significant Word register */
-  __rw__ uint32_t CAM5M;      /* CAM5 Most Significant Word register */
-  __rw__ uint32_t CAM5L;      /* CAM5 Least Significant Word register */
-  __rw__ uint32_t CAM6M;      /* CAM6 Most Significant Word register */
-  __rw__ uint32_t CAM6L;      /* CAM6 Least Significant Word register */
-  __rw__ uint32_t CAM7M;      /* CAM7 Most Significant Word register */
-  __rw__ uint32_t CAM7L;      /* CAM7 Least Significant Word register */
-  __rw__ uint32_t CAM8M;      /* CAM8 Most Significant Word register */
-  __rw__ uint32_t CAM8L;      /* CAM8 Least Significant Word register */
-  __rw__ uint32_t CAM9M;      /* CAM9 Most Significant Word register */
-  __rw__ uint32_t CAM9L;      /* CAM9 Least Significant Word register */
-  __rw__ uint32_t CAM10M;     /* CAM10 Most Significant Word register */
-  __rw__ uint32_t CAM10L;     /* CAM10 Least Significant Word register */
-  __rw__ uint32_t CAM11M;     /* CAM11 Most Significant Word register */
-  __rw__ uint32_t CAM11L;     /* CAM11 Least Significant Word register */
-  __rw__ uint32_t CAM12M;     /* CAM12 Most Significant Word register */
-  __rw__ uint32_t CAM12L;     /* CAM12 Least Significant Word register */
-  __rw__ uint32_t CAM13M;     /* CAM13 Most Significant Word register */
-  __rw__ uint32_t CAM13L;     /* CAM13 Least Significant Word register */
-  __rw__ uint32_t CAM14M;     /* CAM14 Most Significant Word register */
-  __rw__ uint32_t CAM14L;     /* CAM14 Least Significant Word register */
-  __rw__ uint32_t CAM15MSB;   /* CAM15 Most Significant Word register */
-  __rw__ uint32_t CAM15LSB;   /* CAM15 Least Significant Word register */
-  __rw__ uint32_t TXDSA;      /* Transmit Descriptor Link List Start Address register */
-  __rw__ uint32_t RXDSA;      /* Receive Descriptor Link List Start Address register */
-  __rw__ uint32_t CTL;        /* MAC Control register */
-  __rw__ uint32_t MIIMDAT;    /* MII Management Data register */
-  __rw__ uint32_t MIIMCTL;    /* MII Management Control and Address register */
-  __rw__ uint32_t FIFOCTL;    /* FIFO Threshold Control register */
-  __wo__ uint32_t TXST;       /* Transmit Start Demand register */
-  __wo__ uint32_t RXST;       /* Receive Start Demand register */
-  __rw__ uint32_t MRFL;       /* Maximum Receive Frame Control register */
-  __rw__ uint32_t INTEN;      /* MAC Interrupt Enable register */
-  __rw__ uint32_t INTSTS;     /* MAC Interrupt Status register */
-  __rw__ uint32_t GENSTS;     /* MAC General Status register */
-  __rw__ uint32_t MPCNT;      /* Missed Packet Count register */
-  __ro__ uint32_t RPCNT;      /* MAC Receive Pause Count register */
+  __rw__ uint32_t CAMCTL; /* CAM Comparison Control register */
+  __rw__ uint32_t CAMEN; /* CAM Enable register */
+
+  struct
+  {
+    __rw__ uint32_t MSW; /* CAM Most Significant Word registers */
+    __rw__ uint32_t LSW; /* CAM Least Significant Word registers */
+  } CAM[16];
+
+  __rw__ uint32_t TXDSA; /* Transmit Descriptor Linked List Start Address */
+  __rw__ uint32_t RXDSA; /* Receive Descriptor Linked List Start Address */
+  __rw__ uint32_t CTL; /* MAC Control register */
+  __rw__ uint32_t MIIMDAT; /* MII Management Data register */
+  __rw__ uint32_t MIIMCTL; /* MII Management Control and Address register */
+  __rw__ uint32_t FIFOCTL; /* FIFO Threshold Control register */
+  __wo__ uint32_t TXST; /* Transmit Start Demand register */
+  __wo__ uint32_t RXST; /* Receive Start Demand register */
+  __rw__ uint32_t MRFL; /* Maximum Receive Frame Control register */
+  __rw__ uint32_t INTEN; /* MAC Interrupt Enable register */
+  __rw__ uint32_t INTSTS; /* MAC Interrupt Status register */
+  __rw__ uint32_t GENSTS; /* MAC General Status register */
+  __rw__ uint32_t MPCNT; /* Missed Packet Count register */
+  __ro__ uint32_t RPCNT; /* MAC Receive Pause Count register */
   __ne__ uint32_t RESERVED0[2];
-  __rw__ uint32_t FRSTS;      /* DMA Receive Frame Status register */
-  __ro__ uint32_t CTXDSA;     /* Current Transmit Descriptor Start Address register */
-  __ro__ uint32_t CTXBSA;     /* Current Transmit Buffer Start Address register */
-  __ro__ uint32_t CRXDSA;     /* Current Receive Descriptor Start Address register */
-  __ro__ uint32_t CRXBSA;     /* Current Receive Buffer Start Address register */
+  __rw__ uint32_t FRSTS; /* DMA Receive Frame Status register */
+  __ro__ uint32_t CTXDSA; /* Current Transmit Descriptor Start Address */
+  __ro__ uint32_t CTXBSA; /* Current Transmit Buffer Start Address */
+  __ro__ uint32_t CRXDSA; /* Current Receive Descriptor Start Address */
+  __ro__ uint32_t CRXBSA; /* Current Receive Buffer Start Address */
   __ne__ uint32_t RESERVED1[9];
-  __rw__ uint32_t TSCTL;      /* Time Stamp Control register */
+  __rw__ uint32_t TSCTL; /* Time Stamp Control register */
   __ne__ uint32_t RESERVED2[3];
-  __ro__ uint32_t TSSEC;      /* Time Stamp Counter Second register */
-  __ro__ uint32_t TSSUBSEC;   /* Time Stamp Counter Sub Second register */
-  __rw__ uint32_t TSINC;      /* Time Stamp Increment register */
-  __rw__ uint32_t TSADDEND;   /* Time Stamp Addend register */
-  __rw__ uint32_t UPDSEC;     /* Time Stamp Update Second register */
-  __rw__ uint32_t UPDSUBSEC;  /* Time Stamp Update Sub Second register */
-  __rw__ uint32_t ALMSEC;     /* Time Stamp Alarm Second register */
-  __rw__ uint32_t ALMSUBSEC;  /* Time Stamp Alarm Sub Second register */
+  __ro__ uint32_t TSSEC; /* Time Stamp Counter Second register */
+  __ro__ uint32_t TSSUBSEC; /* Time Stamp Counter Sub Second register */
+  __rw__ uint32_t TSINC; /* Time Stamp Increment register */
+  __rw__ uint32_t TSADDEND; /* Time Stamp Addend register */
+  __rw__ uint32_t UPDSEC; /* Time Stamp Update Second register */
+  __rw__ uint32_t UPDSUBSEC; /* Time Stamp Update Sub Second register */
+  __rw__ uint32_t ALMSEC; /* Time Stamp Alarm Second register */
+  __rw__ uint32_t ALMSUBSEC; /* Time Stamp Alarm Sub Second register */
 } NM_EMAC_Type;
 /*------------------Pulse Width Modulation Controller-------------------------*/
 typedef struct
@@ -1243,24 +1195,46 @@ typedef struct
 /*------------------Universal Serial Control Interface Controller-------------*/
 typedef struct
 {
-  // TODO Verify
-  __wo__ uint32_t CTL; /* Control register */
+  /* Offset 0x00 */
+  __rw__ uint32_t CTL; /* Control register */
   __rw__ uint32_t INTEN; /* Interrupt Enable register */
   __rw__ uint32_t BRGEN; /* Baud Rate Generator register */
-  __ro__ uint32_t DATIN0; /* Input Data signal configuration */
-  __ro__ uint32_t CTLIN0; /* Input Control signal configuration */
-  __ro__ uint32_t CLKIN; /* Input Clock signal configuration */
-  __ro__ uint32_t LINECTL; /* Line Control register */
-  __ro__ uint32_t TXDAT; /* Transmit Data register */
+  __ne__ uint32_t RESERVED0;
+
+  /* Offset 0x10 */
+  __rw__ uint32_t DATIN0; /* Input Data signal configuration */
+  __ne__ uint32_t RESERVED1[3];
+
+  /* Offset 0x20 */
+  __rw__ uint32_t CTLIN0; /* Input Control signal configuration */
+  __ne__ uint32_t RESERVED2;
+  __rw__ uint32_t CLKIN; /* Input Clock signal configuration */
+  __rw__ uint32_t LINECTL; /* Line Control register */
+
+  /* Offset 0x30 */
+  __wo__ uint32_t TXDAT; /* Transmit Data register */
   __ro__ uint32_t RXDAT; /* Receive Data register */
-  __ro__ uint32_t BUFCTL; /* Transmit/Receive Buffer Control register */
-  __ro__ uint32_t BUFSTS; /* Transmit/Receive Buffer Status register */
-  __ro__ uint32_t PDMACTL; /* PDMA Control register */
-  __ro__ uint32_t WKCTL; /* Wake-up Control register */
-  __ro__ uint32_t WKSTS; /* Wake-up Status register */
-  __ro__ uint32_t PROTCTL; /* Protocol Control register */
-  __ro__ uint32_t PROTIEN; /* Protocol Interrupt Enable register */
-  __ro__ uint32_t PROTSTS; /* Protocol Status register */
+  __rw__ uint32_t BUFCTL; /* Transmit/Receive Buffer Control register */
+  __rw__ uint32_t BUFSTS; /* Transmit/Receive Buffer Status register */
+  __rw__ uint32_t PDMACTL; /* PDMA Control register */
+
+  /* Offset 0x44 */
+  __rw__ uint32_t DEVADDR0; /* Device Address register 0 */
+  __rw__ uint32_t DEVADDR1; /* Device Address register 1 */
+  __rw__ uint32_t ADDRMSK0; /* Device Address Mask register 0 */
+  __rw__ uint32_t ADDRMSK1; /* Device Address Mask register 1 */
+
+  /* Offset 0x54 */
+  __rw__ uint32_t WKCTL; /* Wake-up Control register */
+  __rw__ uint32_t WKSTS; /* Wake-up Status register */
+  __rw__ uint32_t PROTCTL; /* Protocol Control register */
+  __rw__ uint32_t PROTIEN; /* Protocol Interrupt Enable register */
+  __rw__ uint32_t PROTSTS; /* Protocol Status register */
+  __ne__ uint32_t RESERVED3[8];
+
+  /* Offset 0x88 */
+  __rw__ uint32_t ADMAT; /* I2C Slave Match Address register */
+  __rw__ uint32_t TMCTL; /* I2C Timing Configure Control register */
 } NM_USCI_Type;
 /*----------------------------------------------------------------------------*/
 typedef struct

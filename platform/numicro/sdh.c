@@ -31,7 +31,6 @@ static void powerStateHandler(void *, enum PmState);
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result sdioInit(void *, const void *);
-static void sdioDeinit(void *);
 static void sdioSetCallback(void *, void (*)(void *), void *);
 static enum Result sdioGetParam(void *, int, void *);
 static enum Result sdioSetParam(void *, int, const void *);
