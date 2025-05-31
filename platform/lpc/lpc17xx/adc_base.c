@@ -122,7 +122,7 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcBaseConfig * const config = configBase;
   assert(config->channel == 0);
   assert(config->frequency <= MAX_FREQUENCY);
-  assert(!config->accuracy);
+  assert(!config->accuracy || config->accuracy == 12);
 
   struct AdcBase * const interface = object;
 

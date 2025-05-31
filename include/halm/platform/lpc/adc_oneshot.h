@@ -1,34 +1,17 @@
 /*
  * halm/platform/lpc/adc_oneshot.h
- * Copyright (C) 2013 xent
+ * Copyright (C) 2025 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #ifndef HALM_PLATFORM_LPC_ADC_ONESHOT_H_
 #define HALM_PLATFORM_LPC_ADC_ONESHOT_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/platform/lpc/adc_base.h>
+#include <halm/target.h>
 /*----------------------------------------------------------------------------*/
-extern const struct InterfaceClass * const AdcOneShot;
-
-struct AdcOneShotConfig
-{
-  /** Optional: desired converter clock. */
-  uint32_t frequency;
-  /** Mandatory: analog input. */
-  PinNumber pin;
-  /** Mandatory: peripheral identifier. */
-  uint8_t channel;
-  /** Optional: disable automatic peripheral locking. */
-  bool shared;
-};
-
-struct AdcOneShot
-{
-  struct AdcBase base;
-
-  /* Pin descriptor */
-  struct AdcPin pin;
-};
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/GEN_ADC/adc_oneshot.h>
+#include HEADER_PATH
+#undef HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_ADC_ONESHOT_H_ */
