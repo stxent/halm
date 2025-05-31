@@ -25,6 +25,8 @@ struct SctCounterConfig
   IrqPriority priority;
   /** Optional: edge sensitivity of the selected clock input. */
   enum InputEvent edge;
+  /** Optional: event output. */
+  enum SctOutput output;
   /** Mandatory: timer part. */
   enum SctPart part;
   /** Mandatory: peripheral identifier. */
@@ -40,6 +42,8 @@ struct SctTimerConfig
   uint32_t frequency;
   /** Optional: timer interrupt priority. */
   IrqPriority priority;
+  /** Optional: event output. */
+  enum SctOutput output;
   /** Mandatory: timer part. */
   enum SctPart part;
   /** Mandatory: peripheral identifier. */
@@ -55,8 +59,10 @@ struct SctTimer
 
   /* Desired timer frequency */
   uint32_t frequency;
-  /* Clock input */
+  /* Timer clock input */
   enum SctInput input;
+  /* Reset event output */
+  enum SctOutput output;
   /* Match channel used for counter reset */
   uint8_t event;
 };

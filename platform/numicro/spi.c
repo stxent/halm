@@ -104,7 +104,7 @@ static void interruptHandler(void *object)
     if (interface->callback != NULL)
       interface->callback(interface->callbackArgument);
   }
-  else if (interface->rxLeft && interface->rxLeft < FIFO_DEPTH / 2)
+  else if (interface->rxLeft < FIFO_DEPTH / 2)
   {
     reg->FIFOCTL = (reg->FIFOCTL & ~FIFOCTL_RXTH_MASK)
         | FIFOCTL_RXTH(interface->rxLeft);

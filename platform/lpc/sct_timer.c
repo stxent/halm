@@ -11,7 +11,7 @@
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static enum Result genericTimerInit(void *, uint8_t, enum SctPart,
-    PinNumber, enum InputEvent, IrqPriority, uint32_t);
+    PinNumber, enum InputEvent, enum SctOutput, IrqPriority, uint32_t);
 
 #ifdef CONFIG_PLATFORM_LPC_SCT_PM
 static void powerStateHandler(void *, enum PmState);
@@ -118,7 +118,7 @@ static void interruptHandler(void *object)
 /*----------------------------------------------------------------------------*/
 static enum Result genericTimerInit(void *object, uint8_t channel,
     enum SctPart segment, PinNumber clock, enum InputEvent edge,
-    IrqPriority priority, uint32_t frequency)
+    enum SctOutput output, IrqPriority priority, uint32_t frequency)
 {
   const struct SctBaseConfig baseConfig = {
       .channel = channel,
@@ -131,11 +131,12 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
   if ((res = SctBase->init(timer, &baseConfig)) != E_OK)
     return res;
 
-  LPC_SCT_Type * const reg = timer->base.reg;
-  const unsigned int part = timer->base.part == SCT_HIGH;
-
   if (!sctAllocateEvent(&timer->base, &timer->event))
     return E_BUSY;
+
+  LPC_SCT_Type * const reg = timer->base.reg;
+  const unsigned int part = timer->base.part == SCT_HIGH;
+  const uint16_t eventMask = 1 << timer->event;
 
   /* Configure clock input */
   if (clock)
@@ -162,7 +163,7 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
     timer->input = SCT_INPUT_NONE;
 
   timer->base.handler = interruptHandler;
-  timer->base.mask = 1 << timer->event;
+  timer->base.mask = eventMask;
   timer->callback = NULL;
 
   /* Disable the timer before any configuration is done */
@@ -182,7 +183,7 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
     reg->MATCH[timer->event] = 0xFFFFFFFFUL;
 
   /* Enable match mode for match/capture registers */
-  reg->REGMODE_PART[part] &= ~(1 << timer->event);
+  reg->REGMODE_PART[part] &= ~eventMask;
 
   /* Configure event */
   reg->EV[timer->event].CTRL =
@@ -191,21 +192,32 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
       | EVCTRL_COMBMODE(COMBMODE_MATCH)
       | EVCTRL_DIRECTION(DIRECTION_INDEPENDENT);
 
+  /* Configure event output */
+  timer->output = output;
+  if (timer->output != SCT_OUTPUT_NONE)
+  {
+    reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(timer->output - 1);
+    reg->RES = (reg->RES & ~RES_OUTPUT_MASK(timer->output - 1))
+        | RES_OUTPUT(timer->output - 1, OUTPUT_TOGGLE);
+    reg->OUT[timer->output - 1].CLR = eventMask;
+    reg->OUT[timer->output - 1].SET = eventMask;
+  }
+
   /* Reset current state and enable allocated event in state 0 */
   reg->STATE_PART[part] = 0;
   reg->EV[timer->event].STATE = 0x00000001;
   /* Enable timer clearing on allocated event */
-  reg->LIMIT_PART[part] = timer->base.mask;
-  /* By default the timer is disabled */
+  reg->LIMIT_PART[part] = eventMask;
 
 #ifdef CONFIG_PLATFORM_LPC_SCT_PM
   if ((res = pmRegister(powerStateHandler, timer)) != E_OK)
     return res;
 #endif
 
-  /* Priority is same for both timer parts*/
+  /* Priority is same for both timer parts */
   irqSetPriority(timer->base.irq, priority);
 
+  /* The timer remains disabled */
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -227,7 +239,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   assert(config->part != SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, config->part,
-      SCT_INPUT_NONE, INPUT_RISING, config->priority, config->frequency);
+      0, INPUT_RISING, config->output, config->priority, config->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInitCounter(void *object, const void *configBase)
@@ -237,7 +249,7 @@ static enum Result tmrInitCounter(void *object, const void *configBase)
   assert(config->part != SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, config->part,
-      config->pin, config->edge, config->priority, 0);
+      config->pin, config->edge, config->output, config->priority, 0);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInitUnified(void *object, const void *configBase)
@@ -247,7 +259,7 @@ static enum Result tmrInitUnified(void *object, const void *configBase)
   assert(config->part == SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, SCT_UNIFIED,
-      SCT_INPUT_NONE, INPUT_RISING, config->priority, config->frequency);
+      0, INPUT_RISING, config->output, config->priority, config->frequency);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInitUnifiedCounter(void *object, const void *configBase)
@@ -257,7 +269,7 @@ static enum Result tmrInitUnifiedCounter(void *object, const void *configBase)
   assert(config->part == SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, SCT_UNIFIED,
-      config->pin, config->edge, config->priority, 0);
+      config->pin, config->edge, config->output, config->priority, 0);
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
@@ -280,6 +292,13 @@ static void tmrDeinit(void *object)
   /* Release allocated input */
   if (timer->input != SCT_INPUT_NONE)
     sctReleaseInputChannel(&timer->base, timer->input);
+
+  /* Disable output event generation */
+  if (timer->output != SCT_OUTPUT_NONE)
+  {
+    reg->OUT[timer->output - 1].CLR = 0;
+    reg->OUT[timer->output - 1].SET = 0;
+  }
 
   /* Reset to default state */
   reg->CONFIG &= ~CONFIG_NORELOAD(part);

@@ -207,7 +207,7 @@ static enum Result unitInit(void *object, const void *configBase)
   setUnitResolution(unit, unit->event, unit->resolution);
 
   /* Enable match mode for match/capture registers */
-  reg->REGMODE_PART[part] &= ~(1 << unit->event);
+  reg->REGMODE_PART[part] &= ~eventMask;
 
   /* Configure event */
   reg->EV[unit->event].CTRL =
@@ -222,10 +222,10 @@ static enum Result unitInit(void *object, const void *configBase)
   /* Enable timer clearing on allocated event */
   reg->LIMIT_PART[part] = eventMask;
 
-  /* Priority is same for both timer parts*/
+  /* Priority is same for both timer parts */
   irqSetPriority(unit->base.irq, config->priority);
 
-  /* Timer is left in a disabled state */
+  /* The timer remains disabled */
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
