@@ -11,6 +11,9 @@ choice
 	config CORE_CORTEX_M0
 		bool "Cortex-M0"
 
+	config CORE_CORTEX_M0P
+		bool "Cortex-M0+"
+
 	config CORE_CORTEX_M3
 		bool "Cortex-M3"
 

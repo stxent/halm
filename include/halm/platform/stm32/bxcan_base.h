@@ -35,6 +35,7 @@ struct BxCanBase
   void *reg;
   void (*handler)(void *);
 
+  /* Interrupt identifiers */
   struct
   {
     IrqNumber rx0;
