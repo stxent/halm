@@ -10,7 +10,6 @@
 #include <halm/irq.h>
 #include <halm/pin.h>
 #include <xcore/interface.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/adc_base.h>

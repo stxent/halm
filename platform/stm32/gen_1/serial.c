@@ -9,7 +9,6 @@
 #include <halm/platform/stm32/uart_defs.h>
 #include <halm/pm.h>
 #include <xcore/containers/byte_queue.h>
-#include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 struct Serial

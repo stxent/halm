@@ -17,7 +17,6 @@
 #define HALM_PLATFORM_LPC_LPC43XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/helpers.h>
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals register */

@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_LPC_GPDMA_ONESHOT_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/lpc/gpdma_base.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const GpDmaOneShot;
 

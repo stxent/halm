@@ -16,7 +16,6 @@
 #ifndef HALM_PLATFORM_STM32_STM32F0XX_SYSTEM_H_
 #define HALM_PLATFORM_STM32_STM32F0XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 enum [[gnu::packed]] SysBlockReset

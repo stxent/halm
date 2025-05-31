@@ -9,7 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/dma.h>
 #include <halm/target.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/gpdma_base.h>

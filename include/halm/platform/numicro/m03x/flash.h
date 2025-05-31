@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_NUMICRO_M03X_FLASH_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Flash;

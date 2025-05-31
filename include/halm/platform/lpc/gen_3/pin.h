@@ -12,7 +12,6 @@
 #define HALM_PLATFORM_LPC_GEN_3_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
-#include <stdbool.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 struct Pin

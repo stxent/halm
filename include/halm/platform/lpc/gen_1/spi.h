@@ -13,7 +13,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/generic/spi.h>
 #include <halm/platform/lpc/ssp_base.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Spi;
 

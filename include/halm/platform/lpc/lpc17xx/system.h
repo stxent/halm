@@ -19,7 +19,6 @@
 #include <halm/platform/platform_defs.h>
 #include <xcore/bits.h>
 #include <xcore/helpers.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
 enum [[gnu::packed]] SysBlockPower

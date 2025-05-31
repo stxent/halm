@@ -9,7 +9,6 @@
 #include <halm/platform/lpc/flash_defs.h>
 #include <halm/platform/lpc/iap.h>
 #include <assert.h>
-#include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 static enum FlashBank getBankByAddress(uintptr_t);

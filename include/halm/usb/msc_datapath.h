@@ -8,7 +8,6 @@
 #define HALM_USB_MSC_DATAPATH_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/error.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/

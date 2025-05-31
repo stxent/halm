@@ -11,7 +11,6 @@
 #ifndef HALM_PLATFORM_LPC_LPC11XX_FLASH_DEFS_H_
 #define HALM_PLATFORM_LPC_LPC11XX_FLASH_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define CODE_LPC1110_1      0x0A07102BUL

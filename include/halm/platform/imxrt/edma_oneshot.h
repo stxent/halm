@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_IMXRT_EDMA_ONESHOT_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/imxrt/edma_base.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const EdmaOneShot;
 

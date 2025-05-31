@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_NUMICRO_I2C_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/numicro/i2c_base.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2C;
 

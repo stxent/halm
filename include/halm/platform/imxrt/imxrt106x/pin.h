@@ -13,7 +13,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/imxrt/imxrt106x/pin_daisy.h>
 #include <halm/platform/platform_defs.h>
-#include <stdbool.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 enum

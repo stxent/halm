@@ -14,7 +14,6 @@
 #include <halm/platform/platform_defs.h>
 #include <xcore/bits.h>
 #include <xcore/helpers.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 enum [[gnu::packed]] MemoryRemap
 {

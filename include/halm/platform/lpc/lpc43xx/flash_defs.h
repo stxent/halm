@@ -12,7 +12,6 @@
 #define HALM_PLATFORM_LPC_LPC43XX_FLASH_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define CODE_LPC4350            0xA0000830UL

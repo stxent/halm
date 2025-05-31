@@ -14,7 +14,6 @@
 #include <halm/core/core_defs.h>
 #include <halm/core/cortex/scb_defs.h>
 #include <xcore/asm.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 enum
 {

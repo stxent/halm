@@ -11,7 +11,6 @@
 #include <halm/platform/stm32/system.h>
 #include <xcore/accel.h>
 #include <assert.h>
-#include <stdbool.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 #define HSI_OSC_FREQUENCY     8000000

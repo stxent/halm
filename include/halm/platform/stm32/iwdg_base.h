@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_STM32_IWDG_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/entity.h>
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const IwdgBase;

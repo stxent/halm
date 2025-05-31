@@ -7,8 +7,6 @@
 #ifndef HALM_PLATFORM_GENERIC_POSIX_PIN_H_
 #define HALM_PLATFORM_GENERIC_POSIX_PIN_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
-/*----------------------------------------------------------------------------*/
 struct Pin
 {
   int handle;

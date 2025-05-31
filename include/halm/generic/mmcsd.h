@@ -8,7 +8,6 @@
 #define HALM_GENERIC_MMCSD_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/interface.h>
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const MMCSD;

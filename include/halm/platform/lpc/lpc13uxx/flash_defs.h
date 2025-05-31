@@ -11,7 +11,6 @@
 #ifndef HALM_PLATFORM_LPC_LPC13UXX_FLASH_DEFS_H_
 #define HALM_PLATFORM_LPC_LPC13UXX_FLASH_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define CODE_LPC1315      0x3A010523UL

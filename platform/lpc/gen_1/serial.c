@@ -9,7 +9,6 @@
 #include <halm/platform/lpc/uart_base.h>
 #include <halm/pm.h>
 #include <xcore/containers/byte_queue.h>
-#include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 #define TX_FIFO_SIZE 8

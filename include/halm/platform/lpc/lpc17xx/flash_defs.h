@@ -11,7 +11,6 @@
 #ifndef HALM_PLATFORM_LPC_LPC17XX_FLASH_DEFS_H_
 #define HALM_PLATFORM_LPC_LPC17XX_FLASH_DEFS_H_
 /*----------------------------------------------------------------------------*/
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define CODE_LPC1769            0x26113F37UL

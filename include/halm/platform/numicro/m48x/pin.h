@@ -12,7 +12,6 @@
 #define HALM_PLATFORM_NUMICRO_M48X_PIN_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
-#include <stdbool.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 enum

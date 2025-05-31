@@ -7,7 +7,6 @@
 #include <halm/platform/stm32/spi.h>
 #include <halm/platform/stm32/spi_defs.h>
 #include <assert.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 #define DUMMY_FRAME 0xFF
 /*----------------------------------------------------------------------------*/

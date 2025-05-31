@@ -12,7 +12,6 @@
 #define HALM_CORE_X86_IRQ_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/helpers.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 typedef unsigned int IrqNumber;
 typedef unsigned int IrqPriority;

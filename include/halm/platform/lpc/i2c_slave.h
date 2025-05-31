@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_LPC_I2C_SLAVE_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/lpc/i2c_base.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2CSlave;
 

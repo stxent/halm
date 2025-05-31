@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_STM32_GPTIMER_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
-#include <stdbool.h>
 #include <stdint.h>
 /*------------------Channel packing-------------------------------------------*/
 enum

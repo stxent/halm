@@ -12,7 +12,6 @@
 #define HALM_PLATFORM_STM32_GEN_1_I2C_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/stm32/i2c_base.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const I2C;
 

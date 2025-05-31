@@ -9,7 +9,6 @@
 #include <halm/platform/imxrt/serial.h>
 #include <halm/pm.h>
 #include <xcore/containers/byte_queue.h>
-#include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 struct Serial

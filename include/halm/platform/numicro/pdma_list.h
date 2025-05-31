@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_NUMICRO_PDMA_LIST_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/numicro/pdma_base.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const PdmaList;
 

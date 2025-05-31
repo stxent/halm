@@ -9,7 +9,6 @@
 #include <halm/platform/numicro/flash_defs.h>
 #include <halm/platform/numicro/system.h>
 #include <assert.h>
-#include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 static void accessLock(void);

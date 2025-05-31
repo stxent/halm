@@ -13,7 +13,6 @@
 #include <halm/pm.h>
 #include <xcore/containers/byte_queue.h>
 #include <malloc.h>
-#include <stdbool.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 #define MEM_ALIGNMENT CONFIG_CORE_CORTEX_CACHE_LINE

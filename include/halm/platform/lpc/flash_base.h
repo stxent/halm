@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_LPC_FLASH_BASE_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/entity.h>
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const FlashBase;

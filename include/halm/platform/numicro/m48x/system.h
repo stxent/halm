@@ -18,7 +18,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
 #include <xcore/helpers.h>
-#include <stdbool.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 /* Reset control for core and peripherals */

@@ -9,7 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/target.h>
 #include <xcore/helpers.h>
-#include <stdbool.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 typedef uint16_t PinNumber;
