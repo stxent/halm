@@ -40,9 +40,9 @@ struct I2C
   /* Pointer to an input or output buffer */
   uintptr_t buffer;
   /* Bytes to be received */
-  uint16_t rxLeft;
+  size_t rxLeft;
   /* Bytes to be transmitted */
-  uint16_t txLeft;
+  size_t txLeft;
 
   /* Address of the device */
   uint16_t address;

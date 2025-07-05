@@ -42,12 +42,13 @@ struct I2CBase
 BEGIN_DECLS
 
 /* Common functions */
-void i2cConfigPins(struct I2CBase *);
+void i2cConfigPinsCommon(struct I2CBase *);
 uint32_t i2cGetRate(const struct I2CBase *);
 void i2cRecoverBus(struct I2CBase *);
 void i2cSetRate(struct I2CBase *, uint32_t);
 
 /* Platform-specific functions */
+void i2cConfigPins(struct I2CBase *);
 uint32_t i2cGetClock(const struct I2CBase *);
 
 END_DECLS

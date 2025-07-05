@@ -132,15 +132,35 @@ static void interruptHandler(void *object)
   struct I2C * const interface = object;
   STM_I2C_Type * const reg = interface->base.reg;
   const uint32_t status = reg->ISR;
+  bool event = false;
 
   reg->ICR = ICR_NACKCF | ICR_STOPCF | ICR_BERRCF | ICR_ARLOCF;
 
-  if (status & (ISR_NACKF | ISR_BERR | ISR_ARLO))
-    interface->status = STATUS_ERROR;
-  else
-    interface->status = STATUS_OK;
+  if (status & ISR_TCR)
+  {
+    uint32_t cr2 = reg->CR2 & ~(CR2_NBYTES_MASK | CR2_RELOAD);
 
-  if (interface->callback != NULL)
+    interface->left -= MIN(interface->left, CR2_NBYTES_MAX);
+
+    cr2 |= CR2_NBYTES(MIN(interface->left, CR2_NBYTES_MAX));
+    if (interface->left > CR2_NBYTES_MAX)
+      cr2 |= CR2_RELOAD;
+
+    /* Transfer a next part of data */
+    reg->CR2 = cr2;
+  }
+  else if (status & (ISR_NACKF | ISR_BERR | ISR_ARLO))
+  {
+    interface->status = STATUS_ERROR;
+    event = true;
+  }
+  else
+  {
+    interface->status = STATUS_OK;
+    event = true;
+  }
+
+  if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -380,8 +400,8 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
 
   if (!length)
     return 0;
-  if (length > UCHAR_MAX)
-    length = UCHAR_MAX;
+  if (length > DMA_MAX_TRANSFER_SIZE)
+    length = DMA_MAX_TRANSFER_SIZE;
 
   dmaDisable(interface->rxDma);
   dmaDisable(interface->txDma);
@@ -392,13 +412,18 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
     interface->status = STATUS_ERROR;
     return 0;
   }
-  else
-    interface->status = STATUS_RECEIVE;
 
-  uint32_t cr2 = reg->CR2 & ~CR2_NBYTES_MASK;
+  interface->left = length;
+  interface->status = STATUS_RECEIVE;
 
+  uint32_t cr2 = reg->CR2;
+
+  cr2 &= ~(CR2_NBYTES_MASK | CR2_RELOAD);
   cr2 = insertDeviceAddress(interface, cr2);
-  cr2 |= CR2_NBYTES(length) | CR2_RD_WRN | CR2_AUTOEND;
+
+  cr2 |= CR2_NBYTES(MIN(length, CR2_NBYTES_MAX)) | CR2_RD_WRN | CR2_AUTOEND;
+  if (length > CR2_NBYTES_MAX)
+    cr2 |= CR2_RELOAD;
 
   reg->CR2 = cr2 | CR2_START;
 
@@ -421,8 +446,8 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
 
   if (!length)
     return 0;
-  if (length > UCHAR_MAX)
-    length = UCHAR_MAX;
+  if (length > DMA_MAX_TRANSFER_SIZE)
+    length = DMA_MAX_TRANSFER_SIZE;
 
   dmaDisable(interface->rxDma);
   dmaDisable(interface->txDma);
@@ -433,15 +458,20 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
     interface->status = STATUS_ERROR;
     return 0;
   }
-  else
-    interface->status = STATUS_TRANSMIT;
 
-  uint32_t cr2 = reg->CR2 & ~(CR2_NBYTES_MASK | CR2_RD_WRN | CR2_AUTOEND);
+  interface->left = length;
+  interface->status = STATUS_TRANSMIT;
 
+  uint32_t cr2 = reg->CR2;
+
+  cr2 &= ~(CR2_RD_WRN | CR2_NBYTES_MASK | CR2_RELOAD | CR2_AUTOEND);
   cr2 = insertDeviceAddress(interface, cr2);
+
+  cr2 |= CR2_NBYTES(MIN(length, CR2_NBYTES_MAX));
+  if (length > CR2_NBYTES_MAX)
+    cr2 |= CR2_RELOAD;
   if (!interface->sendRepeatedStart)
     cr2 |= CR2_AUTOEND;
-  cr2 |= CR2_NBYTES(length);
 
   reg->CR2 = cr2 | CR2_START;
 

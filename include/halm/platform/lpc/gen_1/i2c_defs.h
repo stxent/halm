@@ -64,5 +64,7 @@ enum
 #define ADR_ADDRESS(value)              BIT_FIELD((value), 1)
 #define ADR_ADDRESS_MASK                BIT_FIELD(MASK(7), 1)
 #define ADR_ADDRESS_VALUE(reg)          FIELD_VALUE((reg), ADR_ADDRESS_MASK, 1)
+/*------------------SCL duty cycle registers----------------------------------*/
+#define SCL_DUTY_CYCLE_MAX              65535
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_GEN_1_I2C_DEFS_H_ */

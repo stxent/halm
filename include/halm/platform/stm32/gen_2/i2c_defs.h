@@ -51,6 +51,7 @@
 #define CR2_NBYTES_MASK                 BIT_FIELD(MASK(8), 16)
 #define CR2_NBYTES(value)               BIT_FIELD((value), 16)
 #define CR2_NBYTES_VALUE(reg)           FIELD_VALUE((reg), CR2_NBYTES_MASK, 16)
+#define CR2_NBYTES_MAX                  255
 
 #define CR2_RELOAD                      BIT(24)
 #define CR2_AUTOEND                     BIT(25)

@@ -355,8 +355,6 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
 
   if (!length)
     return 0;
-  if (length > USHRT_MAX)
-    length = USHRT_MAX;
 
   interface->buffer = (uintptr_t)buffer;
   interface->rxLeft = length;
@@ -390,8 +388,6 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
 
   if (!length)
     return 0;
-  if (length > USHRT_MAX)
-    length = USHRT_MAX;
 
   interface->buffer = (uintptr_t)buffer;
   interface->rxLeft = 0;

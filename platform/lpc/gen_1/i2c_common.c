@@ -88,10 +88,10 @@ void i2cSetRate(struct I2CBase *interface, uint32_t rate)
 
   assert(clockH >= 4 && clockL >= 4);
 
-  if (clockH > 0xFFFF)
-    clockH = 0xFFFF;
-  if (clockL > 0xFFFF)
-    clockL = 0xFFFF;
+  if (clockH > SCL_DUTY_CYCLE_MAX)
+    clockH = SCL_DUTY_CYCLE_MAX;
+  if (clockL > SCL_DUTY_CYCLE_MAX)
+    clockL = SCL_DUTY_CYCLE_MAX;
 
   reg->SCLH = clockH;
   reg->SCLL = clockL;
