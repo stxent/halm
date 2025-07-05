@@ -233,7 +233,7 @@ static void tmrEnable(void *object)
   const IrqState state = irqSave();
 
   if (timer->enabled)
-    removeTimer(timer->factory, timer);
+    removeTimer(factory, timer);
 
   timer->enabled = true;
   timer->timestamp = factory->counter + timer->overflow;
@@ -245,12 +245,15 @@ static void tmrEnable(void *object)
 static void tmrDisable(void *object)
 {
   struct TimerFactoryEntry * const timer = object;
+  const IrqState state = irqSave();
 
   if (timer->enabled)
   {
     timer->enabled = false;
     removeTimer(timer->factory, timer);
   }
+
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetAutostop(void *object, bool state)
@@ -271,8 +274,9 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 static uint32_t tmrGetFrequency(const void *object)
 {
   const struct TimerFactoryEntry * const timer = object;
-  const uint32_t clock = timerGetFrequency(timer->factory->timer);
-  const uint32_t overflow = timerGetOverflow(timer->factory->timer);
+  struct TimerFactory * const factory = timer->factory;
+  const uint32_t clock = timerGetFrequency(factory->timer);
+  const uint32_t overflow = timerGetOverflow(factory->timer);
 
   assert(overflow != 0 && overflow <= clock);
   return clock / overflow;
@@ -281,10 +285,11 @@ static uint32_t tmrGetFrequency(const void *object)
 static void tmrSetFrequency(void *object, uint32_t frequency)
 {
   const struct TimerFactoryEntry * const timer = object;
-  const uint32_t clock = timerGetFrequency(timer->factory->timer);
+  struct TimerFactory * const factory = timer->factory;
+  const uint32_t clock = timerGetFrequency(factory->timer);
 
   assert(frequency != 0 && frequency <= clock);
-  timerSetOverflow(timer->factory->timer, clock / frequency);
+  timerSetOverflow(factory->timer, clock / frequency);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *object)
@@ -318,8 +323,5 @@ static void tmrSetValue(void *object, uint32_t value)
 /*----------------------------------------------------------------------------*/
 void *timerFactoryCreate(void *object)
 {
-  const struct TimerFactoryEntryConfig config = {
-      .parent = object
-  };
-  return init(TimerFactoryEntry, &config);
+  return init(TimerFactoryEntry, &(struct TimerFactoryEntryConfig){object});
 }
