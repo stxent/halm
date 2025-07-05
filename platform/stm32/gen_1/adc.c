@@ -262,7 +262,7 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   {
     case IF_ADC_CALIBRATE:
       startCalibration(interface);
-      return E_BUSY;
+      return E_OK;
 
     default:
       break;

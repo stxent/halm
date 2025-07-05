@@ -121,16 +121,15 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   return E_INVALID;
 }
 /*----------------------------------------------------------------------------*/
-static size_t adcRead(void *object, void *buffer, size_t length)
+static size_t adcRead(void *object, void *buffer,
+    [[maybe_unused]] size_t length)
 {
   struct AdcOneShot * const interface = object;
 
-  /* ADC should be locked to avoid simultaneous access */
-  assert(adcGetInstance(interface->base.channel) == &interface->base);
   /* Ensure that the buffer has enough space */
   assert(length >= sizeof(uint16_t));
-  /* Suppress warning */
-  (void)length;
+  /* ADC should be locked to avoid simultaneous access */
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
 
   const uint16_t value = makeChannelConversion(interface);
   memcpy(buffer, &value, sizeof(value));

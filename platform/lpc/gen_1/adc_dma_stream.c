@@ -237,8 +237,8 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcDmaStreamConfig * const config = configBase;
   assert(config != NULL);
   assert(config->pins != NULL);
-  assert(config->converter.event < ADC_EVENT_END);
-  assert(config->converter.event != ADC_SOFTWARE);
+  assert(config->converter.event < ADC_EVENT_END
+      && config->converter.event != ADC_SOFTWARE);
 
   const struct AdcBaseConfig baseConfig = {
       .frequency = config->frequency,
@@ -389,7 +389,7 @@ static enum Result adcHandlerEnqueue(void *object,
     LPC_ADC_Type * const reg = interface->base.reg;
     uint8_t * const dst = request->buffer;
 
-    /* When a previous transfer is ongoing it will be continued */
+    /* When a previous transfer is active it will be continued */
     dmaAppend(interface->outer, dst, &interface->buffer, parts[0]);
     dmaAppend(interface->outer, dst + parts[0], &interface->buffer, parts[1]);
 

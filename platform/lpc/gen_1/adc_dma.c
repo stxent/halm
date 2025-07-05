@@ -156,7 +156,7 @@ static void stopConversion(struct AdcDma *interface)
 
   /* Stop further conversions */
   reg->CR = 0;
-  /* Disable interrupts */
+  /* Disable DMA requests */
   reg->INTEN = 0;
 
   dmaDisable(interface->dma);
@@ -168,8 +168,7 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcDmaConfig * const config = configBase;
   assert(config != NULL);
   assert(config->pins != NULL);
-  assert(config->event < ADC_EVENT_END);
-  assert(config->event != ADC_SOFTWARE);
+  assert(config->event < ADC_EVENT_END && config->event != ADC_SOFTWARE);
 
   const struct AdcBaseConfig baseConfig = {
       .frequency = config->frequency,

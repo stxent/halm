@@ -121,8 +121,7 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcConfig * const config = configBase;
   assert(config != NULL);
   assert(config->pins != NULL);
-  assert(config->event < ADC_EVENT_END);
-  assert(config->event != ADC_SOFTWARE);
+  assert(config->event < ADC_EVENT_END && config->event != ADC_SOFTWARE);
 
   const struct AdcBaseConfig baseConfig = {
       .frequency = config->frequency,
