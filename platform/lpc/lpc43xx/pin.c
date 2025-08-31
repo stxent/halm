@@ -288,7 +288,7 @@ static volatile uint32_t *calcControlReg(struct PinDescriptor pin)
   }
   else if (pin.port == PORT_CLK)
   {
-    return &LPC_SCU->SFSPCLK0 + pin.number;
+    return &LPC_SCU->SFSCLK0 + pin.number;
   }
   else
   {
@@ -300,10 +300,10 @@ static struct PinDescriptor calcPinDescriptor(volatile uint32_t *reg)
 {
   struct PinDescriptor pin;
 
-  if (reg >= &LPC_SCU->SFSPCLK0 && reg <= &LPC_SCU->SFSPCLK3)
+  if (reg >= &LPC_SCU->SFSCLK0 && reg <= &LPC_SCU->SFSCLK3)
   {
     pin.port = PORT_CLK;
-    pin.number = reg - &LPC_SCU->SFSPCLK0;
+    pin.number = reg - &LPC_SCU->SFSCLK0;
   }
   else
   {

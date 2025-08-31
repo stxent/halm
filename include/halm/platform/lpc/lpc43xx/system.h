@@ -143,6 +143,7 @@ BEGIN_DECLS
 
 void sysClockDisable(enum SysClockBranch);
 void sysClockEnable(enum SysClockBranch);
+void sysClockSetDivider(enum SysClockBranch, uint32_t);
 bool sysClockStatus(enum SysClockBranch);
 void sysCoreM0AppRemap(uintptr_t);
 void sysCoreM0SubRemap(uintptr_t);

@@ -250,6 +250,15 @@ config PLATFORM_LPC_EMC_NO_DEINIT
 	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_EMC
 
+config PLATFORM_LPC_EMC_CLOCK_DIV
+	bool "EMC clock division"
+	default y
+	depends on PLATFORM_LPC_EMC
+	help
+	  Enable EMC clock division by 2. Clock division is required
+	  when the core clock frequency exceeds the maximum interface or memory
+	  clock frequency.
+
 config PLATFORM_LPC_ETHERNET
 	bool "Ethernet"
 	default y
@@ -299,7 +308,7 @@ config PLATFORM_LPC_GPDMA_SYNC
 	help
 	  Synchronization logic must be enabled when peripherals
 	  generating DMA requests run on different clocks to the GPDMA.
-	  For peripherals  running on the same clock as the GPDMA,
+	  For peripherals running on the same clock as the GPDMA,
 	  disabling the synchronization logic improves the DMA request
 	  response time.
 

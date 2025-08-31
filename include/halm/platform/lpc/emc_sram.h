@@ -13,11 +13,6 @@ extern const struct EntityClass * const EmcSram;
 
 struct EmcSramConfig
 {
-  /** Mandatory: address bus width. */
-  size_t addressWidth;
-  /** Mandatory: data bus width. */
-  size_t dataWidth;
-
   struct
   {
     /** Mandatory: read cycle time, ns. */
@@ -30,8 +25,16 @@ struct EmcSramConfig
     uint32_t we;
   } timings;
 
+  struct {
+    /** Mandatory: address bus width. */
+    uint8_t address;
+    /** Mandatory: data bus width. */
+    uint8_t data;
+  } width;
+
   /** Mandatory: channel number. */
   uint8_t channel;
+
   /** Optional: use Byte Lane Select signals along with Write Enable signal. */
   bool partitioned;
 };

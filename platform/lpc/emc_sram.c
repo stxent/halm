@@ -35,95 +35,101 @@ static enum Result sramInit(void *object, const void *configBase)
 {
   const struct EmcSramConfig * const config = configBase;
   assert(config != NULL);
-  assert(!(config->dataWidth & 0x7));
   assert(config->timings.rc >= config->timings.oe);
   assert(config->timings.wc >= config->timings.we);
-
-  const size_t byteLanes = config->dataWidth >> 3;
-  assert(byteLanes == 1 || byteLanes == 2 || byteLanes == 4);
+  assert(config->width.data == 8 || config->width.data == 16
+      || config->width.data == 32);
 
   struct EmcSram * const memory = object;
+  uint8_t channel = config->channel;
 
   /* Try to register module */
-  if (!emcSetStaticMemoryDescriptor(config->channel, NULL, object))
+  if (!emcSetStaticMemoryDescriptor(channel, NULL, object))
     return E_BUSY;
 
-  memory->channel = config->channel;
-  memory->address = emcGetStaticMemoryAddress(memory->channel);
+  memory->channel = channel;
+  memory->address = emcGetStaticMemoryAddress(channel);
 
+  const size_t byteLanes = config->width.data >> 3;
   const struct PinGroupEntry *group;
   struct Pin pin;
 
   /* Address bus */
-  for (size_t index = 0; index < config->addressWidth; ++index)
+  for (size_t index = 0; index < config->width.address; ++index)
   {
-    group = pinGroupFind(emcAddressPins, emcAddressPinMap[index], 0);
+    group = pinGroupFind(emcAddressPins, emcAddressPinMap[index],
+        EMC_PIN_CHANNEL_DEFAULT);
     assert(group != NULL);
-    pinInput((pin = pinInit(emcAddressPinMap[index])));
+    pinOutput((pin = pinInit(emcAddressPinMap[index])), false);
     pinSetFunction(pin, group->value);
   }
 
   /* Data bus */
-  for (size_t index = 0; index < config->dataWidth; ++index)
+  for (size_t index = 0; index < config->width.data; ++index)
   {
-    group = pinGroupFind(emcDataPins, emcDataPinMap[index], 0);
+    group = pinGroupFind(emcDataPins, emcDataPinMap[index],
+        EMC_PIN_CHANNEL_DEFAULT);
     assert(group != NULL);
     pinInput((pin = pinInit(emcDataPinMap[index])));
     pinSetFunction(pin, group->value);
   }
 
   /* Output Enable pin */
-  group = pinGroupFind(emcControlPins, emcControlPinMap.oe, 0);
+  group = pinGroupFind(emcControlPins, emcControlPinMap.oe,
+      EMC_PIN_CHANNEL_DEFAULT);
   assert(group != NULL);
-  pinInput((pin = pinInit(emcControlPinMap.oe)));
+  pinOutput((pin = pinInit(emcControlPinMap.oe)), true);
   pinSetFunction(pin, group->value);
 
   /* Byte Lane Select pins */
   for (size_t index = 0; index < byteLanes; ++index)
   {
-    group = pinGroupFind(emcControlPins, emcControlPinMap.bls[index], 0);
+    group = pinGroupFind(emcControlPins, emcControlPinMap.bls[index],
+        EMC_PIN_CHANNEL_DEFAULT);
     assert(group);
-    pinInput((pin = pinInit(emcControlPinMap.bls[index])));
+    pinOutput((pin = pinInit(emcControlPinMap.bls[index])), true);
     pinSetFunction(pin, group->value);
   }
 
   /* Write Enable pin */
   if (config->partitioned)
   {
-    group = pinGroupFind(emcControlPins, emcControlPinMap.we, 0);
+    group = pinGroupFind(emcControlPins, emcControlPinMap.we,
+        EMC_PIN_CHANNEL_DEFAULT);
     assert(group != NULL);
-    pinInput((pin = pinInit(emcControlPinMap.we)));
+    pinOutput((pin = pinInit(emcControlPinMap.we)), true);
     pinSetFunction(pin, group->value);
   }
 
   /* Chip Select pin */
-  group = pinGroupFind(emcControlPins, emcControlPinMap.cs[memory->channel], 0);
+  group = pinGroupFind(emcControlPins, emcControlPinMap.cs[channel],
+      EMC_PIN_CHANNEL_DEFAULT);
   assert(group != NULL);
-  pinInput((pin = pinInit(emcControlPinMap.cs[config->channel])));
+  pinOutput((pin = pinInit(emcControlPinMap.cs[config->channel])), true);
   pinSetFunction(pin, group->value);
 
-  uint32_t configValue = STATICCONFIG_B;
+  uint32_t staticMemoryConfig = STATICCONFIG_B;
 
   if (config->partitioned)
-    configValue |= STATICCONFIG_PB;
+    staticMemoryConfig |= STATICCONFIG_PB;
 
   switch (byteLanes)
   {
     case 1:
-      configValue |= STATICCONFIG_MW(MW_8_BIT);
+      staticMemoryConfig |= STATICCONFIG_MW(MW_8_BIT);
       break;
 
     case 2:
-      configValue |= STATICCONFIG_MW(MW_16_BIT);
+      staticMemoryConfig |= STATICCONFIG_MW(MW_16_BIT);
       break;
 
     case 4:
-      configValue |= STATICCONFIG_MW(MW_32_BIT);
+      staticMemoryConfig |= STATICCONFIG_MW(MW_32_BIT);
       break;
   }
 
   const uint32_t frequency = emcGetClock() / 10;
-  const uint32_t cycleTime = 1000000000UL / frequency;
+  const uint32_t cycle = 1000000000UL / frequency;
 
   /* Calculations are in 100 ps resolution */
   const uint32_t oe = 10 * config->timings.oe;
@@ -131,26 +137,26 @@ static enum Result sramInit(void *object, const void *configBase)
   const uint32_t wc = 10 * config->timings.wc;
   const uint32_t we = 10 * config->timings.we;
 
-  const uint32_t aaTime = MAX(rc, cycleTime);
-  const uint32_t weTime = MAX(we, cycleTime);
-  const uint32_t weDelay = MAX(wc, 3 * cycleTime) - weTime - cycleTime;
+  const uint32_t aaTime = MAX(rc, cycle);
+  const uint32_t weTime = MAX(we, cycle);
+  const uint32_t weDelay = MAX(wc, 3 * cycle) - weTime - cycle;
 
   /* Results are in HCLK ticks */
-  const uint32_t oeTicks = (oe + (cycleTime - 1)) / cycleTime;
-  assert(oeTicks < 16);
-  const uint32_t rdTicks = (aaTime + (cycleTime - 1)) / cycleTime - 1;
-  assert(rdTicks < 32);
-  const uint32_t weTicks = (weDelay + (cycleTime - 1)) / cycleTime - 1;
-  assert(weTicks < 16);
-  const uint32_t wrTicks = (weDelay + weTime + (cycleTime - 1)) / cycleTime - 2;
-  assert(wrTicks < 32);
+  const uint32_t oeTicks = (oe + (cycle - 1)) / cycle;
+  assert(oeTicks <= STATICWAITOEN_MAX);
+  const uint32_t rdTicks = (aaTime + (cycle - 1)) / cycle - 1;
+  assert(rdTicks <= STATICWAITRD_MAX);
+  const uint32_t weTicks = (weDelay + (cycle - 1)) / cycle - 1;
+  assert(weTicks <= STATICWAITWEN_MAX);
+  const uint32_t wrTicks = (weDelay + weTime + (cycle - 1)) / cycle - 2;
+  assert(wrTicks <= STATICWAITWR_MAX);
 
-  LPC_EMC->STATIC[memory->channel].CONFIG = configValue;
-  LPC_EMC->STATIC[memory->channel].WAITOEN = oeTicks;
-  LPC_EMC->STATIC[memory->channel].WAITRD = rdTicks;
-  LPC_EMC->STATIC[memory->channel].WAITWEN = weTicks;
-  LPC_EMC->STATIC[memory->channel].WAITWR = wrTicks;
-  LPC_EMC->STATIC[memory->channel].WAITTURN = 0;
+  LPC_EMC->STATIC[channel].CONFIG = staticMemoryConfig;
+  LPC_EMC->STATIC[channel].WAITOEN = oeTicks;
+  LPC_EMC->STATIC[channel].WAITRD = rdTicks;
+  LPC_EMC->STATIC[channel].WAITWEN = weTicks;
+  LPC_EMC->STATIC[channel].WAITWR = wrTicks;
+  LPC_EMC->STATIC[channel].WAITTURN = 0;
 
   return E_OK;
 }

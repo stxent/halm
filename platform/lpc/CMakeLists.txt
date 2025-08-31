@@ -74,6 +74,7 @@ if(CONFIG_PLATFORM_LPC_EEPROM)
 endif()
 
 if(CONFIG_PLATFORM_LPC_EMC)
+    list(APPEND SOURCE_FILES "emc_sdram.c")
     list(APPEND SOURCE_FILES "emc_sram.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/emc_base.c")
 endif()

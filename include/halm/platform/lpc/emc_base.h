@@ -30,6 +30,7 @@ BEGIN_DECLS
 uint32_t emcGetClock(void);
 void *emcGetDynamicMemoryAddress(uint8_t);
 void *emcGetStaticMemoryAddress(uint8_t);
+void emcSetClockDelay(uint32_t);
 bool emcSetDynamicMemoryDescriptor(uint8_t, const struct Entity *,
     struct Entity *);
 bool emcSetStaticMemoryDescriptor(uint8_t, const struct Entity *,

@@ -9,6 +9,7 @@
 #include <halm/platform/lpc/system.h>
 #include <halm/platform/platform_defs.h>
 #include <xcore/asm.h>
+#include <assert.h>
 /*----------------------------------------------------------------------------*/
 static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch);
 /*----------------------------------------------------------------------------*/
@@ -32,6 +33,16 @@ void sysClockDisable(enum SysClockBranch branch)
   /* Use AHB disable protocol and do not enable clock after wake up */
   reg->CFG = (reg->CFG & ~CFG_WAKEUP) | CFG_AUTO;
   reg->CFG &= ~CFG_RUN; /* Disable clock */
+}
+/*----------------------------------------------------------------------------*/
+void sysClockSetDivider(enum SysClockBranch branch, uint32_t value)
+{
+  assert(branch == CLK_M4_EMCDIV);
+  assert(value >= 1 && value <= 2);
+
+  LPC_CCU_BRANCH_Type * const reg = calcBranchReg(branch);
+
+  reg->CFG = (reg->CFG & ~CFG_DIV_MASK) | CFG_DIV(value - 1);
 }
 /*----------------------------------------------------------------------------*/
 bool sysClockStatus(enum SysClockBranch branch)

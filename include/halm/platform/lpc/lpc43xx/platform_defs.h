@@ -648,10 +648,10 @@ typedef struct
   __ne__ uint32_t RESERVED16[276];
 
   /* Offset 0x0C00 */
-  __rw__ uint32_t SFSPCLK0;
-  __rw__ uint32_t SFSPCLK1;
-  __rw__ uint32_t SFSPCLK2;
-  __rw__ uint32_t SFSPCLK3;
+  __rw__ uint32_t SFSCLK0;
+  __rw__ uint32_t SFSCLK1;
+  __rw__ uint32_t SFSCLK2;
+  __rw__ uint32_t SFSCLK3;
   __ne__ uint32_t RESERVED17[28];
 
   /* Offset 0x0C80 */
