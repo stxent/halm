@@ -157,22 +157,22 @@ static void configMemoryTimings(const struct EmcSdramConfig *config)
   const uint32_t cycle = 1000000000UL / frequency;
   uint32_t ticks;
 
-  /* Configure timings, results are in HCLK ticks */
+  /* Configure timings, results are in EMC_CCLK ticks */
 
-  ticks = timeToTicks(config->timings.rp, cycle);
+  ticks = timeToTicks(MAX(config->timings.rp, 1), cycle) - 1;
   assert(ticks <= DYNAMICRP_MAX);
   LPC_EMC->DYNAMICRP = ticks;
 
-  ticks = timeToTicks(config->timings.ras, cycle);
+  ticks = timeToTicks(MAX(config->timings.ras, 1), cycle) - 1;
   assert(ticks <= DYNAMICRAS_MAX);
   LPC_EMC->DYNAMICRAS = ticks;
 
-  ticks = timeToTicks(config->timings.xsr, cycle);
+  ticks = timeToTicks(MAX(config->timings.xsr, 1), cycle) - 1;
   assert(ticks <= DYNAMICSREX_MAX && ticks <= DYNAMICXSR_MAX);
   LPC_EMC->DYNAMICSREX = ticks;
   LPC_EMC->DYNAMICXSR = ticks;
 
-  ticks = timeToTicks(config->timings.apr, cycle);
+  ticks = timeToTicks(MAX(config->timings.apr, 1), cycle) - 1;
   assert(ticks <= DYNAMICAPR_MAX);
   LPC_EMC->DYNAMICAPR = ticks;
 
@@ -180,20 +180,20 @@ static void configMemoryTimings(const struct EmcSdramConfig *config)
   assert(ticks <= DYNAMICDAL_MAX);
   LPC_EMC->DYNAMICDAL = ticks;
 
-  ticks = timeToTicks(config->timings.wr, cycle);
+  ticks = timeToTicks(MAX(config->timings.wr, 1), cycle) - 1;
   assert(ticks <= DYNAMICWR_MAX);
   LPC_EMC->DYNAMICWR = ticks;
 
-  ticks = timeToTicks(config->timings.rc, cycle);
+  ticks = timeToTicks(MAX(config->timings.rc, 1), cycle) - 1;
   assert(ticks <= DYNAMICRC_MAX && ticks <= DYNAMICRFC_MAX);
   LPC_EMC->DYNAMICRC = ticks;
   LPC_EMC->DYNAMICRFC = ticks;
 
-  ticks = timeToTicks(config->timings.rrd, cycle);
+  ticks = timeToTicks(MAX(config->timings.rrd, 1), cycle) - 1;
   assert(ticks <= DYNAMICRRD_MAX);
   LPC_EMC->DYNAMICRRD = ticks;
 
-  ticks = timeToTicks(config->timings.mrd, cycle);
+  ticks = timeToTicks(MAX(config->timings.mrd, 1), cycle) - 1;
   assert(ticks <= DYNAMICMRD_MAX);
   LPC_EMC->DYNAMICMRD = ticks;
 }
@@ -235,7 +235,6 @@ static void issueConfigSequence(struct EmcSdram *memory,
   ticks = (timeToTicks(config->timings.refresh, cycle) + 15) / 16;
   assert(ticks <= DYNAMICREFRESH_MAX);
   LPC_EMC->DYNAMICREFRESH = ticks;
-//  udelay((config->timings.refresh + 999) / 1000);
 
   /* Issue MODE command */
   LPC_EMC->DYNAMICCONTROL = DYNAMICCONTROL_CE | DYNAMICCONTROL_CS
@@ -253,16 +252,8 @@ static void issueConfigSequence(struct EmcSdram *memory,
 static inline uint32_t timeToTicks(uint32_t time, uint32_t cycle)
 {
   /* Calculations are in 100 ps resolution */
-  return ((10 * time) + (cycle - 1)) / cycle;
+  return (time * 10 + (cycle - 1)) / cycle;
 }
-
-#define SDRAM_ADDR_BASE 0x28000000      /* SDRAM base address                 */
-/* Write Mode register macro                                                  */
-#define WR_MODE(x) (*((volatile uint32_t *)(SDRAM_ADDR_BASE | (x))))
-
-#define EMC_NANOSEC(ns, freq, div) (((uint64_t)(ns) * ((freq)/((div)+1)))/1000000000)
-#define SystemCoreClock 25500000
-#define EMC_PIN_SET ((1 << 7) | (1 << 6) | (1 << 5) | (1 << 4))
 /*----------------------------------------------------------------------------*/
 static enum Result sdramInit(void *object, const void *configBase)
 {

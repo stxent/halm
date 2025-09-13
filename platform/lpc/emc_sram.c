@@ -10,6 +10,8 @@
 #include <xcore/helpers.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
+static inline uint32_t timeToTicks(uint32_t, uint32_t);
+
 static enum Result sramInit(void *, const void *);
 
 #ifndef CONFIG_PLATFORM_LPC_EMC_NO_DEINIT
@@ -31,12 +33,16 @@ extern const struct EmcPinDescription emcControlPinMap;
 extern const struct PinGroupEntry emcDataPins[];
 extern const PinNumber emcDataPinMap[];
 /*----------------------------------------------------------------------------*/
+static inline uint32_t timeToTicks(uint32_t time, uint32_t cycle)
+{
+  /* Calculations are in 100 ps resolution */
+  return (time * 10 + (cycle - 1)) / cycle;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result sramInit(void *object, const void *configBase)
 {
   const struct EmcSramConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->timings.rc >= config->timings.oe);
-  assert(config->timings.wc >= config->timings.we);
   assert(config->width.data == 8 || config->width.data == 16
       || config->width.data == 32);
 
@@ -55,7 +61,7 @@ static enum Result sramInit(void *object, const void *configBase)
   struct Pin pin;
 
   /* Address bus */
-  for (size_t index = 0; index < config->width.address; ++index)
+  for (size_t index = (byteLanes >> 1); index < config->width.address; ++index)
   {
     group = pinGroupFind(emcAddressPins, emcAddressPinMap[index],
         EMC_PIN_CHANNEL_DEFAULT);
@@ -92,7 +98,7 @@ static enum Result sramInit(void *object, const void *configBase)
   }
 
   /* Write Enable pin */
-  if (config->partitioned)
+  if (config->useWriteEnable)
   {
     group = pinGroupFind(emcControlPins, emcControlPinMap.we,
         EMC_PIN_CHANNEL_DEFAULT);
@@ -108,9 +114,11 @@ static enum Result sramInit(void *object, const void *configBase)
   pinOutput((pin = pinInit(emcControlPinMap.cs[config->channel])), true);
   pinSetFunction(pin, group->value);
 
-  uint32_t staticMemoryConfig = STATICCONFIG_B;
+  uint32_t staticMemoryConfig = 0;
 
-  if (config->partitioned)
+  if (config->buffering)
+    staticMemoryConfig |= STATICCONFIG_B;
+  if (config->useWriteEnable)
     staticMemoryConfig |= STATICCONFIG_PB;
 
   switch (byteLanes)
@@ -131,32 +139,41 @@ static enum Result sramInit(void *object, const void *configBase)
   const uint32_t frequency = emcGetClock() / 10;
   const uint32_t cycle = 1000000000UL / frequency;
 
-  /* Calculations are in 100 ps resolution */
-  const uint32_t oe = 10 * config->timings.oe;
-  const uint32_t rc = 10 * config->timings.rc;
-  const uint32_t wc = 10 * config->timings.wc;
-  const uint32_t we = 10 * config->timings.we;
-
-  const uint32_t aaTime = MAX(rc, cycle);
-  const uint32_t weTime = MAX(we, cycle);
-  const uint32_t weDelay = MAX(wc, 3 * cycle) - weTime - cycle;
-
-  /* Results are in HCLK ticks */
-  const uint32_t oeTicks = (oe + (cycle - 1)) / cycle;
+  /* Results are in EMC_CCLK ticks */
+  const uint32_t oeTicks = timeToTicks(MAX(config->timings.oe, 1), cycle) - 1;
   assert(oeTicks <= STATICWAITOEN_MAX);
-  const uint32_t rdTicks = (aaTime + (cycle - 1)) / cycle - 1;
-  assert(rdTicks <= STATICWAITRD_MAX);
-  const uint32_t weTicks = (weDelay + (cycle - 1)) / cycle - 1;
-  assert(weTicks <= STATICWAITWEN_MAX);
-  const uint32_t wrTicks = (weDelay + weTime + (cycle - 1)) / cycle - 2;
-  assert(wrTicks <= STATICWAITWR_MAX);
 
-  LPC_EMC->STATIC[channel].CONFIG = staticMemoryConfig;
-  LPC_EMC->STATIC[channel].WAITOEN = oeTicks;
-  LPC_EMC->STATIC[channel].WAITRD = rdTicks;
+  const uint32_t weTicks = timeToTicks(MAX(config->timings.we, 1), cycle) - 1;
+  assert(weTicks <= STATICWAITWEN_MAX);
+
+  const uint32_t taTicks =
+      timeToTicks(MAX(config->timings.turnaround, 1), cycle) - 1;
+  assert(taTicks <= STATICWAITTURN_MAX);
+
+  const uint32_t rdTicks = timeToTicks(MAX(config->timings.rd, 1), cycle) - 1;
+  const uint32_t wrTicks = timeToTicks(MAX(config->timings.wr, 1), cycle) - 1;
+
+  if (rdTicks > STATICWAITRD_MAX || wrTicks > STATICWAITWR_MAX)
+  {
+    const uint32_t extendedWaitTicks = MAX(rdTicks, wrTicks);
+    assert(extendedWaitTicks <= STATICEXTENDEDWAIT_MAX);
+
+    staticMemoryConfig |= STATICCONFIG_EW;
+    LPC_EMC->STATICEXTENDEDWAIT = extendedWaitTicks;
+    LPC_EMC->STATIC[channel].WAITRD = 0;
+    LPC_EMC->STATIC[channel].WAITWR = 0;
+  }
+  else
+  {
+    LPC_EMC->STATICEXTENDEDWAIT = 0;
+    LPC_EMC->STATIC[channel].WAITRD = rdTicks;
+    LPC_EMC->STATIC[channel].WAITWR = MIN(wrTicks - 1, STATICWAITWR_MAX);
+  }
+
   LPC_EMC->STATIC[channel].WAITWEN = weTicks;
-  LPC_EMC->STATIC[channel].WAITWR = wrTicks;
-  LPC_EMC->STATIC[channel].WAITTURN = 0;
+  LPC_EMC->STATIC[channel].WAITOEN = oeTicks;
+  LPC_EMC->STATIC[channel].WAITTURN = taTicks;
+  LPC_EMC->STATIC[channel].CONFIG = staticMemoryConfig;
 
   return E_OK;
 }
