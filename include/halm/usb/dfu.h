@@ -31,11 +31,12 @@ struct Dfu
 
   void *callbackArgument;
   void (*onDetachRequest)(void *, uint16_t);
-  size_t (*onDownloadRequest)(void *, size_t, const void *, size_t, uint16_t *);
-  size_t (*onUploadRequest)(void *, size_t, void *, size_t);
+  size_t (*onDownloadRequest)(void *, uint32_t, const void *, size_t,
+      uint16_t *);
+  size_t (*onUploadRequest)(void *, uint32_t, void *, size_t);
 
   /* Current offset */
-  size_t position;
+  uint32_t position;
   /* Maximum transfer size */
   uint16_t transferSize;
 
@@ -56,9 +57,9 @@ void dfuOnDownloadCompleted(struct Dfu *, bool);
 void dfuSetCallbackArgument(struct Dfu *, void *);
 void dfuSetDetachRequestCallback(struct Dfu *, void (*)(void *, uint16_t));
 void dfuSetDownloadRequestCallback(struct Dfu *,
-    size_t (*)(void *, size_t, const void *, size_t, uint16_t *));
+    size_t (*)(void *, uint32_t, const void *, size_t, uint16_t *));
 void dfuSetUploadRequestCallback(struct Dfu *,
-    size_t (*)(void *, size_t, void *, size_t));
+    size_t (*)(void *, uint32_t, void *, size_t));
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

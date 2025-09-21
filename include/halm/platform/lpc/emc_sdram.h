@@ -67,6 +67,8 @@ struct EmcSdram
 
   /* Starting address of the memory bank */
   void *address;
+  /* Memory size */
+  uint32_t size;
   /* Peripheral identifier */
   uint8_t channel;
 };
@@ -76,6 +78,11 @@ BEGIN_DECLS
 static inline void *emcSdramAddress(const struct EmcSdram *memory)
 {
   return memory->address;
+}
+
+static inline size_t emcSdramSize(const struct EmcSdram *memory)
+{
+  return (size_t)memory->size;
 }
 
 END_DECLS

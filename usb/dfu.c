@@ -529,13 +529,13 @@ void dfuSetDetachRequestCallback(struct Dfu *driver,
 }
 /*----------------------------------------------------------------------------*/
 void dfuSetDownloadRequestCallback(struct Dfu *driver,
-    size_t (*callback)(void *, size_t, const void *, size_t, uint16_t *))
+    size_t (*callback)(void *, uint32_t, const void *, size_t, uint16_t *))
 {
   driver->onDownloadRequest = callback;
 }
 /*----------------------------------------------------------------------------*/
 void dfuSetUploadRequestCallback(struct Dfu *driver,
-    size_t (*callback)(void *, size_t, void *, size_t))
+    size_t (*callback)(void *, uint32_t, void *, size_t))
 {
   driver->onUploadRequest = callback;
 }

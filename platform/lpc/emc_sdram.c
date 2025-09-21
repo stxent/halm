@@ -369,9 +369,10 @@ static enum Result sdramInit(void *object, const void *configBase)
   /* Configure address mapping */
 
   const uint32_t width = config->width.device >> 3;
-  const uint32_t size = (1UL << (config->rows + config->columns))
+  memory->size = (1UL << (config->rows + config->columns))
       * config->banks * width;
-  uint32_t sizeMapping = 9 - countLeadingZeros32(size);
+
+  uint32_t sizeMapping = 9 - countLeadingZeros32(memory->size);
   uint32_t widthMapping = width >> 1;
 
   if (sizeMapping > 7)

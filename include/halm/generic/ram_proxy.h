@@ -35,7 +35,7 @@ struct RamProxy
   uint8_t *arena;
   size_t capacity;
   size_t granule;
-  size_t position;
+  uintptr_t position;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_GENERIC_RAM_PROXY_H_ */

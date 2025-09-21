@@ -64,7 +64,7 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
   switch ((enum FlashParameter)parameter)
   {
     case IF_FLASH_SECTOR_SIZE:
-      *(uint32_t *)data = interface->granule;
+      *(uint32_t *)data = (uint32_t)interface->granule;
       return E_OK;
 
     default:
@@ -74,19 +74,19 @@ static enum Result interfaceGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_POSITION:
-      *(uint32_t *)data = interface->position;
+      *(uint32_t *)data = (uint32_t)interface->position;
       return E_OK;
 
     case IF_POSITION_64:
-      *(uint64_t *)data = (uint64_t)interface->position;
+      *(uint64_t *)data = interface->position;
       return E_OK;
 
     case IF_SIZE:
-      *(uint32_t *)data = interface->capacity;
+      *(uint32_t *)data = (uint32_t)interface->capacity;
       return E_OK;
 
     case IF_SIZE_64:
-      *(uint64_t *)data = (uint64_t)interface->capacity;
+      *(uint64_t *)data = interface->capacity;
       return E_OK;
 
     case IF_STATUS:
@@ -129,7 +129,7 @@ static enum Result interfaceSetParam(void *object, int parameter,
 
       if (address < interface->capacity)
       {
-        interface->position = *(uint32_t *)data;
+        interface->position = address;
         return E_OK;
       }
       else
@@ -140,9 +140,9 @@ static enum Result interfaceSetParam(void *object, int parameter,
     {
       const uint64_t address = *(const uint64_t *)data;
 
-      if (address < (uint64_t)interface->capacity)
+      if (address < interface->capacity)
       {
-        interface->position = (uint32_t)*(uint32_t *)data;
+        interface->position = (uintptr_t)address;
         return E_OK;
       }
       else
