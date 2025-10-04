@@ -261,6 +261,11 @@ static enum Result workQueueStart(void *object)
   irqRestore(state);
 #endif
 
+#ifdef CONFIG_GENERIC_WQ_LOAD
+  wq->loops = 0;
+  wq->previous = 0;
+#endif
+
   while (WQ_RUNNING(wq))
   {
 #if defined(CONFIG_GENERIC_WQ_PM) && !defined(CONFIG_GENERIC_WQ_LOAD)
