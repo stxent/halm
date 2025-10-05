@@ -15,6 +15,21 @@
 #  define PLATFORM        imxrt106x
 #  define PLATFORM_TYPE   imxrt
 
+#elif defined(LPC82X)
+
+#  define GEN_ADC         gen_2
+#  define GEN_BOD         gen_1
+#  define GEN_FLASH       gen_1
+#  define GEN_I2C         gen_2
+#  define GEN_PIN         lpc82x
+#  define GEN_PINBUS      gen_2
+#  define GEN_PININT      gen_3
+#  define GEN_SPI         gen_2
+#  define GEN_UART        gen_2
+#  define NVIC_IRQ_BITS   2
+#  define PLATFORM        lpc82x
+#  define PLATFORM_TYPE   lpc
+
 #elif defined(LPC11XX)
 
 #  define GEN_ADC         gen_1

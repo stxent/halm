@@ -36,6 +36,10 @@ choice
 		bool "NXP i.MX RT106x"
 		depends on CORE_CORTEX_M7
 
+	config FAMILY_LPC82X
+		bool "NXP LPC82X"
+		depends on CORE_CORTEX_M0P
+
 	config FAMILY_LPC11XX
 		bool "NXP LPC11xx"
 		depends on CORE_CORTEX_M0

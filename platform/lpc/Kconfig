@@ -1,10 +1,11 @@
 config GEN_ADC
 	string
 	default "gen_1" if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+	default "gen_2" if FAMILY_LPC82X
 
 config GEN_BOD
 	string
-	default "gen_1" if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
+	default "gen_1" if FAMILY_LPC82X || FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
 	default "lpc17xx" if FAMILY_LPC17XX
 	default "lpc43xx" if FAMILY_LPC43XX
 
@@ -25,30 +26,32 @@ config GEN_DAC
 
 config GEN_FLASH
 	string
-	default "gen_1" if FAMILY_LPC11EXX || FAMILY_LPC11XX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX
+	default "gen_1" if FAMILY_LPC82X || FAMILY_LPC11EXX || FAMILY_LPC11XX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX
 	default "lpc43xx" if FAMILY_LPC43XX
 
 config GEN_I2C
 	string
 	default "gen_1" if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+	default "gen_2" if FAMILY_LPC82X
 
 config GEN_PIN
 	string
 	default "gen_2" if FAMILY_LPC11XX || FAMILY_LPC13XX
 	default "gen_3" if FAMILY_LPC11EXX || FAMILY_LPC13UXX
+	default "lpc82x" if FAMILY_LPC82X
 	default "lpc17xx" if FAMILY_LPC17XX
 	default "lpc43xx" if FAMILY_LPC43XX
 
 config GEN_PINBUS
 	string
 	default "gen_2" if FAMILY_LPC11XX || FAMILY_LPC13XX
-	default "gen_3" if FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX
+	default "gen_3" if FAMILY_LPC82X || FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX
 	default "lpc17xx" if FAMILY_LPC17XX
 
 config GEN_PININT
 	string
 	default "gen_2" if FAMILY_LPC11XX || FAMILY_LPC13XX
-	default "gen_3" if FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX
+	default "gen_3" if FAMILY_LPC82X || FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX
 	default "lpc17xx" if FAMILY_LPC17XX
 
 config GEN_RTC
@@ -58,10 +61,12 @@ config GEN_RTC
 config GEN_SPI
 	string
 	default "gen_1" if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+	default "gen_2" if FAMILY_LPC82X
 
 config GEN_UART
 	string
 	default "gen_1" if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX || FAMILY_LPC17XX || FAMILY_LPC43XX
+	default "gen_2" if FAMILY_LPC82X
 
 menu "Power settings"
 
@@ -321,6 +326,7 @@ config PLATFORM_LPC_GPDMA_SYNC
 config PLATFORM_LPC_GPTIMER_BASE
 	bool "General Purpose Timer"
 	default y
+	depends on !FAMILY_LPC82X
 
 config PLATFORM_LPC_GPTIMER_NO_DEINIT
 	bool
@@ -458,7 +464,7 @@ config PLATFORM_LPC_IAP
 config PLATFORM_LPC_PININT_BASE
 	bool
 	default y
-	depends on PLATFORM_LPC_PININT && (FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX)
+	depends on PLATFORM_LPC_PININT && (FAMILY_LPC82X || FAMILY_LPC11EXX || FAMILY_LPC13UXX || FAMILY_LPC43XX)
 
 config PLATFORM_LPC_PININT
 	bool "Pin Interrupts"
@@ -503,7 +509,7 @@ config PLATFORM_LPC_SDMMC_PM
 config PLATFORM_LPC_SCT_BASE
 	bool "SCT"
 	default y
-	depends on FAMILY_LPC43XX
+	depends on FAMILY_LPC82X || FAMILY_LPC43XX
 	help
 	  This is the driver for the State Configurable Timer peripheral.
 
@@ -540,6 +546,7 @@ config PLATFORM_LPC_SGPIO_NO_DEINIT
 config PLATFORM_LPC_SSP_BASE
 	bool "SSP"
 	default y
+	depends on !FAMILY_LPC82X
 	help
 	  This is the driver for the Synchronous Serial Port peripheral.
 
