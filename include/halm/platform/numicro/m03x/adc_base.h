@@ -21,7 +21,6 @@ enum [[gnu::packed]] AdcEvent
   ADC_TIMER     = 1,
   ADC_BPWM      = 2,
   ADC_PWM       = 3,
-  ADC_SOFTWARE  = 4,
   ADC_EVENT_END
 };
 

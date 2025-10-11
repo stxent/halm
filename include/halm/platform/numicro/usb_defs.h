@@ -8,6 +8,7 @@
 #define HALM_PLATFORM_NUMICRO_USB_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
+#include <xcore/helpers.h>
 /*------------------Interrupt Enable register---------------------------------*/
 #define INTEN_BUSIEN                    BIT(0)
 #define INTEN_USBIEN                    BIT(1)
@@ -99,5 +100,30 @@ enum
 #define CFGP_SSTALL                     BIT(1)
 /*----------------------------------------------------------------------------*/
 #define EP_TO_NUMBER(ep)                ((ep) & 0x0F)
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+static inline unsigned int usbEpCountTrailingZeros8(uint32_t value)
+{
+  /* It is assumed that the input value is not zero */
+  unsigned int result = 1;
+
+  if ((value & 0x0F) == 0)
+  {
+    result += 4;
+    value >>= 4;
+  }
+
+  if ((value & 0x03) == 0)
+  {
+    result += 2;
+    value >>= 2;
+  }
+
+  result -= value & 0x01;
+  return result;
+}
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_USB_DEFS_H_ */

@@ -113,7 +113,7 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct EadcConfig * const config = configBase;
   assert(config != NULL);
   assert(config->pins != NULL);
-  assert(config->event != ADC_SOFTWARE && config->event < ADC_EVENT_END);
+  assert(config->event != ADC_EVENT_RESERVED && config->event < ADC_EVENT_END);
   assert(config->sensitivity != INPUT_HIGH && config->sensitivity != INPUT_LOW);
 
   const struct EadcBaseConfig baseConfig = {

@@ -11,6 +11,7 @@
 #include <halm/usb/usb_control.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
+#include <xcore/accel.h>
 #include <assert.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/

@@ -197,13 +197,24 @@ static void interruptHandler(void *object)
       epHandleSetupPacket(device->endpoints[CONTROL_OUT]);
     }
 
-    usbEpFlagsIterate(epHandlePacket, device->endpoints,
-        INTSTS_EPEVT_VALUE(intStatus));
+    uint32_t epStatus = INTSTS_EPEVT_VALUE(intStatus);
+
+    while (epStatus)
+    {
+#ifdef XCORE_ACCEL_CLZ
+      const unsigned int index = 31 - countLeadingZeros32(epStatus);
+#else
+      const unsigned int index = usbEpCountTrailingZeros8(epStatus);
+#endif
+
+      epHandlePacket(device->endpoints[index]);
+      epStatus -= 1UL << index;
+    }
   }
 
   if (intStatus & INTSTS_NEVWKIF)
   {
-    // TODO USB wakeup handling
+    // TODO Nuvoton USB wakeup handling
   }
 }
 /*----------------------------------------------------------------------------*/

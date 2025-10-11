@@ -15,6 +15,10 @@ set(HALM_CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE FILEPATH "Path to the
 
 # Default compiler flags
 
+if(PROJECT_IS_TOP_LEVEL)
+    set(CMAKE_C_STANDARD 23)
+endif()
+
 if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
     if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
         set(CMAKE_C_COMPILE_OPTIONS_IPO -flto=auto -ffat-lto-objects)
