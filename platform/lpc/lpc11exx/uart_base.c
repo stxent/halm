@@ -83,8 +83,10 @@ void UART_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *)
 {
-  const uint32_t frequency = clockFrequency(MainClock);
-  return frequency * LPC_SYSCON->SYSAHBCLKDIV / LPC_SYSCON->UARTCLKDIV;
+  const uint32_t frequency = clockFrequency(SystemClock);
+  const uint32_t divisor = LPC_SYSCON->UARTCLKDIV;
+
+  return divisor ? frequency / divisor : 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result uartInit(void *object, const void *configBase)
@@ -100,7 +102,7 @@ static enum Result uartInit(void *object, const void *configBase)
   uartConfigPins(config);
 
   sysClockEnable(CLK_USART);
-  LPC_SYSCON->UARTCLKDIV = LPC_SYSCON->SYSAHBCLKDIV;
+  LPC_SYSCON->UARTCLKDIV = 1;
 
   interface->channel = 0;
   interface->handler = NULL;

@@ -13,6 +13,12 @@ config GEN_CAN
 	default "gen_1" if FAMILY_LPC17XX
 	default "gen_2" if FAMILY_LPC11EXX || FAMILY_LPC43XX
 
+config GEN_CLOCK
+	string
+	default "gen_2" if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
+	default "lpc17xx" if FAMILY_LPC17XX
+	default "lpc43xx" if FAMILY_LPC43XX
+
 config GEN_DAC
 	string
 	default "gen_1" if FAMILY_LPC17XX || FAMILY_LPC43XX

@@ -58,9 +58,9 @@ typedef struct
   __ne__ uint32_t RESERVED11[5];
 
   /* Offset 0x00E0 */
-  __rw__ uint32_t CLKOUTSEL;
+  __rw__ uint32_t CLKOUTCLKSEL;
   __rw__ uint32_t RESERVED12;
-  __rw__ uint32_t CLKOUTDIV;
+  __rw__ uint32_t CLKOUTCLKDIV;
   __ne__ uint32_t RESERVED13[5];
 
   /* Offset 0x0100 */

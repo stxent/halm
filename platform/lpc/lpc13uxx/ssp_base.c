@@ -116,11 +116,11 @@ void SSP1_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t sspGetClock(const struct SspBase *interface)
 {
-  const uint32_t frequency = clockFrequency(MainClock);
-  const uint32_t divider = interface->channel == 0 ?
+  const uint32_t frequency = clockFrequency(SystemClock);
+  const uint32_t divisor = interface->channel == 0 ?
       LPC_SYSCON->SSP0CLKDIV : LPC_SYSCON->SSP1CLKDIV;
 
-  return frequency * LPC_SYSCON->SYSAHBCLKDIV / divider;
+  return divisor ? frequency / divisor : 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result sspInit(void *object, const void *configBase)
@@ -138,7 +138,7 @@ static enum Result sspInit(void *object, const void *configBase)
   {
     case 0:
       sysClockEnable(CLK_SSP0);
-      LPC_SYSCON->SSP0CLKDIV = LPC_SYSCON->SYSAHBCLKDIV;
+      LPC_SYSCON->SSP0CLKDIV = 1;
       LPC_SYSCON->PRESETCTRL |= PRESETCTRL_SSP0;
       interface->irq = SSP0_IRQ;
       interface->reg = LPC_SSP0;
@@ -146,7 +146,7 @@ static enum Result sspInit(void *object, const void *configBase)
 
     case 1:
       sysClockEnable(CLK_SSP1);
-      LPC_SYSCON->SSP1CLKDIV = LPC_SYSCON->SYSAHBCLKDIV;
+      LPC_SYSCON->SSP1CLKDIV = 1;
       LPC_SYSCON->PRESETCTRL |= PRESETCTRL_SSP1;
       interface->irq = SSP1_IRQ;
       interface->reg = LPC_SSP1;

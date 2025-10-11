@@ -7,8 +7,8 @@ string(TOLOWER ${_platform_soc} CMAKE_SYSTEM_SOC)
 
 list(APPEND SOURCE_FILES "../pin.c")
 list(APPEND SOURCE_FILES "startup.c")
+list(APPEND SOURCE_FILES "${CONFIG_GEN_CLOCK}/clocking.c")
 list(APPEND SOURCE_FILES "${CONFIG_GEN_PIN}/pin.c")
-list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/clocking.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/system.c")
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_SYSTEM_SOC}/startup.c")

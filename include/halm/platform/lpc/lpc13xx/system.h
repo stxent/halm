@@ -56,7 +56,9 @@ enum [[gnu::packed]] SysClockBranch
 BEGIN_DECLS
 
 unsigned int sysFlashLatency(void);
+unsigned int sysFlashLatencyFromFrequency(uint32_t);
 void sysFlashLatencyUpdate(unsigned int);
+void sysFlashLatencyReset(void);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

@@ -197,7 +197,7 @@ static uint32_t extOscFrequency(const void *)
 /*----------------------------------------------------------------------------*/
 static bool extOscReady(const void *)
 {
-  return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT) != 0;
+  return extFrequency && (LPC_SC->SCS & SCS_OSCSTAT);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t intOscFrequency(const void *)

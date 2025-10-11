@@ -5,7 +5,7 @@
     "blocks":
     [
       {"offset": "0x00000", "name": "I2C", "type": "LPC_I2C_Type"},
-      {"offset": "0x04000", "name": "WDT", "type": "LPC_WDT_Type"},
+      {"offset": "0x04000", "name": "WWDT", "type": "LPC_WWDT_Type"},
       {"offset": "0x08000", "name": "USART", "type": "LPC_USART_Type"},
       {"offset": "0x0C000", "name": "CT16B0", "type": "LPC_TIMER_Type"},
       {"offset": "0x10000", "name": "CT16B1", "type": "LPC_TIMER_Type"},
