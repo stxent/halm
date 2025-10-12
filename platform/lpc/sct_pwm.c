@@ -343,7 +343,7 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   if (unit->base.part == SCT_UNIFIED)
     pwm->value = &reg->MATCHREL[pwm->event];
   else
-    pwm->value = &reg->MATCHREL_PART[pwm->event][unit->base.part];
+    pwm->value = &reg->MATCHREL_PART[pwm->event][part];
 
   /* Enable match mode for match/capture registers */
   reg->REGMODE_PART[part] &= ~(1 << pwm->event);
@@ -538,8 +538,8 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   }
   else
   {
-    pwm->leading = &reg->MATCHREL_PART[pwm->leadingEvent][unit->base.part];
-    pwm->trailing = &reg->MATCHREL_PART[pwm->trailingEvent][unit->base.part];
+    pwm->leading = &reg->MATCHREL_PART[pwm->leadingEvent][part];
+    pwm->trailing = &reg->MATCHREL_PART[pwm->trailingEvent][part];
   }
 
   /* Enable match mode for match/capture registers */

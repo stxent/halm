@@ -25,7 +25,7 @@ struct TimerHandler
 };
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(void);
-static enum Result timerHandlerAttach(enum SctPart, struct SctBase *);
+static bool timerHandlerAttach(enum SctPart, struct SctBase *);
 
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
 static void timerHandlerDetach(enum SctPart);
@@ -391,30 +391,30 @@ static bool timerHandlerActive(void)
   return instance.parts[0] != NULL || instance.parts[1] != NULL;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result timerHandlerAttach(enum SctPart timerPart,
-    struct SctBase *timer)
+static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
 {
-  enum Result res = E_OK;
+  bool attached = false;
 
   if (timerPart == SCT_UNIFIED)
   {
     if (instance.parts[0] == NULL && instance.parts[1] == NULL)
+    {
       instance.parts[0] = timer;
-    else
-      res = E_BUSY;
+      attached = true;
+    }
   }
   else
   {
     const unsigned int part = timerPart == SCT_HIGH;
 
-    // TODO Handle case when unified part already exists
     if (instance.parts[part] == NULL)
+    {
       instance.parts[part] = timer;
-    else
-      res = E_BUSY;
+      attached = true;
+    }
   }
 
-  return res;
+  return attached;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
@@ -545,9 +545,7 @@ static enum Result tmrInit(void *object, const void *configBase)
       return E_BUSY;
   }
 
-  const enum Result res = timerHandlerAttach(config->part, timer);
-
-  if (res == E_OK)
+  if (timerHandlerAttach(config->part, timer))
   {
     timer->channel = config->channel;
     timer->handler = NULL;
@@ -567,9 +565,10 @@ static enum Result tmrInit(void *object, const void *configBase)
     }
 
     reg->CONFIG = (reg->CONFIG & ~CONFIG_SHARED_MASK) | value;
+    return E_OK;
   }
 
-  return res;
+  return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_LPC_SCT_NO_DEINIT
