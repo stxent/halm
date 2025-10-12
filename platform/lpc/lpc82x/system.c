@@ -12,6 +12,11 @@ unsigned int sysFlashLatency(void)
   return FLASHCFG_FLASHTIM_VALUE(LPC_FMC->FLASHCFG) + 1;
 }
 /*----------------------------------------------------------------------------*/
+unsigned int sysFlashLatencyFromFrequency(uint32_t)
+{
+  return 1;
+}
+/*----------------------------------------------------------------------------*/
 /**
  * Set the flash access time.
  * @param value Flash access time in CPU clocks.
@@ -22,4 +27,13 @@ void sysFlashLatencyUpdate(unsigned int value)
 {
   LPC_FMC->FLASHCFG = (LPC_FMC->FLASHCFG & ~FLASHCFG_FLASHTIM_MASK)
       | FLASHCFG_FLASHTIM(value - 1);
+}
+/*----------------------------------------------------------------------------*/
+void sysFlashLatencyReset(void)
+{
+}
+/*----------------------------------------------------------------------------*/
+void sysMemoryRemap(enum MemoryRemap value)
+{
+  LPC_SYSCON->SYSMEMREMAP = SYSMEMREMAP_MAP(value);
 }

@@ -160,6 +160,11 @@ if(CONFIG_PLATFORM_LPC_IAP)
     list(APPEND SOURCE_FILES "iap.c")
 endif()
 
+if(CONFIG_PLATFORM_LPC_MRT)
+    list(APPEND SOURCE_FILES "mrt.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/mrt_base.c")
+endif()
+
 if(CONFIG_PLATFORM_LPC_PININT_BASE)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pin_int_base.c")
 endif()
@@ -246,6 +251,11 @@ endif()
 
 if(CONFIG_PLATFORM_LPC_WAKEUPINT)
     list(APPEND SOURCE_FILES "${CONFIG_GEN_PININT}/wakeup_int.c")
+endif()
+
+if(CONFIG_PLATFORM_LPC_WKT)
+    list(APPEND SOURCE_FILES "wkt.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/wkt_base.c")
 endif()
 
 if(CONFIG_PLATFORM_LPC_WDT)

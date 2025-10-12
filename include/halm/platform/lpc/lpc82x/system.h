@@ -15,6 +15,13 @@
 #include <xcore/bits.h>
 #include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
+enum [[gnu::packed]] MemoryRemap
+{
+  REMAP_BOOT  = 0,
+  REMAP_SRAM  = 1,
+  REMAP_FLASH = 2
+};
+
 /* Power-down configuration register */
 enum [[gnu::packed]] SysBlockPower
 {
@@ -86,7 +93,10 @@ enum [[gnu::packed]] SysClockBranch
 BEGIN_DECLS
 
 unsigned int sysFlashLatency(void);
+unsigned int sysFlashLatencyFromFrequency(uint32_t);
 void sysFlashLatencyUpdate(unsigned int);
+void sysFlashLatencyReset(void);
+void sysMemoryRemap(enum MemoryRemap);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
