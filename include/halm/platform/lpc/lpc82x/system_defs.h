@@ -13,6 +13,11 @@
 #define FLASHCFG_FLASHTIM(value)        BIT_FIELD((value), 0)
 #define FLASHCFG_FLASHTIM_VALUE(reg) \
     FIELD_VALUE((reg), FLASHCFG_FLASHTIM_MASK, 0)
+/*------------------System Memory Remap register------------------------------*/
+#define SYSMEMREMAP_MAP_MASK            BIT_FIELD(MASK(2), 0)
+#define SYSMEMREMAP_MAP(value)          BIT_FIELD((value), 0)
+#define SYSMEMREMAP_MAP_VALUE(reg) \
+    FIELD_VALUE((reg), SYSMEMREMAP_MAP_MASK, 0)
 /*------------------Power Control register------------------------------------*/
 enum
 {
@@ -29,6 +34,13 @@ enum
 #define PCON_NODPD                      BIT(3)
 #define PCON_SLEEPFLAG                  BIT(8)
 #define PCON_DPDFLAG                    BIT(11)
+/*------------------Deep Power Down Control register--------------------------*/
+/* Low power oscillator control bits are defined in common clocking_defs */
+
+#define DPDCTRL_WAKEUPHYS               BIT(0)
+#define DPDCTRL_WAKEPAD_DISABLE         BIT(1)
+#define DPDCTRL_WAKEUPCLKHYS            BIT(4)
+#define DPDCTRL_WAKECLKPAD_ENABLE       BIT(5)
 /*------------------Interrupt wake-up enable registers------------------------*/
 enum
 {

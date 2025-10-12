@@ -16,7 +16,7 @@ config GEN_CAN
 
 config GEN_CLOCK
 	string
-	default "gen_2" if FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
+	default "gen_2" if FAMILY_LPC82X || FAMILY_LPC11XX || FAMILY_LPC11EXX || FAMILY_LPC13XX || FAMILY_LPC13UXX
 	default "lpc17xx" if FAMILY_LPC17XX
 	default "lpc43xx" if FAMILY_LPC43XX
 
@@ -461,6 +461,21 @@ config PLATFORM_LPC_IAP
 	help
 	  This enables support for In-Application Programming.
 
+config PLATFORM_LPC_MRT
+	bool "Multi-rate Timer"
+	default y
+	depends on FAMILY_LPC82X
+
+config PLATFORM_LPC_MRT_NO_DEINIT
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
+	depends on PLATFORM_LPC_MRT
+
+config PLATFORM_LPC_MRT_PRIORITY
+	int "Timer interrupts priority"
+	default 0
+	depends on PLATFORM_LPC_MRT
+
 config PLATFORM_LPC_PININT_BASE
 	bool
 	default y
@@ -710,6 +725,16 @@ config PLATFORM_LPC_WAKEUPINT_NO_DEINIT
 	bool
 	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_WAKEUPINT
+
+config PLATFORM_LPC_WKT
+	bool "Wake-up timer"
+	default y
+	depends on FAMILY_LPC82X
+
+config PLATFORM_LPC_WKT_NO_DEINIT
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
+	depends on PLATFORM_LPC_WKT
 
 config PLATFORM_LPC_WDT
 	bool "Watchdog"

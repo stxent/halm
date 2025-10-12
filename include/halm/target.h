@@ -19,6 +19,7 @@
 
 #  define GEN_ADC         gen_2
 #  define GEN_BOD         gen_1
+#  define GEN_CLOCK       gen_2
 #  define GEN_FLASH       gen_1
 #  define GEN_I2C         gen_2
 #  define GEN_PIN         lpc82x
