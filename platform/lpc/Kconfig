@@ -510,6 +510,16 @@ config PLATFORM_LPC_RTC_NO_DEINIT
 	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_RTC
 
+config PLATFORM_LPC_SDMA
+	bool "SDMA"
+	default y
+	depends on FAMILY_LPC82X
+
+config PLATFORM_LPC_SDMA_PRIORITY
+	int "SDMA interrupts priority"
+	default 0
+	depends on PLATFORM_LPC_SDMA
+
 config PLATFORM_LPC_SDMMC
 	bool "SD/MMC card interface"
 	default y
