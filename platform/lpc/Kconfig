@@ -668,12 +668,12 @@ config PLATFORM_LPC_SERIAL_POLL
 config PLATFORM_LPC_SERIAL_DMA
 	bool "Serial port driver with DMA"
 	default y
-	depends on PLATFORM_LPC_UART_BASE && PLATFORM_LPC_GPDMA
+	depends on PLATFORM_LPC_UART_BASE && (PLATFORM_LPC_GPDMA || PLATFORM_LPC_SDMA)
 
 config PLATFORM_LPC_ONE_WIRE_UART
 	bool "1-Wire using UART peripheral"
 	default y
-	depends on PLATFORM_LPC_UART_BASE
+	depends on PLATFORM_LPC_UART_BASE && GEN_UART = "gen_1"
 
 config PLATFORM_USB
 	bool "USB"
