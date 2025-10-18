@@ -571,7 +571,7 @@ typedef struct
 typedef struct
 {
   __rw__ uint32_t CFG; /* Configuration register */
-  __rw__ uint32_t CTRL; /* Control register */
+  __rw__ uint32_t CTL; /* Control register */
   __rw__ uint32_t STAT; /* Status register */
   __rw__ uint32_t INTENSET; /* Interrupt Enable Set register */
   __wo__ uint32_t INTENCLR; /* Interrupt Enable Clear register */

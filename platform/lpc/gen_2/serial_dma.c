@@ -1,12 +1,12 @@
 /*
  * serial_dma.c
- * Copyright (C) 2012 xent
+ * Copyright (C) 2025 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/lpc/gen_1/uart_defs.h>
-#include <halm/platform/lpc/gpdma_list.h>
-#include <halm/platform/lpc/gpdma_oneshot.h>
+#include <halm/platform/lpc/gen_2/uart_defs.h>
+#include <halm/platform/lpc/sdma_list.h>
+#include <halm/platform/lpc/sdma_oneshot.h>
 #include <halm/platform/lpc/serial_dma.h>
 #include <halm/platform/lpc/uart_base.h>
 #include <halm/pm.h>
@@ -54,7 +54,7 @@ struct SerialDma
 #endif
 };
 /*----------------------------------------------------------------------------*/
-static bool dmaSetup(struct SerialDma *, uint8_t, uint8_t, size_t);
+static bool dmaSetup(struct SerialDma *, uint8_t, size_t);
 static enum Result enqueueRxBuffers(struct SerialDma *);
 static enum Result enqueueTxBuffers(struct SerialDma *);
 static void readResidue(struct SerialDma *);
@@ -93,53 +93,57 @@ const struct InterfaceClass * const SerialDma = &(const struct InterfaceClass){
     .write = serialWrite
 };
 /*----------------------------------------------------------------------------*/
-static bool dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
-    uint8_t txChannel, size_t chunks)
+static bool dmaSetup(struct SerialDma *interface, uint8_t priority,
+    size_t chunks)
 {
-  static const struct GpDmaSettings dmaSettings[] = {
+  static const struct SdmaSettings dmaSettings[] = {
       {
+          .burst = DMA_BURST_1,
+          .width = DMA_WIDTH_BYTE,
           .source = {
-              .burst = DMA_BURST_1,
-              .width = DMA_WIDTH_BYTE,
-              .increment = false
+              .stride = SDMA_STRIDE_NONE,
+              .wrap = true
           },
           .destination = {
-              .burst = DMA_BURST_4,
-              .width = DMA_WIDTH_BYTE,
-              .increment = true
+              .stride = SDMA_STRIDE_1,
+              .wrap = false
           }
       }, {
+          .burst = DMA_BURST_1,
+          .width = DMA_WIDTH_BYTE,
           .source = {
-              .burst = DMA_BURST_4,
-              .width = DMA_WIDTH_BYTE,
-              .increment = true
+              .stride = SDMA_STRIDE_1,
+              .wrap = false
           },
           .destination = {
-              .burst = DMA_BURST_1,
-              .width = DMA_WIDTH_BYTE,
-              .increment = false
+              .stride = SDMA_STRIDE_NONE,
+              .wrap = true
           }
       }
   };
-  const struct GpDmaListConfig rxDmaConfig = {
+  const struct SdmaListConfig rxDmaConfig = {
       .number = chunks,
-      .event = GPDMA_UART0_RX + interface->base.channel,
-      .type = GPDMA_TYPE_P2M,
-      .channel = rxChannel
+      .request = sdmaGetRequestUartRx(interface->base.channel),
+      .trigger = SDMA_TRIGGER_NONE,
+      .channel = SDMA_CHANNEL_AUTO,
+      .priority = priority,
+      .polarity = false
   };
-  const struct GpDmaOneShotConfig txDmaConfig = {
-      .event = GPDMA_UART0_TX + interface->base.channel,
-      .type = GPDMA_TYPE_M2P,
-      .channel = txChannel
+  const struct SdmaOneShotConfig txDmaConfig = {
+      .request = sdmaGetRequestUartTx(interface->base.channel),
+      .trigger = SDMA_TRIGGER_NONE,
+      .channel = SDMA_CHANNEL_AUTO,
+      .priority = priority,
+      .polarity = false
   };
 
-  interface->rxDma = init(GpDmaList, &rxDmaConfig);
+  interface->rxDma = init(SdmaList, &rxDmaConfig);
   if (interface->rxDma == NULL)
     return false;
   dmaConfigure(interface->rxDma, &dmaSettings[0]);
   dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
 
-  interface->txDma = init(GpDmaOneShot, &txDmaConfig);
+  interface->txDma = init(SdmaOneShot, &txDmaConfig);
   if (interface->txDma == NULL)
     return false;
   dmaConfigure(interface->txDma, &dmaSettings[1]);
@@ -159,11 +163,11 @@ static enum Result enqueueRxBuffers(struct SerialDma *interface)
 
   if (count >= interface->rxBufferSize)
   {
-    LPC_UART_Type * const reg = interface->base.reg;
+    LPC_USART_Type * const reg = interface->base.reg;
 
     do
     {
-      dmaAppend(interface->rxDma, address, (void *)&reg->THR,
+      dmaAppend(interface->rxDma, address, (void *)&reg->RXDATA,
           interface->rxBufferSize);
 
       address += interface->rxBufferSize;
@@ -180,16 +184,16 @@ static enum Result enqueueRxBuffers(struct SerialDma *interface)
 /*----------------------------------------------------------------------------*/
 static enum Result enqueueTxBuffers(struct SerialDma *interface)
 {
-  LPC_UART_Type * const reg = interface->base.reg;
+  LPC_USART_Type * const reg = interface->base.reg;
   const uint8_t *address;
   enum Result res;
 
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
-  if (interface->txBufferSize > GPDMA_MAX_TRANSFER_SIZE)
-    interface->txBufferSize = GPDMA_MAX_TRANSFER_SIZE;
+  if (interface->txBufferSize > SDMA_MAX_TRANSFER_SIZE)
+    interface->txBufferSize = SDMA_MAX_TRANSFER_SIZE;
 
-  dmaAppend(interface->txDma, (void *)&reg->THR, address,
+  dmaAppend(interface->txDma, (void *)&reg->TXDATA, address,
       interface->txBufferSize);
 
   if ((res = dmaEnable(interface->txDma)) != E_OK)
@@ -305,11 +309,7 @@ static void powerStateHandler(void *object, enum PmState state)
   if (state == PM_ACTIVE)
   {
     struct SerialDma * const interface = object;
-    struct UartRateConfig rateConfig;
-
-    /* Recalculate and set baud rate */
-    if (uartCalcRate(&interface->base, interface->rate, &rateConfig))
-      uartSetRate(&interface->base, rateConfig);
+    uartSetRate(&interface->base, interface->rate);
   }
 }
 #endif
@@ -319,8 +319,9 @@ static enum Result serialInit(void *object, const void *configBase)
   const struct SerialDmaConfig * const config = configBase;
   assert(config != NULL);
   assert(config->rxChunks > 0 && config->rxLength > 0 && config->txLength > 0);
-  assert(config->rxLength / config->rxChunks <= GPDMA_MAX_TRANSFER_SIZE);
   assert(config->rxLength % config->rxChunks == 0);
+  assert(!config->oversampling || (config->oversampling > OSR_OSRVAL_MIN
+      && config->oversampling <= OSR_OSRVAL_MAX + 1));
 
   const struct UartBaseConfig baseConfig = {
       .rx = config->rx,
@@ -328,15 +329,11 @@ static enum Result serialInit(void *object, const void *configBase)
       .channel = config->channel
   };
   struct SerialDma * const interface = object;
-  struct UartRateConfig rateConfig;
   enum Result res;
 
   /* Call base class constructor */
   if ((res = UartBase->init(interface, &baseConfig)) != E_OK)
     return res;
-
-  if (!uartCalcRate(&interface->base, config->rate, &rateConfig))
-    return E_VALUE;
 
   if (config->arena != NULL)
   {
@@ -358,7 +355,7 @@ static enum Result serialInit(void *object, const void *configBase)
     interface->preallocated = false;
   }
 
-  if (!dmaSetup(interface, config->dma[0], config->dma[1], config->rxChunks))
+  if (!dmaSetup(interface, config->priority, config->rxChunks))
     return E_ERROR;
 
   interface->callback = NULL;
@@ -372,19 +369,20 @@ static enum Result serialInit(void *object, const void *configBase)
   interface->txWatermark = 0;
 #endif
 
-  LPC_UART_Type * const reg = interface->base.reg;
+  LPC_USART_Type * const reg = interface->base.reg;
 
   /* Set 8-bit length */
-  reg->LCR = LCR_WLS(WLS_8BIT);
-  /* Enable FIFO and DMA, set RX trigger level */
-  reg->FCR = (reg->FCR & ~FCR_RXTRIGLVL_MASK) | FCR_FIFOEN | FCR_DMAMODE
-      | FCR_RXTRIGLVL(RX_TRIGGER_LEVEL_1);
-  /* Disable all interrupts */
-  reg->IER = 0;
-  /* Transmitter is enabled by default */
+  reg->CFG = CFG_DATALEN(DATALEN_8BIT);
+  /* Configure oversampling value */
+  reg->OSR = config->oversampling ?
+      OSR_OSRVAL(config->oversampling - 1) : OSR_OSRVAL(OSR_OSRVAL_MAX);
 
+  if (!uartSetRate(&interface->base, config->rate))
+    return E_VALUE;
   uartSetParity(&interface->base, config->parity);
-  uartSetRate(&interface->base, rateConfig);
+
+  /* Enable the peripheral */
+  reg->CFG |= CFG_ENABLE;
 
 #ifdef CONFIG_PLATFORM_LPC_UART_PM
   interface->rate = config->rate;
@@ -532,16 +530,13 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
   {
     case IF_RATE:
     {
-      struct UartRateConfig rateConfig;
       const uint32_t rate = *(const uint32_t *)data;
 
-      if (uartCalcRate(&interface->base, rate, &rateConfig))
+      if (uartSetRate(&interface->base, rate))
       {
 #  ifdef CONFIG_PLATFORM_LPC_UART_PM
         interface->rate = rate;
 #  endif /* CONFIG_PLATFORM_LPC_UART_PM */
-
-        uartSetRate(&interface->base, rateConfig);
         return E_OK;
       }
       else
