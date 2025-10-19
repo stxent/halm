@@ -190,6 +190,28 @@ void sctReleaseOutputChannel(struct SctBase *, enum SctOutput route)
   instance.outputs |= 1 << (route - 1);
 }
 /*----------------------------------------------------------------------------*/
+bool sctReserveInputChannel(struct SctBase *, enum SctInput route)
+{
+  if (instance.inputs & (1 << (route - 1)))
+  {
+    instance.inputs &= ~(1 << (route - 1));
+    return true;
+  }
+  else
+    return false;
+}
+/*----------------------------------------------------------------------------*/
+bool sctReserveOutputChannel(struct SctBase *, enum SctOutput route)
+{
+  if (instance.outputs & (1 << (route - 1)))
+  {
+    instance.outputs &= ~(1 << (route - 1));
+    return true;
+  }
+  else
+    return false;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SctBaseConfig * const config = configBase;

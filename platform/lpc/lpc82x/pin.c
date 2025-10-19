@@ -13,7 +13,7 @@ static void commonPinInit(struct Pin);
 static inline bool isI2CPin(struct Pin);
 /*----------------------------------------------------------------------------*/
 static const int8_t pinFuncMap[29] = {
-     0,  9,  5,  4, 24,  8, 14, 13,
+    -1,  9,  5,  4, 24,  8, 14, 13,
      6,  7, 12, 11, -1, 23, 15, -1,
     -1, 22, 21, 20, 19, 18, 17, 16,
     -1, -1, -1, -1, -1
@@ -83,14 +83,23 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   }
 
   uint32_t pinenable = LPC_SWM->PINENABLE[0];
+  int8_t cache = -1;
   int8_t offset = pinFuncMap[pin.number];
 
   /* Disable fixed functions from the first group */
   if (offset >= 0)
+  {
     pinenable |= 1UL << offset;
+
+    if (function == PIN_ANALOG)
+      cache = offset;
+  }
 
   switch (pin.number)
   {
+    case 0:
+      offset = 0; /* ACMP_I1 */
+      break;
     case 1:
       offset = 1; /* ACMP_I2 */
       break;
@@ -110,11 +119,21 @@ void pinSetFunction(struct Pin pin, uint8_t function)
 
   /* Disable fixed function from the extended group */
   if (offset >= 0)
+  {
     pinenable |= 1UL << offset;
+
+    if (function == PIN_ANALOG_ACMP)
+      cache = offset;
+  }
 
   switch (function)
   {
     case PIN_DEFAULT:
+      break;
+
+    case PIN_ANALOG:
+    case PIN_ANALOG_ACMP:
+      pinenable &= ~(1UL << cache);
       break;
 
     default:

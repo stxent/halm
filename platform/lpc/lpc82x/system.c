@@ -12,9 +12,9 @@ unsigned int sysFlashLatency(void)
   return FLASHCFG_FLASHTIM_VALUE(LPC_FMC->FLASHCFG) + 1;
 }
 /*----------------------------------------------------------------------------*/
-unsigned int sysFlashLatencyFromFrequency(uint32_t)
+unsigned int sysFlashLatencyFromFrequency(uint32_t frequency)
 {
-  return 1;
+  return frequency <= 30000000 ? 1 : 2;
 }
 /*----------------------------------------------------------------------------*/
 /**
@@ -22,6 +22,7 @@ unsigned int sysFlashLatencyFromFrequency(uint32_t)
  * @param value Flash access time in CPU clocks.
  * @n Possible values and recommended operating frequencies:
  *   - 1 clock: up to 30 MHz.
+ *   - 2 clocks: more than 30 MHz.
  */
 void sysFlashLatencyUpdate(unsigned int value)
 {
@@ -31,6 +32,7 @@ void sysFlashLatencyUpdate(unsigned int value)
 /*----------------------------------------------------------------------------*/
 void sysFlashLatencyReset(void)
 {
+  sysFlashLatencyUpdate(2);
 }
 /*----------------------------------------------------------------------------*/
 void sysMemoryRemap(enum MemoryRemap value)

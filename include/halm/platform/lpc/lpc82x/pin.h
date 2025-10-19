@@ -19,6 +19,17 @@ enum
 {
   PORT_0
 };
+
+/* Platform-specific special function values */
+enum
+{
+  PIN_ANALOG_ACMP   = 0x7D,
+  PIN_ANALOG_ADC    = PIN_ANALOG,
+  PIN_ANALOG_CLOCK  = PIN_ANALOG,
+  PIN_ANALOG_I2C    = PIN_ANALOG,
+  PIN_ANALOG_RESET  = PIN_ANALOG,
+  PIN_ANALOG_SWD    = PIN_ANALOG
+};
 /*----------------------------------------------------------------------------*/
 struct Pin
 {

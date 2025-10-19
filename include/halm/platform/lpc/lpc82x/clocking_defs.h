@@ -38,13 +38,13 @@ static inline void configCrystalPins(bool bypass)
 
   pin = pinInit(inKey);
   pinInput(pin);
-  pinSetFunction(pin, 6);
+  pinSetFunction(pin, PIN_ANALOG_CLOCK);
 
   if (!bypass)
   {
     pin = pinInit(outKey);
     pinInput(pin);
-    pinSetFunction(pin, 7);
+    pinSetFunction(pin, PIN_ANALOG_CLOCK);
   }
 }
 
