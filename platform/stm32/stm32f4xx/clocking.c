@@ -43,6 +43,11 @@ static enum Result intOscEnable(const void *, const void *);
 static uint32_t intOscFrequency(const void *);
 static bool intOscReady(const void *);
 
+static void audioPllDisable(const void *);
+static enum Result audioPllEnable(const void *, const void *);
+static uint32_t audioPllFrequency(const void *);
+static bool audioPllReady(const void *);
+
 static void mainPllDisable(const void *);
 static enum Result mainPllEnable(const void *, const void *);
 static uint32_t mainPllFrequency(const void *);
@@ -80,6 +85,13 @@ const struct ClockClass * const InternalOsc = &(const struct ClockClass){
     .enable = intOscEnable,
     .frequency = intOscFrequency,
     .ready = intOscReady
+};
+
+const struct ClockClass * const AudioPll = &(const struct ClockClass){
+    .disable = audioPllDisable,
+    .enable = audioPllEnable,
+    .frequency = audioPllFrequency,
+    .ready = audioPllReady
 };
 
 const struct ClockClass * const MainPll = &(const struct ClockClass){
@@ -125,7 +137,8 @@ const struct ClockClass * const MainClock = &(const struct ClockClass){
 };
 /*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
-static uint32_t pllFrequency = 0;
+static uint32_t i2sPllFrequency = 0;
+static uint32_t sysPllFrequency = 0;
 enum VoltageRange volRange = VR_DEFAULT;
 uint32_t ticksPerSecond = TICK_RATE(HSI_OSC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
@@ -291,6 +304,70 @@ static bool intOscReady(const void *)
   return (STM_RCC->CR & CR_HSIRDY) != 0;
 }
 /*----------------------------------------------------------------------------*/
+static void audioPllDisable(const void *)
+{
+  STM_RCC->CR &= ~CR_PLLI2SON;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result audioPllEnable(const void *, const void *configBase)
+{
+  const struct MainPllConfig * const config = configBase;
+  assert(config != NULL);
+  assert(config->divisor);
+
+  if (!(STM_RCC->CR & CR_PLLON))
+    return E_ERROR;
+
+  uint32_t cfgr = STM_RCC->PLLCFGR;
+  uint32_t srcFrequency;
+
+  if (config->source == CLOCK_INTERNAL)
+  {
+    if (cfgr & PLLCFGR_PLLSRC)
+      return E_VALUE;
+    srcFrequency = HSI_OSC_FREQUENCY;
+  }
+  else
+  {
+    if (!(cfgr & PLLCFGR_PLLSRC))
+      return E_VALUE;
+    srcFrequency = extFrequency;
+  }
+
+  const uint32_t pllm = PLLCFGR_PLLM_VALUE(cfgr);
+  const uint32_t vcoFrequency = srcFrequency * config->multiplier;
+
+  const uint32_t plln = vcoFrequency / (srcFrequency / pllm);
+  if (plln < PLLI2SCFGR_PLLI2SN_MIN || plln > PLLI2SCFGR_PLLI2SN_MAX)
+    return E_VALUE;
+
+  const uint32_t pllr = config->divisor;
+  if (pllr < PLLI2SCFGR_PLLI2SR_MIN || pllr > PLLI2SCFGR_PLLI2SR_MAX)
+    return E_VALUE;
+
+  const uint32_t cfgr2 = PLLI2SCFGR_PLLI2SN(plln) | PLLI2SCFGR_PLLI2SR(pllr);
+
+  STM_RCC->CR &= ~CR_PLLI2SON;
+  /* Select PLLI2S as I2S clock source */
+  STM_RCC->CFGR = cfgr & ~CFGR_I2SSRC;
+  /* Reconfigure PLLI2S*/
+  STM_RCC->PLLI2SCFGR = cfgr2;
+  STM_RCC->CR |= CR_PLLI2SON;
+
+  i2sPllFrequency = vcoFrequency / config->divisor;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t audioPllFrequency(const void *)
+{
+  return (STM_RCC->CR & CR_PLLI2SRDY) ? i2sPllFrequency : 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool audioPllReady(const void *)
+{
+  return (STM_RCC->CR & CR_PLLI2SRDY) != 0;
+}
+/*----------------------------------------------------------------------------*/
 static void mainPllDisable(const void *)
 {
   STM_RCC->CR &= ~CR_PLLON;
@@ -341,14 +418,14 @@ static enum Result mainPllEnable(const void *, const void *configBase)
   STM_RCC->CR &= ~CR_PLLON;
   STM_RCC->PLLCFGR = cfgr;
   STM_RCC->CR |= CR_PLLON;
-  pllFrequency = vcoFrequency / config->divisor;
+  sysPllFrequency = vcoFrequency / config->divisor;
 
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t mainPllFrequency(const void *)
 {
-  return (STM_RCC->CR & CR_PLLRDY) ? pllFrequency : 0;
+  return (STM_RCC->CR & CR_PLLRDY) ? sysPllFrequency : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool mainPllReady(const void *)
@@ -403,7 +480,7 @@ static uint32_t systemClockFrequency(const void *)
       break;
 
     case CFGR_SW_PLL:
-      frequency = pllFrequency;
+      frequency = sysPllFrequency;
       break;
   }
 
@@ -419,7 +496,7 @@ static uint32_t usbClockFrequency(const void *)
     const uint32_t pllq = PLLCFGR_PLLQ_VALUE(pllcfgr);
 
     if (pllq >= PLLCFGR_PLLQ_MIN && pllq <= PLLCFGR_PLLQ_MAX)
-      return pllFrequency * ((pllp + 1) * 2) / pllq;
+      return sysPllFrequency * ((pllp + 1) * 2) / pllq;
   }
 
   return 0;

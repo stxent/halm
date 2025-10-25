@@ -74,6 +74,30 @@ struct MainClockConfig
 /* Require a MainClockConfig structure */
 extern const struct ClockClass * const MainClock;
 /*----------------------------------------------------------------------------*/
+struct AudioPllConfig
+{
+  /**
+   * Mandatory: PLL main output divisor. Possible values should be in the range
+   * of 2 to 7.
+   */
+  uint16_t divisor;
+  /**
+   * Mandatory: PLL multiplier. PLL VCO frequency should be in the range
+   * of 192 to 432 MHz.
+   */
+  uint16_t multiplier;
+  /**
+   * Mandatory: clock source.
+   * @n Available options:
+   *   - @b CLOCK_INTERNAL.
+   *   - @b CLOCK_EXTERNAL.
+   */
+  enum ClockSource source;
+};
+
+/* Requires an AudioPllConfig structure */
+extern const struct ClockClass * const AudioPll;
+/*----------------------------------------------------------------------------*/
 struct MainPllConfig
 {
   /** Mandatory: PLL main output divisor. Possible values are 2, 4, 6 and 8. */

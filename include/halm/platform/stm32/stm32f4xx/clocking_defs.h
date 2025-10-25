@@ -27,7 +27,7 @@
 #define CR_PLLON                        BIT(24)
 #define CR_PLLRDY                       BIT(25)
 #define CR_PLLI2SON                     BIT(26)
-#define CR_PLLI2S2RDY                   BIT(27)
+#define CR_PLLI2SRDY                    BIT(27)
 /*------------------PLL Configuration Register--------------------------------*/
 #define PLLCFGR_PLLM_MASK               BIT_FIELD(MASK(6), 0)
 #define PLLCFGR_PLLM(value)             BIT_FIELD((value), 0)
@@ -184,10 +184,14 @@ enum
 #define PLLI2SCFGR_PLLI2SN(value)       BIT_FIELD((value), 6)
 #define PLLI2SCFGR_PLLI2SN_VALUE(reg) \
     FIELD_VALUE((reg), PLLI2SCFGR_PLLI2SN_MASK, 6)
+#define PLLI2SCFGR_PLLI2SN_MAX          432
+#define PLLI2SCFGR_PLLI2SN_MIN          192
 
 #define PLLI2SCFGR_PLLI2SR_MASK         BIT_FIELD(MASK(3), 28)
 #define PLLI2SCFGR_PLLI2SR(value)       BIT_FIELD((value), 28)
 #define PLLI2SCFGR_PLLI2SR_VALUE(reg) \
     FIELD_VALUE((reg), PLLI2SCFGR_PLLI2SR_MASK, 28)
+#define PLLI2SCFGR_PLLI2SR_MAX          7
+#define PLLI2SCFGR_PLLI2SR_MIN          2
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F4XX_CLOCKING_DEFS_H_ */

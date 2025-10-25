@@ -279,6 +279,7 @@ static void interruptHandler(void *object)
 #endif
     }
 
+    /* All other flags except for RFOM are read-only or write-1-to-clear */
     reg->RFR[0] = RF_RFOM;
   }
 
@@ -377,6 +378,12 @@ static void sendMessage(struct Can *interface,
   assert(message->length <= 8);
 
   STM_CAN_Type * const reg = interface->base.reg;
+
+  /*
+   * Mailbox code must not be used without TME flag checking. In case all
+   * transmit mailboxes are pending, the code value is equal to the number
+   * of the transmit mailbox with the lowest priority.
+   */
   const uint32_t mailbox = TSR_CODE_VALUE(reg->TSR);
 
   if (message->flags & CAN_EXT_ID)
@@ -799,7 +806,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   size_t position = 0;
   bool error = false;
 
-  /* Synchronize access to the message queue between the driver and the core */
+  /* Provide atomic access to the message queue */
   irqDisable(interface->base.irq.tx);
 
   if (pointerQueueEmpty(&interface->txQueue)
