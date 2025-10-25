@@ -136,11 +136,12 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
 
   LPC_SCT_Type * const reg = timer->base.reg;
   const unsigned int part = timer->base.part == SCT_HIGH;
-  const uint16_t eventMask = 1 << timer->event;
 
   /* Configure clock input */
   if (clock)
   {
+    const unsigned int clockIndex = timer->input - 1;
+
     timer->input = sctAllocateInputChannel(&timer->base, clock);
     if (timer->input == SCT_INPUT_NONE)
       return E_BUSY;
@@ -151,19 +152,19 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
     if (edge == INPUT_RISING)
     {
       reg->CONFIG |= CONFIG_CLKMODE(CLKMODE_INPUT_HP)
-          | CONFIG_CKSEL_RISING(timer->input - 1);
+          | CONFIG_CKSEL_RISING(clockIndex);
     }
     else
     {
       reg->CONFIG |= CONFIG_CLKMODE(CLKMODE_INPUT_HP)
-          | CONFIG_CKSEL_FALLING(timer->input - 1);
+          | CONFIG_CKSEL_FALLING(clockIndex);
     }
   }
   else
     timer->input = SCT_INPUT_NONE;
 
   timer->base.handler = interruptHandler;
-  timer->base.mask = eventMask;
+  timer->base.mask = 1 << timer->event;
   timer->callback = NULL;
 
   /* Disable the timer before any configuration is done */
@@ -183,7 +184,7 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
     reg->MATCH[timer->event] = 0xFFFFFFFFUL;
 
   /* Enable match mode for match/capture registers */
-  reg->REGMODE_PART[part] &= ~eventMask;
+  reg->REGMODE_PART[part] &= ~timer->base.mask;
 
   /* Configure event */
   reg->EV[timer->event].CTRL =
@@ -196,18 +197,20 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
   timer->output = output;
   if (timer->output != SCT_OUTPUT_NONE)
   {
-    reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(timer->output - 1);
-    reg->RES = (reg->RES & ~RES_OUTPUT_MASK(timer->output - 1))
-        | RES_OUTPUT(timer->output - 1, OUTPUT_TOGGLE);
-    reg->OUT[timer->output - 1].CLR = eventMask;
-    reg->OUT[timer->output - 1].SET = eventMask;
+    const unsigned int eventIndex = timer->output - 1;
+
+    reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(eventIndex);
+    reg->RES = (reg->RES & ~RES_OUTPUT_MASK(eventIndex))
+        | RES_OUTPUT(eventIndex, OUTPUT_TOGGLE);
+    reg->OUT[eventIndex].CLR = timer->base.mask;
+    reg->OUT[eventIndex].SET = timer->base.mask;
   }
 
   /* Reset current state and enable allocated event in state 0 */
   reg->STATE_PART[part] = 0;
   reg->EV[timer->event].STATE = 0x00000001;
   /* Enable timer clearing on allocated event */
-  reg->LIMIT_PART[part] = eventMask;
+  reg->LIMIT_PART[part] = timer->base.mask;
 
 #ifdef CONFIG_PLATFORM_LPC_SCT_PM
   if ((res = pmRegister(powerStateHandler, timer)) != E_OK)
@@ -347,7 +350,6 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 {
   struct SctTimer * const timer = object;
   LPC_SCT_Type * const reg = timer->base.reg;
-  const uint16_t eventMask = timer->base.mask;
 
   timer->callbackArgument = argument;
   timer->callback = callback;
@@ -355,12 +357,12 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   if (timer->callback != NULL)
   {
     /* Clear pending requests */
-    reg->EVFLAG = eventMask;
+    reg->EVFLAG = timer->base.mask;
     /* Enable interrupt requests */
-    reg->EVEN |= eventMask;
+    reg->EVEN |= timer->base.mask;
   }
   else
-    reg->EVEN &= ~eventMask;
+    reg->EVEN &= ~timer->base.mask;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *object)
