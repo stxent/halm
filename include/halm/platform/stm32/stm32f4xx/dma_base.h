@@ -134,6 +134,16 @@ static inline enum DmaEvent dmaGetEventI2CTx(uint8_t channel)
   return DMA_I2C1_TX + channel * 2;
 }
 
+static inline enum DmaEvent dmaGetEventI2SRx(uint8_t channel)
+{
+  return DMA_I2S2EXT_RX + (channel - 1) * 2;
+}
+
+static inline enum DmaEvent dmaGetEventI2STx(uint8_t channel)
+{
+  return DMA_I2S2EXT_TX + (channel - 1) * 2;
+}
+
 static inline enum DmaEvent dmaGetEventSdio(void)
 {
   return DMA_SDIO;

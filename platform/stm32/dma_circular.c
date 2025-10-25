@@ -120,9 +120,9 @@ static void streamConfigure(void *object, const void *settingsBase)
 
   /* Burst size must not exceed FIFO size */
   assert(burstToSize(settings->source.width,
-      settings->source.burst) <= 16);
+      settings->source.burst) <= FIFO_MAX_SIZE);
   assert(burstToSize(settings->destination.width,
-      settings->destination.burst) <= 16);
+      settings->destination.burst) <= FIFO_MAX_SIZE);
 
   /* Burst transfer is not allowed in the fixed address mode */
   assert(settings->source.increment

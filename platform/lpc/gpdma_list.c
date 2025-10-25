@@ -334,8 +334,7 @@ static size_t channelQueued(const void *object)
 {
   const struct GpDmaList * const channel = object;
 
-  if (channel->state != STATE_IDLE && channel->state != STATE_READY)
+  if (channel->state != STATE_IDLE)
     return channel->queued;
-
   return 0;
 }

@@ -131,13 +131,17 @@ static void dma1StreamHandler(unsigned int index)
   struct BdmaBase * const stream = instances[STREAM_ENCODE(0, index)];
   const uint32_t rawStatus = STM_DMA1->ISR & ISR_CHANNEL_MASK(index);
   const uint32_t status = ISR_CHANNEL_VALUE(rawStatus, index);
-  enum Result res = E_OK;
+  enum Result res;
 
   /* Clear interrupt flags */
   STM_DMA1->IFCR = rawStatus;
 
-  if (!(status & ISR_TCIF_GENERIC))
-    res = (status & ISR_TEIF_GENERIC) ? E_ERROR : E_BUSY;
+  if (status & ISR_TEIF_GENERIC)
+    res = E_ERROR;
+  else if (status & ISR_TCIF_GENERIC)
+    res = E_OK;
+  else
+    res = E_BUSY;
 
   stream->handler(stream, res);
 }

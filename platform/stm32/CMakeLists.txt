@@ -46,6 +46,7 @@ endif()
 
 if(CONFIG_PLATFORM_STM32_DMA)
     list(APPEND SOURCE_FILES "dma_circular.c")
+    list(APPEND SOURCE_FILES "dma_list.c")
     list(APPEND SOURCE_FILES "dma_oneshot.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dma_base.c")
 endif()

@@ -85,6 +85,8 @@
 #define SCR_IE_MASK \
     (SCR_DMEIE | SCR_TEIE | SCR_HTIE | SCR_TCIE)
 /*------------------Stream FIFO Control Register------------------------------*/
+#define FIFO_MAX_SIZE                   16
+
 enum
 {
   SFCR_FTH_QUARTER_FULL   = 0,

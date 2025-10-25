@@ -1,14 +1,15 @@
 /*
- * dma_oneshot.c
- * Copyright (C) 2023 xent
+ * dma_list.c
+ * Copyright (C) 2025 xent
  * Project is distributed under the terms of the MIT License
  */
 
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm32/dma_defs.h>
-#include <halm/platform/stm32/dma_oneshot.h>
+#include <halm/platform/stm32/dma_list.h>
 #include <xcore/asm.h>
 #include <assert.h>
+#include <stdlib.h>
 /*----------------------------------------------------------------------------*/
 enum State
 {
@@ -36,8 +37,8 @@ static void streamAppend(void *, void *, const void *, size_t);
 static void streamClear(void *);
 static size_t streamQueued(const void *);
 /*----------------------------------------------------------------------------*/
-const struct DmaClass * const DmaOneShot = &(const struct DmaClass){
-    .size = sizeof(struct DmaOneShot),
+const struct DmaClass * const DmaList = &(const struct DmaClass){
+    .size = sizeof(struct DmaList),
     .init = streamInit,
     .deinit = streamDeinit,
 
@@ -56,22 +57,64 @@ const struct DmaClass * const DmaOneShot = &(const struct DmaClass){
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object, enum Result res)
 {
-  struct DmaOneShot * const stream = object;
+  struct DmaList * const stream = object;
   STM_DMA_STREAM_Type * const reg = stream->base.reg;
+  bool event = false;
 
-  /* Disable the DMA stream */
-  reg->CR = 0;
+  --stream->queued;
 
-  dmaResetInstance(stream->base.number);
-  stream->state = res == E_OK ? STATE_DONE : STATE_ERROR;
+  switch (res)
+  {
+    case E_OK:
+    {
+      if (stream->queued >= 1)
+      {
+        size_t index = stream->index;
 
-  if (stream->callback != NULL)
+        /* Calculate index of the first chunk */
+        if (index >= stream->queued)
+          index -= stream->queued;
+        else
+          index += stream->capacity - stream->queued;
+
+        if (reg->CR & SCR_CT)
+          reg->M0AR = stream->list[index].memoryAddress;
+        else
+          reg->M1AR = stream->list[index].memoryAddress;
+
+        if (stream->queued == 1)
+        {
+          /* Queue drained, last buffer will be dropped */
+          reg->CR &= ~SCR_EN;
+        }
+      }
+      else
+        stream->state = STATE_IDLE;
+
+      event = true;
+      break;
+    }
+
+    default:
+      stream->state = STATE_ERROR;
+      break;
+  }
+
+  if (stream->state != STATE_BUSY)
+  {
+    reg->CR = 0;
+    dmaResetInstance(stream->base.number);
+
+    event = true;
+  }
+
+  if (event && stream->callback != NULL)
     stream->callback(stream->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object, const void *configBase)
 {
-  const struct DmaOneShotConfig * const config = configBase;
+  const struct DmaListConfig * const config = configBase;
   assert(config != NULL);
 
   const struct DmaBaseConfig baseConfig = {
@@ -80,16 +123,28 @@ static enum Result streamInit(void *object, const void *configBase)
       .type = config->type,
       .stream = config->stream
   };
-  struct DmaOneShot * const stream = object;
+  struct DmaList * const stream = object;
+  enum Result res;
 
   /* Call base class constructor */
-  const enum Result res = DmaBase->init(stream, &baseConfig);
+  if ((res = DmaBase->init(stream, &baseConfig)) != E_OK)
+    return res;
+
+  stream->list = malloc(sizeof(struct DmaListEntry) * config->number);
+  if (stream->list == NULL)
+    res = E_MEMORY;
 
   if (res == E_OK)
   {
     stream->base.config |= SCR_TCIE | SCR_TEIE;
     stream->base.handler = interruptHandler;
+  
     stream->callback = NULL;
+    stream->capacity = config->number;
+    stream->periphAddress = 0;
+    stream->transfers = 0;
+    stream->index = 0;
+    stream->queued = 0;
     stream->fifo = 0;
     stream->state = STATE_IDLE;
   }
@@ -105,7 +160,7 @@ static void streamDeinit(void *object)
 static void streamConfigure(void *object, const void *settingsBase)
 {
   const struct DmaSettings * const settings = settingsBase;
-  struct DmaOneShot * const stream = object;
+  struct DmaList * const stream = object;
 
   assert(settings->source.burst <= DMA_BURST_16);
   assert(settings->source.width <= DMA_WIDTH_WORD);
@@ -158,8 +213,7 @@ static void streamConfigure(void *object, const void *settingsBase)
       config |= SCR_MINC;
   }
 
-  if (SCR_DIR_VALUE(config) == DMA_TYPE_M2M
-      || settings->source.width != settings->destination.width
+  if (settings->source.width != settings->destination.width
       || settings->source.burst != DMA_BURST_1
       || settings->destination.burst != DMA_BURST_1)
   {
@@ -189,7 +243,7 @@ static void streamConfigure(void *object, const void *settingsBase)
 static void streamSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct DmaOneShot * const stream = object;
+  struct DmaList * const stream = object;
 
   stream->callback = callback;
   stream->callbackArgument = argument;
@@ -197,23 +251,32 @@ static void streamSetCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum Result streamEnable(void *object)
 {
-  struct DmaOneShot * const stream = object;
+  struct DmaList * const stream = object;
 
   assert(stream->state == STATE_READY);
 
   if (dmaSetInstance(stream->base.number, object))
   {
     STM_DMA_STREAM_Type * const reg = stream->base.reg;
+    uint32_t config = stream->base.config | SCR_EN;
 
     stream->state = STATE_BUSY;
     reg->FCR = (uint32_t)stream->fifo;
     reg->NDTR = stream->transfers;
-    reg->M0AR = stream->memoryAddress;
+    reg->M0AR = stream->list[0].memoryAddress;
     reg->PAR = stream->periphAddress;
+
+    if (stream->queued > 1)
+    {
+      config |= SCR_DBM;
+      reg->M1AR = stream->list[1].memoryAddress;
+    }
+    else
+      reg->M1AR = 0;
 
     /* Start the transfer */
     __dmb();
-    reg->CR = stream->base.config | SCR_EN;
+    reg->CR = config;
 
     return E_OK;
   }
@@ -226,7 +289,7 @@ static enum Result streamEnable(void *object)
 /*----------------------------------------------------------------------------*/
 static void streamDisable(void *object)
 {
-  struct DmaOneShot * const stream = object;
+  struct DmaList * const stream = object;
   STM_DMA_STREAM_Type * const reg = stream->base.reg;
 
   if (stream->state == STATE_BUSY)
@@ -240,25 +303,36 @@ static void streamDisable(void *object)
 /*----------------------------------------------------------------------------*/
 static enum Result streamResidue(const void *object, size_t *count)
 {
-  const struct DmaOneShot * const stream = object;
+  const struct DmaList * const stream = object;
 
+  /* Residue is available when the stream was initialized and enabled */
   if (stream->state != STATE_IDLE && stream->state != STATE_READY)
   {
     const STM_DMA_STREAM_Type * const reg = stream->base.reg;
+    const unsigned int target = (reg->CR & SCR_CT) != 0;
+    size_t index = stream->index + stream->capacity - stream->queued;
+
+    if (index >= stream->capacity)
+      index -= stream->capacity;
+
     const uint32_t config = stream->base.config;
     const uint32_t width = SCR_DIR_VALUE(config) == DMA_TYPE_M2P ?
         (1 << SCR_PSIZE_VALUE(config)) : (1 << SCR_MSIZE_VALUE(config));
 
-    *count = (size_t)(reg->NDTR * width);
-    return E_OK;
+    if (((reg->CR & SCR_CT) != 0) == target)
+    {
+      /* Linked list item is not changed, transfer count is correct */
+      *count = (size_t)(reg->NDTR * width);
+      return E_OK;
+    }
   }
-  else
-    return E_ERROR;
+
+  return E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamStatus(const void *object)
 {
-  const struct DmaOneShot * const stream = object;
+  const struct DmaList * const stream = object;
 
   switch ((enum State)stream->state)
   {
@@ -278,49 +352,72 @@ static enum Result streamStatus(const void *object)
 static void streamAppend(void *object, void *destination, const void *source,
     size_t size)
 {
-  struct DmaOneShot * const stream = object;
+  struct DmaList * const stream = object;
   const uint32_t config = stream->base.config;
-  uintptr_t memoryAddress;
-  uintptr_t periphAddress;
-  uint32_t transfers;
 
   assert(destination != NULL && source != NULL);
   assert(!(size % (1 << SCR_PSIZE_VALUE(config))));
   assert(!(size % (1 << SCR_MSIZE_VALUE(config))));
-  assert(stream->state != STATE_BUSY && stream->state != STATE_READY);
+  assert(stream->queued < stream->capacity);
+
+  if (stream->state == STATE_DONE || stream->state == STATE_ERROR)
+  {
+    stream->index = 0;
+    stream->queued = 0;
+  }
+
+  struct DmaListEntry * const entry = stream->list + stream->index;
+  uintptr_t periphAddress;
+  uint32_t transfers;
+
+  if (++stream->index >= stream->capacity)
+    stream->index = 0;
 
   if (SCR_DIR_VALUE(config) == DMA_TYPE_M2P)
   {
     /* Direction is from memory to peripheral */
-    memoryAddress = (uintptr_t)source;
+    entry->memoryAddress = (uintptr_t)source;
     periphAddress = (uintptr_t)destination;
     transfers = size >> SCR_PSIZE_VALUE(config);
   }
   else
   {
     /* Direction is from peripheral to memory */
-    memoryAddress = (uintptr_t)destination;
+    entry->memoryAddress = (uintptr_t)destination;
     periphAddress = (uintptr_t)source;
     transfers = size >> SCR_MSIZE_VALUE(config);
   }
 
+  assert(!(entry->memoryAddress % (1 << SCR_MSIZE_VALUE(config))));
   assert(!(periphAddress % (1 << SCR_PSIZE_VALUE(config))));
-  assert(!(memoryAddress % (1 << SCR_MSIZE_VALUE(config))));
-  assert(transfers > 0 && transfers <= DMA_MAX_TRANSFER);
+  assert(transfers && transfers <= DMA_MAX_TRANSFER);
+  assert(!stream->transfers || transfers == stream->transfers);
+  assert(!stream->transfers || periphAddress == stream->periphAddress);
 
-  stream->memoryAddress = memoryAddress;
-  stream->periphAddress = periphAddress;
-  stream->transfers = (uint16_t)transfers;
-  stream->state = STATE_READY;
+  ++stream->queued;
+
+  if (stream->state != STATE_BUSY)
+  {
+    stream->periphAddress = periphAddress;
+    stream->transfers = (uint16_t)transfers;
+    stream->state = STATE_READY;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void streamClear(void *object)
 {
-  ((struct DmaOneShot *)object)->state = STATE_IDLE;
+  struct DmaList * const stream = object;
+
+  stream->index = 0;
+  stream->queued = 0;
+  stream->state = STATE_IDLE;
 }
 /*----------------------------------------------------------------------------*/
 static size_t streamQueued(const void *object)
 {
-  const struct DmaOneShot * const stream = object;
-  return stream->state != STATE_IDLE && stream->state != STATE_READY ? 1 : 0;
+  const struct DmaList * const stream = object;
+
+  if (stream->state != STATE_IDLE)
+    return stream->queued;
+  return 0;
 }

@@ -256,18 +256,17 @@ static inline void genericStreamHandler(unsigned int controller,
   const uint32_t offset = ISR_CHANNEL_OFFSET(index);
   const uint32_t raw = *isr & ISR_CHANNEL_MASK(offset);
   const uint32_t status = ISR_CHANNEL_VALUE(raw, offset);
-  enum Result res = E_OK;
+  enum Result res;
 
   /* Clear interrupt flags */
   *ifcr = raw;
 
-  if (!(status & ISR_TCIF_GENERIC))
-  {
-    if (status & (ISR_FEIF_GENERIC | ISR_DMEIF_GENERIC | ISR_TEIF_GENERIC))
-      res = E_ERROR;
-    else
-      res = E_BUSY;
-  }
+  if (status & (ISR_FEIF_GENERIC | ISR_DMEIF_GENERIC | ISR_TEIF_GENERIC))
+    res = E_ERROR;
+  else if (status & ISR_TCIF_GENERIC)
+    res = E_OK;
+  else
+    res = E_BUSY;
 
   stream->handler(stream, res);
 }
