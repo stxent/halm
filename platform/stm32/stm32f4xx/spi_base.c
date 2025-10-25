@@ -5,6 +5,7 @@
  */
 
 #include <halm/platform/stm32/clocking.h>
+#include <halm/platform/stm32/dma_list.h>
 #include <halm/platform/stm32/dma_oneshot.h>
 #include <halm/platform/stm32/spi_base.h>
 #include <halm/platform/stm32/spi_defs.h>
@@ -245,9 +246,44 @@ void SPI3_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
+uint32_t i2sGetClock(const struct SpiBase *)
+{
+  return clockFrequency(AudioPll);
+}
+/*----------------------------------------------------------------------------*/
 uint32_t spiGetClock(const struct SpiBase *interface)
 {
   return clockFrequency(interface->channel == 0 ? Apb2Clock : Apb1Clock);
+}
+/*----------------------------------------------------------------------------*/
+void *i2sMakeListDma(uint8_t channel, uint8_t stream,
+    enum DmaPriority priority, enum DmaType type, size_t number)
+{
+  const struct DmaListConfig config = {
+      .number = number,
+      .event = (type == DMA_TYPE_P2M) ?
+          dmaGetEventI2SRx(channel) : dmaGetEventI2STx(channel),
+      .priority = priority,
+      .type = type,
+      .stream = stream
+  };
+
+  return init(DmaList, &config);
+}
+/*----------------------------------------------------------------------------*/
+void *spiMakeListDma(uint8_t channel, uint8_t stream,
+    enum DmaPriority priority, enum DmaType type, size_t number)
+{
+  const struct DmaListConfig config = {
+      .number = number,
+      .event = (type == DMA_TYPE_P2M) ?
+          dmaGetEventSpiRx(channel) : dmaGetEventSpiTx(channel),
+      .priority = priority,
+      .type = type,
+      .stream = stream
+  };
+
+  return init(DmaList, &config);
 }
 /*----------------------------------------------------------------------------*/
 void *spiMakeOneShotDma(uint8_t channel, uint8_t stream,

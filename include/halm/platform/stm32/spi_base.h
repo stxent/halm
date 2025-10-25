@@ -65,7 +65,10 @@ void spiSetMode(struct SpiBase *, uint8_t);
 bool spiSetRate(struct SpiBase *, uint32_t);
 
 /* Platform-specific functions */
+uint32_t i2sGetClock(const struct SpiBase *);
 uint32_t spiGetClock(const struct SpiBase *);
+void *i2sMakeListDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType, size_t);
+void *spiMakeListDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType, size_t);
 void *spiMakeOneShotDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType);
 
 END_DECLS

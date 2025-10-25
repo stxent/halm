@@ -44,6 +44,29 @@
 #define SR_OVR                          BIT(6)
 #define SR_BSY                          BIT(7)
 /*------------------I2S Configuration Register--------------------------------*/
+enum
+{
+  DATLEN_16BIT,
+  DATLEN_24BIT,
+  DATLEN_32BIT
+};
+
+enum
+{
+  I2SSTD_I2S_PHILIPS,
+  I2SSTD_LEFT_JUSTIFIED,
+  I2SSTD_RIGHT_JUSTIFIED,
+  I2SSTD_PCM
+};
+
+enum
+{
+  I2SCFG_SLAVE_TX,
+  I2SCFG_SLAVE_RX,
+  I2SCFG_MASTER_TX,
+  I2SCFG_MASTER_RX
+};
+
 #define I2SCFGR_CHLEN                   BIT(0)
 
 #define I2SCFGR_DATLEN(value)           BIT_FIELD((value), 1)
@@ -71,6 +94,8 @@
 #define I2SPR_I2SDIV(value)             BIT_FIELD((value), 0)
 #define I2SPR_I2SDIV_MASK               BIT_FIELD(MASK(8), 0)
 #define I2SPR_I2SDIV_VALUE(reg)         FIELD_VALUE((reg), I2SPR_I2SDIV_MASK, 0)
+#define I2SPR_I2SDIV_MAX                255
+#define I2SPR_I2SDIV_MIN                2
 
 #define I2SPR_ODD                       BIT(8)
 #define I2SPR_MCKOE                     BIT(9)

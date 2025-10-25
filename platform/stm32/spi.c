@@ -50,11 +50,17 @@ const struct InterfaceClass * const Spi = &(const struct InterfaceClass){
 static void dmaHandler(void *object)
 {
   struct Spi * const interface = object;
+  STM_SPI_Type * const reg = interface->base.reg;
 
   if (interface->callback != NULL)
   {
     if (interface->invoked)
+    {
+      /* Disable DMA request generation */
+      reg->CR2 &= ~(CR2_RXDMAEN | CR2_TXDMAEN);
+
       interface->callback(interface->callbackArgument);
+    }
     else
       interface->invoked = true;
   }
@@ -224,6 +230,9 @@ static size_t transferData(struct Spi *interface, const void *txSource,
     return 0;
   }
 
+  /* Enable DMA request generation */
+  reg->CR2 |= CR2_RXDMAEN | CR2_TXDMAEN;
+
   enum Result res = E_OK;
 
   if (interface->blocking)
@@ -278,7 +287,7 @@ static enum Result spiInit(void *object, const void *configBase)
 #endif
 
   /* Enable the peripheral */
-  reg->CR2 = CR2_RXDMAEN | CR2_TXDMAEN | CR2_SSOE;
+  reg->CR2 = CR2_SSOE;
   reg->CR1 |= CR1_SPE;
 
   return E_OK;

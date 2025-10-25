@@ -157,21 +157,28 @@ static bool dmaSetup(struct SerialDma *interface, uint8_t rxStream,
 /*----------------------------------------------------------------------------*/
 static enum Result enqueueRxBuffer(struct SerialDma *interface)
 {
-  const STM_USART_Type * const reg = interface->base.reg;
+  STM_USART_Type * const reg = interface->base.reg;
 
   dmaAppend(interface->rxDma, interface->rxBuffer, (const void *)&reg->RDR,
       interface->rxBufferSize);
   interface->rxPosition = 0;
 
   /* Start reception */
-  return dmaEnable(interface->rxDma);
+  const enum Result res = dmaEnable(interface->rxDma);
+
+  if (res == E_OK)
+  {
+    /* Enable DMA RX requests */
+    reg->CR3 |= CR3_DMAR;
+  }
+
+  return res;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result enqueueTxBuffers(struct SerialDma *interface)
 {
   STM_USART_Type * const reg = interface->base.reg;
   const uint8_t *address;
-  enum Result res;
 
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
@@ -181,7 +188,15 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
   dmaAppend(interface->txDma, (void *)&reg->TDR, address,
       interface->txBufferSize);
 
-  if ((res = dmaEnable(interface->txDma)) != E_OK)
+  /* Start transmission */
+  const enum Result res = dmaEnable(interface->txDma);
+
+  if (res == E_OK)
+  {
+    /* Enable DMA TX requests */
+    reg->CR3 |= CR3_DMAT;
+  }
+  else
     interface->txBufferSize = 0;
 
   return res;
@@ -252,7 +267,11 @@ static void serialInterruptHandler(void *object)
 static void txDmaHandler(void *object)
 {
   struct SerialDma * const interface = object;
+  STM_USART_Type * const reg = interface->base.reg;
   bool event = false;
+
+  /* Disable DMA TX requests */
+  reg->CR3 &= ~CR3_DMAT;
 
   if (dmaStatus(interface->txDma) != E_ERROR)
     byteQueueAbandon(&interface->txQueue, interface->txBufferSize);
@@ -352,8 +371,8 @@ static enum Result serialInit(void *object, const void *configBase)
     return E_VALUE;
   uartSetParity(&interface->base, config->parity);
 
-  /* Enable DMA mode for transmission and reception */
-  reg->CR3 = CR3_DMAR | CR3_DMAT;
+  /* Disable DMA by default */
+  reg->CR3 = 0;
 
   /* Enable receiver and transmitter, IDLE interrupt, enable peripheral */
   reg->CR1 |= CR1_RE | CR1_TE | CR1_IDLEIE | CR1_UE;
@@ -381,6 +400,7 @@ static void serialDeinit(void *object)
   dmaDisable(interface->txDma);
   dmaDisable(interface->rxDma);
 
+  reg->CR3 = 0;
   reg->CR1 = 0;
 
 #ifdef CONFIG_PLATFORM_STM32_UART_PM
