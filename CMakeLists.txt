@@ -19,6 +19,10 @@ if(PROJECT_IS_TOP_LEVEL)
     set(CMAKE_C_STANDARD 23)
 endif()
 
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    set(FLAGS_STARTUP "-fno-builtin")
+endif()
+
 if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
     if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
         set(CMAKE_C_COMPILE_OPTIONS_IPO -flto=auto -ffat-lto-objects)

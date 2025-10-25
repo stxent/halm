@@ -16,8 +16,8 @@ extern void platformStartup(void);
 /*----------------------------------------------------------------------------*/
 void RESET_ISR(void)
 {
-  register unsigned long *dst;
-  register unsigned long *src;
+  unsigned long *dst;
+  unsigned long *src;
 
 #ifdef CONFIG_CORE_CORTEX_MEMORY_DEBUG
   /* Fill the RAM with a predefined pattern */

@@ -3,11 +3,12 @@
 
 string(TOLOWER ${PLATFORM} CMAKE_SYSTEM_SOC)
 
+list(APPEND STARTUP_FILES "startup.c")
+list(APPEND STARTUP_FILES "${CMAKE_SYSTEM_SOC}/startup.c")
+
 list(APPEND SOURCE_FILES "../pin.c")
-list(APPEND SOURCE_FILES "startup.c")
-list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/clocking.c")
 list(APPEND SOURCE_FILES "${CONFIG_GEN_PIN}/pin.c")
-list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/startup.c")
+list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/clocking.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/system.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/vectors.c")
 
@@ -116,4 +117,5 @@ elseif(CONFIG_PLATFORM_STM32_BDMA)
     list(APPEND SOURCE_FILES "bdma_memcopy.c")
 endif()
 
-add_library(halm_platform OBJECT ${SOURCE_FILES})
+add_library(halm_platform OBJECT ${STARTUP_FILES} ${SOURCE_FILES})
+set_source_files_properties(${STARTUP_FILES} PROPERTIES COMPILE_OPTIONS "${FLAGS_STARTUP}")

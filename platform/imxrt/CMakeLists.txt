@@ -5,11 +5,12 @@ string(REPLACE "_" ";" _platform_parts ${PLATFORM})
 list(GET _platform_parts 0 _platform_soc)
 string(TOLOWER ${_platform_soc} CMAKE_SYSTEM_SOC)
 
+list(APPEND STARTUP_FILES "startup.c")
+list(APPEND STARTUP_FILES "${CMAKE_SYSTEM_SOC}/startup.c")
+
 list(APPEND SOURCE_FILES "../pin.c")
-list(APPEND SOURCE_FILES "startup.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/clocking.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pin.c")
-list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/startup.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/system.c")
 list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/vectors.c")
 
@@ -50,4 +51,5 @@ if(CONFIG_PLATFORM_USB)
 endif()
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/${CMAKE_SYSTEM_SOC}/CMakeLists.txt" OPTIONAL)
-add_library(halm_platform OBJECT ${SOURCE_FILES})
+add_library(halm_platform OBJECT ${STARTUP_FILES} ${SOURCE_FILES})
+set_source_files_properties(${STARTUP_FILES} PROPERTIES COMPILE_OPTIONS "${FLAGS_STARTUP}")
