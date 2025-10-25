@@ -512,6 +512,16 @@ void sctReleaseOutputChannel(struct SctBase *, enum SctOutput)
 {
 }
 /*----------------------------------------------------------------------------*/
+bool sctReserveInputChannel(struct SctBase *, enum SctInput)
+{
+  return true;
+}
+/*----------------------------------------------------------------------------*/
+bool sctReserveOutputChannel(struct SctBase *, enum SctOutput)
+{
+  return true;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SctBaseConfig * const config = configBase;

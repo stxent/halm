@@ -65,6 +65,8 @@ uint32_t sctGetClock(const struct SctBase *);
 void sctReleaseEvent(struct SctBase *, uint8_t);
 void sctReleaseInputChannel(struct SctBase *, enum SctInput);
 void sctReleaseOutputChannel(struct SctBase *, enum SctOutput);
+bool sctReserveInputChannel(struct SctBase *, enum SctInput);
+bool sctReserveOutputChannel(struct SctBase *, enum SctOutput);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
