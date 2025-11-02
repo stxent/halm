@@ -38,6 +38,8 @@ struct UsbEndpoint
   uint16_t size;
   /* Logical address */
   uint8_t address;
+  /* Endpoint type */
+  uint8_t type;
 };
 
 struct UsbDevice
@@ -49,12 +51,16 @@ struct UsbDevice
   /* Control message handler */
   struct UsbControl *control;
 
+  /* Endpoints configured as isochronous */
+  uint16_t isochronous;
   /* The last allocated address inside the packet buffer memory */
   uint16_t position;
   /* Device is configured */
   bool configured;
   /* Device is enabled */
   bool enabled;
+  /* Next frame is even flag */
+  bool even;
   /* Device is suspended */
   bool suspended;
 };
@@ -62,6 +68,7 @@ struct UsbDevice
 static void configPeriphLatency(struct UsbDevice *);
 static void interruptHandler(void *);
 static void resetDevice(struct UsbDevice *);
+static void toggleIsochronousEndpoints(struct UsbDevice *);
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *, const void *);
 static void *devCreateEndpoint(void *, uint8_t);
@@ -193,10 +200,18 @@ static void interruptHandler(void *object)
     usbControlNotify(device->control, USB_DEVICE_EVENT_RESET);
   }
 
+#ifdef CONFIG_PLATFORM_USB_SOF
   if (intStatus & GINTSTS_SOF)
   {
     reg->GLOBAL.GINTSTS = GINTSTS_SOF;
     usbControlNotify(device->control, USB_DEVICE_EVENT_FRAME);
+  }
+#endif
+
+  if (intStatus & GINTSTS_EOPF)
+  {
+    reg->GLOBAL.GINTSTS = GINTSTS_EOPF;
+    toggleIsochronousEndpoints(device);
   }
 
   if (intStatus & GINTSTS_ENUMDNE)
@@ -265,9 +280,13 @@ static void resetDevice(struct UsbDevice *device)
   STM_USB_OTG_Type * const reg = device->base.reg;
 
   /* Set inactive configuration */
+  device->isochronous = 0;
+  device->even = false;
   device->suspended = false;
   device->position = MIN(device->base.memoryCapacity >> 1, 1024);
 
+  /* Disable End of Periodic Frame interrupt */
+  reg->GLOBAL.GINTMSK &= ~GINTMSK_EOPFM;
   /* Disable interrupts for all endpoints */
   reg->DEV.DAINTMSK = 0;
 
@@ -294,6 +313,30 @@ static void resetDevice(struct UsbDevice *device)
     device->endpoints[index] = NULL;
 }
 /*----------------------------------------------------------------------------*/
+static void toggleIsochronousEndpoints(struct UsbDevice *device)
+{
+  STM_USB_OTG_Type * const reg = device->base.reg;
+  const bool even = (reg->DEV.DSTS & DSTS_FNSOF_LSB) == 0;
+  uint32_t mask = device->isochronous;
+
+  /* Skip microframe events */
+  if (device->even != even)
+  {
+    device->even = even;
+
+    while (mask)
+    {
+      const unsigned int number = 31 - countLeadingZeros32(mask);
+
+      /* Enqueue to the next frame */
+      reg->DEV_EP_OUT[number].DOEPCTL |= device->even ?
+          DOEPCTL_SODDFRM : DOEPCTL_SEVNFRM;
+
+      mask -= 1UL << number;
+    }
+  }
+}
+/*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
@@ -318,7 +361,9 @@ static enum Result devInit(void *object, const void *configBase)
     return res;
 
   device->base.handler = interruptHandler;
+  device->isochronous = 0;
   device->configured = false;
+  device->even = false;
   device->enabled = false;
   device->suspended = false;
 
@@ -363,11 +408,12 @@ static enum Result devInit(void *object, const void *configBase)
   reg->GLOBAL.GUSBCFG |= GUSBCFG_FDMOD;
   configPeriphLatency(device);
 
+  /* Set Periodic Frame Interval to 90% */
+  reg->DEV.DCFG = (reg->DEV.DCFG & ~DCFG_PFIVL_MASK)
+      | DCFG_PFIVL(PFIVL_90P);
+  /* Set maximum USB core speed */
   reg->DEV.DCFG = (reg->DEV.DCFG & ~DCFG_DSPD_MASK)
       | (device->base.hs ? DCFG_DSPD(DSPD_HS) : DCFG_DSPD(DSPD_FS));
-
-  // TODO Is it needed?
-  reg->GLOBAL.GINTSTS = GINTSTS_MMIS;
 
   /* Restart the PHY clock */
   reg->PCG.PCGCCTL = 0;
@@ -503,7 +549,7 @@ static void devStringErase(void *object, struct UsbString string)
   struct UsbDevice * const device = object;
   usbControlStringErase(device->control, string);
 }
-// /*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 // static void disableEpIn(struct UsbEndpoint *ep)
 // {
 //   STM_USB_OTG_Type * const reg = ep->device->base.reg;
@@ -529,28 +575,41 @@ static void enableEpIn(struct UsbEndpoint *ep, size_t length)
   assert((number && packets <= CONFIG_PLATFORM_USB_IN_BUFFERS)
       || (!number && packets == 1));
 
-  reg->DEV_EP_IN[number].DIEPTSIZ =
-      DIEPTSIZ_PKTCNT(packets) | DIEPTSIZ_XFRSIZ(length);
-  reg->DEV_EP_IN[number].DIEPCTL |= DIEPCTL_CNAK | DIEPCTL_EPENA;
+  const uint32_t dieptsiz = DIEPTSIZ_PKTCNT(packets) | DIEPTSIZ_XFRSIZ(length);
+  uint32_t diepctl = reg->DEV_EP_IN[number].DIEPCTL;
+
+  diepctl |= DIEPCTL_CNAK | DIEPCTL_EPENA;
+  if (ep->type == ENDPOINT_TYPE_ISOCHRONOUS)
+  {
+    /* Enqueue to the current frame */
+    diepctl |= ep->device->even ? DIEPCTL_SEVNFRM : DIEPCTL_SODDFRM;
+  }
+
+  reg->DEV_EP_IN[number].DIEPTSIZ = dieptsiz;
+  reg->DEV_EP_IN[number].DIEPCTL = diepctl;
 }
 /*----------------------------------------------------------------------------*/
 static void enableEpOut(struct UsbEndpoint *ep)
 {
   STM_USB_OTG_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+  uint32_t doepctl = reg->DEV_EP_OUT[number].DOEPCTL;
+  uint32_t doeptsiz;
 
-  if (!number)
+  if (ep->type == ENDPOINT_TYPE_CONTROL)
   {
-    reg->DEV_EP_OUT[number].DOEPTSIZ = DOEPTSIZ0_XFRSIZ(ep->size)
-        | DOEPTSIZ0_PKTCNT | DOEPTSIZ0_STUPCNT(1);
+    doeptsiz = DOEPTSIZ0_XFRSIZ(ep->size) | DOEPTSIZ0_PKTCNT
+        | DOEPTSIZ0_STUPCNT(1);
   }
   else
   {
-    reg->DEV_EP_OUT[number].DOEPTSIZ = DOEPTSIZ_XFRSIZ(ep->size)
-        | DOEPTSIZ_PKTCNT(1);
+    doeptsiz = DOEPTSIZ_XFRSIZ(ep->size) | DOEPTSIZ_PKTCNT(1);
   }
 
-  reg->DEV_EP_OUT[number].DOEPCTL |= DOEPCTL_CNAK | DOEPCTL_EPENA;
+  doepctl |= DOEPCTL_CNAK | DOEPCTL_EPENA;
+
+  reg->DEV_EP_OUT[number].DOEPTSIZ = doeptsiz;
+  reg->DEV_EP_OUT[number].DOEPCTL = doepctl;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t encodeEp0Size(size_t size)
@@ -857,6 +916,7 @@ static enum Result epInit(void *object, const void *configBase)
     ep->subclass = subclass;
     ep->device = config->parent;
     ep->address = config->address;
+    ep->type = ENDPOINT_TYPE_CONTROL;
 
     return E_OK;
   }
@@ -933,6 +993,16 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   }
 
   ep->size = size;
+  ep->type = type;
+
+  if (ep->type == ENDPOINT_TYPE_ISOCHRONOUS)
+  {
+    /* Enable End of Periodic Frame interrupt */
+    reg->GLOBAL.GINTMSK |= GINTMSK_EOPFM;
+
+    if (!(ep->address & USB_EP_DIRECTION_IN))
+      device->isochronous |= 1 << number;
+  }
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
@@ -955,13 +1025,16 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 
   if (ep->address & USB_EP_DIRECTION_IN)
   {
-    uint32_t diepctl = DIEPCTL_EPTYP(type) | DIEPCTL_TXFNUM(number)
+    uint32_t diepctl = DIEPCTL_EPTYP(ep->type) | DIEPCTL_TXFNUM(number)
         | DIEPCTL_SNAK;
 
     if (number)
     {
       assert(size <= DIEPCTL_MPSIZ_MASK);
-      diepctl |= DIEPCTL_MPSIZ(size) | DIEPCTL_USBAEP | DIEPCTL_SD0PID;
+      diepctl |= DIEPCTL_MPSIZ(size) | DIEPCTL_USBAEP;
+
+      if (ep->type != ENDPOINT_TYPE_ISOCHRONOUS)
+        diepctl |= DIEPCTL_SD0PID;
     }
     else
     {
@@ -974,7 +1047,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
   }
   else
   {
-    uint32_t doepctl = DOEPCTL_EPTYP(type) | DOEPCTL_SNAK | DOEPCTL_EPENA;
+    uint32_t doepctl = DOEPCTL_EPTYP(ep->type) | DOEPCTL_SNAK | DOEPCTL_EPENA;
     uint32_t doeptsiz;
 
     if (number)
@@ -982,6 +1055,9 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
       assert(size <= DOEPCTL_MPSIZ_MASK);
       doeptsiz = DOEPTSIZ_XFRSIZ(size) | DOEPTSIZ_PKTCNT(1);
       doepctl |= DOEPCTL_MPSIZ(size) | DOEPCTL_USBAEP | DOEPCTL_SD0PID;
+
+      if (ep->type != ENDPOINT_TYPE_ISOCHRONOUS)
+        doepctl |= DOEPCTL_SD0PID;
     }
     else
     {
@@ -1028,7 +1104,7 @@ static void epSetStalled(void *object, bool stalled)
 
     if (stalled)
       value |= DIEPCTL_STALL;
-    if (!number)
+    if (number && ep->type != ENDPOINT_TYPE_ISOCHRONOUS)
       value |= DIEPCTL_SD0PID;
 
     reg->DEV_EP_IN[number].DIEPCTL = value;
@@ -1039,7 +1115,7 @@ static void epSetStalled(void *object, bool stalled)
 
     if (stalled)
       value |= DOEPCTL_STALL;
-    if (!number)
+    if (number && ep->type != ENDPOINT_TYPE_ISOCHRONOUS)
       value |= DOEPCTL_SD0PID;
 
     reg->DEV_EP_OUT[number].DOEPCTL = value;

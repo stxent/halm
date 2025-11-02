@@ -713,7 +713,8 @@ static void inStreamEndpointDescriptor(const void *object,
         .descriptorType = DESCRIPTOR_TYPE_ENDPOINT,
         .endpointAddress = driver->endpoints.tx,
         .attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_ISOCHRONOUS)
-            | ENDPOINT_DESCRIPTOR_ASYNC,
+            | (driver->endpoints.fb ?
+                ENDPOINT_DESCRIPTOR_ASYNC : ENDPOINT_DESCRIPTOR_SYNC),
         .maxPacketSize = toLittleEndian16(driver->maxPacketSize),
         /* Interval is 2 ^ (4 - 1) microframes for HS devices */
         .interval = usbDevGetSpeed(driver->device) == USB_HS ? 4 : 1
@@ -863,7 +864,8 @@ static void outStreamEndpointDescriptor(const void *object,
         .descriptorType = DESCRIPTOR_TYPE_ENDPOINT,
         .endpointAddress = driver->endpoints.rx,
         .attributes = ENDPOINT_DESCRIPTOR_TYPE(ENDPOINT_TYPE_ISOCHRONOUS)
-            | ENDPOINT_DESCRIPTOR_ASYNC, // TODO Adaptive mode
+            | (driver->endpoints.fb ?
+                ENDPOINT_DESCRIPTOR_ASYNC : ENDPOINT_DESCRIPTOR_SYNC),
         .maxPacketSize = toLittleEndian16(driver->maxPacketSize),
         /* Interval is 2 ^ (4 - 1) microframes for HS devices */
         .interval = usbDevGetSpeed(driver->device) == USB_HS ? 4 : 1

@@ -469,6 +469,14 @@ enum
   DSPD_FS = 3
 };
 
+enum
+{
+  PFIVL_80P,
+  PFIVL_85P,
+  PFIVL_90P,
+  PFIVL_95P
+};
+
 #define DCFG_DSPD_MASK                  BIT_FIELD(MASK(2), 0)
 #define DCFG_DSPD(value)                BIT_FIELD((value), 0)
 #define DCFG_DSPD_VALUE(reg)            FIELD_VALUE((reg), DCFG_DSPD_MASK, 0)
@@ -530,6 +538,7 @@ enum
 #define DSTS_FNSOF_MASK                 BIT_FIELD(MASK(14), 8)
 #define DSTS_FNSOF(value)               BIT_FIELD((value), 8)
 #define DSTS_FNSOF_VALUE(reg)           FIELD_VALUE((reg), DSTS_FNSOF_MASK, 8)
+#define DSTS_FNSOF_LSB                  BIT(8)
 /*------------------Device IN EP common interrupt mask register---------------*/
 #define DIEPMSK_XFRCM                   BIT(0)
 #define DIEPMSK_EPDM                    BIT(1)
