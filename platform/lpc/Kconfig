@@ -139,12 +139,12 @@ config PLATFORM_LPC_ADC
 config PLATFORM_LPC_ADC_DMA
 	bool "Multichannel ADC with DMA"
 	default y
-	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
+	depends on PLATFORM_LPC_ADC_BASE && (PLATFORM_LPC_GPDMA || PLATFORM_LPC_SDMA)
 
 config PLATFORM_LPC_ADC_DMA_STREAM
 	bool "Multichannel buffered ADC with DMA"
 	default y
-	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
+	depends on PLATFORM_LPC_ADC_BASE && (PLATFORM_LPC_GPDMA || PLATFORM_LPC_SDMA)
 
 config PLATFORM_LPC_ADC_ONESHOT
 	bool "Multichannel ADC with polling"

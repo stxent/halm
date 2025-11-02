@@ -77,11 +77,9 @@ static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
 
     /*
      * If the SCT is operating as two 16-bit counters, events can only modify
-     * the state of the outputs when neither counter is halted. High Timer
-     * must be initiliazed after the Low Timer. Low Timer must be enabled.
+     * the state of the outputs when neither counter is halted.
      */
-    if (instance.parts[part] == NULL
-        && (timerPart == SCT_LOW || instance.parts[SCT_LOW] != NULL))
+    if (instance.parts[part] == NULL)
     {
       instance.parts[part] = timer;
       attached = true;
