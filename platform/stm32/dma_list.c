@@ -59,56 +59,47 @@ static void interruptHandler(void *object, enum Result res)
 {
   struct DmaList * const stream = object;
   STM_DMA_STREAM_Type * const reg = stream->base.reg;
-  bool event = false;
 
   --stream->queued;
 
-  switch (res)
+  if (res == E_OK)
   {
-    case E_OK:
+    const uint32_t cr = reg->CR;
+
+    if ((cr & SCR_EN) && stream->queued >= 1)
     {
-      if (stream->queued >= 1)
-      {
-        size_t index = stream->index;
+      size_t index = stream->index;
 
-        /* Calculate index of the first chunk */
-        if (index >= stream->queued)
-          index -= stream->queued;
-        else
-          index += stream->capacity - stream->queued;
-
-        if (reg->CR & SCR_CT)
-          reg->M0AR = stream->list[index].memoryAddress;
-        else
-          reg->M1AR = stream->list[index].memoryAddress;
-
-        if (stream->queued == 1)
-        {
-          /* Queue drained, last buffer will be dropped */
-          reg->CR &= ~SCR_EN;
-        }
-      }
+      /* Calculate index of the first chunk */
+      if (index >= stream->queued)
+        index -= stream->queued;
       else
-        stream->state = STATE_IDLE;
+        index += stream->capacity - stream->queued;
 
-      event = true;
-      break;
+      if (cr & SCR_CT)
+        reg->M0AR = stream->list[index].memoryAddress;
+      else
+        reg->M1AR = stream->list[index].memoryAddress;
+
+      if (stream->queued == 1)
+      {
+        /* Queue drained, last buffer will be dropped */
+        reg->CR &= ~SCR_EN;
+      }
     }
-
-    default:
-      stream->state = STATE_ERROR;
-      break;
+    else
+      stream->state = STATE_IDLE;
   }
+  else
+    stream->state = STATE_ERROR;
 
   if (stream->state != STATE_BUSY)
   {
     reg->CR = 0;
     dmaResetInstance(stream->base.number);
-
-    event = true;
   }
 
-  if (event && stream->callback != NULL)
+  if (stream->callback != NULL)
     stream->callback(stream->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -141,10 +132,10 @@ static enum Result streamInit(void *object, const void *configBase)
   
     stream->callback = NULL;
     stream->capacity = config->number;
-    stream->periphAddress = 0;
-    stream->transfers = 0;
     stream->index = 0;
     stream->queued = 0;
+    stream->periphAddress = 0;
+    stream->transferNumber = 0;
     stream->fifo = 0;
     stream->state = STATE_IDLE;
   }
@@ -262,7 +253,7 @@ static enum Result streamEnable(void *object)
 
     stream->state = STATE_BUSY;
     reg->FCR = (uint32_t)stream->fifo;
-    reg->NDTR = stream->transfers;
+    reg->NDTR = stream->transferNumber;
     reg->M0AR = stream->list[0].memoryAddress;
     reg->PAR = stream->periphAddress;
 
@@ -368,7 +359,7 @@ static void streamAppend(void *object, void *destination, const void *source,
 
   struct DmaListEntry * const entry = stream->list + stream->index;
   uintptr_t periphAddress;
-  uint32_t transfers;
+  uint32_t transferNumber;
 
   if (++stream->index >= stream->capacity)
     stream->index = 0;
@@ -378,29 +369,32 @@ static void streamAppend(void *object, void *destination, const void *source,
     /* Direction is from memory to peripheral */
     entry->memoryAddress = (uintptr_t)source;
     periphAddress = (uintptr_t)destination;
-    transfers = size >> SCR_PSIZE_VALUE(config);
+    transferNumber = size >> SCR_PSIZE_VALUE(config);
   }
   else
   {
     /* Direction is from peripheral to memory */
     entry->memoryAddress = (uintptr_t)destination;
     periphAddress = (uintptr_t)source;
-    transfers = size >> SCR_MSIZE_VALUE(config);
+    transferNumber = size >> SCR_MSIZE_VALUE(config);
   }
 
   assert(!(entry->memoryAddress % (1 << SCR_MSIZE_VALUE(config))));
   assert(!(periphAddress % (1 << SCR_PSIZE_VALUE(config))));
-  assert(transfers && transfers <= DMA_MAX_TRANSFER);
-  assert(!stream->transfers || transfers == stream->transfers);
-  assert(!stream->transfers || periphAddress == stream->periphAddress);
+  assert(transferNumber && transferNumber <= DMA_MAX_TRANSFER);
 
   ++stream->queued;
 
   if (stream->state != STATE_BUSY)
   {
     stream->periphAddress = periphAddress;
-    stream->transfers = (uint16_t)transfers;
+    stream->transferNumber = (uint16_t)transferNumber;
     stream->state = STATE_READY;
+  }
+  else
+  {
+    assert(periphAddress == stream->periphAddress);
+    assert(transferNumber == stream->transferNumber);
   }
 }
 /*----------------------------------------------------------------------------*/

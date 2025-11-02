@@ -142,6 +142,10 @@ const struct PinEntry spiPins[] = {
         .channel = 1,
         .value = 5
     }, {
+        .key = PIN(PORT_C, 6), /* I2S2_MCK */
+        .channel = 1,
+        .value = 5
+    }, {
         .key = PIN(PORT_I, 0), /* SPI2_NSS/I2S2_WS */
         .channel = 1,
         .value = 5
@@ -178,6 +182,10 @@ const struct PinEntry spiPins[] = {
         .value = 6
     }, {
         .key = PIN(PORT_B, 5), /* SPI3_MOSI/I2S3_SD */
+        .channel = 2,
+        .value = 6
+    }, {
+        .key = PIN(PORT_C, 7), /* I2S3_MCK */
         .channel = 2,
         .value = 6
     }, {
@@ -251,9 +259,24 @@ uint32_t i2sGetClock(const struct SpiBase *)
   return clockFrequency(AudioPll);
 }
 /*----------------------------------------------------------------------------*/
+void *i2sGetExtension(const struct SpiBase *interface)
+{
+  switch (interface->channel)
+  {
+    case SPI2:
+      return STM_I2S2EXT;
+
+    case SPI3:
+      return STM_I2S3EXT;
+
+    default:
+      return NULL;
+  }
+}
+/*----------------------------------------------------------------------------*/
 uint32_t spiGetClock(const struct SpiBase *interface)
 {
-  return clockFrequency(interface->channel == 0 ? Apb2Clock : Apb1Clock);
+  return clockFrequency(interface->channel == SPI1 ? Apb2Clock : Apb1Clock);
 }
 /*----------------------------------------------------------------------------*/
 void *i2sMakeListDma(uint8_t channel, uint8_t stream,

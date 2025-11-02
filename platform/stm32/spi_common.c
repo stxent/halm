@@ -11,6 +11,17 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry spiPins[];
 /*----------------------------------------------------------------------------*/
+void i2sConfigClockPin(uint8_t channel, PinNumber key)
+{
+  const struct PinEntry * const pinEntry = pinFind(spiPins, key, channel);
+  assert(pinEntry != NULL);
+
+  const struct Pin pin = pinInit(key);
+
+  pinOutput(pin, false);
+  pinSetFunction(pin, pinEntry->value);
+}
+/*----------------------------------------------------------------------------*/
 void spiConfigPins(const struct SpiBaseConfig *config)
 {
   enum

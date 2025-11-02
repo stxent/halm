@@ -149,15 +149,21 @@ static void interruptHandler(void *object)
     /* Transfer a next part of data */
     reg->CR2 = cr2;
   }
-  else if (status & (ISR_NACKF | ISR_BERR | ISR_ARLO))
-  {
-    interface->status = STATUS_ERROR;
-    event = true;
-  }
   else
   {
-    interface->status = STATUS_OK;
-    event = true;
+    /* Disable DMA requests */
+    reg->CR1 &= ~(CR1_TXDMAEN | CR1_RXDMAEN);
+
+    if (status & (ISR_NACKF | ISR_BERR | ISR_ARLO))
+    {
+      interface->status = STATUS_ERROR;
+      event = true;
+    }
+    else
+    {
+      interface->status = STATUS_OK;
+      event = true;
+    }
   }
 
   if (event && interface->callback != NULL)
@@ -233,9 +239,8 @@ static enum Result i2cInit(void *object, const void *configBase)
 
   /* Clear interrupt flags */
   reg->ICR = ICR_NACKCF | ICR_STOPCF | ICR_BERRCF | ICR_ARLOCF;
-  /* Enable Analog Filter, Clock Stretching, DMA and interrupts */
-  reg->CR1 = CR1_NACKIE | CR1_STOPIE | CR1_TCIE | CR1_ERRIE
-      | CR1_TXDMAEN | CR1_RXDMAEN;
+  /* Enable Analog Filter, Clock Stretching and interrupts */
+  reg->CR1 = CR1_NACKIE | CR1_STOPIE | CR1_TCIE | CR1_ERRIE;
 
   /* Rate should be initialized before interface enabling */
   i2cSetRate(&interface->base, config->rate);
@@ -425,6 +430,7 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   if (length > CR2_NBYTES_MAX)
     cr2 |= CR2_RELOAD;
 
+  reg->CR1 |= CR1_RXDMAEN;
   reg->CR2 = cr2 | CR2_START;
 
   if (interface->blocking)
@@ -473,6 +479,7 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   if (!interface->sendRepeatedStart)
     cr2 |= CR2_AUTOEND;
 
+  reg->CR1 |= CR1_TXDMAEN;
   reg->CR2 = cr2 | CR2_START;
 
   if (interface->blocking)

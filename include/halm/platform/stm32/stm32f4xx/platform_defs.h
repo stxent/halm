@@ -807,13 +807,13 @@ typedef struct
   __ne__ uint8_t RESERVED10[0x400 - sizeof(STM_WWDG_Type)];
   STM_IWDG_Type IWDG;
   __ne__ uint8_t RESERVED11[0x400 - sizeof(STM_IWDG_Type)];
-  STM_SPI_Type SPI2EXT;
+  STM_SPI_Type I2S2EXT;
   __ne__ uint8_t RESERVED12[0x400 - sizeof(STM_SPI_Type)];
   STM_SPI_Type SPI2;
   __ne__ uint8_t RESERVED13[0x400 - sizeof(STM_SPI_Type)];
   STM_SPI_Type SPI3;
   __ne__ uint8_t RESERVED14[0x400 - sizeof(STM_SPI_Type)];
-  STM_SPI_Type SPI3EXT;
+  STM_SPI_Type I2S3EXT;
   __ne__ uint8_t RESERVED15[0x400 - sizeof(STM_SPI_Type)];
   STM_USART_Type USART2;
   __ne__ uint8_t RESERVED16[0x400 - sizeof(STM_USART_Type)];
@@ -933,10 +933,10 @@ extern APB2_DOMAIN_Type APB2_DOMAIN;
 #define STM_RTC           (&APB1_DOMAIN.RTC)
 #define STM_WWDG          (&APB1_DOMAIN.WWDG)
 #define STM_IWDG          (&APB1_DOMAIN.IWDG)
-#define STM_SPI2EXT       (&APB1_DOMAIN.SPI2EXT)
+#define STM_I2S2EXT       (&APB1_DOMAIN.I2S2EXT)
 #define STM_SPI2          (&APB1_DOMAIN.SPI2)
 #define STM_SPI3          (&APB1_DOMAIN.SPI3)
-#define STM_SPI3EXT       (&APB1_DOMAIN.SPI3EXT)
+#define STM_I2S3EXT       (&APB1_DOMAIN.I2S3EXT)
 #define STM_USART2        (&APB1_DOMAIN.USART2)
 #define STM_USART3        (&APB1_DOMAIN.USART3)
 #define STM_UART4         (&APB1_DOMAIN.UART4)

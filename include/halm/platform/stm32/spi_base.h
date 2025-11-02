@@ -58,6 +58,7 @@ struct SpiBase
 BEGIN_DECLS
 
 /* Common functions */
+void i2sConfigClockPin(uint8_t, PinNumber);
 void spiConfigPins(const struct SpiBaseConfig *);
 uint8_t spiGetMode(const struct SpiBase *);
 uint32_t spiGetRate(const struct SpiBase *);
@@ -66,6 +67,7 @@ bool spiSetRate(struct SpiBase *, uint32_t);
 
 /* Platform-specific functions */
 uint32_t i2sGetClock(const struct SpiBase *);
+void *i2sGetExtension(const struct SpiBase *);
 uint32_t spiGetClock(const struct SpiBase *);
 void *i2sMakeListDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType, size_t);
 void *spiMakeListDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType, size_t);

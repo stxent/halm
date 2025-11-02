@@ -50,7 +50,7 @@ struct DmaList
   /* Base address of the peripheral data register */
   uintptr_t periphAddress;
   /* Number of transfers */
-  uint16_t transfers;
+  uint16_t transferNumber;
 
   /* FIFO configuration */
   uint8_t fifo;
