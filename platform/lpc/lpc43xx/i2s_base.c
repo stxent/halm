@@ -216,8 +216,8 @@ static struct I2SBase *instances[2] = {NULL};
 static void configPins(const struct I2SBaseConfig *config)
 {
   const PinNumber pinArray[] = {
-      config->rx.sck, config->rx.ws, config->rx.sda, config->rx.mclk,
-      config->tx.sck, config->tx.ws, config->tx.sda, config->tx.mclk
+      config->rx.sck, config->rx.ws, config->rx.sd, config->rx.mck,
+      config->tx.sck, config->tx.ws, config->tx.sd, config->tx.mck
   };
 
   for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)

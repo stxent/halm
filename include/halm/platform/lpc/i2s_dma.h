@@ -26,28 +26,28 @@ struct I2SDmaConfig
 
   struct
   {
-    /** Mandatory: receive data. */
-    PinNumber sda;
+    /** Optional: master clock output. */
+    PinNumber mck;
     /** Optional: receive clock. */
     PinNumber sck;
+    /** Mandatory: receive data. */
+    PinNumber sd;
     /** Optional: receive word select. */
     PinNumber ws;
-    /** Optional: master clock output. */
-    PinNumber mclk;
     /** Mandatory: direct memory access channel. */
     uint8_t dma;
   } rx;
 
   struct
   {
-    /** Mandatory: transmit data. */
-    PinNumber sda;
+    /** Optional: master clock output. */
+    PinNumber mck;
     /** Optional: transmit clock. */
     PinNumber sck;
+    /** Mandatory: transmit data. */
+    PinNumber sd;
     /** Optional: transmit word select. */
     PinNumber ws;
-    /** Optional: master clock output. */
-    PinNumber mclk;
     /** Mandatory: direct memory access channel. */
     uint8_t dma;
   } tx;

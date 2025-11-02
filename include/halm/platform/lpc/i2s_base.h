@@ -30,26 +30,26 @@ struct I2SBaseConfig
 {
   struct
   {
+    /** Optional: master clock output. */
+    PinNumber mck;
     /** Optional: receive clock. */
     PinNumber sck;
+    /** Optional: receive data. */
+    PinNumber sd;
     /** Optional: receive word select. */
     PinNumber ws;
-    /** Optional: receive data. */
-    PinNumber sda;
-    /** Optional: master clock output. */
-    PinNumber mclk;
   } rx;
 
   struct
   {
+    /** Optional: master clock output. */
+    PinNumber mck;
     /** Optional: transmit clock. */
     PinNumber sck;
+    /** Optional: transmit data. */
+    PinNumber sd;
     /** Optional: transmit word select. */
     PinNumber ws;
-    /** Optional: transmit data. */
-    PinNumber sda;
-    /** Optional: master clock output. */
-    PinNumber mclk;
   } tx;
 
   /** Mandatory: peripheral identifier. */

@@ -126,7 +126,7 @@ static bool dmaSetup(struct I2SDma *interface,
       }
   };
 
-  if (config->rx.sda != 0)
+  if (config->rx.sd != 0)
   {
     const struct GpDmaListConfig dmaConfig = {
         .number = config->size << 1,
@@ -143,7 +143,7 @@ static bool dmaSetup(struct I2SDma *interface,
     dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
   }
 
-  if (config->tx.sda != 0)
+  if (config->tx.sd != 0)
   {
     const struct GpDmaListConfig dmaConfig = {
         .number = config->size << 1,
@@ -187,7 +187,7 @@ static void modeSetup(struct I2SDma *interface,
   reg->RXBITRATE = 0;
   reg->TXBITRATE = 0;
 
-  if (config->rx.sda != 0)
+  if (config->rx.sd != 0)
   {
     assert((config->rx.ws != 0 && config->rx.sck != 0)
         || (config->rx.ws == 0 && config->rx.sck == 0));
@@ -200,7 +200,7 @@ static void modeSetup(struct I2SDma *interface,
 
     if (config->slave)
       dai |= DAI_WS_SEL;
-    if (config->rx.mclk)
+    if (config->rx.mck)
       reg->RXMODE |= RXMODE_RXMCENA;
     if (!config->rx.ws && !config->rx.sck)
       reg->RXMODE |= RXMODE_RX4PIN;
@@ -212,7 +212,7 @@ static void modeSetup(struct I2SDma *interface,
     reg->DMA1 = 0;
   }
 
-  if (config->tx.sda != 0)
+  if (config->tx.sd != 0)
   {
     assert((config->tx.ws != 0 && config->tx.sck != 0)
         || (config->tx.ws == 0 && config->tx.sck == 0));
@@ -225,7 +225,7 @@ static void modeSetup(struct I2SDma *interface,
 
     if (config->slave)
       dao |= DAO_WS_SEL;
-    if (config->tx.mclk)
+    if (config->tx.mck)
       reg->TXMODE |= TXMODE_TXMCENA;
     if (!config->tx.ws && !config->tx.sck)
       reg->TXMODE |= TXMODE_TX4PIN;
@@ -254,14 +254,14 @@ static bool streamSetup(struct I2SDma *interface,
       .size = config->size
   };
 
-  if (config->rx.sda != 0)
+  if (config->rx.sd != 0)
   {
     interface->rxStream = init(I2SDmaRxStream, &streamConfig);
     if (interface->rxStream == NULL)
       return false;
   }
 
-  if (config->tx.sda != 0)
+  if (config->tx.sd != 0)
   {
     interface->txStream = init(I2SDmaTxStream, &streamConfig);
     if (interface->txStream == NULL)
@@ -407,21 +407,21 @@ static enum Result i2sInit(void *object, const void *configBase)
   const struct I2SDmaConfig * const config = configBase;
   assert(config != NULL);
   assert(config->rate);
-  assert(config->rx.sda || config->tx.sda);
+  assert(config->rx.sd || config->tx.sd);
   assert(config->width <= I2S_WIDTH_32);
 
   const struct I2SBaseConfig baseConfig = {
       .rx = {
+          .mck = config->rx.mck,
           .sck = config->rx.sck,
-          .ws = config->rx.ws,
-          .sda = config->rx.sda,
-          .mclk = config->rx.mclk
+          .sd = config->rx.sd,
+          .ws = config->rx.ws
       },
       .tx = {
+          .mck = config->tx.mck,
           .sck = config->tx.sck,
-          .ws = config->tx.ws,
-          .sda = config->tx.sda,
-          .mclk = config->tx.mclk
+          .sd = config->tx.sd,
+          .ws = config->tx.ws
       },
       .channel = config->channel
   };
