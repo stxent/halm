@@ -234,6 +234,11 @@ if(CONFIG_PLATFORM_LPC_SGPIO_BASE)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/sgpio_base.c")
 endif()
 
+if(CONFIG_PLATFORM_LPC_SPI_BASE)
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_SPI}/spi_common.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/spi_base.c")
+endif()
+
 if(CONFIG_PLATFORM_LPC_SPI)
     list(APPEND SOURCE_FILES "${CONFIG_GEN_SPI}/spi.c")
 endif()

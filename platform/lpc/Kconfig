@@ -568,6 +568,28 @@ config PLATFORM_LPC_SGPIO_NO_DEINIT
 	default y if PLATFORM_LPC_NO_DEINIT
 	depends on PLATFORM_LPC_SGPIO_BASE
 
+config PLATFORM_LPC_SPI_BASE
+	bool "SPI"
+	default y
+	depends on FAMILY_LPC82X
+	help
+	  This is the driver for the Serial Peripheral Interface.
+
+config PLATFORM_LPC_SPI_NO_DEINIT
+	bool
+	default y if PLATFORM_LPC_NO_DEINIT
+	depends on PLATFORM_LPC_SPI_BASE
+
+config PLATFORM_LPC_SPI_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_LPC_SPI_BASE && PM
+
+config PLATFORM_LPC_SPI_RC
+	bool "Runtime configuration"
+	default y
+	depends on PLATFORM_LPC_SPI_BASE
+
 config PLATFORM_LPC_SSP_BASE
 	bool "SSP"
 	default y
@@ -593,12 +615,12 @@ config PLATFORM_LPC_SSP_RC
 config PLATFORM_LPC_SPI
 	bool "Interrupt-driven SPI Master"
 	default y
-	depends on PLATFORM_LPC_SSP_BASE
+	depends on PLATFORM_LPC_SPI_BASE || PLATFORM_LPC_SSP_BASE
 
 config PLATFORM_LPC_SPI_DMA
 	bool "SPI Master with DMA"
 	default y
-	depends on PLATFORM_LPC_SSP_BASE && PLATFORM_LPC_GPDMA
+	depends on (PLATFORM_LPC_SPI_BASE || PLATFORM_LPC_SSP_BASE) && (PLATFORM_LPC_GPDMA || PLATFORM_LPC_SDMA)
 
 config PLATFORM_LPC_SPI_DMA_CHAIN
 	int "DMA chain size"
