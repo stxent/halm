@@ -181,8 +181,8 @@ static enum Result unitInit(void *object, const void *configBase)
   unit->centered = config->centered;
 
   LPC_SCT_Type * const reg = unit->base.reg;
-  const unsigned int part = unit->base.part == SCT_HIGH;
   const uint16_t eventMask = 1 << unit->event;
+  const unsigned int part = unit->base.part == SCT_HIGH;
 
   unit->base.mask = eventMask;
   reg->CTRL_PART[part] = CTRL_HALT;
@@ -375,8 +375,8 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   /* Disable modulation by default */
   if (pwm->inversion)
   {
-    reg->OUT[pwmIndex].CLR = 0;
     reg->OUT[pwmIndex].SET = 1 << unit->event;
+    reg->OUT[pwmIndex].CLR = 0;
     reg->OUTPUT |= 1 << pwmIndex;
   }
   else
@@ -450,19 +450,20 @@ static void singleEdgeDisable(void *object)
 {
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
-  const unsigned int pwmIndex = pwm->channel - 1;
   LPC_SCT_Type * const reg = unit->base.reg;
+  const uint16_t eventMask = (1 << pwm->event) | (1 << unit->event);
+  const unsigned int pwmIndex = pwm->channel - 1;
 
   /* Set or clear synchronously */
   if (pwm->inversion)
   {
-    reg->OUT[pwmIndex].SET = 0;
-    reg->OUT[pwmIndex].CLR = 1 << unit->event;
+    reg->OUT[pwmIndex].CLR = 0;
+    reg->OUT[pwmIndex].SET = eventMask;
   }
   else
   {
-    reg->OUT[pwmIndex].SET = 1 << unit->event;
-    reg->OUT[pwmIndex].CLR = 0;
+    reg->OUT[pwmIndex].SET = 0;
+    reg->OUT[pwmIndex].CLR = eventMask;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -584,8 +585,8 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   /* Disable modulation by default */
   if (pwm->inversion)
   {
-    reg->OUT[pwmIndex].CLR = 0;
     reg->OUT[pwmIndex].SET = 1 << unit->event;
+    reg->OUT[pwmIndex].CLR = 0;
     reg->OUTPUT |= 1 << pwmIndex;
   }
   else
@@ -649,13 +650,13 @@ static void doubleEdgeEnable(void *object)
 
   if (pwm->inversion)
   {
-    reg->OUT[pwmIndex].CLR = 1 << pwm->leadingEvent;
     reg->OUT[pwmIndex].SET = 1 << pwm->trailingEvent;
+    reg->OUT[pwmIndex].CLR = 1 << pwm->leadingEvent;
   }
   else
   {
-    reg->OUT[pwmIndex].SET = 1 << pwm->leadingEvent;
     reg->OUT[pwmIndex].CLR = 1 << pwm->trailingEvent;
+    reg->OUT[pwmIndex].SET = 1 << pwm->leadingEvent;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -663,19 +664,20 @@ static void doubleEdgeDisable(void *object)
 {
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
-  const unsigned int pwmIndex = pwm->channel - 1;
   LPC_SCT_Type * const reg = unit->base.reg;
+  const uint16_t eventMask = (1 << pwm->trailingEvent) | (1 << unit->event);
+  const unsigned int pwmIndex = pwm->channel - 1;
 
   /* Set or clear synchronously */
   if (pwm->inversion)
   {
-    reg->OUT[pwmIndex].SET = 0;
-    reg->OUT[pwmIndex].CLR = 1 << unit->event;
+    reg->OUT[pwmIndex].CLR = 0;
+    reg->OUT[pwmIndex].SET = eventMask;
   }
   else
   {
-    reg->OUT[pwmIndex].SET = 1 << unit->event;
-    reg->OUT[pwmIndex].CLR = 0;
+    reg->OUT[pwmIndex].SET = 0;
+    reg->OUT[pwmIndex].CLR = eventMask;
   }
 }
 /*----------------------------------------------------------------------------*/
