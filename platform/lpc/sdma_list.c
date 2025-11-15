@@ -98,7 +98,10 @@ static void interruptHandler(void *object, enum Result res)
 
   if (channel->state != STATE_BUSY)
   {
-    LPC_SDMA->INTENCLR = 1UL << channel->base.number;
+    const uint32_t mask = 1UL << channel->base.number;
+
+    LPC_SDMA->ENABLECLR = mask;
+    LPC_SDMA->INTENCLR = mask;
     sdmaResetInstance(channel->base.number);
 
     event = true;
@@ -239,8 +242,8 @@ static void channelDisable(void *object)
     const uint32_t number = channel->base.number;
     const uint32_t mask = 1UL << number;
 
-    LPC_SDMA->INTENCLR = mask;
     LPC_SDMA->ENABLECLR = mask;
+    LPC_SDMA->INTENCLR = mask;
     while (LPC_SDMA->BUSY & mask);
     LPC_SDMA->ABORT = mask;
 
@@ -300,6 +303,7 @@ static void channelAppend(void *object, void *destination, const void *source,
     size_t size)
 {
   struct SdmaList * const channel = object;
+
   const uint32_t transferConfig = channel->transferConfig;
   const unsigned int dstStride =
       (1 << XFERCFG_DSTINC_VALUE(transferConfig)) >> 1;

@@ -118,7 +118,6 @@ void DMA_ISR(void)
     {
       LPC_SDMA->ERRINT = mask;
       res = E_ERROR;
-
     }
     else
     {
