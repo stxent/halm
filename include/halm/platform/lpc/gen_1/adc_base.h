@@ -46,6 +46,11 @@ struct AdcBase
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
+/* Common functions */
+uint32_t adcSetupPins(const struct AdcBase *, struct AdcPin *,
+    const PinNumber *, size_t);
+
+/* Platform-specific functions */
 struct AdcPin adcConfigPin(const struct AdcBase *, PinNumber);
 struct AdcBase *adcGetInstance(uint8_t);
 void adcReleasePin(struct AdcPin);

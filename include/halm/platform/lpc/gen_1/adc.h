@@ -40,12 +40,10 @@ struct Adc
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Data registers used */
-  const uint32_t *dr[8];
-  /* Pin descriptors */
-  struct AdcPin pins[8];
   /* Output buffer */
-  uint16_t buffer[8];
+  uint16_t *buffer;
+  /* Pin descriptors */
+  struct AdcPin *pins;
 
   /* Interrupt priority */
   IrqPriority priority;

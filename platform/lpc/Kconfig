@@ -126,11 +126,6 @@ config PLATFORM_LPC_ADC_SHARED
 	help
 	  This allows usage of multiple ADC channel objects on the same peripheral.
 
-config PLATFORM_LPC_ADC_ONESHOT
-	bool "Single channel ADC with polling"
-	default y
-	depends on PLATFORM_LPC_ADC_BASE
-
 config PLATFORM_LPC_ADC
 	bool "Multichannel ADC with interrupts"
 	default y
@@ -145,6 +140,11 @@ config PLATFORM_LPC_ADC_DMA_STREAM
 	bool "Multichannel buffered ADC with DMA"
 	default y
 	depends on PLATFORM_LPC_ADC_BASE && PLATFORM_LPC_GPDMA
+
+config PLATFORM_LPC_ADC_ONESHOT
+	bool "Multichannel ADC with polling"
+	default y
+	depends on PLATFORM_LPC_ADC_BASE
 
 config PLATFORM_LPC_ATIMER
 	bool "Alarm Timer"

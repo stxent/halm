@@ -7,10 +7,10 @@
 #include <halm/platform/lpc/adc.h>
 #include <halm/platform/lpc/gen_1/adc_defs.h>
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static size_t setupPins(struct Adc *, const PinNumber *);
 static void startConversion(struct Adc *);
 static void stopConversion(struct Adc *);
 /*----------------------------------------------------------------------------*/
@@ -41,49 +41,15 @@ const struct InterfaceClass * const Adc = &(const struct InterfaceClass){
 static void interruptHandler(void *object)
 {
   struct Adc * const interface = object;
+  const struct AdcPin * const pins = interface->pins;
+  const LPC_ADC_Type * const reg = interface->base.reg;
 
   /* Read values and clear interrupt flags */
   for (size_t index = 0; index < interface->count; ++index)
-    interface->buffer[index] = (uint16_t)(*interface->dr[index]);
+    interface->buffer[index] = (uint16_t)reg->DR[pins[index].channel];
 
   if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
-}
-/*----------------------------------------------------------------------------*/
-static size_t setupPins(struct Adc *interface, const PinNumber *pins)
-{
-  LPC_ADC_Type * const reg = interface->base.reg;
-  size_t index = 0;
-  uint32_t enabled = 0;
-  unsigned int event = 0;
-
-  while (pins[index])
-  {
-    assert(index < ARRAY_SIZE(interface->pins));
-    const struct AdcPin pin = adcConfigPin(&interface->base, pins[index]);
-
-    interface->pins[index] = pin;
-    interface->dr[index] = (const uint32_t *)&reg->DR[pin.channel];
-
-    /*
-     * Check whether the order of pins is correct and all pins
-     * are unique. Pins must be sorted by analog channel number to ensure
-     * direct connection between pins in the configuration
-     * and an array of measured values.
-     */
-    const unsigned int channel = interface->pins[index].channel;
-    assert(!(enabled >> channel));
-
-    event = channel;
-    enabled |= 1 << channel;
-    ++index;
-  }
-
-  assert(enabled != 0);
-  interface->base.control |= CR_SEL(enabled);
-  interface->event = event;
-
-  return index;
 }
 /*----------------------------------------------------------------------------*/
 static void startConversion(struct Adc *interface)
@@ -120,7 +86,7 @@ static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->pins != NULL);
+  assert(config->pins != NULL && *config->pins);
   assert(config->event < ADC_EVENT_END && config->event != ADC_SOFTWARE);
 
   const struct AdcBaseConfig baseConfig = {
@@ -130,16 +96,26 @@ static enum Result adcInit(void *object, const void *configBase)
       .shared = config->shared
   };
   struct Adc * const interface = object;
+  size_t count = 0;
+
+  for (const PinNumber *pin = config->pins; *pin; ++pin)
+    ++count;
 
   /* Call base class constructor */
   const enum Result res = AdcBase->init(interface, &baseConfig);
   if (res != E_OK)
     return res;
 
+  interface->buffer =
+      malloc((sizeof(uint16_t) + sizeof(struct AdcPin)) * count);
+  if (interface->buffer == NULL)
+    return E_MEMORY;
+  interface->pins = (struct AdcPin *)(interface->buffer + count);
+
   interface->base.handler = interruptHandler;
   interface->callback = NULL;
+  interface->count = (uint8_t)count;
   interface->priority = config->priority;
-  memset(interface->buffer, 0, sizeof(interface->buffer));
 
   if (config->event == ADC_BURST)
     interface->base.control |= CR_BURST;
@@ -147,7 +123,11 @@ static enum Result adcInit(void *object, const void *configBase)
     interface->base.control |= CR_START(config->event);
 
   /* Initialize input pins */
-  interface->count = setupPins(interface, config->pins);
+  const uint32_t mask = adcSetupPins(&interface->base, interface->pins,
+      config->pins, count);
+
+  interface->base.control |= CR_SEL(mask);
+  interface->event = interface->pins[count - 1].channel;
 
   return E_OK;
 }
@@ -166,6 +146,7 @@ static void adcDeinit(void *object)
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
+  free(interface->buffer);
 
   AdcBase->deinit(interface);
 }

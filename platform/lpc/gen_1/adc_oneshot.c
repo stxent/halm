@@ -7,9 +7,9 @@
 #include <halm/platform/lpc/adc_oneshot.h>
 #include <halm/platform/lpc/gen_1/adc_defs.h>
 #include <assert.h>
-#include <string.h>
+#include <stdlib.h>
 /*----------------------------------------------------------------------------*/
-static uint16_t makeChannelConversion(struct AdcOneShot *);
+static void makeChannelConversion(struct AdcOneShot *, uint16_t *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 static enum Result adcGetParam(void *, int, void *);
@@ -34,29 +34,39 @@ const struct InterfaceClass * const AdcOneShot = &(const struct InterfaceClass){
     .write = NULL
 };
 /*----------------------------------------------------------------------------*/
-static uint16_t makeChannelConversion(struct AdcOneShot *interface)
+static void makeChannelConversion(struct AdcOneShot *interface,
+    uint16_t *output)
 {
+  /* ADC should be locked to avoid simultaneous access */
+  assert(adcGetInstance(interface->base.channel) == &interface->base);
+
+  const struct AdcPin * const pins = interface->pins;
   LPC_ADC_Type * const reg = interface->base.reg;
-  uint32_t value;
 
-  /* Reconfigure peripheral and start the conversion */
-  reg->CR = interface->base.control;
-
-  do
+  for (size_t index = 0; index < interface->count; ++index)
   {
-    value = reg->DR[interface->pin.channel];
+    const unsigned int channel = pins[index].channel;
+    uint32_t value;
+
+    /* Reconfigure peripheral and start the conversion */
+    reg->CR = interface->base.control | CR_SEL(1 << channel);
+
+    do
+    {
+      value = reg->DR[channel];
+    }
+    while (!(value & DR_DONE));
+
+    reg->CR = 0;
+    output[index] = (uint16_t)value;
   }
-  while (!(value & DR_DONE));
-
-  reg->CR = 0;
-
-  return DR_RESULT_VALUE(value);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcOneShotConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->pins != NULL && *config->pins);
 
   const struct AdcBaseConfig baseConfig = {
       .frequency = config->frequency,
@@ -65,17 +75,25 @@ static enum Result adcInit(void *object, const void *configBase)
       .shared = config->shared
   };
   struct AdcOneShot * const interface = object;
+  size_t count = 0;
+
+  for (const PinNumber *pin = config->pins; *pin; ++pin)
+    ++count;
 
   /* Call base class constructor */
   const enum Result res = AdcBase->init(interface, &baseConfig);
   if (res != E_OK)
     return res;
 
-  /* Enable analog function on the input pin */
-  interface->pin = adcConfigPin(&interface->base, config->pin);
+  interface->pins = malloc(sizeof(struct AdcPin) * count);
+  if (interface->pins == NULL)
+    return E_MEMORY;
+
+  interface->count = (uint8_t)count;
   /* Calculate Control register value */
-  interface->base.control |= CR_START(ADC_SOFTWARE)
-      | CR_SEL_CHANNEL(interface->pin.channel);
+  interface->base.control |= CR_START(ADC_SOFTWARE);
+  /* Initialize input pins */
+  adcSetupPins(&interface->base, interface->pins, config->pins, count);
 
   return E_OK;
 }
@@ -85,7 +103,10 @@ static void adcDeinit(void *object)
 {
   struct AdcOneShot * const interface = object;
 
-  adcReleasePin(interface->pin);
+  for (size_t index = 0; index < interface->count; ++index)
+    adcReleasePin(interface->pins[index]);
+  free(interface->pins);
+
   AdcBase->deinit(interface);
 }
 #endif
@@ -127,12 +148,8 @@ static size_t adcRead(void *object, void *buffer,
   struct AdcOneShot * const interface = object;
 
   /* Ensure that the buffer has enough space */
-  assert(length >= sizeof(uint16_t));
-  /* ADC should be locked to avoid simultaneous access */
-  assert(adcGetInstance(interface->base.channel) == &interface->base);
+  assert(length >= interface->count * sizeof(uint16_t));
 
-  const uint16_t value = makeChannelConversion(interface);
-  memcpy(buffer, &value, sizeof(value));
-
-  return sizeof(value);
+  makeChannelConversion(interface, buffer);
+  return interface->count * sizeof(uint16_t);
 }

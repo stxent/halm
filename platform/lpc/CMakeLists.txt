@@ -29,6 +29,7 @@ endif()
 
 if(CONFIG_PLATFORM_LPC_ADC)
     list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc.c")
+    list(APPEND SOURCE_FILES "${CONFIG_GEN_ADC}/adc_common.c")
 endif()
 
 if(CONFIG_PLATFORM_LPC_ADC_DMA)

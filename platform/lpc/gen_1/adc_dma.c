@@ -8,12 +8,12 @@
 #include <halm/platform/lpc/gen_1/adc_defs.h>
 #include <halm/platform/lpc/gpdma_circular.h>
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static bool dmaSetup(struct AdcDma *, const struct AdcDmaConfig *, size_t);
 static void resetDmaBuffers(struct AdcDma *);
-static size_t setupPins(struct AdcDma *, const PinNumber *);
 static bool startConversion(struct AdcDma *);
 static void stopConversion(struct AdcDma *);
 /*----------------------------------------------------------------------------*/
@@ -97,36 +97,6 @@ static void resetDmaBuffers(struct AdcDma *interface)
   }
 }
 /*----------------------------------------------------------------------------*/
-static size_t setupPins(struct AdcDma *interface, const PinNumber *pins)
-{
-  size_t index = 0;
-  uint32_t enabled = 0;
-
-  while (pins[index])
-  {
-    assert(index < ARRAY_SIZE(interface->pins));
-    interface->pins[index] = adcConfigPin(&interface->base, pins[index]);
-
-    /*
-     * Check whether the order of pins is correct and all pins
-     * are unique. Pins must be sorted by analog channel number to ensure
-     * direct connection between pins in the configuration
-     * and an array of measured values.
-     */
-    const unsigned int channel = interface->pins[index].channel;
-    assert(!(enabled >> channel));
-
-    enabled |= 1 << channel;
-    ++index;
-  }
-
-  assert(enabled != 0);
-  interface->base.control |= CR_SEL(enabled);
-  interface->mask = enabled;
-
-  return index;
-}
-/*----------------------------------------------------------------------------*/
 static bool startConversion(struct AdcDma *interface)
 {
   assert(adcGetInstance(interface->base.channel) == &interface->base);
@@ -167,7 +137,7 @@ static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->pins != NULL);
+  assert(config->pins != NULL && *config->pins);
   assert(config->event < ADC_EVENT_END && config->event != ADC_SOFTWARE);
 
   const struct AdcBaseConfig baseConfig = {
@@ -177,14 +147,27 @@ static enum Result adcInit(void *object, const void *configBase)
       .shared = config->shared
   };
   struct AdcDma * const interface = object;
+  size_t count = 0;
+
+  for (const PinNumber *pin = config->pins; *pin; ++pin)
+    ++count;
 
   /* Call base class constructor */
   const enum Result res = AdcBase->init(interface, &baseConfig);
   if (res != E_OK)
     return res;
 
+  if (!dmaSetup(interface, config, interface->count))
+    return E_ERROR;
+
+  interface->buffer =
+      malloc((sizeof(uint16_t) + sizeof(struct AdcPin)) * count);
+  if (interface->buffer == NULL)
+    return E_MEMORY;
+  interface->pins = (struct AdcPin *)(interface->buffer + count);
+
   interface->callback = NULL;
-  memset(interface->buffer, 0, sizeof(interface->buffer));
+  interface->count = (uint8_t)count;
 
   if (config->event == ADC_BURST)
     interface->base.control |= CR_BURST;
@@ -192,10 +175,11 @@ static enum Result adcInit(void *object, const void *configBase)
     interface->base.control |= CR_START(config->event);
 
   /* Initialize input pins */
-  interface->count = setupPins(interface, config->pins);
+  const uint32_t mask = adcSetupPins(&interface->base, interface->pins,
+      config->pins, count);
 
-  if (!dmaSetup(interface, config, interface->count))
-    return E_ERROR;
+  interface->base.control |= CR_SEL(mask);
+  interface->mask = mask;
 
   return E_OK;
 }
@@ -214,6 +198,7 @@ static void adcDeinit(void *object)
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
+  free(interface->buffer);
 
   deinit(interface->dma);
   AdcBase->deinit(interface);

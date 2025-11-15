@@ -35,7 +35,6 @@ static bool setupInnerChannel(struct AdcDmaStream *,
     const struct AdcDmaStreamConfig *);
 static bool setupOuterChannel(struct AdcDmaStream *,
     const struct AdcDmaStreamConfig *);
-static size_t setupPins(struct AdcDmaStream *, const PinNumber *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 static enum Result adcGetParam(void *, int, void *);
@@ -202,41 +201,11 @@ static bool setupOuterChannel(struct AdcDmaStream *interface,
     return false;
 }
 /*----------------------------------------------------------------------------*/
-static size_t setupPins(struct AdcDmaStream *interface, const PinNumber *pins)
-{
-  size_t index = 0;
-  uint32_t enabled = 0;
-
-  while (pins[index])
-  {
-    assert(index < ARRAY_SIZE(interface->pins));
-    interface->pins[index] = adcConfigPin(&interface->base, pins[index]);
-
-    /*
-     * Check whether the order of pins is correct and all pins
-     * are unique. Pins must be sorted by analog channel number to ensure
-     * direct connection between pins in the configuration
-     * and an array of measured values.
-     */
-    const unsigned int channel = interface->pins[index].channel;
-    assert(!(enabled >> channel));
-
-    enabled |= 1 << channel;
-    ++index;
-  }
-
-  assert(enabled != 0);
-  interface->base.control |= CR_SEL(enabled);
-  interface->mask = enabled;
-
-  return index;
-}
-/*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaStreamConfig * const config = configBase;
   assert(config != NULL);
-  assert(config->pins != NULL);
+  assert(config->pins != NULL && *config->pins);
   assert(config->converter.event < ADC_EVENT_END
       && config->converter.event != ADC_SOFTWARE);
 
@@ -252,6 +221,10 @@ static enum Result adcInit(void *object, const void *configBase)
   };
 
   struct AdcDmaStream * const interface = object;
+  size_t count = 0;
+
+  for (const PinNumber *pin = config->pins; *pin; ++pin)
+    ++count;
 
   /* Call base class constructor */
   const enum Result res = AdcBase->init(interface, &baseConfig);
@@ -261,9 +234,6 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->stream = init(AdcDmaStreamHandler, &streamConfig);
   if (interface->stream == NULL)
     return E_ERROR;
-
-  /* Initialize input pins */
-  interface->count = setupPins(interface, config->pins);
 
   if (!setupOuterChannel(interface, config))
   {
@@ -277,12 +247,25 @@ static enum Result adcInit(void *object, const void *configBase)
     deinit(interface->stream);
     return E_ERROR;
   }
-  resetInnerBuffers(interface);
+
+  interface->pins = malloc(sizeof(struct AdcPin) * count);
+  if (interface->pins == NULL)
+    return E_MEMORY;
+
+  interface->count = (uint8_t)count;
 
   if (config->converter.event == ADC_BURST)
     interface->base.control |= CR_BURST;
   else
     interface->base.control |= CR_START(config->converter.event);
+
+  /* Initialize input pins */
+  const uint32_t mask = adcSetupPins(&interface->base, interface->pins,
+      config->pins, count);
+
+  resetInnerBuffers(interface);
+  interface->base.control |= CR_SEL(mask);
+  interface->mask = mask;
 
   return E_OK;
 }
@@ -435,10 +418,11 @@ static void adcDeinit(void *object)
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
+  free(interface->pins);
 
-  deinit(interface->stream);
-  deinit(interface->outer);
   deinit(interface->inner);
+  deinit(interface->outer);
+  deinit(interface->stream);
 
   AdcBase->deinit(interface);
 }

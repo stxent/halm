@@ -44,10 +44,10 @@ struct AdcDma
   /* DMA handle */
   struct Dma *dma;
 
-  /* Pin descriptors */
-  struct AdcPin pins[8];
   /* Output buffer */
-  uint16_t buffer[8];
+  uint16_t *buffer;
+  /* Pin descriptors */
+  struct AdcPin *pins;
 
   /* Event mask */
   uint32_t mask;

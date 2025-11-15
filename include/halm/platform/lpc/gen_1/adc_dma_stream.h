@@ -64,7 +64,8 @@ struct AdcDmaStream
   struct Dma *outer;
 
   /* Pin descriptors */
-  struct AdcPin pins[8];
+  struct AdcPin *pins;
+
   /* Event mask */
   uint32_t mask;
   /* Temporary buffer */
