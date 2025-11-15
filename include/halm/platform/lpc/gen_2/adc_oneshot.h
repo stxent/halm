@@ -17,12 +17,14 @@ extern const struct InterfaceClass * const AdcOneShot;
 
 struct AdcOneShotConfig
 {
+  /** Mandatory: pointer to an array of pins terminated by a zero element. */
+  const PinNumber *pins;
   /** Optional: desired converter clock. */
   uint32_t frequency;
-  /** Mandatory: analog input. */
-  PinNumber pin;
   /** Mandatory: converter sequence identifier. */
   enum AdcSequence sequence;
+  /** Optional: enable sequence preemption, available for sequence A only. */
+  bool preemption;
   /** Optional: disable automatic peripheral locking. */
   bool shared;
 };
@@ -31,10 +33,13 @@ struct AdcOneShot
 {
   struct AdcBase base;
 
+  /* Pin descriptors */
+  struct AdcPin *pins;
+
   /* Sequence control register value */
   uint32_t control;
-  /* Pin descriptor */
-  struct AdcPin pin;
+  /* Pin count */
+  uint8_t count;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_GEN_2_ADC_ONESHOT_H_ */

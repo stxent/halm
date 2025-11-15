@@ -52,8 +52,10 @@ struct Adc
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Channel configurations and data buffers */
-  struct AdcChannelTuple *channels;
+  /* Output buffer */
+  uint16_t *buffer;
+  /* Pin descriptors */
+  struct AdcPin *pins;
 
   /* Sequence control register value */
   uint32_t control;

@@ -11,7 +11,6 @@
 #include <stdlib.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static void setupPins(struct Adc *, const PinNumber *, size_t);
 static void startConversion(struct Adc *);
 static void stopConversion(struct Adc *);
 /*----------------------------------------------------------------------------*/
@@ -42,47 +41,17 @@ const struct InterfaceClass * const Adc = &(const struct InterfaceClass){
 static void interruptHandler(void *object)
 {
   struct Adc * const interface = object;
-  struct AdcChannelTuple *entry = interface->channels;
-  const struct AdcChannelTuple * const end = entry + interface->count;
+  const struct AdcPin * const pins = interface->pins;
   LPC_ADC_Type * const reg = interface->base.reg;
 
   /* Clear pending interrupt flag */
   reg->FLAGS = (interface->base.sequence & 1) ? FLAGS_SEQB_INT : FLAGS_SEQA_INT;
 
-  do
-  {
-    entry->data = (uint16_t)reg->DAT[entry->pin.channel];
-  }
-  while (++entry != end);
+  for (size_t index = 0; index < interface->count; ++index)
+    interface->buffer[index] = (uint16_t)reg->DAT[pins[index].channel];
 
   if (interface->callback != NULL)
     interface->callback(interface->callbackArgument);
-}
-/*----------------------------------------------------------------------------*/
-static void setupPins(struct Adc *interface, const PinNumber *pins,
-    size_t count)
-{
-  uint32_t enabled = 0;
-
-  for (size_t index = 0; index < count; ++index)
-  {
-    const struct AdcPin pin = adcConfigPin(&interface->base, pins[index]);
-
-    interface->channels[index].data = 0;
-    interface->channels[index].pin = pin;
-
-    /*
-     * Check whether the order of pins is correct and all pins
-     * are unique. Pins must be sorted by analog channel number to ensure
-     * direct connection between pins in the configuration
-     * and an array of measured values.
-     */
-    assert(!(enabled >> pin.channel));
-
-    enabled |= 1 << pin.channel;
-  }
-
-  interface->control |= SEQ_CTRL_CHANNELS(enabled);
 }
 /*----------------------------------------------------------------------------*/
 static void startCalibration(struct Adc *interface)
@@ -146,7 +115,8 @@ static void stopConversion(struct Adc *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
-  assert(config != NULL && config->pins != NULL);
+  assert(config != NULL);
+  assert(config->pins != NULL && *config->pins);
   assert(config->event < ADC_EVENT_END);
   assert(!config->preemption || (config->sequence & 1) == 0);
   assert(config->sensitivity <= INPUT_FALLING);
@@ -162,16 +132,21 @@ static enum Result adcInit(void *object, const void *configBase)
 
   for (const PinNumber *pin = config->pins; *pin; ++pin)
     ++count;
-  if (!count)
-    return E_VALUE;
 
   /* Call base class constructor */
   const enum Result res = AdcBase->init(interface, &baseConfig);
   if (res != E_OK)
     return res;
 
+  interface->buffer =
+      malloc((sizeof(uint16_t) + sizeof(struct AdcPin)) * count);
+  if (interface->buffer == NULL)
+    return E_MEMORY;
+  interface->pins = (struct AdcPin *)(interface->buffer + count);
+
   interface->base.handler = interruptHandler;
   interface->callback = NULL;
+  interface->count = (uint8_t)count;
   interface->priority = config->priority;
 
   interface->control = SEQ_CTRL_MODE | SEQ_CTRL_SEQ_ENA;
@@ -187,13 +162,10 @@ static enum Result adcInit(void *object, const void *configBase)
     interface->control |= SEQ_CTRL_SINGLESTEP;
 
   /* Initialize input pins */
-  interface->channels = malloc(sizeof(struct AdcChannelTuple) * count);
-  if (interface->channels == NULL)
-    return E_MEMORY;
+  const uint32_t mask = adcSetupPins(&interface->base, interface->pins,
+      config->pins, count);
 
-  interface->count = (uint8_t)count;
-  setupPins(interface, config->pins, count);
-
+  interface->control |= SEQ_CTRL_CHANNELS(mask);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -210,9 +182,9 @@ static void adcDeinit(void *object)
   }
 
   for (size_t index = 0; index < interface->count; ++index)
-    adcReleasePin(interface->channels[index].pin);
+    adcReleasePin(interface->pins[index]);
+  free(interface->buffer);
 
-  free(interface->channels);
   AdcBase->deinit(interface);
 }
 #endif
@@ -299,7 +271,7 @@ static size_t adcRead(void *object, void *buffer, size_t length)
 
   irqDisable(interface->base.irq.seq);
   while (index < count)
-    *result++ = interface->channels[index++].data;
+    *result++ = interface->buffer[index++];
   irqEnable(interface->base.irq.seq);
 
   return count * sizeof(uint16_t);

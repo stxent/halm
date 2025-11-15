@@ -15,7 +15,6 @@
 static void dmaHandler(void *);
 static bool dmaSetup(struct AdcDma *, uint8_t, uint8_t);
 static void resetDmaBuffers(struct AdcDma *);
-static void setupPins(struct AdcDma *, const PinNumber *, size_t);
 static void startCalibration(struct AdcDma *);
 static bool startConversion(struct AdcDma *);
 static void stopConversion(struct AdcDma *);
@@ -100,30 +99,6 @@ static void resetDmaBuffers(struct AdcDma *interface)
       interface->count * sizeof(uint16_t));
 }
 /*----------------------------------------------------------------------------*/
-static void setupPins(struct AdcDma *interface, const PinNumber *pins,
-    size_t count)
-{
-  uint32_t enabled = 0;
-
-  for (size_t index = 0; index < count; ++index)
-  {
-    const struct AdcPin pin = adcConfigPin(&interface->base, pins[index]);
-    interface->pins[index] = pin;
-
-    /*
-     * Check whether the order of pins is correct and all pins
-     * are unique. Pins must be sorted by analog channel number to ensure
-     * direct connection between pins in the configuration
-     * and an array of measured values.
-     */
-    assert(!(enabled >> pin.channel));
-
-    enabled |= 1 << pin.channel;
-  }
-
-  interface->control |= SEQ_CTRL_CHANNELS(enabled);
-}
-/*----------------------------------------------------------------------------*/
 static void startCalibration(struct AdcDma *interface)
 {
   assert(adcGetInstance(interface->base.sequence) == &interface->base);
@@ -187,7 +162,8 @@ static void stopConversion(struct AdcDma *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaConfig * const config = configBase;
-  assert(config != NULL && config->pins != NULL);
+  assert(config != NULL);
+  assert(config->pins != NULL && *config->pins);
   assert(config->event < ADC_EVENT_END);
   assert(!config->preemption || (config->sequence & 1) == 0);
   assert(config->sensitivity <= INPUT_FALLING);
@@ -203,15 +179,23 @@ static enum Result adcInit(void *object, const void *configBase)
 
   for (const PinNumber *pin = config->pins; *pin; ++pin)
     ++count;
-  if (!count)
-    return E_VALUE;
 
   /* Call base class constructor */
   const enum Result res = AdcBase->init(interface, &baseConfig);
   if (res != E_OK)
     return res;
 
+  if (!dmaSetup(interface, config->dma, config->priority))
+    return E_ERROR;
+
+  interface->buffer =
+      malloc((sizeof(uint16_t) + sizeof(struct AdcPin)) * count);
+  if (interface->buffer == NULL)
+    return E_MEMORY;
+  interface->pins = (struct AdcPin *)(interface->buffer + count);
+
   interface->callback = NULL;
+  interface->count = (uint8_t)count;
 
   interface->control = SEQ_CTRL_SEQ_ENA;
   if (config->event == ADC_BURST)
@@ -225,20 +209,11 @@ static enum Result adcInit(void *object, const void *configBase)
   if (config->singlestep)
     interface->control |= SEQ_CTRL_SINGLESTEP;
 
-  interface->buffer = malloc(sizeof(uint16_t) * count);
-  if (interface->buffer == NULL)
-    return E_MEMORY;
-  interface->pins = malloc(sizeof(struct AdcPin) * count);
-  if (interface->pins == NULL)
-    return E_MEMORY;
-
   /* Initialize input pins */
-  interface->count = (uint8_t)count;
-  setupPins(interface, config->pins, count);
+  const uint32_t mask = adcSetupPins(&interface->base, interface->pins,
+      config->pins, count);
 
-  if (!dmaSetup(interface, config->dma, config->priority))
-    return E_ERROR;
-
+  interface->control |= SEQ_CTRL_CHANNELS(mask);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -256,8 +231,6 @@ static void adcDeinit(void *object)
 
   for (size_t index = 0; index < interface->count; ++index)
     adcReleasePin(interface->pins[index]);
-
-  free(interface->pins);
   free(interface->buffer);
 
   deinit(interface->dma);
