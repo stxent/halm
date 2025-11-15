@@ -377,13 +377,18 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   {
     reg->OUT[pwmIndex].SET = 1 << unit->event;
     reg->OUT[pwmIndex].CLR = 0;
-    reg->OUTPUT |= 1 << pwmIndex;
   }
   else
   {
     reg->OUT[pwmIndex].CLR = 1 << unit->event;
     reg->OUT[pwmIndex].SET = 0;
-    reg->OUTPUT &= ~(1 << pwmIndex);
+  }
+  if (sctIsHalted(&unit->base))
+  {
+    if (pwm->inversion)
+      reg->OUTPUT |= 1 << pwmIndex;
+    else
+      reg->OUTPUT &= ~(1 << pwmIndex);
   }
 
   /* Enable allocated event in state 0 */
@@ -406,13 +411,17 @@ static void singleEdgeDeinit(void *object)
   /* Disable allocated event */
   reg->EV[pwm->event].STATE = 0;
 
-  /* Disable the output and overwrite output state to avoid undefined level */
+  /* Disable the output */
   reg->OUT[pwmIndex].CLR = 0;
   reg->OUT[pwmIndex].SET = 0;
-  if (pwm->inversion)
-    reg->OUTPUT |= 1 << pwmIndex;
-  else
-    reg->OUTPUT &= ~(1 << pwmIndex);
+  /* Overwrite output state to avoid undefined level */
+  if (sctIsHalted(&unit->base))
+  {
+    if (pwm->inversion)
+      reg->OUTPUT |= 1 << pwmIndex;
+    else
+      reg->OUTPUT &= ~(1 << pwmIndex);
+  }
 
   /* Restore default state of other registers */
   reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(pwmIndex);
@@ -587,13 +596,18 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   {
     reg->OUT[pwmIndex].SET = 1 << unit->event;
     reg->OUT[pwmIndex].CLR = 0;
-    reg->OUTPUT |= 1 << pwmIndex;
   }
   else
   {
     reg->OUT[pwmIndex].CLR = 1 << unit->event;
     reg->OUT[pwmIndex].SET = 0;
-    reg->OUTPUT &= ~(1 << pwmIndex);
+  }
+  if (sctIsHalted(&unit->base))
+  {
+    if (pwm->inversion)
+      reg->OUTPUT |= 1 << pwmIndex;
+    else
+      reg->OUTPUT &= ~(1 << pwmIndex);
   }
 
   /* Enable allocated events in state 0 */
@@ -618,13 +632,17 @@ static void doubleEdgeDeinit(void *object)
   reg->EV[pwm->leadingEvent].STATE = 0;
   reg->EV[pwm->trailingEvent].STATE = 0;
 
-  /* Disable the output and overwrite output state to avoid undefined level */
+  /* Disable the output */
   reg->OUT[pwmIndex].CLR = 0;
   reg->OUT[pwmIndex].SET = 0;
-  if (pwm->inversion)
-    reg->OUTPUT |= 1 << pwmIndex;
-  else
-    reg->OUTPUT &= ~(1 << pwmIndex);
+  /* Overwrite output state to avoid undefined level */
+  if (sctIsHalted(&unit->base))
+  {
+    if (pwm->inversion)
+      reg->OUTPUT |= 1 << pwmIndex;
+    else
+      reg->OUTPUT &= ~(1 << pwmIndex);
+  }
 
   /* Restore default state of other registers */
   reg->OUTPUTDIRCTRL &= ~OUTPUTDIRCTRL_SETCLR_MASK(pwmIndex);

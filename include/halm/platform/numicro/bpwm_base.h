@@ -37,7 +37,7 @@ BEGIN_DECLS
 BEGIN_DECLS
 
 /* Common functions */
-uint8_t bpwmConfigPin(uint8_t, PinNumber);
+uint8_t bpwmConfigPin(uint8_t, PinNumber, bool);
 void bpwmSetFrequency(struct BpwmUnitBase *, uint32_t);
 
 /* Platform-specific functions */

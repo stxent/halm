@@ -52,6 +52,7 @@ struct SctBase
 BEGIN_DECLS
 
 /* Common functions */
+bool sctIsHalted(const struct SctBase *);
 void sctSetFrequency(struct SctBase *, uint32_t);
 
 /* Platform-specific functions */

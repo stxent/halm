@@ -60,7 +60,7 @@ BEGIN_DECLS
 /* Common functions */
 int gpTimerAllocateChannel(uint8_t);
 uint8_t gpTimerConfigCapturePin(uint8_t, PinNumber, enum PinPull);
-uint8_t gpTimerConfigMatchPin(uint8_t, PinNumber);
+uint8_t gpTimerConfigMatchPin(uint8_t, PinNumber, bool);
 uint8_t gpTimerGetMatchChannel(uint8_t, PinNumber);
 void gpTimerSetFrequency(struct GpTimerBase *, uint32_t);
 

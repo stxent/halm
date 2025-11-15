@@ -13,14 +13,14 @@
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry bpwmPins[];
 /*----------------------------------------------------------------------------*/
-uint8_t bpwmConfigPin(uint8_t channel, PinNumber key)
+uint8_t bpwmConfigPin(uint8_t channel, PinNumber key, bool value)
 {
   const struct PinEntry * const pinEntry = pinFind(bpwmPins, key, channel);
   assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 
-  pinOutput(pin, false);
+  pinOutput(pin, value);
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
 
   return UNPACK_CHANNEL(pinEntry->value);

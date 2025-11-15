@@ -274,7 +274,8 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   struct BpwmUnit * const unit = config->parent;
 
   /* Initialize output pin */
-  pwm->channel = bpwmConfigPin(unit->base.channel, config->pin);
+  pwm->channel = bpwmConfigPin(unit->base.channel, config->pin,
+      !config->inversion);
 
   /* Allocate channel */
   if (unitAllocateChannel(unit, pwm->channel))

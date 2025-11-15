@@ -312,7 +312,7 @@ static enum Result channelInit(void *object, const void *configBase)
   }
 
   /* Initialize output pin after match state configuration */
-  gpTimerConfigMatchPin(unit->base.channel, config->pin);
+  gpTimerConfigMatchPin(unit->base.channel, config->pin, !pwm->inversion);
 
   return E_OK;
 }

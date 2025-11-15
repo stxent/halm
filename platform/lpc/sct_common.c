@@ -8,6 +8,28 @@
 #include <halm/platform/lpc/sct_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
+bool sctIsHalted(const struct SctBase *timer)
+{
+  const LPC_SCT_Type * const reg = timer->reg;
+  const uint32_t config = reg->CONFIG;
+  const uint32_t control = reg->CTRL;
+
+  if (!(config & CONFIG_UNIFY))
+  {
+    static const uint32_t mask = CTRL_HALT | (CTRL_HALT << 16);
+
+    /*
+     * Both timers must be either turned on simultaneously
+     * or turned off simultaneously.
+     */
+    assert((control & mask) == mask || !(control & mask));
+
+    return (control & mask) == mask;
+  }
+  else
+    return (control & CTRL_HALT) != 0;
+}
+/*----------------------------------------------------------------------------*/
 void sctSetFrequency(struct SctBase *timer, uint32_t frequency)
 {
   const unsigned int part = timer->part == SCT_HIGH;
