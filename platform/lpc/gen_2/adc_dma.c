@@ -15,7 +15,6 @@
 static void dmaHandler(void *);
 static bool dmaSetup(struct AdcDma *, uint8_t, uint8_t);
 static void resetDmaBuffers(struct AdcDma *);
-static void startCalibration(struct AdcDma *);
 static bool startConversion(struct AdcDma *);
 static void stopConversion(struct AdcDma *);
 /*----------------------------------------------------------------------------*/
@@ -91,68 +90,55 @@ static bool dmaSetup(struct AdcDma *interface, uint8_t channel,
 /*----------------------------------------------------------------------------*/
 static void resetDmaBuffers(struct AdcDma *interface)
 {
-  const unsigned int sequenceB = interface->base.sequence & 1;
+  const unsigned int number = interface->base.sequence & 1;
   LPC_ADC_Type * const reg = interface->base.reg;
 
   dmaAppend(interface->dma, interface->buffer,
-      (const void *)&reg->SEQ_GDAT[sequenceB],
+      (const void *)&reg->SEQ_GDAT[number],
       interface->count * sizeof(uint16_t));
-}
-/*----------------------------------------------------------------------------*/
-static void startCalibration(struct AdcDma *interface)
-{
-  assert(adcGetInstance(interface->base.sequence) == &interface->base);
-
-  LPC_ADC_Type * const reg = interface->base.reg;
-
-  /* Reconfigure ADC clock */
-  adcEnterCalibrationMode(&interface->base);
-
-  /* Start calibration */
-  reg->CTRL |= CTRL_LPWRMODE;
-  reg->CTRL |= CTRL_CALMODE;
-  reg->CTRL &= ~CTRL_LPWRMODE;
-  while (reg->CTRL & CTRL_CALMODE);
-
-  /* Restore configuration */
-  reg->CTRL = interface->base.control;
 }
 /*----------------------------------------------------------------------------*/
 static bool startConversion(struct AdcDma *interface)
 {
   assert(adcGetInstance(interface->base.sequence) == &interface->base);
 
-  const unsigned int sequenceB = interface->base.sequence & 1;
+  const unsigned int number = interface->base.sequence & 1;
   LPC_ADC_Type * const reg = interface->base.reg;
 
-  /* Clear pending request */
-  reg->FLAGS = sequenceB ? FLAGS_SEQB_INT : FLAGS_SEQA_INT;
   /* Rebuild DMA descriptor chain */
   resetDmaBuffers(interface);
+
+  /* Configure the sequence, but don't enable it */
+  reg->SEQ_CTRL[number] = interface->control;
+
+  /* Clear pending DMA request */
+  reg->FLAGS = FLAGS_SEQ_INT(number);
 
   if (dmaEnable(interface->dma) != E_OK)
     return false;
 
-  /* Enable DMA requests */
+  /* Enable DMA request after each conversion */
   const IrqState state = irqSave();
-  reg->INTEN |= sequenceB ? INTEN_SEQB_INTEN : INTEN_SEQA_INTEN;
+  reg->INTEN |= INTEN_SEQ_INTEN(number);
   irqRestore(state);
 
-  reg->SEQ_CTRL[sequenceB] = interface->control;
+  /* Enable sequence */
+  reg->SEQ_CTRL[number] |= SEQ_CTRL_SEQ_ENA;
+
   return true;
 }
 /*----------------------------------------------------------------------------*/
 static void stopConversion(struct AdcDma *interface)
 {
-  const unsigned int sequenceB = interface->base.sequence & 1;
+  const unsigned int number = interface->base.sequence & 1;
   LPC_ADC_Type * const reg = interface->base.reg;
 
   /* Stop further conversions */
-  reg->SEQ_CTRL[sequenceB] = 0;
+  reg->SEQ_CTRL[number] &= ~SEQ_CTRL_SEQ_ENA;
 
   /* Disable DMA requests */
   const IrqState state = irqSave();
-  reg->INTEN &= sequenceB ? ~INTEN_SEQB_INTEN : ~INTEN_SEQA_INTEN;
+  reg->INTEN &= ~INTEN_SEQ_INTEN(number);
   irqRestore(state);
 
   dmaDisable(interface->dma);
@@ -197,7 +183,7 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->callback = NULL;
   interface->count = (uint8_t)count;
 
-  interface->control = SEQ_CTRL_SEQ_ENA;
+  interface->control = 0;
   if (config->event == ADC_BURST)
     interface->control |= SEQ_CTRL_BURST;
   else
@@ -268,7 +254,7 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   switch ((enum ADCParameter)parameter)
   {
     case IF_ADC_CALIBRATE:
-      startCalibration(interface);
+      adcStartCalibration(&interface->base);
       return E_OK;
 
     default:

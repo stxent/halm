@@ -45,7 +45,7 @@ static void interruptHandler(void *object)
   LPC_ADC_Type * const reg = interface->base.reg;
 
   /* Clear pending interrupt flag */
-  reg->FLAGS = (interface->base.sequence & 1) ? FLAGS_SEQB_INT : FLAGS_SEQA_INT;
+  reg->FLAGS = FLAGS_SEQ_INT(interface->base.sequence & 1);
 
   for (size_t index = 0; index < interface->count; ++index)
     interface->buffer[index] = (uint16_t)reg->DAT[pins[index].channel];
@@ -54,62 +54,48 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void startCalibration(struct Adc *interface)
-{
-  assert(adcGetInstance(interface->base.sequence) == &interface->base);
-
-  LPC_ADC_Type * const reg = interface->base.reg;
-
-  /* Reconfigure ADC clock */
-  adcEnterCalibrationMode(&interface->base);
-
-  /* Start calibration */
-  reg->CTRL |= CTRL_LPWRMODE;
-  reg->CTRL |= CTRL_CALMODE;
-  reg->CTRL &= ~CTRL_LPWRMODE;
-  while (reg->CTRL & CTRL_CALMODE);
-
-  /* Restore configuration */
-  reg->CTRL = interface->base.control;
-}
-/*----------------------------------------------------------------------------*/
 static void startConversion(struct Adc *interface)
 {
   assert(adcGetInstance(interface->base.sequence) == &interface->base);
 
-  const unsigned int sequenceB = interface->base.sequence & 1;
+  const unsigned int number = interface->base.sequence & 1;
   LPC_ADC_Type * const reg = interface->base.reg;
 
-  /* Clear pending interrupt flag */
-  reg->FLAGS = sequenceB ? FLAGS_SEQB_INT : FLAGS_SEQA_INT;
+  /* Configure the sequence, but don't enable it */
+  reg->SEQ_CTRL[number] = interface->control;
 
-  /* Configure and enable sequence interrupt */
+  /* Clear pending interrupt flag */
+  reg->FLAGS = FLAGS_SEQ_INT(number);
+
+  /* Enable End-of-Sequence interrupt */
+  const IrqState state = irqSave();
+  reg->INTEN |= INTEN_SEQ_INTEN(number);
+  irqRestore(state);
+
+  /* Configure and enable NVIC interrupt */
   irqSetPriority(interface->base.irq.seq, interface->priority);
   irqClearPending(interface->base.irq.seq);
   irqEnable(interface->base.irq.seq);
 
-  /* Enable end-of-sequence interrupt */
-  const IrqState state = irqSave();
-  reg->INTEN |= sequenceB ? INTEN_SEQB_INTEN : INTEN_SEQA_INTEN;
-  irqRestore(state);
-
-  reg->SEQ_CTRL[sequenceB] = interface->control;
+  /* Enable sequence */
+  reg->SEQ_CTRL[number] |= SEQ_CTRL_SEQ_ENA;
 }
 /*----------------------------------------------------------------------------*/
 static void stopConversion(struct Adc *interface)
 {
-  const unsigned int sequenceB = interface->base.sequence & 1;
+  const unsigned int number = interface->base.sequence & 1;
   LPC_ADC_Type * const reg = interface->base.reg;
 
   /* Stop further conversions */
-  reg->SEQ_CTRL[sequenceB] = 0;
+  reg->SEQ_CTRL[number] &= ~SEQ_CTRL_SEQ_ENA;
 
-  /* Disable interrupt */
-  const IrqState state = irqSave();
-  reg->INTEN &= sequenceB ? ~INTEN_SEQB_INTEN : ~INTEN_SEQA_INTEN;
-  irqRestore(state);
-
+  /* Disable NVIC interrupt */
   irqDisable(interface->base.irq.seq);
+
+  /* Disable End-of-Sequence interrupt */
+  const IrqState state = irqSave();
+  reg->INTEN &= ~INTEN_SEQ_INTEN(number);
+  irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
@@ -149,7 +135,7 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->count = (uint8_t)count;
   interface->priority = config->priority;
 
-  interface->control = SEQ_CTRL_MODE | SEQ_CTRL_SEQ_ENA;
+  interface->control = SEQ_CTRL_MODE;
   if (config->event == ADC_BURST)
     interface->control |= SEQ_CTRL_BURST;
   else
@@ -226,7 +212,7 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   switch ((enum ADCParameter)parameter)
   {
     case IF_ADC_CALIBRATE:
-      startCalibration(interface);
+      adcStartCalibration(&interface->base);
       return E_OK;
 
     default:

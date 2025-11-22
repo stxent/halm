@@ -84,6 +84,7 @@ enum
 
 #define INTEN_SEQA_INTEN                BIT(0)
 #define INTEN_SEQB_INTEN                BIT(1)
+#define INTEN_SEQ_INTEN(sequence)       BIT(sequence)
 #define INTEN_OVR_INTEN                 BIT(2)
 
 #define INTEN_ADCMPINTEN(channel, value) \
@@ -100,8 +101,10 @@ enum
 
 #define FLAGS_SEQA_OVR                  BIT(24)
 #define FLAGS_SEQB_OVR                  BIT(25)
+#define FLAGS_SEQ_OVR(sequence)         BIT(24 + (sequence))
 #define FLAGS_SEQA_INT                  BIT(28)
 #define FLAGS_SEQB_INT                  BIT(29)
+#define FLAGS_SEQ_INT(sequence)         BIT(28 + (sequence))
 #define FLAGS_THCMP_INT                 BIT(30)
 #define FLAGS_OVR_INT                   BIT(31)
 /*------------------Trim register---------------------------------------------*/

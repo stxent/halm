@@ -155,7 +155,7 @@ void adcEnterCalibrationMode(struct AdcBase *)
   const uint32_t divisor = calcClockDivisor(CAL_FREQUENCY);
   assert(divisor && divisor <= CTRL_CLKDIV_MAX + 1);
 
-  LPC_ADC->CTRL = CTRL_CLKDIV(divisor - 1);
+  LPC_ADC->CTRL = CTRL_CLKDIV(divisor - 1) | CTRL_LPWRMODE;
 }
 /*----------------------------------------------------------------------------*/
 struct AdcBase *adcGetInstance(enum AdcSequence sequence)
@@ -205,10 +205,11 @@ static enum Result adcInit(void *object, const void *configBase)
   assert(config->sequence < ADC_SEQ_END);
   assert(!config->accuracy || config->accuracy == 12);
 
+  const uint32_t divisor = calcClockDivisor(config->frequency);
   struct AdcBase * const interface = object;
 
-  if (!config->shared && !adcSetInstance(config->sequence, NULL, interface))
-    return E_BUSY;
+  assert(divisor && divisor <= CTRL_CLKDIV_MAX + 1);
+  interface->control = CTRL_CLKDIV(divisor - 1);
 
   if (!sysPowerStatus(PWR_ADC))
   {
@@ -219,6 +220,9 @@ static enum Result adcInit(void *object, const void *configBase)
     LPC_ADC->CTRL = CTRL_CLKDIV(CTRL_CLKDIV_MAX) | CTRL_LPWRMODE;
   }
 
+  if (!config->shared && !adcSetInstance(config->sequence, NULL, interface))
+    return E_BUSY;
+
   interface->sequence = config->sequence;
   interface->handler = NULL;
   interface->irq.ovr = ADC_OVR_IRQ;
@@ -227,10 +231,6 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->irq.thcmp = ADC_THCMP_IRQ;
   interface->reg = LPC_ADC;
 
-  const uint32_t divisor = calcClockDivisor(config->frequency);
-  assert(divisor && divisor <= CTRL_CLKDIV_MAX + 1);
-
-  interface->control = CTRL_CLKDIV(divisor - 1);
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/

@@ -82,15 +82,15 @@ static void dmaHandler(void *object)
   /* Scatter-gather transfer finished */
   if (transferStatus != E_BUSY)
   {
-    const unsigned int sequenceB = interface->base.sequence & 1;
+    const unsigned int number = interface->base.sequence & 1;
     LPC_ADC_Type * const reg = interface->base.reg;
 
     /* Stop further conversions */
-    reg->SEQ_CTRL[sequenceB] = 0;
+    reg->SEQ_CTRL[number] &= ~SEQ_CTRL_SEQ_ENA;
 
     /* Disable DMA requests */
     const IrqState state = irqSave();
-    reg->INTEN &= sequenceB ? ~INTEN_SEQB_INTEN : ~INTEN_SEQA_INTEN;
+    reg->INTEN &= ~INTEN_SEQ_INTEN(number);
     irqRestore(state);
 
     if (transferStatus == E_ERROR)
@@ -155,25 +155,6 @@ static bool dmaSetup(struct AdcDmaStream *interface, uint8_t channel,
     return false;
 }
 /*----------------------------------------------------------------------------*/
-static void startCalibration(struct AdcDmaStream *interface)
-{
-  assert(adcGetInstance(interface->base.sequence) == &interface->base);
-
-  LPC_ADC_Type * const reg = interface->base.reg;
-
-  /* Reconfigure ADC clock */
-  adcEnterCalibrationMode(&interface->base);
-
-  /* Start calibration */
-  reg->CTRL |= CTRL_LPWRMODE;
-  reg->CTRL |= CTRL_CALMODE;
-  reg->CTRL &= ~CTRL_LPWRMODE;
-  while (reg->CTRL & CTRL_CALMODE);
-
-  /* Restore configuration */
-  reg->CTRL = interface->base.control;
-}
-/*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaStreamConfig * const config = configBase;
@@ -218,7 +199,7 @@ static enum Result adcInit(void *object, const void *configBase)
 
   interface->count = (uint8_t)count;
 
-  interface->control = SEQ_CTRL_SEQ_ENA;
+  interface->control = 0;
   if (config->event == ADC_BURST)
     interface->control |= SEQ_CTRL_BURST;
   else
@@ -268,7 +249,7 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   switch ((enum ADCParameter)parameter)
   {
     case IF_ADC_CALIBRATE:
-      startCalibration(interface);
+      adcStartCalibration(&interface->base);
       return E_OK;
 
     default:
@@ -344,27 +325,31 @@ static enum Result adcHandlerEnqueue(void *object,
 
   if (!pointerQueueFull(&stream->requests))
   {
-    const unsigned int sequenceB = interface->base.sequence & 1;
+    const unsigned int number = interface->base.sequence & 1;
     LPC_ADC_Type * const reg = interface->base.reg;
     uint8_t * const destination = request->buffer;
 
     /* When a previous transfer is active it will be continued */
     dmaAppend(interface->dma, destination,
-        (const void *)&reg->SEQ_GDAT[sequenceB], parts[0]);
+        (const void *)&reg->SEQ_GDAT[number], parts[0]);
     dmaAppend(interface->dma, destination + parts[0],
-        (const void *)&reg->SEQ_GDAT[sequenceB], parts[1]);
+        (const void *)&reg->SEQ_GDAT[number], parts[1]);
 
     if (dmaStatus(interface->dma) != E_BUSY)
     {
+      /* Configure the sequence, but don't enable it */
+      reg->SEQ_CTRL[number] = interface->control;
+
       /* Clear pending request */
-      reg->FLAGS = sequenceB ? FLAGS_SEQB_INT : FLAGS_SEQA_INT;
+      reg->FLAGS = FLAGS_SEQ_INT(number);
 
       if (dmaEnable(interface->dma) == E_OK)
       {
-        /* Enable DMA requests */
-        reg->INTEN |= sequenceB ? INTEN_SEQB_INTEN : INTEN_SEQA_INTEN;
+        /* Enable DMA request after each conversion */
+        reg->INTEN |= INTEN_SEQ_INTEN(number);
+
         /* Reconfigure peripheral and start the conversion */
-        reg->SEQ_CTRL[sequenceB] = interface->control;
+        reg->SEQ_CTRL[number] |= SEQ_CTRL_SEQ_ENA;
       }
       else
         res = E_INTERFACE;

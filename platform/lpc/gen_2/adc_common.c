@@ -5,6 +5,7 @@
  */
 
 #include <halm/platform/lpc/adc_base.h>
+#include <halm/platform/lpc/gen_2/adc_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 uint32_t adcSetupPins(const struct AdcBase *interface, struct AdcPin *channels,
@@ -29,4 +30,22 @@ uint32_t adcSetupPins(const struct AdcBase *interface, struct AdcPin *channels,
   }
 
   return enabled;
+}
+/*----------------------------------------------------------------------------*/
+void adcStartCalibration(struct AdcBase *interface)
+{
+  assert(adcGetInstance(interface->sequence) == interface);
+
+  LPC_ADC_Type * const reg = interface->reg;
+  const uint32_t control = reg->CTRL;
+
+  /* Reconfigure ADC clock */
+  adcEnterCalibrationMode(interface);
+
+  /* Start calibration */
+  reg->CTRL = (reg->CTRL & ~CTRL_LPWRMODE) | CTRL_CALMODE;
+  while (reg->CTRL & CTRL_CALMODE);
+
+  /* Restore configuration */
+  reg->CTRL = control;
 }

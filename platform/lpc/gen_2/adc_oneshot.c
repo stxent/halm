@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <stdlib.h>
 /*----------------------------------------------------------------------------*/
-static void startCalibration(struct AdcOneShot *);
 static void makeChannelConversion(struct AdcOneShot *, uint16_t *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
@@ -43,48 +42,34 @@ static void makeChannelConversion(struct AdcOneShot *interface,
   assert(adcGetInstance(interface->base.sequence) == &interface->base);
 
   const struct AdcPin * const pins = interface->pins;
-  const unsigned int sequenceB = interface->base.sequence & 1;
-  const uint32_t eoc = sequenceB ? FLAGS_SEQB_INT : FLAGS_SEQA_INT;
+  const unsigned int number = interface->base.sequence & 1;
+  const uint32_t eoc = FLAGS_SEQ_INT(number);
   LPC_ADC_Type * const reg = interface->base.reg;
   IrqState state;
 
-  /* Clear pending event flag, enable end-of-sequence event */
+  /* Configure the sequence, but don't enable it */
+  reg->SEQ_CTRL[number] = interface->control;
+
+  /* Clear pending interrupt flag */
+  reg->FLAGS = eoc;
+
+  /* Enable End-of-Sequence interrupt */
   state = irqSave();
-  reg->FLAGS = sequenceB ? FLAGS_SEQB_INT : FLAGS_SEQA_INT;
-  reg->INTEN |= sequenceB ? INTEN_SEQB_INTEN : INTEN_SEQA_INTEN;
+  reg->INTEN |= INTEN_SEQ_INTEN(number);
   irqRestore(state);
 
-  /* Reconfigure peripheral and start the conversion */
-  reg->SEQ_CTRL[sequenceB] = interface->control;
+  /* Start single sequence conversion */
+  reg->SEQ_CTRL[number] |= SEQ_CTRL_START | SEQ_CTRL_SEQ_ENA;
   while (!(reg->FLAGS & eoc));
-  reg->SEQ_CTRL[sequenceB] = 0;
+  reg->SEQ_CTRL[number] &= ~SEQ_CTRL_SEQ_ENA;
 
-  /* Disable end-of-sequence event */
+  /* Disable End-of-Sequence interrupt */
   state = irqSave();
-  reg->INTEN |= sequenceB ? INTEN_SEQB_INTEN : INTEN_SEQA_INTEN;
+  reg->INTEN &= ~INTEN_SEQ_INTEN(number);
   irqRestore(state);
 
   for (size_t index = 0; index < interface->count; ++index)
     output[index] = (uint16_t)reg->DAT[pins[index].channel];
-}
-/*----------------------------------------------------------------------------*/
-static void startCalibration(struct AdcOneShot *interface)
-{
-  assert(adcGetInstance(interface->base.sequence) == &interface->base);
-
-  LPC_ADC_Type * const reg = interface->base.reg;
-
-  /* Reconfigure ADC clock */
-  adcEnterCalibrationMode(&interface->base);
-
-  /* Start calibration */
-  reg->CTRL |= CTRL_LPWRMODE;
-  reg->CTRL |= CTRL_CALMODE;
-  reg->CTRL &= ~CTRL_LPWRMODE;
-  while (reg->CTRL & CTRL_CALMODE);
-
-  /* Restore configuration */
-  reg->CTRL = interface->base.control;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *object, const void *configBase)
@@ -118,7 +103,7 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->count = (uint8_t)count;
 
   /* Calculate Control register value */
-  interface->control = SEQ_CTRL_START | SEQ_CTRL_MODE | SEQ_CTRL_SEQ_ENA;
+  interface->control = SEQ_CTRL_MODE;
   if (config->preemption)
     interface->control |= SEQ_CTRL_LOWPRIO;
 
@@ -170,7 +155,7 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   switch ((enum ADCParameter)parameter)
   {
     case IF_ADC_CALIBRATE:
-      startCalibration(interface);
+      adcStartCalibration(&interface->base);
       return E_OK;
 
     default:

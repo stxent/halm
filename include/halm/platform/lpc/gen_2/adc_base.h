@@ -56,6 +56,7 @@ BEGIN_DECLS
 /* Common functions */
 uint32_t adcSetupPins(const struct AdcBase *, struct AdcPin *,
     const PinNumber *, size_t);
+void adcStartCalibration(struct AdcBase *);
 
 /* Platform-specific functions */
 struct AdcPin adcConfigPin(const struct AdcBase *, PinNumber);
