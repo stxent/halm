@@ -21,8 +21,8 @@ typedef uint16_t PinNumber;
 #define PIN(port, offset) \
     ((PinNumber)~((((port) & 0xFF) << 8) | ((offset) & 0xFF)))
 
-#define PIN_TO_OFFSET(key)  (~(key) & 0xFF)
-#define PIN_TO_PORT(key)    ((~(key) >> 8) & 0xFF)
+#define PIN_TO_OFFSET(key)  ((uint8_t)(~(key) & 0xFF))
+#define PIN_TO_PORT(key)    ((uint8_t)((~(key) >> 8) & 0xFF))
 /*----------------------------------------------------------------------------*/
 /* Special function values */
 enum

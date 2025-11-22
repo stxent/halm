@@ -169,9 +169,9 @@ static enum Result driverControl(struct UsbControl *control,
 static void fillConfigurationDescriptor(struct UsbControl *control,
     void *payload)
 {
-  const uint8_t configuration = usbControlStringFind(control,
+  const UsbStringIndex configurationStr = usbControlStringFind(control,
       USB_STRING_CONFIGURATION, DEFAULT_DEVICE_CONFIGURATION);
-  const uint8_t power = (control->current + 1) >> 1;
+  const uint8_t power = (uint8_t)((control->current + 1) / 2);
   uint8_t attributes = CONFIGURATION_DESCRIPTOR_DEFAULT;
 
   if (!control->current)
@@ -183,7 +183,7 @@ static void fillConfigurationDescriptor(struct UsbControl *control,
   uintptr_t offset;
 
   offset = offsetof(struct UsbConfigurationDescriptor, configuration);
-  descriptor[offset] = configuration;
+  descriptor[offset] = (uint8_t)configurationStr;
   offset = offsetof(struct UsbConfigurationDescriptor, attributes);
   descriptor[offset] = attributes;
   offset = offsetof(struct UsbConfigurationDescriptor, maxPower);
@@ -204,19 +204,19 @@ static void fillDeviceDescriptor(struct UsbControl *control, void *payload)
   memcpy(descriptor + offset, &productId, sizeof(productId));
 
 #ifdef CONFIG_USB_DEVICE_STRINGS
-  const uint8_t manufacturerStr = usbControlStringFind(control,
+  const UsbStringIndex manufacturerStr = usbControlStringFind(control,
       USB_STRING_VENDOR, 0);
-  const uint8_t productStr = usbControlStringFind(control,
+  const UsbStringIndex productStr = usbControlStringFind(control,
       USB_STRING_PRODUCT, 0);
-  const uint8_t serialNumberStr = usbControlStringFind(control,
+  const UsbStringIndex serialNumberStr = usbControlStringFind(control,
       USB_STRING_SERIAL, 0);
 
   offset = offsetof(struct UsbDeviceDescriptor, manufacturer);
-  descriptor[offset] = manufacturerStr;
+  descriptor[offset] = (uint8_t)manufacturerStr;
   offset = offsetof(struct UsbDeviceDescriptor, product);
-  descriptor[offset] = productStr;
+  descriptor[offset] = (uint8_t)productStr;
   offset = offsetof(struct UsbDeviceDescriptor, serialNumber);
-  descriptor[offset] = serialNumberStr;
+  descriptor[offset] = (uint8_t)serialNumberStr;
 #endif
 }
 /*----------------------------------------------------------------------------*/
@@ -280,7 +280,7 @@ static enum Result handleDeviceRequest(struct UsbControl *control,
     {
       usbTrace("control: set address %u", packet->value);
 
-      usbDevSetAddress(control->owner, packet->value);
+      usbDevSetAddress(control->owner, (uint8_t)packet->value);
       break;
     }
 
@@ -329,7 +329,7 @@ static enum Result handleEndpointRequest(struct UsbControl *control,
     uint16_t *responseLength)
 {
   struct UsbEndpoint * const endpoint = usbDevCreateEndpoint(control->owner,
-      packet->index);
+      (uint8_t)packet->index);
   enum Result res = E_OK;
 
   switch (packet->request)
@@ -475,7 +475,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
   else if (control->context.left && request->length <= control->context.left)
   {
     /* Copy next chunk of data into the temporary buffer */
-    const uint16_t offset = packet->length - control->context.left;
+    const uint16_t offset = (uint16_t)(packet->length - control->context.left);
 
     memcpy(control->context.payload + offset, request->buffer, request->length);
     control->context.left -= request->length;
@@ -574,7 +574,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
         pointerArrayBack(&control->inRequestPool);
     pointerArrayPopBack(&control->inRequestPool);
 
-    const size_t chunk = MIN(length, EP0_PACKET_SIZE);
+    const uint16_t chunk = MIN(length, EP0_PACKET_SIZE);
 
     if (chunk)
       memcpy(request->buffer, data, chunk);
