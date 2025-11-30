@@ -1,0 +1,62 @@
+/*
+ * halm/platform/lpc/gen_2/i2c_dma.h
+ * Copyright (C) 2025 xent
+ * Project is distributed under the terms of the MIT License
+ */
+
+#ifndef HALM_PLATFORM_LPC_I2C_DMA_H_
+#error This header should not be included directly
+#endif
+
+#ifndef HALM_PLATFORM_LPC_GEN_2_I2C_DMA_H_
+#define HALM_PLATFORM_LPC_GEN_2_I2C_DMA_H_
+/*----------------------------------------------------------------------------*/
+#include <halm/dma.h>
+#include <halm/platform/lpc/i2c_base.h>
+/*----------------------------------------------------------------------------*/
+extern const struct InterfaceClass * const I2CDma;
+
+struct I2CDmaConfig
+{
+  /** Mandatory: data rate. */
+  uint32_t rate;
+  /** Mandatory: serial clock pin. */
+  PinNumber scl;
+  /** Mandatory: serial data pin. */
+  PinNumber sda;
+  /** Mandatory: peripheral identifier. */
+  uint8_t channel;
+  /** Optional: DMA priority. Low priority is used by default. */
+  uint8_t priority;
+};
+
+struct I2CDma
+{
+  struct I2CBase base;
+
+  void (*callback)(void *);
+  void *callbackArgument;
+
+  /* Desired baud rate */
+  uint32_t rate;
+
+  /* DMA channel for data reception */
+  struct Dma *rxDma;
+  /* DMA channel for data transmission */
+  struct Dma *txDma;
+  // /* Pointer to an input or output buffer */
+  // uintptr_t buffer;
+  // /* Bytes to be received */
+  // size_t left;
+
+  /* Address of the device, only 7-bit addresses are supported */
+  uint8_t address;
+  /* Current interface state */
+  uint8_t state;
+  /* Selection between blocking mode and zero copy mode */
+  bool blocking;
+  /* Generate repeated start condition after a next transfer */
+  bool sendRepeatedStart;
+};
+/*----------------------------------------------------------------------------*/
+#endif /* HALM_PLATFORM_LPC_GEN_2_I2C_DMA_H_ */

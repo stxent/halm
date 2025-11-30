@@ -31,7 +31,6 @@ struct AdcDmaStreamHandler
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *);
 static bool dmaSetup(struct AdcDmaStream *, uint8_t, uint8_t, size_t);
-static void startCalibration(struct AdcDmaStream *);
 /*----------------------------------------------------------------------------*/
 static enum Result adcInit(void *, const void *);
 static enum Result adcGetParam(void *, int, void *);

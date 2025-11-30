@@ -405,6 +405,11 @@ config PLATFORM_LPC_I2C
 	default y
 	depends on PLATFORM_LPC_I2C_BASE
 
+config PLATFORM_LPC_I2C_DMA
+	bool "I2C Master with DMA"
+	default y
+	depends on PLATFORM_LPC_I2C_BASE && PLATFORM_LPC_SDMA
+
 config PLATFORM_LPC_I2C_SLAVE
 	bool "I2C Slave"
 	default y

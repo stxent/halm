@@ -76,7 +76,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
   if (isI2CPin(pin))
   {
     volatile uint32_t * const reg = pin.reg;
-    uint32_t value = *reg | ~IOCON_I2C_MASK;
+    uint32_t value = *reg & ~IOCON_I2C_MASK;
 
     value |= function == PIN_DEFAULT ? IOCON_I2C_IO : IOCON_I2C_STANDARD;
     *reg = value;
