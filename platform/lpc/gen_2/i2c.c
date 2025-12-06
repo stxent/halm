@@ -54,7 +54,7 @@ static void interruptHandler(void *object)
 {
   struct I2C * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
-  const uint8_t status = reg->STAT;
+  const uint32_t status = reg->STAT;
   bool event = false;
 
   if (status & STAT_MSK_ERROR_MASK)

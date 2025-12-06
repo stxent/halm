@@ -66,8 +66,6 @@ enum
 #define STAT_MST_MASK \
     (STAT_MSTARBLOSS | STAT_MSTSTSTPERR | STAT_EVENTTIMEOUT | STAT_SCLTIMEOUT)
 #define STAT_MSK_ERROR_MASK             STAT_MST_MASK
-#define STAT_SLV_MASK \
-    (STAT_SLVDESEL | STAT_EVENTTIMEOUT | STAT_SCLTIMEOUT)
 /*------------------Interrupt Enable Set and read register--------------------*/
 #define INTENSET_MSTPENDINGEN           BIT(0)
 #define INTENSET_MSTARBLOSSEN           BIT(4)
