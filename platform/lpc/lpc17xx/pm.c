@@ -23,7 +23,7 @@ void pmPlatformChangeState(enum PmState state)
       break;
 
     case PM_SUSPEND:
-#if defined(CONFIG_PLATFORM_LPC_PM_PD)
+#ifdef CONFIG_PLATFORM_LPC_PM_PD
       value = PCON_PM(PCON_PM_POWERDOWN) | PCON_PDFLAG;
 #else
       value = PCON_PM(PCON_PM_SLEEP) | PCON_DSFLAG;

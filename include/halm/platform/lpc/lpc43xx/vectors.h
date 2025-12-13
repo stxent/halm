@@ -11,11 +11,11 @@
 #ifndef HALM_PLATFORM_LPC_LPC43XX_VECTORS_H_
 #define HALM_PLATFORM_LPC_LPC43XX_VECTORS_H_
 /*----------------------------------------------------------------------------*/
-#if defined(LPC43XX)
+#ifdef LPC43XX
 #  include "vectors_m4.h"
-#elif defined(LPC43XX_M0APP)
+#elifdef LPC43XX_M0APP
 #  include "vectors_m0_app.h"
-#elif defined(LPC43XX_M0SUB)
+#elifdef LPC43XX_M0SUB
 #  include "vectors_m0_sub.h"
 #else
 #  error "Target core is not defined"
