@@ -52,6 +52,7 @@ void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum PinPull);
 void pinSetSlewRate(struct Pin, enum PinSlewRate);
 void pinSetType(struct Pin, enum PinType);
+void pinSchmittTriggerEnabled(struct Pin, bool);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

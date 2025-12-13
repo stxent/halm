@@ -52,6 +52,48 @@ enum
 #define REGLCTL_MAGIC_NUMBER_0          0x59
 #define REGLCTL_MAGIC_NUMBER_1          0x16
 #define REGLCTL_MAGIC_NUMBER_2          0x88
+/*------------------VREF Control register-------------------------------------*/
+enum
+{
+  PRELOAD_SEL_60US    = 0, /* For 0.1 uF capacitors */
+  PRELOAD_SEL_310US   = 1, /* For 1 uF capacitors */
+  PRELOAD_SEL_1270US  = 2, /* For 4.7 uF capacitors */
+  PRELOAD_SEL_2650US  = 3  /* For 10 uF capacitors */
+};
+
+enum
+{
+  VBGISEL_4UA2  = 0,
+  VBGISEL_7UA3  = 1,
+  VBGISEL_10UA4 = 2,
+  VBGISEL_13UA5 = 3
+};
+
+enum
+{
+  VREFCTL_EXT     = 0,
+  VREFCTL_INT_1V6 = 3,
+  VREFCTL_INT_2V0 = 7,
+  VREFCTL_INT_2V5 = 11,
+  VREFCTL_INT_3V0 = 15
+};
+
+#define VREFCTL_VREFCTL_MASK            BIT_FIELD(MASK(5), 0)
+#define VREFCTL_VREFCTL(value)          BIT_FIELD((value), 0)
+#define VREFCTL_VREFCTL_VALUE(reg) \
+    FIELD_VALUE((reg), VREFCTL_VREFCTL_MASK, 0)
+
+#define VREFCTL_PRELOAD_SEL_MASK        BIT_FIELD(MASK(2), 6)
+#define VREFCTL_PRELOAD_SEL(value)      BIT_FIELD((value), 6)
+#define VREFCTL_PRELOAD_SEL_VALUE(reg) \
+    FIELD_VALUE((reg), VREFCTL_PRELOAD_SEL_MASK, 0)
+
+#define VREFCTL_VBGFEN                  BIT(24)
+
+#define VREFCTL_VBGISEL_MASK            BIT_FIELD(MASK(2), 25)
+#define VREFCTL_VBGISEL(value)          BIT_FIELD((value), 25)
+#define VREFCTL_VBGISEL_VALUE(reg) \
+    FIELD_VALUE((reg), VREFCTL_VBGISEL_MASK, 25)
 /*------------------USB PHY control register----------------------------------*/
 enum
 {

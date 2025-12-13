@@ -27,6 +27,7 @@ static void commonPinInit(struct Pin pin)
 {
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
+  pinSchmittTriggerEnabled(pin, true);
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)
@@ -162,4 +163,17 @@ void pinSetType(struct Pin pin, enum PinType type)
   }
 
   reg->MODE = value;
+}
+/*----------------------------------------------------------------------------*/
+void pinSchmittTriggerEnabled(struct Pin pin, bool enabled)
+{
+  NM_GPIO_Type * const reg = calcPort(pin.port);
+  uint32_t value = reg->SMTEN;
+
+  if (enabled)
+    value |= BIT(pin.number);
+  else
+    value &= ~BIT(pin.number);
+
+  reg->SMTEN = value;
 }

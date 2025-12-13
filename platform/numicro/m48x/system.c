@@ -98,6 +98,32 @@ bool sysClockStatus(enum SysClockBranch branch)
   return (*calcClockReg(branch) & (1UL << (branch & 0x1F))) != 0;
 }
 /*----------------------------------------------------------------------------*/
+void sysConfigVoltageReference(void)
+{
+  uint32_t vrefctl = NM_SYS->VREFCTL & ~VREFCTL_VREFCTL_MASK;
+
+#ifndef CONFIG_PLATFORM_NUMICRO_VREF_EXT
+  /* Recommended by manual */
+  vrefctl = (vrefctl & ~VREFCTL_VBGISEL_MASK) | VREFCTL_VBGISEL(VBGISEL_10UA4);
+#endif
+
+#ifdef CONFIG_PLATFORM_NUMICRO_VREF_1V6
+  vrefctl |= VREFCTL_VREFCTL(VREFCTL_INT_1V6);
+#elifdef CONFIG_PLATFORM_NUMICRO_VREF_2V0
+  vrefctl |= VREFCTL_VREFCTL(VREFCTL_INT_2V0);
+#elifdef CONFIG_PLATFORM_NUMICRO_VREF_2V5
+  vrefctl |= VREFCTL_VREFCTL(VREFCTL_INT_2V5);
+#elifdef CONFIG_PLATFORM_NUMICRO_VREF_3V0
+  vrefctl |= VREFCTL_VREFCTL(VREFCTL_INT_3V0);
+#else
+  vrefctl |= VREFCTL_VREFCTL(VREFCTL_EXT);
+#endif
+
+  sysUnlockReg();
+  NM_SYS->VREFCTL = vrefctl;
+  sysLockReg();
+}
+/*----------------------------------------------------------------------------*/
 void sysFlashLatencyReset(void)
 {
   sysUnlockReg();

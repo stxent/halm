@@ -181,6 +181,27 @@ config PLATFORM_NUMICRO_EADC_DMA
 	default y
 	depends on PLATFORM_NUMICRO_EADC_BASE && PLATFORM_NUMICRO_PDMA
 
+choice
+	prompt "Analog Voltage Reference"
+	default PLATFORM_NUMICRO_VREF_EXT
+	depends on PLATFORM_NUMICRO_EADC_BASE
+
+	config PLATFORM_NUMICRO_VREF_EXT
+		bool "External"
+
+	config PLATFORM_NUMICRO_VREF_1V6
+		bool "Internal 1.6V"
+
+	config PLATFORM_NUMICRO_VREF_2V0
+		bool "Internal 2.0V"
+
+	config PLATFORM_NUMICRO_VREF_2V5
+		bool "Internal 2.5V"
+
+	config PLATFORM_NUMICRO_VREF_3V0
+		bool "Internal 3.0V"
+endchoice
+
 config PLATFORM_NUMICRO_FLASH
 	bool "Flash driver"
 	default y

@@ -527,7 +527,6 @@ static inline NM_HSUSBD_EP_Type *epGetChannel(struct UsbEndpoint *ep)
 static void epHandlePacket(struct UsbEndpoint *ep)
 {
   NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
-  const bool error = (channel->EPINTSTS & EPINTSTS_ERRIF) != 0;
 
   channel->EPINTSTS = EPINTSTS_MASK;
 
@@ -538,8 +537,7 @@ static void epHandlePacket(struct UsbEndpoint *ep)
     if (ep->address & USB_EP_DIRECTION_IN)
     {
       pointerQueuePopFront(&ep->requests);
-      req->callback(req->argument, req, error ?
-          USB_REQUEST_ERROR : USB_REQUEST_COMPLETED);
+      req->callback(req->argument, req, USB_REQUEST_COMPLETED);
 
       if (!pointerQueueEmpty(&ep->requests))
       {
@@ -552,7 +550,7 @@ static void epHandlePacket(struct UsbEndpoint *ep)
       enum UsbRequestStatus status = USB_REQUEST_ERROR;
       size_t read;
 
-      if (!error && epReadData(ep, req->buffer, req->capacity, &read))
+      if (epReadData(ep, req->buffer, req->capacity, &read))
       {
         req->length = read;
         status = USB_REQUEST_COMPLETED;
@@ -993,12 +991,12 @@ static void dataEpEnable(void *object, uint8_t type, uint16_t size)
     epcfg |= EPCFG_EPDIR;
 
     channel->EPINTSTS = EPINTSTS_MASK;
-    channel->EPINTEN = EPINTEN_SHORTTXIEN | EPINTEN_TXPKIEN | EPINTEN_ERRIEN;
+    channel->EPINTEN = EPINTEN_SHORTTXIEN | EPINTEN_TXPKIEN;
   }
   else
   {
     channel->EPINTSTS = EPINTSTS_MASK;
-    channel->EPINTEN = EPINTEN_ERRIEN;
+    channel->EPINTEN = 0;
   }
 
   channel->EPRSPCTL = EPRSPCTL_FLUSH | EPRSPCTL_TOGGLE

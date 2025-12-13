@@ -107,7 +107,7 @@ static void interruptHandler(void *object)
   else if (interface->rxLeft < FIFO_DEPTH / 2)
   {
     reg->FIFOCTL = (reg->FIFOCTL & ~FIFOCTL_RXTH_MASK)
-        | FIFOCTL_RXTH(interface->rxLeft);
+        | FIFOCTL_RXTH(interface->rxLeft - 1);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -130,8 +130,8 @@ static size_t transferData(struct Spi *interface, size_t length)
   interface->rxLeft = interface->txLeft = length;
 
   /* Clear FIFO, configure levels and enable interrupts */
-  reg->FIFOCTL = FIFOCTL_TXTHIEN | FIFOCTL_TXTH(FIFO_DEPTH / 2)
-      | FIFOCTL_RXTHIEN | FIFOCTL_RXTH(chunk);
+  reg->FIFOCTL = FIFOCTL_TXTHIEN | FIFOCTL_TXTH(FIFO_DEPTH / 2 - 1)
+      | FIFOCTL_RXTHIEN | FIFOCTL_RXTH(chunk - 1);
 
   if (interface->blocking)
   {

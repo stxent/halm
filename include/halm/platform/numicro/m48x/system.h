@@ -164,6 +164,7 @@ BEGIN_DECLS
 void sysClockDisable(enum SysClockBranch);
 void sysClockEnable(enum SysClockBranch);
 bool sysClockStatus(enum SysClockBranch);
+void sysConfigVoltageReference(void);
 void sysFlashLatencyReset(void);
 void sysFlashLatencyUpdate(uint32_t);
 size_t sysGetSizeAPROM(void);

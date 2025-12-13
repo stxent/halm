@@ -331,6 +331,9 @@ static enum Result adcInit(void *object, const void *configBase)
     reg->CTL = CTL_ADCRST;
     sysLockReg();
 
+    /* Select voltage reference */
+    sysConfigVoltageReference();
+
     /* Enable deep power-down mode, set LDO start-up time to 20 us */
     reg->PWRM = PWRM_PWUCALEN | PWRM_PWDMOD(PWDMOD_DEEP_POWER_DOWN)
         | PWRM_LDOSUT(frequency / 50000);
