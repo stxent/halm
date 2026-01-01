@@ -10,7 +10,7 @@
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 #define DUMMY_FRAME 0xFF
-#define FIFO_DEPTH  8
+#define FIFO_DEPTH  4
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 static size_t transferData(struct Spi *, size_t);

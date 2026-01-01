@@ -373,7 +373,6 @@ static enum Result devInit(void *object, const void *configBase)
   reg->BUSINTEN = 0;
   reg->BUSINTSTS = BUSINTSTS_MASK;
 
-  reg->OPER = 0;
   reg->FADDR = 0;
   reg->PHYCTL = PHYCTL_PHYEN | PHYCTL_WKEN;
 
@@ -383,10 +382,6 @@ static enum Result devInit(void *object, const void *configBase)
     reg->EP[index].EPINTEN = 0;
     reg->EP[index].EPRSPCTL = EPRSPCTL_FLUSH;
   }
-
-#ifndef CONFIG_PLATFORM_USB_DEVICE_FORCE_FS
-  reg->OPER |= OPER_HISPDEN;
-#endif
 
   irqSetPriority(device->base.irq, config->priority);
   irqEnable(device->base.irq);
@@ -459,6 +454,13 @@ static void devSetConnected(void *object, bool state)
 
   device->enabled = state;
 
+#ifdef CONFIG_PLATFORM_USB_DEVICE_FORCE_FS
+  reg->OPER = 0;
+#else
+  reg->OPER = OPER_HISPDEN;
+#endif
+
+  /* TODO HSUSBD Fix disconnect-connect sequence */
   if (state)
   {
     reg->BUSINTSTS = BUSINTSTS_MASK;
@@ -470,14 +472,14 @@ static void devSetConnected(void *object, bool state)
 #endif
 
     reg->GINTEN = GINTEN_USBIEN | GINTEN_CEPIEN | GINTEN_EPIEN_MASK;
-    reg->PHYCTL |= PHYCTL_DPPUEN | PHYCTL_PHYEN;
+    reg->PHYCTL |= PHYCTL_DPPUEN;
   }
   else
   {
     reg->BUSINTEN = 0;
     reg->GINTEN = 0;
 
-    reg->PHYCTL &= ~(PHYCTL_DPPUEN | PHYCTL_PHYEN);
+    reg->PHYCTL &= ~PHYCTL_DPPUEN;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -527,8 +529,9 @@ static inline NM_HSUSBD_EP_Type *epGetChannel(struct UsbEndpoint *ep)
 static void epHandlePacket(struct UsbEndpoint *ep)
 {
   NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
+  const uint32_t status = channel->EPINTSTS;
 
-  channel->EPINTSTS = EPINTSTS_MASK;
+  channel->EPINTSTS = status;
 
   if (!pointerQueueEmpty(&ep->requests))
   {
@@ -536,31 +539,37 @@ static void epHandlePacket(struct UsbEndpoint *ep)
 
     if (ep->address & USB_EP_DIRECTION_IN)
     {
-      pointerQueuePopFront(&ep->requests);
-      req->callback(req->argument, req, USB_REQUEST_COMPLETED);
-
-      if (!pointerQueueEmpty(&ep->requests))
+      if (status & EPINTSTS_TXPKIF)
       {
-        req = pointerQueueFront(&ep->requests);
-        epWriteData(ep, req->buffer, req->length);
+        pointerQueuePopFront(&ep->requests);
+        req->callback(req->argument, req, USB_REQUEST_COMPLETED);
+
+        if (!pointerQueueEmpty(&ep->requests))
+        {
+          req = pointerQueueFront(&ep->requests);
+          epWriteData(ep, req->buffer, req->length);
+        }
       }
     }
     else
     {
-      enum UsbRequestStatus status = USB_REQUEST_ERROR;
-      size_t read;
-
-      if (epReadData(ep, req->buffer, req->capacity, &read))
+      if (status & EPINTSTS_RXPKIF)
       {
-        req->length = read;
-        status = USB_REQUEST_COMPLETED;
+        enum UsbRequestStatus result = USB_REQUEST_ERROR;
+        size_t read;
+
+        if (epReadData(ep, req->buffer, req->capacity, &read))
+        {
+          req->length = read;
+          result = USB_REQUEST_COMPLETED;
+        }
+
+        pointerQueuePopFront(&ep->requests);
+        req->callback(req->argument, req, result);
+
+        if (pointerQueueEmpty(&ep->requests))
+          channel->EPINTEN &= ~(EPINTEN_RXPKIEN | EPINTEN_SHORTRXIEN);
       }
-
-      pointerQueuePopFront(&ep->requests);
-      req->callback(req->argument, req, status);
-
-      if (pointerQueueEmpty(&ep->requests))
-        channel->EPINTEN &= ~(EPINTEN_RXPKIEN | EPINTEN_SHORTRXIEN);
     }
   }
 }
@@ -644,7 +653,7 @@ static bool epReadData(struct UsbEndpoint *ep, uint8_t *buffer,
   else
   {
     /* Flush erroneous FIFO state */
-    channel->EPRSPCTL |= EPRSPCTL_FLUSH;
+    channel->EPRSPCTL = (channel->EPRSPCTL & ~EPRSPCTL_TOGGLE) | EPRSPCTL_FLUSH;
     return false;
   }
 }
@@ -700,11 +709,17 @@ static void epWriteData(struct UsbEndpoint *ep, const uint8_t *buffer,
   else
   {
     if (length % channel->EPMPS != 0)
-      channel->EPRSPCTL |= EPRSPCTL_SHORTTXEN;
+    {
+      channel->EPRSPCTL = (channel->EPRSPCTL & ~EPRSPCTL_TOGGLE)
+          | EPRSPCTL_SHORTTXEN;
+    }
   }
 
   if (!length)
-    channel->EPRSPCTL |= EPRSPCTL_ZEROLEN;
+  {
+    channel->EPRSPCTL = (channel->EPRSPCTL & ~EPRSPCTL_TOGGLE)
+        | EPRSPCTL_ZEROLEN;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void epWriteControlData(struct ControlUsbEndpoint *ep,
@@ -980,8 +995,7 @@ static void dataEpEnable(void *object, uint8_t type, uint16_t size)
 
     default:
       eptype = EPTYPE_BULK;
-//      validation = MODE_AUTO_VALIDATE; // TODO Auto-validation mode
-      validation = MODE_MANUAL_VALIDATE;
+      validation = MODE_AUTO_VALIDATE;
       break;
   }
   ep->manual = validation != MODE_AUTO_VALIDATE;
@@ -991,12 +1005,12 @@ static void dataEpEnable(void *object, uint8_t type, uint16_t size)
     epcfg |= EPCFG_EPDIR;
 
     channel->EPINTSTS = EPINTSTS_MASK;
-    channel->EPINTEN = EPINTEN_SHORTTXIEN | EPINTEN_TXPKIEN;
+    channel->EPINTEN = EPINTEN_SHORTTXIEN | EPINTEN_TXPKIEN | EPINTEN_ERRIEN;
   }
   else
   {
     channel->EPINTSTS = EPINTSTS_MASK;
-    channel->EPINTEN = 0;
+    channel->EPINTEN = EPINTEN_ERRIEN;
   }
 
   channel->EPRSPCTL = EPRSPCTL_FLUSH | EPRSPCTL_TOGGLE
@@ -1050,8 +1064,8 @@ static void dataEpSetStalled(void *object, bool stalled)
   struct UsbEndpoint * const ep = object;
   NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);
 
-  if (stalled)
-    channel->EPRSPCTL |= EPRSPCTL_HALT;
+  if (!stalled)
+    channel->EPRSPCTL = (channel->EPRSPCTL & ~EPRSPCTL_HALT) | EPRSPCTL_TOGGLE;
   else
-    channel->EPRSPCTL &= ~EPRSPCTL_HALT;
+    channel->EPRSPCTL |= EPRSPCTL_HALT;
 }
