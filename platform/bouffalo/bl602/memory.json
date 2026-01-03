@@ -1,0 +1,38 @@
+[
+  {
+    "address": "0x02000000",
+    "name": "CLIC_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x000000", "name": "CLIC", "type": "BL_CLIC_Type"}
+    ]
+  },
+  {
+    "address": "0x40000000",
+    "name": "PB_DOMAIN",
+    "blocks":
+    [
+      {"offset": "0x0000", "name": "GLB", "type": "BL_GLB_Type"},
+      {"offset": "0x1000", "name": "MIX", "type": "BL_MIX_Type"},
+      {"offset": "0x2000", "name": "GPIP", "type": "BL_GPIP_Type"},
+      {"offset": "0x4000", "name": "SEC", "type": "BL_SEC_Type"},
+      {"offset": "0x5000", "name": "TZ1", "type": "BL_TZ_Type"},
+      {"offset": "0x6000", "name": "TZ2", "type": "BL_TZ_Type"},
+      {"offset": "0x7000", "name": "EFUSE", "type": "BL_EFUSE_Type"},
+      {"offset": "0x9000", "name": "L1C", "type": "BL_L1C_Type"},
+      {"offset": "0xA000", "name": "UART0", "type": "BL_UART_Type"},
+      {"offset": "0xA100", "name": "UART1", "type": "BL_UART_Type"},
+      {"offset": "0xA200", "name": "SPI", "type": "BL_SPI_Type"},
+      {"offset": "0xA300", "name": "I2C", "type": "BL_I2C_Type"},
+      {"offset": "0xA400", "name": "PWM", "type": "BL_PWM_Type"},
+      {"offset": "0xA500", "name": "TIMER", "type": "BL_TIMER_Type"},
+      {"offset": "0xA600", "name": "IRR", "type": "BL_IRR_Type"},
+      {"offset": "0xB000", "name": "QSPI", "type": "BL_QSPI_Type"},
+      {"offset": "0xC000", "name": "DMA", "type": "BL_DMA_Type"},
+      {"offset": "0xD000", "name": "SDU", "type": "BL_SDU_Type"},
+      {"offset": "0xE000", "name": "PDS", "type": "BL_PDS_Type"},
+      {"offset": "0xF000", "name": "HBN", "type": "BL_HBN_Type"},
+      {"offset": "0xF800", "name": "AON", "type": "BL_AON_Type"}
+    ]
+  }
+]

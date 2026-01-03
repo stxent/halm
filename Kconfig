@@ -22,6 +22,9 @@ choice
 
 	config CORE_CORTEX_M7
 		bool "Cortex-M7"
+
+	config CORE_RISCV
+		bool "RISC-V"
 endchoice
 
 choice
@@ -94,6 +97,10 @@ choice
 	config FAMILY_STM32F4XX
 		bool "ST STM32F4xx"
 		depends on CORE_CORTEX_M4
+
+	config FAMILY_BL602
+		bool "Bouffalo Lab BL60x"
+		depends on CORE_RISCV
 endchoice
 
 config FAMILY_LPC43XX

@@ -189,6 +189,11 @@
 #  define PLATFORM        stm32f4xx
 #  define PLATFORM_TYPE   stm32
 
+#elif defined(BL602)
+
+#  define PLATFORM        bl602
+#  define PLATFORM_TYPE   bouffalo
+
 #else
 
 #  define PLATFORM_TYPE   generic

@@ -1,0 +1,32 @@
+config CORE_RISCV_NO_DEINIT
+	bool "Disable destructors"
+	default n
+
+config CORE_RISCV_FPU
+	bool "FPU"
+	default n
+	help
+	  This enables Floating Point Unit.
+
+config CORE_RISCV_MEMORY_DEBUG
+	bool "Memory debug"
+	default n
+	help
+	  This fills the RAM with a predefined pattern.
+
+config CORE_RISCV_MEMORY_PATTERN
+	hex "Memory pattern"
+	default 0xDEADBEEF
+	range 0x00000000 0xFFFFFFFF
+	depends on CORE_RISCV_MEMORY_DEBUG
+
+config CORE_RISCV_MACHINE_TIMER
+	bool "Machine Timer"
+	default y
+	help
+	  This is the driver for the Machine Timer peripheral.
+
+config CORE_RISCV_MACHINE_TIMER_NO_DEINIT
+	bool
+	default y if CORE_RISCV_NO_DEINIT
+	depends on CORE_RISCV_MACHINE_TIMER

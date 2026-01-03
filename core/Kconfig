@@ -5,3 +5,7 @@ endif
 if CORE_CORTEX_M0 || CORE_CORTEX_M0P || CORE_CORTEX_M3 || CORE_CORTEX_M4 || CORE_CORTEX_M7
 	source "core/cortex/Kconfig"
 endif
+
+if CORE_RISCV
+	source "core/riscv/Kconfig"
+endif
