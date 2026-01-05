@@ -239,6 +239,15 @@ typedef struct
   __rw__ uint32_t RC32K_CTRL0;
   __rw__ uint32_t XTAL32K;
 } BL_HBN_Type;
+/*------------------L1 Cache controller---------------------------------------*/
+typedef struct
+{
+  /* Offset 0x000 */
+  __rw__ uint32_t L1C_CONFIG;
+  __ro__ uint32_t HIT_CNT_LSB;
+  __ro__ uint32_t HIT_CNT_MSB;
+  __ro__ uint32_t MISS_CNT;
+} BL_L1C_Type;
 /*------------------Power-Down Sleep peripheral-------------------------------*/
 typedef struct
 {
@@ -472,7 +481,6 @@ typedef struct BL_TODO_Type BL_SEC_Type;
 typedef struct BL_TODO_Type BL_TZ_Type;
 typedef struct BL_TODO_Type BL_TZ_Type;
 typedef struct BL_TODO_Type BL_EFUSE_Type;
-typedef struct BL_TODO_Type BL_L1C_Type;
 typedef struct BL_TODO_Type BL_SPI_Type;
 typedef struct BL_TODO_Type BL_I2C_Type;
 typedef struct BL_TODO_Type BL_PWM_Type;
@@ -537,6 +545,7 @@ extern PB_DOMAIN_Type PB_DOMAIN;
 #define BL_CLIC         (&CLIC_DOMAIN.CLIC)
 
 #define BL_GLB          (&PB_DOMAIN.GLB)
+#define BL_L1C          (&PB_DOMAIN.L1C)
 #define BL_UART0        (&PB_DOMAIN.UART0)
 #define BL_UART1        (&PB_DOMAIN.UART1)
 #define BL_TIMER        (&PB_DOMAIN.TIMER)

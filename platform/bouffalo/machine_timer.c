@@ -196,7 +196,7 @@ static uint64_t tmrGetValue64(const void *)
   }
   while (high1 != high0);
 
-  return ((uint64_t)high0 << 32) | low;;
+  return ((uint64_t)high0 << 32) | low;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetValue64(void *, uint64_t value)

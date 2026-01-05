@@ -78,6 +78,7 @@ enum
 #define CLK_CFG2_SF_CLK_DIV_MASK        BIT_FIELD(MASK(3), 8)
 #define CLK_CFG2_SF_CLK_DIV_VALUE(reg) \
     FIELD_VALUE((reg), CLK_CFG2_SF_CLK_DIV_MASK, 8)
+#define CLK_CFG2_SF_CLK_DIV_MAX         7
 
 #define CLK_CFG2_SF_CLK_EN              BIT(11)
 

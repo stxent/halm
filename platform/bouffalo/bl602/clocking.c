@@ -7,6 +7,7 @@
 #include <halm/delay.h>
 #include <halm/platform/bouffalo/clocking.h>
 #include <halm/platform/bouffalo/bl602/clocking_defs.h>
+#include <halm/platform/bouffalo/bl602/l1c.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
 #include <stddef.h>
@@ -23,6 +24,11 @@ static void extOscDisable(const void *);
 static enum Result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
 static bool extOscReady(const void *);
+
+static void flashClockDisable(const void *);
+static enum Result flashClockEnable(const void *, const void *);
+static uint32_t flashClockFrequency(const void *);
+static bool flashClockReady(const void *);
 
 static enum Result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
@@ -42,6 +48,13 @@ const struct ClockClass * const ExternalOsc = &(const struct ClockClass){
     .enable = extOscEnable,
     .frequency = extOscFrequency,
     .ready = extOscReady
+};
+
+const struct ClockClass * const FlashClock = &(const struct ClockClass){
+    .disable = flashClockDisable,
+    .enable = flashClockEnable,
+    .frequency = flashClockFrequency,
+    .ready = flashClockReady
 };
 
 const struct ClockClass * const MainClock = &(const struct ClockClass){
@@ -111,6 +124,98 @@ static uint32_t extOscFrequency(const void *)
 static bool extOscReady(const void *)
 {
   return (BL_AON->TSEN & TSEN_XTAL_RDY) != 0;
+}
+/*----------------------------------------------------------------------------*/
+static void flashClockDisable(const void *)
+{
+  BL_GLB->CLK_CFG2 &= ~CLK_CFG2_SF_CLK_EN;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result flashClockEnable(const void *, const void *configBase)
+{
+  const struct GenericClockConfig * const config = configBase;
+  assert(config != NULL);
+
+  if (config->divisor > CLK_CFG2_SF_CLK_DIV_MAX)
+    return E_VALUE;
+
+  const uint32_t divisor = config->divisor ? config->divisor : 1;
+  uint32_t clkCfg2 = BL_GLB->CLK_CFG2;
+  uint32_t frequency = 0;
+
+  clkCfg2 &= ~(CLK_CFG2_SF_CLK_DIV_MASK | CLK_CFG2_SF_CLK_SEL_MASK);
+  clkCfg2 |= CLK_CFG2_SF_CLK_DIV(divisor - 1);
+
+  switch (config->source)
+  {
+    case CLOCK_PLL_80MHZ:
+      clkCfg2 |= CLK_CFG2_SF_CLK_SEL(SF_CLK_SEL_80MHZ);
+      frequency = 80000000;
+      break;
+
+    case CLOCK_PLL_96MHZ:
+      clkCfg2 |= CLK_CFG2_SF_CLK_SEL(SF_CLK_SEL_96MHZ);
+      frequency = 96000000;
+      break;
+
+    case CLOCK_PLL_120MHZ:
+      clkCfg2 |= CLK_CFG2_SF_CLK_SEL(SF_CLK_SEL_120MHZ);
+      frequency = 120000000;
+      break;
+
+    case CLOCK_SYSTEM:
+      clkCfg2 |= CLK_CFG2_SF_CLK_SEL(SF_CLK_SEL_HCLK);
+      frequency = mainClockFrequency(NULL);
+      break;
+
+    default:
+      break;
+  }
+
+  if (!frequency)
+    return E_VALUE;
+
+  /* Reset access time */
+  cacheControlAccess2T(true);
+  /* Apply new clock source and divider */
+  BL_GLB->CLK_CFG2 = clkCfg2;
+  /* Configure access time depending on the new frequency */
+  cacheControlAccess2T(frequency > 120000000);
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t flashClockFrequency(const void *)
+{
+  const uint32_t clkCfg2 = BL_GLB->CLK_CFG2;
+  const uint32_t divisor = CLK_CFG2_SF_CLK_DIV_VALUE(clkCfg2) + 1;
+  uint32_t frequency;
+
+  switch (CLK_CFG2_SF_CLK_SEL_VALUE(clkCfg2))
+  {
+    case SF_CLK_SEL_120MHZ:
+      frequency = 120000000;
+      break;
+
+    case SF_CLK_SEL_80MHZ:
+      frequency = 80000000;
+      break;
+
+    case SF_CLK_SEL_96MHZ:
+      frequency = 96000000;
+      break;
+
+    default:
+      frequency = mainClockFrequency(NULL);
+      break;
+  }
+
+  return frequency / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static bool flashClockReady(const void *)
+{
+  return (BL_GLB->CLK_CFG2 & CLK_CFG2_SF_CLK_EN) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result mainClockEnable(const void *, const void *configBase)

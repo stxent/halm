@@ -5,6 +5,7 @@
  */
 
 #include <halm/irq.h>
+#include <halm/platform/bouffalo/bl602/l1c.h>
 #include <halm/platform/bouffalo/clic_defs.h>
 #include <halm/platform/bouffalo/csr_defs.h>
 #include <xcore/core/riscv/csr.h>
@@ -52,6 +53,9 @@ void platformStartup(void)
       | MTVEC_MODE(MODE_CLIC_VECTORED));
   csrWrite(CSR_MTVT, (uintptr_t)vector_table);
 #endif
+
+  /* Disable cache controller */
+  cacheDisable();
 
   /* Enable global interrupts */
   csrSet(CSR_MSTATUS, MSTATUS_MIE);

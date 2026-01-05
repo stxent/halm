@@ -52,6 +52,7 @@ struct GenericClockConfig
 };
 
 /* Requires a GenericClockConfig structure */
+extern const struct ClockClass * const FlashClock;
 extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const UartClock;
 /*----------------------------------------------------------------------------*/
