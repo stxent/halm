@@ -11,23 +11,8 @@
 #ifndef HALM_CORE_RISCV_DELAY_H_
 #define HALM_CORE_RISCV_DELAY_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/helpers.h>
-#include <stdint.h>
-/*----------------------------------------------------------------------------*/
-BEGIN_DECLS
-
-static inline void mdelay(uint32_t period)
-{
-  // TODO
-  for (volatile unsigned i = 0; i < period * 10000; ++i);
-}
-
-static inline void udelay(uint32_t period)
-{
-  // TODO
-  for (volatile unsigned i = 0; i < period * 10; ++i);
-}
-
-END_DECLS
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/delay.h>
+#include HEADER_PATH
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_RISCV_DELAY_H_ */

@@ -11,8 +11,10 @@
 #include <assert.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
-#define INT_OSC_FREQUENCY     32000000
-#define TICK_RATE(frequency)  ((frequency) / 1000) // TODO
+#define INT_OSC_FREQUENCY 32000000
+
+#define TICK_RATE(frequency) \
+    (((frequency) * 4398046ULL + (1ULL << 31)) >> 32)
 /*----------------------------------------------------------------------------*/
 static void clockDisableStub(const void *);
 static bool clockReadyStub(const void *);
