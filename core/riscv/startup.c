@@ -15,8 +15,8 @@ extern unsigned long _stack;
 /*----------------------------------------------------------------------------*/
 void coreStartup(void)
 {
-  register unsigned long *dst;
-  register unsigned long *src;
+  unsigned long *dst;
+  unsigned long *src;
 
 #ifdef CONFIG_CORE_RISCV_MEMORY_DEBUG
   /* Fill the RAM with a predefined pattern */
