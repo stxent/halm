@@ -1,28 +1,44 @@
 /*
- * serial.c
+ * serial_dma.c
  * Copyright (C) 2026 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/bouffalo/serial.h>
+#include <halm/platform/bouffalo/dma_circular.h>
+#include <halm/platform/bouffalo/dma_oneshot.h>
+#include <halm/platform/bouffalo/serial_dma.h>
 #include <halm/platform/bouffalo/uart_base.h>
 #include <halm/platform/bouffalo/uart_defs.h>
 #include <halm/pm.h>
 #include <xcore/containers/byte_queue.h>
-#include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-struct Serial
+struct SerialDma
 {
   struct UartBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
 
+  /* DMA channel for data reception */
+  struct Dma *rxDma;
+  /* DMA channel for data transmission */
+  struct Dma *txDma;
+
   /* Input queue */
   struct ByteQueue rxQueue;
   /* Output queue */
   struct ByteQueue txQueue;
+  /* Pointer to the temporary reception buffer */
+  uint8_t *rxBuffer;
+  /* Position inside the temporary buffer */
+  size_t rxPosition;
+
+  /* Size of the circular reception buffer */
+  size_t rxBufferSize;
+  /* Size of the DMA TX transfer */
+  size_t txBufferSize;
 
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_PM
   /* Desired baud rate */
@@ -37,9 +53,14 @@ struct Serial
 #endif
 };
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *);
-static void updateRxWatermark(struct Serial *, size_t);
-static void updateTxWatermark(struct Serial *, size_t);
+static bool dmaSetup(struct SerialDma *, uint8_t, uint8_t);
+static enum Result enqueueRxBuffer(struct SerialDma *);
+static enum Result enqueueTxBuffers(struct SerialDma *);
+static void rxDmaHandler(void *);
+static void serialInterruptHandler(void *);
+static void txDmaHandler(void *);
+static void updateRxWatermark(struct SerialDma *, size_t);
+static void updateTxWatermark(struct SerialDma *, size_t);
 
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_PM
 static void powerStateHandler(void *, enum PmState);
@@ -58,8 +79,8 @@ static void serialDeinit(void *);
 #  define serialDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const Serial = &(const struct InterfaceClass){
-    .size = sizeof(struct Serial),
+const struct InterfaceClass * const SerialDma = &(const struct InterfaceClass){
+    .size = sizeof(struct SerialDma),
     .init = serialInit,
     .deinit = serialDeinit,
 
@@ -70,67 +91,170 @@ const struct InterfaceClass * const Serial = &(const struct InterfaceClass){
     .write = serialWrite
 };
 /*----------------------------------------------------------------------------*/
-static void interruptHandler(void *object)
+static bool dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
+    uint8_t txChannel)
 {
-  struct Serial * const interface = object;
+  static const struct DmaSettings dmaSettings[] = {
+      {
+          .source = {
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          },
+          .destination = {
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_BYTE,
+              .increment = true
+          }
+      }, {
+          .source = {
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_BYTE,
+              .increment = true
+          },
+          .destination = {
+              .burst = DMA_BURST_1,
+              .width = DMA_WIDTH_BYTE,
+              .increment = false
+          }
+      }
+  };
+  const struct DmaCircularConfig rxDmaConfig = {
+      .number = 2,
+      .event = DMA_UART0_RX + interface->base.channel * 2,
+      .type = DMA_TYPE_P2M,
+      .channel = rxChannel,
+      .oneshot = false,
+      .silent = false
+  };
+  const struct DmaOneShotConfig txDmaConfig = {
+      .event = DMA_UART0_TX + interface->base.channel * 2,
+      .type = DMA_TYPE_M2P,
+      .channel = txChannel
+  };
+
+  interface->rxDma = init(DmaCircular, &rxDmaConfig);
+  if (interface->rxDma == NULL)
+    return false;
+  dmaConfigure(interface->rxDma, &dmaSettings[0]);
+  dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
+
+  interface->txDma = init(DmaOneShot, &txDmaConfig);
+  if (interface->txDma == NULL)
+    return false;
+  dmaConfigure(interface->txDma, &dmaSettings[1]);
+  dmaSetCallback(interface->txDma, txDmaHandler, interface);
+
+  return true;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result enqueueRxBuffer(struct SerialDma *interface)
+{
+  const BL_UART_Type * const reg = interface->base.reg;
+  const size_t size = interface->rxBufferSize / 2;
+
+  dmaAppend(interface->rxDma, interface->rxBuffer,
+      (const void *)&reg->FIFO_RDATA, size);
+  dmaAppend(interface->rxDma, interface->rxBuffer + size,
+      (const void *)&reg->FIFO_RDATA, size);
+  interface->rxPosition = 0;
+
+  /* Start reception */
+  return dmaEnable(interface->rxDma);
+}
+/*----------------------------------------------------------------------------*/
+static enum Result enqueueTxBuffers(struct SerialDma *interface)
+{
   BL_UART_Type * const reg = interface->base.reg;
+  const uint8_t *address;
+  enum Result res;
+
+  byteQueueDeferredPop(&interface->txQueue, &address,
+      &interface->txBufferSize, 0);
+  dmaAppend(interface->txDma, (void *)&reg->FIFO_WDATA, address,
+      interface->txBufferSize);
+
+  if ((res = dmaEnable(interface->txDma)) != E_OK)
+    interface->txBufferSize = 0;
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
+static void rxDmaHandler(void *object)
+{
+  struct SerialDma * const interface = object;
+  const size_t index = dmaQueued(interface->rxDma);
+
+  assert(index >= 1 && index <= 2);
+  assert(dmaStatus(interface->rxDma) == E_BUSY);
+
+  const size_t end = interface->rxBufferSize >> (2 - index);
+  const size_t count = end - interface->rxPosition;
+
+  byteQueuePushArray(&interface->rxQueue,
+      interface->rxBuffer + interface->rxPosition, count);
+  interface->rxPosition = index == 1 ? (interface->rxBufferSize >> 1) : 0;
+
+  updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
+
+  if (interface->callback != NULL)
+    interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
+static void serialInterruptHandler(void *object)
+{
+  struct SerialDma * const interface = object;
+  BL_UART_Type * const reg = interface->base.reg;
+
+  assert(dmaStatus(interface->rxDma) == E_BUSY);
+
+  /* Clear IDLE flag */
+  reg->INT_CLEAR = INT_CLEAR_RRTOCLR;
+
+  const size_t chunk = interface->rxBufferSize >> 1;
+  size_t residue;
+
+  if (dmaResidue(interface->rxDma, &residue) == E_OK)
+  {
+    if (interface->rxPosition < chunk)
+      residue += chunk;
+
+    const size_t pending =
+        interface->rxBufferSize - interface->rxPosition - residue;
+
+    if (pending)
+    {
+      byteQueuePushArray(&interface->rxQueue,
+          interface->rxBuffer + interface->rxPosition, pending);
+      interface->rxPosition += pending;
+
+      updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
+
+      if (interface->callback != NULL)
+        interface->callback(interface->callbackArgument);
+    }
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void txDmaHandler(void *object)
+{
+  struct SerialDma * const interface = object;
   bool event = false;
 
-  const uint32_t status = reg->INT_STS;
-  const uint32_t mask = reg->INT_MASK;
+  if (dmaStatus(interface->txDma) != E_ERROR)
+    byteQueueAbandon(&interface->txQueue, interface->txBufferSize);
+  interface->txBufferSize = 0;
 
-  /* Handle received data */
-  if (status & (INT_STS_RFIN | INT_STS_RRTOIN))
-  {
-    const size_t count = FIFO_CONFIG1_RFICNT_VALUE(reg->FIFO_CONFIG1);
-
-    for (size_t index = 0; index < count; ++index)
-    {
-      const uint8_t data = reg->FIFO_RDATA;
-
-      /* Received bytes will be dropped when queue becomes full */
-      if (!byteQueueFull(&interface->rxQueue))
-        byteQueuePushBack(&interface->rxQueue, data);
-    }
-
-    /* Handle reception timeout */
-    if (status & INT_STS_RRTOIN)
-    {
-      reg->INT_CLEAR = INT_CLEAR_RRTOCLR;
-      event = true;
-    }
-  }
-
-  /* Send queued data */
-  if (!(mask & INT_MASK_TFMS) && (status & INT_STS_TFIN))
-  {
-    const size_t pending = byteQueueSize(&interface->txQueue);
-    const size_t count = MIN(pending, FIFO_CONFIG1_FITH_MAX / 2);
-
-    updateTxWatermark(interface, byteQueueSize(&interface->txQueue));
-
-    for (size_t index = 0; index < count; ++index)
-      reg->FIFO_WDATA = byteQueuePopFront(&interface->txQueue);
-
-    if (byteQueueEmpty(&interface->txQueue))
-    {
-      reg->INT_MASK = mask | INT_MASK_TFMS;
-      event = true;
-    }
-  }
-
-  /* User handler will be called when receive queue is half-full */
-  const size_t rxQueueLevel = byteQueueCapacity(&interface->rxQueue) / 2;
-  const size_t rxQueueSize = byteQueueSize(&interface->rxQueue);
-
-  updateRxWatermark(interface, rxQueueSize);
-  event = event || rxQueueSize >= rxQueueLevel;
+  if (!byteQueueEmpty(&interface->txQueue))
+    enqueueTxBuffers(interface);
+  else
+    event = true;
 
   if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void updateRxWatermark(struct Serial *interface, size_t level)
+static void updateRxWatermark(struct SerialDma *interface, size_t level)
 {
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_WATERMARK
   if (level > interface->rxWatermark)
@@ -141,7 +265,7 @@ static void updateRxWatermark(struct Serial *interface, size_t level)
 #endif
 }
 /*----------------------------------------------------------------------------*/
-static void updateTxWatermark(struct Serial *interface, size_t level)
+static void updateTxWatermark(struct SerialDma *interface, size_t level)
 {
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_WATERMARK
   if (level > interface->txWatermark)
@@ -157,7 +281,7 @@ static void powerStateHandler(void *object, enum PmState state)
 {
   if (state == PM_ACTIVE)
   {
-    struct Serial * const interface = object;
+    struct SerialDma * const interface = object;
     uartSetRate(&interface->base, interface->rate);
   }
 }
@@ -165,8 +289,10 @@ static void powerStateHandler(void *object, enum PmState state)
 /*----------------------------------------------------------------------------*/
 static enum Result serialInit(void *object, const void *configBase)
 {
-  const struct SerialConfig * const config = configBase;
+  const struct SerialDmaConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->rxChunk % 2 == 0);
+  assert(config->rxChunk > 0 && config->rxChunk <= DMA_MAX_TRANSFER_SIZE);
   assert(config->rxLength > 0 && config->txLength > 0);
 
   const struct UartBaseConfig baseConfig = {
@@ -174,7 +300,7 @@ static enum Result serialInit(void *object, const void *configBase)
       .tx = config->tx,
       .channel = config->channel
   };
-  struct Serial * const interface = object;
+  struct SerialDma * const interface = object;
   enum Result res;
 
   /* Call base class constructor */
@@ -186,13 +312,23 @@ static enum Result serialInit(void *object, const void *configBase)
   if (!byteQueueInit(&interface->txQueue, config->txLength))
     return E_MEMORY;
 
-  interface->base.handler = interruptHandler;
+  /* Allocate ring buffer for reception */
+  interface->rxBuffer = malloc(config->rxChunk);
+  if (interface->rxBuffer == NULL)
+    return E_MEMORY;
+
+  interface->base.handler = serialInterruptHandler;
   interface->callback = NULL;
+  interface->rxBufferSize = config->rxChunk;
+  interface->txBufferSize = 0;
 
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_WATERMARK
   interface->rxWatermark = 0;
   interface->txWatermark = 0;
 #endif
+
+  if (!dmaSetup(interface, config->dma[0], config->dma[1]))
+    return E_ERROR;
 
   BL_UART_Type * const reg = interface->base.reg;
 
@@ -207,12 +343,12 @@ static enum Result serialInit(void *object, const void *configBase)
   uartSetStopBits(&interface->base, SERIAL_STOPBITS_1);
 
   reg->DATA_CONFIG = 0;
-  reg->INT_MASK = INT_MASK_ALL & ~(INT_MASK_RFMS | INT_MASK_RRTOMASK);
-  reg->INT_EN = INT_EN_TFIF | INT_EN_RFIF | INT_EN_RRTO;
+  reg->INT_MASK = INT_MASK_ALL & ~INT_MASK_RRTOMASK;
+  reg->INT_EN = INT_EN_RRTO;
   reg->URX_RTO_TIMER = URX_RTO_TIMER_RXRTOVA(32);
-  reg->FIFO_CONFIG0 = 0;
+  reg->FIFO_CONFIG0 = FIFO_CONFIG0_UDTEN | FIFO_CONFIG0_UDREN;
   reg->FIFO_CONFIG1 = FIFO_CONFIG1_TFITH(FIFO_CONFIG1_FITH_MAX / 2)
-      | FIFO_CONFIG1_RFITH(FIFO_CONFIG1_FITH_MAX / 2);
+      | FIFO_CONFIG1_RFITH(0);
 
   /* Enable receiver and transmitter */
   reg->URX_CONFIG |= URX_CONFIG_RXBCNTD(BCNTD_8_BITS) | URX_CONFIG_EN
@@ -227,16 +363,16 @@ static enum Result serialInit(void *object, const void *configBase)
     return res;
 #endif
 
-  irqSetPriority(interface->base.irq, config->priority);
+  irqSetPriority(interface->base.irq, CONFIG_PLATFORM_BOUFFALO_DMA_PRIORITY);
   irqEnable(interface->base.irq);
 
-  return E_OK;
+  return enqueueRxBuffer(interface);
 }
 /*----------------------------------------------------------------------------*/
 #ifndef CONFIG_PLATFORM_BOUFFALO_UART_NO_DEINIT
 static void serialDeinit(void *object)
 {
-  struct Serial * const interface = object;
+  struct SerialDma * const interface = object;
   BL_UART_Type * const reg = interface->base.reg;
 
   irqDisable(interface->base.irq);
@@ -247,8 +383,15 @@ static void serialDeinit(void *object)
   pmUnregister(interface);
 #endif
 
+  /* Free DMA channels */
+  deinit(interface->txDma);
+  deinit(interface->rxDma);
+
+  free(interface->rxBuffer);
   byteQueueDeinit(&interface->txQueue);
   byteQueueDeinit(&interface->rxQueue);
+
+  /* Call base class destructor */
   UartBase->deinit(interface);
 }
 #endif
@@ -256,7 +399,7 @@ static void serialDeinit(void *object)
 static void serialSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
-  struct Serial * const interface = object;
+  struct SerialDma * const interface = object;
 
   interface->callbackArgument = argument;
   interface->callback = callback;
@@ -264,7 +407,7 @@ static void serialSetCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static enum Result serialGetParam(void *object, int parameter, void *data)
 {
-  struct Serial * const interface = object;
+  struct SerialDma * const interface = object;
 
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_RC
   switch ((enum SerialParameter)parameter)
@@ -325,7 +468,7 @@ static enum Result serialGetParam(void *object, int parameter, void *data)
 /*----------------------------------------------------------------------------*/
 static enum Result serialSetParam(void *object, int parameter, const void *data)
 {
-  struct Serial * const interface = object;
+  struct SerialDma * const interface = object;
 
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_RC
   switch ((enum SerialParameter)parameter)
@@ -382,7 +525,7 @@ static enum Result serialSetParam(void *object, int parameter, const void *data)
 /*----------------------------------------------------------------------------*/
 static size_t serialRead(void *object, void *buffer, size_t length)
 {
-  struct Serial * const interface = object;
+  struct SerialDma * const interface = object;
   uint8_t *position = buffer;
 
   while (length && !byteQueueEmpty(&interface->rxQueue))
@@ -394,9 +537,9 @@ static size_t serialRead(void *object, void *buffer, size_t length)
     count = MIN(length, count);
     memcpy(position, address, count);
 
-    irqDisable(interface->base.irq);
+    const IrqState state = irqSave();
     byteQueueAbandon(&interface->rxQueue, count);
-    irqEnable(interface->base.irq);
+    irqRestore(state);
 
     position += count;
     length -= count;
@@ -407,8 +550,9 @@ static size_t serialRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t serialWrite(void *object, const void *buffer, size_t length)
 {
-  struct Serial * const interface = object;
+  struct SerialDma * const interface = object;
   const uint8_t *position = buffer;
+  IrqState state;
 
   while (length && !byteQueueFull(&interface->txQueue))
   {
@@ -419,21 +563,19 @@ static size_t serialWrite(void *object, const void *buffer, size_t length)
     count = MIN(length, count);
     memcpy(address, position, count);
 
-    irqDisable(interface->base.irq);
+    state = irqSave();
     byteQueueAdvance(&interface->txQueue, count);
-    irqEnable(interface->base.irq);
+    irqRestore(state);
 
     position += count;
     length -= count;
   }
 
-  BL_UART_Type * const reg = interface->base.reg;
-
-  /* Invoke interrupt when the transmitter is idle */
-  irqDisable(interface->base.irq);
-  if (!byteQueueEmpty(&interface->txQueue) && (reg->INT_MASK & INT_MASK_TFMS))
-    reg->INT_MASK &= ~INT_MASK_TFMS;
-  irqEnable(interface->base.irq);
+  state = irqSave();
+  updateTxWatermark(interface, byteQueueSize(&interface->txQueue));
+  if (!byteQueueEmpty(&interface->txQueue) && interface->txBufferSize == 0)
+    enqueueTxBuffers(interface);
+  irqRestore(state);
 
   return position - (const uint8_t *)buffer;
 }

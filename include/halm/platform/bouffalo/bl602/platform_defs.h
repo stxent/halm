@@ -92,6 +92,40 @@ typedef struct
   /* Offset 0x800C00 */
   __rw__ uint8_t CLICCFG;
 } BL_CLIC_Type;
+/*------------------Direct Memory Access controller---------------------------*/
+/* Channel registers */
+typedef struct
+{
+  __rw__ uint32_t SRCADDR;
+  __rw__ uint32_t DSTADDR;
+  __rw__ uint32_t LLI;
+  __rw__ uint32_t CONTROL;
+  __rw__ uint32_t CONFIG;
+  __ne__ uint32_t RESERVED[59];
+} BL_DMA_CHANNEL_Type;
+
+/* Common registers */
+typedef struct
+{
+  __ro__ uint32_t INTSTATUS;
+  __ro__ uint32_t INTTCSTATUS;
+  __wo__ uint32_t INTTCCLEAR;
+  __ro__ uint32_t INTERRSTATUS;
+  __wo__ uint32_t INTERRCLEAR;
+  __ro__ uint32_t RAWINTTCSTATUS;
+  __ro__ uint32_t RAWINTERRORSTATUS;
+  __ro__ uint32_t ENBLDCHNS;
+  __rw__ uint32_t SOFTBREQ;
+  __rw__ uint32_t SOFTSREQ;
+  __rw__ uint32_t SOFTLBREQ;
+  __rw__ uint32_t SOFTLSREQ;
+  __rw__ uint32_t CONFIG;
+  __rw__ uint32_t SYNC;
+  __ne__ uint32_t RESERVED[50];
+
+  /* Offset 0x100: channel registers */
+  BL_DMA_CHANNEL_Type CHANNELS[4];
+} BL_DMA_Type;
 /*------------------Global Register-------------------------------------------*/
 typedef struct
 {
@@ -486,7 +520,6 @@ typedef struct BL_TODO_Type BL_I2C_Type;
 typedef struct BL_TODO_Type BL_PWM_Type;
 typedef struct BL_TODO_Type BL_IRR_Type;
 typedef struct BL_TODO_Type BL_QSPI_Type;
-typedef struct BL_TODO_Type BL_DMA_Type;
 typedef struct BL_TODO_Type BL_SDU_Type;
 /*----------------------------------------------------------------------------*/
 typedef struct
@@ -549,6 +582,7 @@ extern PB_DOMAIN_Type PB_DOMAIN;
 #define BL_UART0        (&PB_DOMAIN.UART0)
 #define BL_UART1        (&PB_DOMAIN.UART1)
 #define BL_TIMER        (&PB_DOMAIN.TIMER)
+#define BL_DMA          (&PB_DOMAIN.DMA)
 #define BL_PDS          (&PB_DOMAIN.PDS)
 #define BL_HBN          (&PB_DOMAIN.HBN)
 #define BL_AON          (&PB_DOMAIN.AON)

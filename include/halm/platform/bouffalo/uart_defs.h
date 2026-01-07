@@ -66,22 +66,22 @@ enum
 #define URX_CONFIG_IRRXEN               BIT(6)
 #define URX_CONFIG_IRRXINV              BIT(7)
 
-#define UTX_CONFIG_RXBCNTD(value)       BIT_FIELD((value), 8)
-#define UTX_CONFIG_RXBCNTD_MASK         BIT_FIELD(MASK(3), 8)
-#define UTX_CONFIG_RXBCNTD_VALUE(reg) \
-    FIELD_VALUE((reg), UTX_CONFIG_RXBCNTD_MASK, 8)
+#define URX_CONFIG_RXBCNTD(value)       BIT_FIELD((value), 8)
+#define URX_CONFIG_RXBCNTD_MASK         BIT_FIELD(MASK(3), 8)
+#define URX_CONFIG_RXBCNTD_VALUE(reg) \
+    FIELD_VALUE((reg), URX_CONFIG_RXBCNTD_MASK, 8)
 
 #define URX_CONFIG_DEGEN                BIT(11)
 
-#define UTX_CONFIG_DEGCNT(value)        BIT_FIELD((value), 12)
-#define UTX_CONFIG_DEGCNT_MASK          BIT_FIELD(MASK(4), 12)
-#define UTX_CONFIG_DEGCNT_VALUE(reg) \
-    FIELD_VALUE((reg), UTX_CONFIG_DEGCNT_MASK, 12)
+#define URX_CONFIG_DEGCNT(value)        BIT_FIELD((value), 12)
+#define URX_CONFIG_DEGCNT_MASK          BIT_FIELD(MASK(4), 12)
+#define URX_CONFIG_DEGCNT_VALUE(reg) \
+    FIELD_VALUE((reg), URX_CONFIG_DEGCNT_MASK, 12)
 
-#define UTX_CONFIG_RXLEN(value)         BIT_FIELD((value), 16)
-#define UTX_CONFIG_RXLEN_MASK           BIT_FIELD(MASK(16), 16)
-#define UTX_CONFIG_RXLEN_VALUE(reg) \
-    FIELD_VALUE((reg), UTX_CONFIG_RXLEN_MASK, 16)
+#define URX_CONFIG_RXLEN(value)         BIT_FIELD((value), 16)
+#define URX_CONFIG_RXLEN_MASK           BIT_FIELD(MASK(16), 16)
+#define URX_CONFIG_RXLEN_VALUE(reg) \
+    FIELD_VALUE((reg), URX_CONFIG_RXLEN_MASK, 16)
 /*------------------Period control register-----------------------------------*/
 #define BIT_PRD_TBITPRD(value)          BIT_FIELD((value), 0)
 #define BIT_PRD_TBITPRD_MASK            BIT_FIELD(MASK(16), 0)

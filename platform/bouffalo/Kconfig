@@ -14,6 +14,26 @@ config PLATFORM_BOUFFALO_NO_DEINIT
 	bool "Disable destructors"
 	default n
 
+config PLATFORM_BOUFFALO_DMA
+	bool "DMA"
+	default y
+
+config PLATFORM_BOUFFALO_DMA_PRIORITY
+	int "DMA interrupts priority"
+	default 0
+	depends on PLATFORM_BOUFFALO_DMA
+
+config PLATFORM_BOUFFALO_DMA_SYNC
+	bool "DMA synchronization"
+	default y
+	depends on PLATFORM_BOUFFALO_DMA
+	help
+	  Synchronization logic must be enabled when peripherals
+	  generating DMA requests run on different clocks to the GPDMA.
+	  For peripherals  running on the same clock as the GPDMA,
+	  disabling the synchronization logic improves the DMA request
+	  response time.
+
 config PLATFORM_BOUFFALO_GPTIMER_BASE
 	bool "General Purpose Timer"
 	default y
@@ -32,6 +52,26 @@ config PLATFORM_BOUFFALO_GPTIMER
 	bool "Common timer"
 	default y
 	depends on PLATFORM_BOUFFALO_GPTIMER_BASE
+
+choice
+	prompt "Instruction Cache size"
+	default PLATFORM_BOUFFALO_ICACHE_NONE
+
+	config PLATFORM_BOUFFALO_ICACHE_NONE
+		bool "Disabled"
+
+	config PLATFORM_BOUFFALO_ICACHE_8K
+		bool "8K"
+
+	config PLATFORM_BOUFFALO_ICACHE_16K
+		bool "16K"
+
+	config PLATFORM_BOUFFALO_ICACHE_24K
+		bool "24K"
+
+	config PLATFORM_BOUFFALO_ICACHE_32K
+		bool "32K"
+endchoice
 
 config PLATFORM_BOUFFALO_UART_BASE
 	bool "UART"
@@ -61,5 +101,10 @@ config PLATFORM_BOUFFALO_SERIAL
 	bool "Interrupt-driven serial port driver"
 	default y
 	depends on PLATFORM_BOUFFALO_UART_BASE
+
+config PLATFORM_BOUFFALO_SERIAL_DMA
+	bool "Serial port driver with DMA"
+	default y
+	depends on PLATFORM_BOUFFALO_UART_BASE && PLATFORM_BOUFFALO_DMA
 
 endmenu

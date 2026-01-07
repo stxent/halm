@@ -85,7 +85,7 @@ bool uartSetRate(struct UartBase *interface, uint32_t rate)
 
   BL_UART_Type * const reg = interface->reg;
   const uint32_t clock = uartGetClock(interface);
-  const uint32_t prescaler = (clock + (rate >> 1)) / rate;
+  const uint32_t prescaler = (clock + (rate >> 1)) / rate - 1;
 
   if (prescaler <= BIT_PRD_BITPRD_MAX)
   {
@@ -104,16 +104,16 @@ void uartSetStopBits(struct UartBase *interface, enum SerialStopBits number)
   switch (number)
   {
     case SERIAL_STOPBITS_2:
-      utxConfig |= BCNTP_2_BITS;
+      utxConfig |= UTX_CONFIG_TXBCNTP(BCNTP_2_BITS);
       break;
     case SERIAL_STOPBITS_0P5:
-      utxConfig |= BCNTP_0_5_BIT;
+      utxConfig |= UTX_CONFIG_TXBCNTP(BCNTP_0_5_BIT);
       break;
     case SERIAL_STOPBITS_1P5:
-      utxConfig |= BCNTP_1_5_BITS;
+      utxConfig |= UTX_CONFIG_TXBCNTP(BCNTP_1_5_BITS);
       break;
     default:
-      utxConfig |= BCNTP_1_BIT;
+      utxConfig |= UTX_CONFIG_TXBCNTP(BCNTP_1_BIT);
       break;
   }
 

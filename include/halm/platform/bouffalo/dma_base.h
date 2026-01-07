@@ -1,0 +1,121 @@
+/*
+ * halm/platform/bouffalo/dma_base.h
+ * Copyright (C) 2026 xent
+ * Project is distributed under the terms of the MIT License
+ */
+
+#ifndef HALM_PLATFORM_BOUFFALO_DMA_BASE_H_
+#define HALM_PLATFORM_BOUFFALO_DMA_BASE_H_
+/*----------------------------------------------------------------------------*/
+#include <halm/dma.h>
+#include <halm/target.h>
+#include <stdbool.h>
+#include <stdint.h>
+/*----------------------------------------------------------------------------*/
+#undef HEADER_PATH
+#define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/dma_base.h>
+#include HEADER_PATH
+#undef HEADER_PATH
+/*----------------------------------------------------------------------------*/
+#define DMA_MAX_TRANSFER_SIZE ((1 << 12) - 1)
+/*----------------------------------------------------------------------------*/
+/** DMA burst transfer size. */
+enum [[gnu::packed]] DmaBurst
+{
+  DMA_BURST_1,
+  DMA_BURST_4,
+  DMA_BURST_8,
+  DMA_BURST_16,
+  DMA_BURST_32,
+  DMA_BURST_64,
+  DMA_BURST_128,
+  DMA_BURST_256
+};
+
+/** DMA transfer type. */
+enum [[gnu::packed]] DmaType
+{
+  /** Memory to memory. */
+  DMA_TYPE_M2M,
+  /** Memory to peripheral. */
+  DMA_TYPE_M2P,
+  /** Peripheral to memory. */
+  DMA_TYPE_P2M
+};
+
+/** DMA transfer width. */
+enum [[gnu::packed]] DmaWidth
+{
+  DMA_WIDTH_BYTE,
+  DMA_WIDTH_HALFWORD,
+  DMA_WIDTH_WORD
+};
+/*----------------------------------------------------------------------------*/
+struct [[gnu::packed]] DmaEntry
+{
+  uint32_t source;
+  uint32_t destination;
+  uint32_t next;
+  uint32_t control;
+};
+/*----------------------------------------------------------------------------*/
+extern const struct EntityClass * const DmaBase;
+
+struct DmaBaseConfig
+{
+  /** Mandatory: request connection to the peripheral or memory. */
+  enum DmaEvent event;
+  /** Mandatory: transfer type. */
+  enum DmaType type;
+  /** Mandatory: channel number. */
+  uint8_t channel;
+};
+
+struct DmaSettings
+{
+  /** Mandatory: source configuration. */
+  struct
+  {
+    /** Mandatory: number of transfers that make up a burst transfer request. */
+    enum DmaBurst burst;
+    /** Mandatory: source transfer width. */
+    enum DmaWidth width;
+    /** Mandatory: enable increment of the source address. */
+    bool increment;
+  } source;
+
+  /** Mandatory: destination configuration. */
+  struct
+  {
+    /** Mandatory: number of transfers that make up a burst transfer request. */
+    enum DmaBurst burst;
+    /** Mandatory: destination transfer width. */
+    enum DmaWidth width;
+    /** Mandatory: enable increment of the destination address. */
+    bool increment;
+  } destination;
+};
+
+struct DmaBase
+{
+  struct Entity base;
+
+  void *reg;
+  void (*handler)(void *, enum Result);
+
+  /* Precalculated value of the channel configuration register */
+  uint32_t config;
+  /* Identifier of the channel */
+  uint8_t number;
+};
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+void dmaResetInstance(uint8_t);
+bool dmaSetInstance(uint8_t, struct DmaBase *);
+
+uint32_t dmaBaseCalcControl(const struct DmaBase *, const struct DmaSettings *);
+
+END_DECLS
+/*----------------------------------------------------------------------------*/
+#endif /* HALM_PLATFORM_BOUFFALO_DMA_BASE_H_ */

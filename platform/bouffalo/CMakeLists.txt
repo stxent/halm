@@ -19,6 +19,14 @@ if(CONFIG_PM)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/pm.c")
 endif()
 
+if(CONFIG_PLATFORM_BOUFFALO_DMA)
+    list(APPEND SOURCE_FILES "dma_circular.c")
+    list(APPEND SOURCE_FILES "dma_list.c")
+    list(APPEND SOURCE_FILES "dma_memcopy.c")
+    list(APPEND SOURCE_FILES "dma_oneshot.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dma_base.c")
+endif()
+
 if(CONFIG_PLATFORM_BOUFFALO_GPTIMER_BASE)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/gptimer_base.c")
 endif()
@@ -34,6 +42,10 @@ endif()
 
 if(CONFIG_PLATFORM_BOUFFALO_SERIAL)
     list(APPEND SOURCE_FILES "serial.c")
+endif()
+
+if(CONFIG_PLATFORM_BOUFFALO_SERIAL_DMA)
+    list(APPEND SOURCE_FILES "serial_dma.c")
 endif()
 
 add_library(halm_platform OBJECT ${SOURCE_FILES})
