@@ -66,11 +66,27 @@ typedef struct
   __ne__ uint32_t RESERVED0[4095];
 
   /* Offset 0x004000 */
-  __rw__ uint64_t MTIMECMP;
+  union
+  {
+    __rw__ uint64_t MTIMECMP;
+    struct
+    {
+      __rw__ uint32_t MTIMECMPL;
+      __rw__ uint32_t MTIMECMPH;
+    };
+  };
   __ne__ uint32_t RESERVED1[8188];
 
   /* Offset 0x00BFF8 */
-  __rw__ uint64_t MTIME;
+  union
+  {
+    __rw__ uint64_t MTIME;
+    struct
+    {
+      __rw__ uint32_t MTIMEL;
+      __rw__ uint32_t MTIMEH;
+    };
+  };
   __ne__ uint32_t RESERVED2[2083840];
 
   /* Offset 0x7FF000 */

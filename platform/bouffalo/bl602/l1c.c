@@ -19,9 +19,25 @@ void cacheControlAccess2T(bool enabled)
 /*----------------------------------------------------------------------------*/
 void cacheDisable(void)
 {
+  cacheEnable(ICACHE_NONE);
+}
+/*----------------------------------------------------------------------------*/
+void cacheEnable(enum CacheSize size)
+{
   uint32_t config = BL_L1C->L1C_CONFIG;
 
   config &= ~L1C_CONFIG_CACHEABLE;
   config |= L1C_CONFIG_WAYDIS_MASK | L1C_CONFIG_IROM_2T_ACCESS;
+
+  /* Reset cache settings, all cache ways are disabled */
   BL_L1C->L1C_CONFIG = config;
+
+  if (size != ICACHE_NONE)
+  {
+    config &= ~L1C_CONFIG_WAYDIS_MASK;
+    config |= L1C_CONFIG_CACHEABLE | L1C_CONFIG_WAYDIS(MASK(4) & ~MASK(size));
+
+    /* Apply new cache settings */
+    BL_L1C->L1C_CONFIG = config;
+  }
 }

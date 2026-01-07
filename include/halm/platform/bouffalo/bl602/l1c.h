@@ -9,10 +9,20 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
+enum [[gnu::packed]] CacheSize
+{
+  ICACHE_NONE,
+  ICACHE_8K,
+  ICACHE_16K,
+  ICACHE_24K,
+  ICACHE_32K
+};
+/*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
 void cacheControlAccess2T(bool);
 void cacheDisable(void);
+void cacheEnable(enum CacheSize);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

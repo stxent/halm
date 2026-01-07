@@ -73,11 +73,9 @@ static struct MachineTimer *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void setCurrentValue(uint64_t value)
 {
-  volatile uint32_t * const mtime = (volatile uint32_t *)&BL_CLIC->MTIME;
-
-  mtime[0] = 0; /* Prevent carry */
-  mtime[1] = value >> 32;
-  mtime[0] = value;
+  BL_CLIC->MTIMEL = 0; /* Prevent carry */
+  BL_CLIC->MTIMEH = value >> 32;
+  BL_CLIC->MTIMEL = value;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct MachineTimer *object)
@@ -93,11 +91,9 @@ static bool setInstance(struct MachineTimer *object)
 /*----------------------------------------------------------------------------*/
 static void setOverflow(uint64_t value)
 {
-  volatile uint32_t * const mtimecmp = (volatile uint32_t *)&BL_CLIC->MTIMECMP;
-
-  mtimecmp[1] = UINT32_MAX; /* Prevent interrupt generation */
-  mtimecmp[0] = value;
-  mtimecmp[1] = value >> 32;
+  BL_CLIC->MTIMECMPH = UINT32_MAX; /* Prevent interrupt generation */
+  BL_CLIC->MTIMECMPL = value;
+  BL_CLIC->MTIMECMPH = value >> 32;
 }
 /*----------------------------------------------------------------------------*/
 [[gnu::interrupt]] void CLIC_MTIP_ISR(void)
@@ -164,7 +160,7 @@ static uint32_t tmrGetFrequency(const void *)
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *)
 {
-  return (uint32_t)BL_CLIC->MTIMECMP + 1;
+  return BL_CLIC->MTIMECMPL + 1;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *, uint32_t overflow)
@@ -174,7 +170,7 @@ static void tmrSetOverflow(void *, uint32_t overflow)
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *)
 {
-  return *(const volatile uint32_t *)&BL_CLIC->MTIME;
+  return BL_CLIC->MTIMEL;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetValue(void *, uint32_t value)
@@ -184,15 +180,13 @@ static void tmrSetValue(void *, uint32_t value)
 /*----------------------------------------------------------------------------*/
 static uint64_t tmrGetValue64(const void *)
 {
-  const volatile uint32_t * const mtime =
-      (const volatile uint32_t *)&BL_CLIC->MTIME;
   uint32_t high0, high1, low;
 
   do
   {
-    high0 = *(mtime + 1);
-    low = *mtime;
-    high1 = *(mtime + 1);
+    high0 = BL_CLIC->MTIMEH;
+    low = BL_CLIC->MTIMEL;
+    high1 = BL_CLIC->MTIMEH;
   }
   while (high1 != high0);
 
