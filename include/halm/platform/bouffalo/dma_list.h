@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_BOUFFALO_DMA_LIST_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/bouffalo/dma_base.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 extern const struct DmaClass * const DmaList;
 

@@ -334,6 +334,27 @@ typedef struct
   __rw__ uint32_t CLKPLL_SDM;
   __rw__ uint32_t CLKPLL_OUTPUT_EN;
 } BL_PDS_Type;
+/*------------------SPI peripherals-------------------------------------------*/
+typedef struct {
+  /* Offset 0x00 */
+  __rw__ uint32_t CONFIG;
+  __rw__ uint32_t INT_STS;
+  __ro__ uint32_t BUS_BUSY;
+  __ne__ uint32_t RESERVED0;
+
+  /* Offset 0x10 */
+  __rw__ uint32_t PRD0;
+  __rw__ uint32_t PRD1;
+  __rw__ uint32_t RXD_IGNR;
+  __rw__ uint32_t STO_VALUE;
+  __ne__ uint32_t RESERVED1[24];
+
+  /* Offset 0x80 */
+  __rw__ uint32_t FIFO_CONFIG0;
+  __rw__ uint32_t FIFO_CONFIG1;
+  __wo__ uint32_t FIFO_WDATA;
+  __ro__ uint32_t FIFO_RDATA;
+} BL_SPI_Type;
 /*------------------Timer and Watchdog peripherals----------------------------*/
 typedef struct
 {
@@ -365,10 +386,10 @@ typedef struct
   {
     struct
     {
-      __rw__ uint32_t TCR2;
-      __rw__ uint32_t TCR3;
+      __ro__ uint32_t TCR2;
+      __ro__ uint32_t TCR3;
     };
-    __rw__ uint32_t TCR[2];
+    __ro__ uint32_t TCR[2];
   };
   __ne__ uint32_t RESERVED2;
 
@@ -377,10 +398,10 @@ typedef struct
   {
     struct
     {
-      __rw__ uint32_t TMSR2;
-      __rw__ uint32_t TMSR3;
+      __ro__ uint32_t TMSR2;
+      __ro__ uint32_t TMSR3;
     };
-    __rw__ uint32_t TMSR[2];
+    __ro__ uint32_t TMSR[2];
   };
   __ne__ uint32_t RESERVED3;
 
@@ -431,14 +452,14 @@ typedef struct
   {
     struct
     {
-      __rw__ uint32_t TICR2;
-      __rw__ uint32_t TICR3;
+      __wo__ uint32_t TICR2;
+      __wo__ uint32_t TICR3;
     };
-    __rw__ uint32_t TICR[2];
+    __wo__ uint32_t TICR[2];
   };
 
   /* Offset 0x80 */
-  __rw__ uint32_t WICR;
+  __wo__ uint32_t WICR;
   __rw__ uint32_t TCER;
   __rw__ uint32_t TCMR;
   __ne__ uint32_t RESERVED7;
@@ -455,11 +476,11 @@ typedef struct
   };
 
   /* Offset 0x98 */
-  __rw__ uint32_t WCR;
-  __rw__ uint32_t WFAR;
+  __wo__ uint32_t WCR;
+  __wo__ uint32_t WFAR;
 
   /* Offset 0xA0 */
-  __rw__ uint32_t WSAR;
+  __wo__ uint32_t WSAR;
   __ne__ uint32_t RESERVED8;
 
   /* Offset 0xA8 */
@@ -479,10 +500,10 @@ typedef struct
   {
     struct
     {
-      __rw__ uint32_t TCVSYN2;
-      __rw__ uint32_t TCVSYN3;
+      __ro__ uint32_t TCVSYN2;
+      __ro__ uint32_t TCVSYN3;
     };
-    __rw__ uint32_t TCVSYN[2];
+    __ro__ uint32_t TCVSYN[2];
   };
 
   /* Offset 0xBC */
@@ -529,9 +550,7 @@ typedef struct BL_TODO_Type BL_MIX_Type;
 typedef struct BL_TODO_Type BL_GPIP_Type;
 typedef struct BL_TODO_Type BL_SEC_Type;
 typedef struct BL_TODO_Type BL_TZ_Type;
-typedef struct BL_TODO_Type BL_TZ_Type;
 typedef struct BL_TODO_Type BL_EFUSE_Type;
-typedef struct BL_TODO_Type BL_SPI_Type;
 typedef struct BL_TODO_Type BL_I2C_Type;
 typedef struct BL_TODO_Type BL_PWM_Type;
 typedef struct BL_TODO_Type BL_IRR_Type;
@@ -597,6 +616,7 @@ extern PB_DOMAIN_Type PB_DOMAIN;
 #define BL_L1C          (&PB_DOMAIN.L1C)
 #define BL_UART0        (&PB_DOMAIN.UART0)
 #define BL_UART1        (&PB_DOMAIN.UART1)
+#define BL_SPI          (&PB_DOMAIN.SPI)
 #define BL_TIMER        (&PB_DOMAIN.TIMER)
 #define BL_DMA          (&PB_DOMAIN.DMA)
 #define BL_PDS          (&PB_DOMAIN.PDS)

@@ -17,7 +17,6 @@
 #define HALM_PLATFORM_BOUFFALO_BL602_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/helpers.h>
-#include <stdbool.h>
 /*----------------------------------------------------------------------------*/
 /* Enable or disable clock branches */
 enum [[gnu::packed]] SysClockBranch

@@ -19,6 +19,7 @@
 /*----------------------------------------------------------------------------*/
 static void clockDisableStub(const void *);
 static bool clockReadyStub(const void *);
+static uint32_t rootClockFrequency(uint32_t);
 
 static void extOscDisable(const void *);
 static enum Result extOscEnable(const void *, const void *);
@@ -30,8 +31,21 @@ static enum Result flashClockEnable(const void *, const void *);
 static uint32_t flashClockFrequency(const void *);
 static bool flashClockReady(const void *);
 
+static void i2cClockDisable(const void *);
+static enum Result i2cClockEnable(const void *, const void *);
+static uint32_t i2cClockFrequency(const void *);
+static bool i2cClockReady(const void *);
+
 static enum Result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
+
+static enum Result socClockEnable(const void *, const void *);
+static uint32_t socClockFrequency(const void *);
+
+static void spiClockDisable(const void *);
+static enum Result spiClockEnable(const void *, const void *);
+static uint32_t spiClockFrequency(const void *);
+static bool spiClockReady(const void *);
 
 static void sysPllDisable(const void *);
 static enum Result sysPllEnable(const void *, const void *);
@@ -57,11 +71,32 @@ const struct ClockClass * const FlashClock = &(const struct ClockClass){
     .ready = flashClockReady
 };
 
+const struct ClockClass * const I2CClock = &(const struct ClockClass){
+    .disable = i2cClockDisable,
+    .enable = i2cClockEnable,
+    .frequency = i2cClockFrequency,
+    .ready = i2cClockReady
+};
+
 const struct ClockClass * const MainClock = &(const struct ClockClass){
     .disable = clockDisableStub,
     .enable = mainClockEnable,
     .frequency = mainClockFrequency,
     .ready = clockReadyStub
+};
+
+const struct ClockClass * const SocClock = &(const struct ClockClass){
+    .disable = clockDisableStub,
+    .enable = socClockEnable,
+    .frequency = socClockFrequency,
+    .ready = clockReadyStub
+};
+
+const struct ClockClass * const SpiClock = &(const struct ClockClass){
+    .disable = spiClockDisable,
+    .enable = spiClockEnable,
+    .frequency = spiClockFrequency,
+    .ready = spiClockReady
 };
 
 const struct ClockClass * const SystemPll = &(const struct ClockClass){
@@ -88,6 +123,47 @@ static void clockDisableStub(const void *)
 static bool clockReadyStub(const void *)
 {
   return true;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t rootClockFrequency(uint32_t cfg)
+{
+  uint32_t frequency = 0;
+
+  switch (CLK_CFG0_ROOT_CLK_SEL_VALUE(cfg))
+  {
+    case ROOT_CLK_SEL_RC32M:
+      frequency = INT_OSC_FREQUENCY;
+      break;
+
+    case ROOT_CLK_SEL_XTAL:
+      frequency = extFrequency;
+      break;
+
+    default:
+    {
+      switch (CLK_CFG0_PLL_SEL_VALUE(cfg))
+      {
+        case PLL_SEL_48MHZ:
+          frequency = 48000000;
+          break;
+
+        case PLL_SEL_120MHZ:
+          frequency = 120000000;
+          break;
+
+        case PLL_SEL_160MHZ:
+          frequency = 160000000;
+          break;
+
+        case PLL_SEL_192MHZ:
+          frequency = 192000000;
+          break;
+      }
+      break;
+    }
+  }
+
+  return frequency;
 }
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *)
@@ -218,6 +294,49 @@ static bool flashClockReady(const void *)
   return (BL_GLB->CLK_CFG2 & CLK_CFG2_SF_CLK_EN) != 0;
 }
 /*----------------------------------------------------------------------------*/
+static void i2cClockDisable(const void *)
+{
+  BL_GLB->CLK_CFG3 &= ~CLK_CFG3_I2CEN;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result i2cClockEnable(const void *, const void *configBase)
+{
+  const struct DividedClockConfig * const config = configBase;
+  assert(config != NULL);
+
+  if (config->divisor > CLK_CFG3_I2CDIV_MAX)
+    return E_VALUE;
+
+  const uint32_t divisor = config->divisor ? config->divisor : 1;
+  uint32_t clkCfg3 = BL_GLB->CLK_CFG3;
+
+  clkCfg3 &= ~CLK_CFG3_I2CDIV_MASK;
+  clkCfg3 |= CLK_CFG3_I2CDIV(divisor - 1) | CLK_CFG3_I2CEN;
+
+  BL_GLB->CLK_CFG3 = clkCfg3;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t i2cClockFrequency(const void *)
+{
+  const uint32_t clkCfg3 = BL_GLB->CLK_CFG3;
+
+  if (clkCfg3 & CLK_CFG3_I2CEN)
+  {
+    const uint32_t divisor = CLK_CFG3_I2CDIV_VALUE(clkCfg3) + 1;
+    const uint32_t frequency = socClockFrequency(NULL);
+
+    return frequency / divisor;
+  }
+  else
+    return 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool i2cClockReady(const void *)
+{
+  return (BL_GLB->CLK_CFG3 & CLK_CFG3_I2CEN) != 0;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result mainClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
@@ -308,43 +427,81 @@ static uint32_t mainClockFrequency(const void *)
 {
   const uint32_t clkCfg0 = BL_GLB->CLK_CFG0;
   const uint32_t divisor = CLK_CFG0_HCLK_DIV_VALUE(clkCfg0) + 1;
-  uint32_t frequency;
-
-  switch (CLK_CFG0_ROOT_CLK_SEL_VALUE(clkCfg0))
-  {
-    case ROOT_CLK_SEL_RC32M:
-      frequency = INT_OSC_FREQUENCY;
-      break;
-
-    case ROOT_CLK_SEL_XTAL:
-      frequency = extFrequency;
-      break;
-
-    default:
-    {
-      switch (CLK_CFG0_PLL_SEL_VALUE(clkCfg0))
-      {
-        case PLL_SEL_48MHZ:
-          frequency = 48000000;
-          break;
-
-        case PLL_SEL_120MHZ:
-          frequency = 120000000;
-          break;
-
-        case PLL_SEL_160MHZ:
-          frequency = 160000000;
-          break;
-
-        case PLL_SEL_192MHZ:
-          frequency = 192000000;
-          break;
-      }
-      break;
-    }
-  }
+  const uint32_t frequency = rootClockFrequency(clkCfg0);
 
   return frequency / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result socClockEnable(const void *, const void *configBase)
+{
+  const struct DividedClockConfig * const config = configBase;
+  assert(config != NULL);
+
+  if (config->divisor > CLK_CFG0_BCLK_DIV_MAX)
+    return E_VALUE;
+
+  const uint32_t divisor = config->divisor ? config->divisor : 1;
+  uint32_t clkCfg0 = BL_GLB->CLK_CFG0;
+
+  clkCfg0 &= ~CLK_CFG0_BCLK_DIV_MASK;
+  clkCfg0 |= CLK_CFG0_BCLK_EN | CLK_CFG0_BCLK_DIV(divisor - 1);
+
+  BL_GLB->CLK_CFG0 = clkCfg0 & ~CLK_CFG0_BCLK_EN;
+  BL_GLB->CLK_CFG0 = clkCfg0;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t socClockFrequency(const void *)
+{
+  const uint32_t clkCfg0 = BL_GLB->CLK_CFG0;
+  const uint32_t divisor = CLK_CFG0_BCLK_DIV_VALUE(clkCfg0) + 1;
+  const uint32_t frequency = rootClockFrequency(clkCfg0);
+
+  return frequency / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static void spiClockDisable(const void *)
+{
+  BL_GLB->CLK_CFG3 &= ~CLK_CFG3_SPIEN;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result spiClockEnable(const void *, const void *configBase)
+{
+  const struct DividedClockConfig * const config = configBase;
+  assert(config != NULL);
+
+  if (config->divisor > CLK_CFG3_SPIDIV_MAX)
+    return E_VALUE;
+
+  const uint32_t divisor = config->divisor ? config->divisor : 1;
+  uint32_t clkCfg3 = BL_GLB->CLK_CFG3;
+
+  clkCfg3 &= ~CLK_CFG3_SPIDIV_MASK;
+  clkCfg3 |= CLK_CFG3_SPIDIV(divisor - 1) | CLK_CFG3_SPIEN;
+
+  BL_GLB->CLK_CFG3 = clkCfg3;
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t spiClockFrequency(const void *)
+{
+  const uint32_t clkCfg3 = BL_GLB->CLK_CFG3;
+
+  if (clkCfg3 & CLK_CFG3_SPIEN)
+  {
+    const uint32_t divisor = CLK_CFG3_SPIDIV_VALUE(clkCfg3) + 1;
+    const uint32_t frequency = socClockFrequency(NULL);
+
+    return frequency / divisor;
+  }
+  else
+    return 0;
+}
+/*----------------------------------------------------------------------------*/
+static bool spiClockReady(const void *)
+{
+  return (BL_GLB->CLK_CFG3 & CLK_CFG3_SPIEN) != 0;
 }
 /*----------------------------------------------------------------------------*/
 static void sysPllDisable(const void *)

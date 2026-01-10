@@ -155,7 +155,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *)
 {
-  return clockFrequency(MainClock) / 16;
+  return clockFrequency(SocClock) / 8;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetOverflow(const void *)

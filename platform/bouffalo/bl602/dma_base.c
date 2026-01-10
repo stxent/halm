@@ -9,7 +9,6 @@
 #include <halm/platform/bouffalo/dma_base.h>
 #include <halm/platform/bouffalo/dma_defs.h>
 #include <halm/platform/platform_defs.h>
-#include <xcore/accel.h>
 #include <xcore/atomic.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -33,8 +32,8 @@ static const uint8_t dmaEventMap[] = {
     [DMA_UART1_TX]  = 3,
     [DMA_I2C_RX]    = 6,
     [DMA_I2C_TX]    = 7,
-    [SPI_RX]        = 10,
-    [SPI_TX]        = 11,
+    [DMA_SPI_RX]    = 10,
+    [DMA_SPI_TX]    = 11,
     [DMA_ADC]       = 22,
     [DMA_DAC]       = 23
 };
@@ -98,12 +97,17 @@ bool dmaSetInstance(uint8_t channel, struct DmaBase *object)
 {
   assert(channel < CHANNEL_COUNT);
 
-  if (instances[channel] != NULL)
-    return false;
-  instances[channel] = object;
-  return true;
-//  void *expected = NULL;
-//  return compareExchangePointer(&instances[channel], &expected, object);
+  bool completed = false;
+  const IrqState state = irqSave();
+
+  if (instances[channel] == NULL)
+  {
+    instances[channel] = object;
+    completed = true;
+  }
+
+  irqRestore(state);
+  return completed;
 }
 /*----------------------------------------------------------------------------*/
 [[gnu::interrupt]] void DMA_ALL_ISR(void)
@@ -114,32 +118,32 @@ bool dmaSetInstance(uint8_t channel, struct DmaBase *object)
   BL_DMA->INTTCCLEAR = terminalStatus;
   BL_DMA->INTERRCLEAR = errorStatus;
 
-  uint32_t intStatus = errorStatus | terminalStatus;
+  const uint32_t intStatus = errorStatus | terminalStatus;
 
-  do
+  for (unsigned int index = 0; index < CHANNEL_COUNT; ++index)
   {
-    const unsigned int index = 31 - countLeadingZeros32(intStatus);
-    struct DmaBase * const descriptor = instances[index];
     const uint32_t mask = 1UL << index;
-    enum Result res = E_OK;
 
-    intStatus -= mask;
-
-    if (errorStatus & mask)
+    if (intStatus & mask)
     {
-      res = E_ERROR;
-    }
-    else
-    {
-      const BL_DMA_CHANNEL_Type * const reg = descriptor->reg;
+      struct DmaBase * const descriptor = instances[index];
+      enum Result res = E_OK;
 
-      if (reg->CONFIG & CONFIG_CHEN)
-        res = E_BUSY;
-    }
+      if (errorStatus & mask)
+      {
+        res = E_ERROR;
+      }
+      else
+      {
+        const BL_DMA_CHANNEL_Type * const reg = descriptor->reg;
 
-    descriptor->handler(descriptor, res);
+        if (reg->CONFIG & CONFIG_CHEN)
+          res = E_BUSY;
+      }
+
+      descriptor->handler(descriptor, res);
+    }
   }
-  while (intStatus);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)

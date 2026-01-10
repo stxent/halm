@@ -27,9 +27,9 @@ enum
   PLCR_MATCH2     = 3
 };
 
-#define TPLCR_PLCR(value)               BIT_FIELD((value), 0)
-#define TPLCR_PLCR_MASK                 BIT_FIELD(MASK(2), 0)
-#define TPLCR_PLCR_VALUE(reg)           FIELD_VALUE((reg), TPLCR_PLCR_MASK, 0)
+#define TPLCR_TPLCR(value)              BIT_FIELD((value), 0)
+#define TPLCR_TPLCR_MASK                BIT_FIELD(MASK(2), 0)
+#define TPLCR_TPLCR_VALUE(reg)          FIELD_VALUE((reg), TPLCR_TPLCR_MASK, 0)
 /*------------------Timer Interrupt Clear Control Register--------------------*/
 #define TICR_CLEAR(match)               BIT(match)
 #define TICR_MASK                       BIT_FIELD(MASK(3), 0)

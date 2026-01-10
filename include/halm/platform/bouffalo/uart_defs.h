@@ -168,14 +168,14 @@ enum
 #define STS_URX_ABR_PRD_ABRPRD_VALUE(reg) \
     FIELD_VALUE((reg), STS_URX_ABR_PRD_ABRPRD_MASK, 16)
 /*------------------FIFO Configuration 0 register-----------------------------*/
-#define FIFO_CONFIG0_UDTEN              BIT(0)
-#define FIFO_CONFIG0_UDREN              BIT(1)
-#define FIFO_CONFIG0_TFICLR             BIT(2)
-#define FIFO_CONFIG0_RFICLR             BIT(3)
-#define FIFO_CONFIG0_TFIO               BIT(4)
-#define FIFO_CONFIG0_TFIU               BIT(5)
-#define FIFO_CONFIG0_RFIO               BIT(6)
-#define FIFO_CONFIG0_RFIU               BIT(7)
+#define FIFO_CONFIG0_UDTEN              BIT(0) /* Enable DMA TX requests */
+#define FIFO_CONFIG0_UDREN              BIT(1) /* Enable DMA RX requests */
+#define FIFO_CONFIG0_TFICLR             BIT(2) /* Clear signal of TX FIFO */
+#define FIFO_CONFIG0_RFICLR             BIT(3) /* Clear signal of RX FIFO */
+#define FIFO_CONFIG0_TFIO               BIT(4) /* Overflow flag of TX FIFO */
+#define FIFO_CONFIG0_TFIU               BIT(5) /* Underflow flag of TX FIFO */
+#define FIFO_CONFIG0_RFIO               BIT(6) /* Overflow flag of RX FIFO */
+#define FIFO_CONFIG0_RFIU               BIT(7) /* Underflow flag of RX FIFO */
 /*------------------FIFO Configuration 1 register-----------------------------*/
 #define FIFO_CONFIG1_TFICNT(value)      BIT_FIELD((value), 0)
 #define FIFO_CONFIG1_TFICNT_MASK        BIT_FIELD(MASK(6), 0)

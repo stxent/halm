@@ -49,6 +49,7 @@ enum
 #define CLK_CFG0_BCLK_DIV_MASK          BIT_FIELD(MASK(8), 16)
 #define CLK_CFG0_BCLK_DIV_VALUE(reg) \
     FIELD_VALUE((reg), CLK_CFG0_BCLK_DIV_MASK, 16)
+#define CLK_CFG0_BCLK_DIV_MAX           255
 
 #define CLK_CFG0_FCLK_SW_STATE(value)   BIT_FIELD((value), 24)
 #define CLK_CFG0_FCLK_SW_STATE_MASK     BIT_FIELD(MASK(3), 24)
@@ -103,6 +104,22 @@ enum
 #define CLK_CFG2_DMA_CLK_EN_MASK        BIT_FIELD(MASK(8), 24)
 #define CLK_CFG2_DMA_CLK_EN_VALUE(reg) \
     FIELD_VALUE((reg), CLK_CFG2_DMA_CLK_EN_MASK, 24)
+/*------------------Clock Configuration 3 register----------------------------*/
+#define CLK_CFG3_SPIDIV(value)          BIT_FIELD((value), 0)
+#define CLK_CFG3_SPIDIV_MASK            BIT_FIELD(MASK(5), 0)
+#define CLK_CFG3_SPIDIV_VALUE(reg) \
+    FIELD_VALUE((reg), CLK_CFG3_SPIDIV_MASK, 0)
+#define CLK_CFG3_SPIDIV_MAX             31
+
+#define CLK_CFG3_SPIEN                  BIT(8)
+
+#define CLK_CFG3_I2CDIV(value)          BIT_FIELD((value), 16)
+#define CLK_CFG3_I2CDIV_MASK            BIT_FIELD(MASK(8), 16)
+#define CLK_CFG3_I2CDIV_VALUE(reg) \
+    FIELD_VALUE((reg), CLK_CFG3_I2CDIV_MASK, 16)
+#define CLK_CFG3_I2CDIV_MAX             255
+
+#define CLK_CFG3_I2CEN                  BIT(24)
 /*------------------HBN GLB register------------------------------------------*/
 #define HBN_GLB_ROOT_CLK_SEL(value)     BIT_FIELD((value), 0)
 #define HBN_GLB_ROOT_CLK_SEL_MASK       BIT_FIELD(MASK(2), 0)

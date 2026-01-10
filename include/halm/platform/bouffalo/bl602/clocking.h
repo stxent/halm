@@ -31,6 +31,22 @@ enum [[gnu::packed]] ClockSource
   CLOCK_SYSTEM
 };
 /*----------------------------------------------------------------------------*/
+struct DividedClockConfig
+{
+  /**
+   * Mandatory: input clock divisor.
+   * @n The divider value for SOC clock should be from 1 to 256.
+   * @n The divider value for I2C clock should be from 1 to 256.
+   * @n The divider value for SPI clock should be from 1 to 32.
+   */
+  uint16_t divisor;
+};
+
+/* Requires an DividedClockConfig structure */
+extern const struct ClockClass * const I2CClock;
+extern const struct ClockClass * const SocClock;
+extern const struct ClockClass * const SpiClock;
+/*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
   /**

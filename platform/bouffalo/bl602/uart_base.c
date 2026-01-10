@@ -25,6 +25,29 @@ const struct EntityClass * const UartBase = &(const struct EntityClass){
     .deinit = uartDeinit
 };
 /*----------------------------------------------------------------------------*/
+static struct UartBase *instances[2] = {NULL};
+/*----------------------------------------------------------------------------*/
+static bool setInstance(uint8_t channel, struct UartBase *object)
+{
+  if (instances[channel] == NULL)
+  {
+    instances[channel] = object;
+    return true;
+  }
+  else
+    return false;
+}
+/*----------------------------------------------------------------------------*/
+[[gnu::interrupt]] void UART0_ISR(void)
+{
+  instances[0]->handler(instances[0]);
+}
+/*----------------------------------------------------------------------------*/
+[[gnu::interrupt]] void UART1_ISR(void)
+{
+  instances[1]->handler(instances[1]);
+}
+/*----------------------------------------------------------------------------*/
 void uartConfigPins(const struct UartBaseConfig *config)
 {
   uint32_t uartSigSel = BL_GLB->UART_SIG_SEL_0;
@@ -56,29 +79,6 @@ void uartConfigPins(const struct UartBaseConfig *config)
   }
 
   BL_GLB->UART_SIG_SEL_0 = uartSigSel;
-}
-/*----------------------------------------------------------------------------*/
-static struct UartBase *instances[2] = {NULL};
-/*----------------------------------------------------------------------------*/
-static bool setInstance(uint8_t channel, struct UartBase *object)
-{
-  if (instances[channel] == NULL)
-  {
-    instances[channel] = object;
-    return true;
-  }
-  else
-    return false;
-}
-/*----------------------------------------------------------------------------*/
-[[gnu::interrupt]] void UART0_ISR(void)
-{
-  instances[0]->handler(instances[0]);
-}
-/*----------------------------------------------------------------------------*/
-[[gnu::interrupt]] void UART1_ISR(void)
-{
-  instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *)

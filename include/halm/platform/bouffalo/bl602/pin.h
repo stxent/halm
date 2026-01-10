@@ -13,7 +13,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/bouffalo/bl602/pin_defs.h>
 #include <halm/platform/platform_defs.h>
-#include <stdbool.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 enum

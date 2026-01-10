@@ -27,7 +27,6 @@ static void tmrSetFrequency(void *, uint32_t);
 static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
-static void tmrSetValue(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_BOUFFALO_GPTIMER_NO_DEINIT
 static void tmrDeinit(void *);
@@ -49,7 +48,7 @@ const struct TimerClass * const GpTimer = &(const struct TimerClass){
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
-    .setValue = tmrSetValue
+    .setValue = NULL
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -112,7 +111,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   BL_TIMER->TIER[channel] = 0;
   BL_TIMER->TICR[channel] = TICR_MASK;
   BL_TIMER->TPLVR[channel] = 0;
-  BL_TIMER->TPLCR[channel] = TPLCR_PLCR(PLCR_MATCH0);
+  BL_TIMER->TPLCR[channel] = TPLCR_TPLCR(PLCR_MATCH0);
   BL_TIMER->TMR[channel].MAT[MATCH_EVENT] = UINT32_MAX;
 
   setTimerFrequency(timer, config->frequency);
@@ -215,12 +214,4 @@ static uint32_t tmrGetValue(const void *object)
 {
   const struct GpTimer * const timer = object;
   return BL_TIMER->TCVSYN[timer->base.channel];
-}
-/*----------------------------------------------------------------------------*/
-static void tmrSetValue(void *object, uint32_t value)
-{
-  struct GpTimer * const timer = object;
-
-  assert(value <= BL_TIMER->TMR[timer->base.channel].MAT[MATCH_EVENT]);
-  BL_TIMER->TCVSYN[timer->base.channel] = value;
 }
