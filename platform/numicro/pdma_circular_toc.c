@@ -197,11 +197,11 @@ static void channelConfigure(void *object, const void *settingsBase)
       || settings->burst == DMA_BURST_1);
 
   uint32_t control = channel->base.control & ~(
-          DSCT_CTL_BURSIZE_MASK
-          | DSCT_CTL_SAINC_MASK
-          | DSCT_CTL_DAINC_MASK
-          | DSCT_CTL_TXWIDTH_MASK
-      );
+      DSCT_CTL_BURSIZE_MASK
+      | DSCT_CTL_SAINC_MASK
+      | DSCT_CTL_DAINC_MASK
+      | DSCT_CTL_TXWIDTH_MASK
+  );
 
   control |= DSCT_CTL_BURSIZE(settings->burst);
   control |= DSCT_CTL_TXWIDTH(settings->width);
@@ -279,10 +279,9 @@ static void channelDisable(void *object)
 
   if (channel->state == STATE_BUSY)
   {
-    reg->CHRST = CHRST_CH(number);
+    pdmaResetChannel(&channel->base);
     reg->TOUTEN &= ~TOUTEN_CH(number);
     reg->TOUTIEN &= ~TOUTIEN_CH(number);
-
     pdmaUnbindInstance(&channel->base);
 
     channel->state = STATE_DONE;

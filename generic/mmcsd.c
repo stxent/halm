@@ -831,10 +831,10 @@ static void parseCardSpecificData(struct MMCSD *device,
   }
   else if (device->info.capacityType == CAPACITY_SC)
   {
-    const uint32_t eraseSectorSize = extractBits(response, 39, 45) + 1;
+    const uint32_t eraseSectorSize = extractBits(response, 39, 45);
     const bool eraseBlockEnable = extractBit(response, 46);
 
-    device->info.eraseGroupSize = eraseBlockEnable ? 1 : eraseSectorSize;
+    device->info.eraseGroupSize = eraseBlockEnable ? 1 : (eraseSectorSize + 1);
     device->info.eraseGroupSize <<= 9;
   }
 
@@ -843,16 +843,16 @@ static void parseCardSpecificData(struct MMCSD *device,
   if (device->info.capacityType == CAPACITY_SC)
   {
     const uint32_t blockLength = extractBits(response, 80, 83);
-    const uint32_t deviceSize = extractBits(response, 62, 73) + 1;
+    const uint32_t deviceSize = extractBits(response, 62, 73);
     const uint32_t sizeMult = extractBits(response, 47, 49);
 
-    device->info.sectorCount = (deviceSize << (sizeMult + 2));
+    device->info.sectorCount = ((deviceSize + 1) << (sizeMult + 2));
     device->info.sectorCount <<= blockLength - 9;
   }
   else if (device->info.cardType <= CARD_SD_2_0)
   {
-    const uint32_t deviceSize = extractBits(response, 48, 69) + 1;
-    device->info.sectorCount = deviceSize << 10;
+    const uint32_t deviceSize = extractBits(response, 48, 69);
+    device->info.sectorCount = (deviceSize + 1) << 10;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -870,7 +870,7 @@ static enum Result setTransferState(struct MMCSD *device)
   if (res != E_OK)
     return res;
 
-  const uint8_t state = CURRENT_STATE(response);
+  const enum CardState state = CURRENT_STATE(response);
 
   if (state == CARD_STANDBY)
   {

@@ -165,9 +165,9 @@ enum
 #define I2SSTS_RXCNT_VALUE(reg) \
     FIELD_VALUE((reg), I2SSTS_RXCNT_MASK, 24)
 
-#define I2SSTS_TXCNT(value)             BIT_FIELD((value), 24)
-#define I2SSTS_TXCNT_MASK               BIT_FIELD(MASK(3), 24)
+#define I2SSTS_TXCNT(value)             BIT_FIELD((value), 28)
+#define I2SSTS_TXCNT_MASK               BIT_FIELD(MASK(3), 28)
 #define I2SSTS_TXCNT_VALUE(reg) \
-    FIELD_VALUE((reg), I2SSTS_TXCNT_MASK, 24)
+    FIELD_VALUE((reg), I2SSTS_TXCNT_MASK, 28)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_NUMICRO_SPI_DEFS_H_ */

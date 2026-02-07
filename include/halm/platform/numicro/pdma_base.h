@@ -109,6 +109,7 @@ BEGIN_DECLS
 
 bool pdmaBindInstance(struct PdmaBase *);
 void pdmaUnbindInstance(struct PdmaBase *);
+void pdmaResetChannel(struct PdmaBase *);
 void pdmaSetMux(struct PdmaBase *);
 void pdmaStartTransfer(struct PdmaBase *, uint32_t, uintptr_t, uintptr_t,
     uintptr_t);

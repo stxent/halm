@@ -111,14 +111,16 @@ enum
 #define FIFOSTS_RXPTR_MASK              BIT_FIELD(MASK(6), 8)
 #define FIFOSTS_RXPTR_VALUE(reg) \
     FIELD_VALUE((reg), FIFOSTS_RXPTR_MASK, 8)
+#define FIFOSTS_RXPTR_MAX               16
 
 #define FIFOSTS_RXEMPTY                 BIT(14)
 #define FIFOSTS_RXFULL                  BIT(15)
 
 #define FIFOSTS_TXPTR(value)            BIT_FIELD((value), 16)
-#define FIFOSTS_TXPTR_MASK              BIT_FIELD(MASK(2), 16)
+#define FIFOSTS_TXPTR_MASK              BIT_FIELD(MASK(6), 16)
 #define FIFOSTS_TXPTR_VALUE(reg) \
     FIELD_VALUE((reg), FIFOSTS_TXPTR_MASK, 16)
+#define FIFOSTS_TXPTR_MAX               16
 
 #define FIFOSTS_TXEMPTY                 BIT(22)
 #define FIFOSTS_TXFULL                  BIT(23)

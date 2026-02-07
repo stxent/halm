@@ -28,31 +28,11 @@ void adcReleasePin(struct AdcPin)
 {
 }
 /*----------------------------------------------------------------------------*/
-uint32_t adcSetupPins(struct EadcBase *interface, const PinNumber *pins,
+void adcSetupPins(struct EadcBase *interface, const PinNumber *pins,
     struct AdcPin *output, size_t count)
 {
-  uint32_t enabled = 0;
-
   for (size_t index = 0; index < count; ++index)
-  {
-    *output = adcConfigPin(interface, pins[index]);
-
-    /*
-     * Check whether the order of pins is correct and all pins
-     * are unique. Pins must be sorted by analog channel number to ensure
-     * direct connection between pins in the configuration
-     * and an array of measured values.
-     */
-    const unsigned int channel = output->channel;
-
-    assert(!(enabled >> channel));
-    enabled |= 1 << channel;
-
-    ++output;
-  }
-
-  assert(enabled != 0);
-  return enabled;
+    *output++ = adcConfigPin(interface, pins[index]);
 }
 /*----------------------------------------------------------------------------*/
 struct Pin adcSetupTriggerPin(uint8_t channel, PinNumber key)

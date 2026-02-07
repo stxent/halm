@@ -135,11 +135,6 @@ extern const struct ClockClass * const Epwm1Clock;
 extern const struct ClockClass * const Qspi0Clock;
 extern const struct ClockClass * const Qspi1Clock;
 extern const struct ClockClass * const RtcClock;
-
-/* SDH dividers are used by SDH driver */
-extern const struct ClockClass * const Sdh0Clock;
-extern const struct ClockClass * const Sdh1Clock;
-
 extern const struct ClockClass * const Spi0Clock;
 extern const struct ClockClass * const Spi1Clock;
 extern const struct ClockClass * const Spi2Clock;
@@ -151,6 +146,10 @@ extern const struct ClockClass * const Timer2Clock;
 extern const struct ClockClass * const Timer3Clock;
 extern const struct ClockClass * const WdtClock;
 extern const struct ClockClass * const WwdtClock;
+
+/* Require a GenericClockConfig structure, SDH clocks are used by SDH driver */
+extern const struct ClockClass * const Sdh0Clock;
+extern const struct ClockClass * const Sdh1Clock;
 
 /* Requires an ExtendedClockConfig structure */
 extern const struct ClockClass * const CcapClock;

@@ -6,7 +6,7 @@
 
 #include <halm/pin.h>
 #include <halm/platform/numicro/m48x/pin_defs.h>
-#include <halm/platform/numicro/m48x/system_defs.h>
+#include <halm/platform/numicro/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinFunc(uint8_t, uint8_t);
 static inline NM_GPIO_Type *calcPort(uint8_t);
@@ -108,15 +108,15 @@ void pinSetPull(struct Pin pin, enum PinPull pull)
   switch (pull)
   {
     case PIN_NOPULL:
-      value |= PUSEL_PUSEL(PUSEL_NONE, pin.number);
+      value |= PUSEL_PUSEL(pin.number, PUSEL_NONE);
       break;
 
     case PIN_PULLUP:
-      value |= PUSEL_PUSEL(PUSEL_UP, pin.number);
+      value |= PUSEL_PUSEL(pin.number, PUSEL_UP);
       break;
 
     case PIN_PULLDOWN:
-      value |= PUSEL_PUSEL(PUSEL_DOWN, pin.number);
+      value |= PUSEL_PUSEL(pin.number, PUSEL_DOWN);
       break;
   }
 
@@ -131,15 +131,15 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
   switch (rate)
   {
     case PIN_SLEW_FAST:
-      value |= SLEWCTL_HSREN(HSREN_FAST, pin.number);
+      value |= SLEWCTL_HSREN(pin.number, HSREN_FAST);
       break;
 
     case PIN_SLEW_NORMAL:
-      value |= SLEWCTL_HSREN(HSREN_HIGH, pin.number);
+      value |= SLEWCTL_HSREN(pin.number, HSREN_HIGH);
       break;
 
     case PIN_SLEW_SLOW:
-      value |= SLEWCTL_HSREN(HSREN_NORMAL, pin.number);
+      value |= SLEWCTL_HSREN(pin.number, HSREN_NORMAL);
       break;
   }
 
@@ -154,11 +154,11 @@ void pinSetType(struct Pin pin, enum PinType type)
   switch (type)
   {
     case PIN_PUSHPULL:
-      value |= MODE_MODE(MODE_PUSH_PULL, pin.number);
+      value |= MODE_MODE(pin.number, MODE_PUSH_PULL);
       break;
 
     case PIN_OPENDRAIN:
-      value |= MODE_MODE(MODE_OPEN_DRAIN, pin.number);
+      value |= MODE_MODE(pin.number, MODE_OPEN_DRAIN);
       break;
   }
 

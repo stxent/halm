@@ -40,8 +40,6 @@ struct Eadc
   void (*callback)(void *);
   void *callbackArgument;
 
-  /* Enabled channels mask */
-  uint32_t enabled;
   /* Sampling Module settings */
   uint32_t sampling;
   /* Output buffer */

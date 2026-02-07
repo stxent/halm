@@ -81,7 +81,8 @@ static void interruptHandler(void *object)
   /* Handle received data */
   if (!(fifo & FIFOSTS_RXEMPTY))
   {
-    size_t count = FIFOSTS_RXPTR_VALUE(fifo);
+    size_t count = (fifo & FIFOSTS_RXFULL) ?
+        FIFOSTS_RXPTR_MAX : FIFOSTS_RXPTR_VALUE(fifo);
 
     do
     {

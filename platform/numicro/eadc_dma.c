@@ -182,8 +182,8 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->pins = malloc(sizeof(struct AdcPin) * interface->count);
   if (interface->pins == NULL)
     return E_MEMORY;
-  interface->enabled = adcSetupPins(&interface->base, config->pins,
-      interface->pins, interface->count);
+  adcSetupPins(&interface->base, config->pins, interface->pins,
+      interface->count);
 
   /* Calculate trigger delay settings */
   uint16_t offset = config->offset;

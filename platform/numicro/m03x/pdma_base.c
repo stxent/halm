@@ -42,6 +42,12 @@ void pdmaUnbindInstance(struct PdmaBase *channel)
   instances[channel->number] = NULL;
 }
 /*----------------------------------------------------------------------------*/
+void pdmaResetChannel(struct PdmaBase *channel)
+{
+  NM_PDMA_Type * const reg = channel->reg;
+  reg->CHRST = CHRST_CH(channel->number);
+}
+/*----------------------------------------------------------------------------*/
 void pdmaSetMux(struct PdmaBase *channel)
 {
   volatile uint32_t * const reg = &NM_PDMA->REQSEL[channel->number >> 2];

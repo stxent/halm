@@ -157,11 +157,11 @@ static void channelConfigure(void *object, const void *settingsBase)
       || settings->burst == DMA_BURST_1);
 
   uint32_t control = channel->base.control & ~(
-          DSCT_CTL_BURSIZE_MASK
-          | DSCT_CTL_SAINC_MASK
-          | DSCT_CTL_DAINC_MASK
-          | DSCT_CTL_TXWIDTH_MASK
-      );
+      DSCT_CTL_BURSIZE_MASK
+      | DSCT_CTL_SAINC_MASK
+      | DSCT_CTL_DAINC_MASK
+      | DSCT_CTL_TXWIDTH_MASK
+  );
 
   control |= DSCT_CTL_BURSIZE(settings->burst);
   control |= DSCT_CTL_TXWIDTH(settings->width);
@@ -226,12 +226,10 @@ static enum Result channelEnable(void *object)
 static void channelDisable(void *object)
 {
   struct PdmaCircular * const channel = object;
-  NM_PDMA_Type * const reg = channel->base.reg;
-  const uint8_t number = channel->base.number;
 
   if (channel->state == STATE_BUSY)
   {
-    reg->CHRST = CHRST_CH(number);
+    pdmaResetChannel(&channel->base);
     pdmaUnbindInstance(&channel->base);
 
     channel->state = STATE_DONE;

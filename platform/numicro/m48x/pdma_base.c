@@ -43,6 +43,26 @@ void pdmaUnbindInstance(struct PdmaBase *channel)
   instances[channel->number] = NULL;
 }
 /*----------------------------------------------------------------------------*/
+void pdmaResetChannel(struct PdmaBase *channel)
+{
+  NM_PDMA_Type * const reg = channel->reg;
+
+  const IrqState state = irqSave();
+  const uint32_t enabled = reg->CHCTL & ~(1 << channel->number);
+
+  /* Workaround for M48x PDMA Errata */
+  reg->PAUSE = enabled;
+  while (reg->TACTSTS & enabled);
+
+  reg->CHRST = CHRST_CH(channel->number);
+
+  /* Enable and re-trigger other channels */
+  __dmb();
+  reg->CHCTL = enabled;
+
+  irqRestore(state);
+}
+/*----------------------------------------------------------------------------*/
 void pdmaSetMux(struct PdmaBase *channel)
 {
   volatile uint32_t * const reg = &NM_PDMA->REQSEL[channel->number >> 2];

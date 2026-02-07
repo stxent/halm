@@ -49,8 +49,6 @@ struct EadcDma
   /* Pin descriptors */
   struct AdcPin *pins;
 
-  /* Enabled channels mask */
-  uint32_t enabled;
   /* Sampling Module settings */
   uint32_t sampling;
   /* Pin count */

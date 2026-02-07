@@ -87,9 +87,9 @@ bool qspiSetRate(struct QspiBase *interface, uint32_t rate)
     return false;
 
   /*
-  * The time interval must be larger than or equal 8 PCLK cycles between
-  * releasing SPI IP software reset and setting this clock divider register.
-  */
+   * The time interval must be larger than or equal 8 PCLK cycles between
+   * releasing SPI IP software reset and setting this clock divider register.
+   */
   reg->CLKDIV = divisor;
   return true;
 }

@@ -119,11 +119,11 @@ void pinSetType(struct Pin pin, enum PinType type)
   switch (type)
   {
     case PIN_PUSHPULL:
-      value |= MODE_MODE(MODE_PUSH_PULL, pin.number);
+      value |= MODE_MODE(pin.number, MODE_PUSH_PULL);
       break;
 
     case PIN_OPENDRAIN:
-      value |= MODE_MODE(MODE_OPEN_DRAIN, pin.number);
+      value |= MODE_MODE(pin.number, MODE_OPEN_DRAIN);
       break;
   }
 
