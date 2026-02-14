@@ -34,8 +34,8 @@ struct SpiDmaConfig
   /** Mandatory: mode number. */
   uint8_t mode;
   /**
-   * Mandatory: direct memory access channels for incoming and outgoing data,
-   * correct channel priority will be selected automatically.
+   * Mandatory: DMA channels used for incoming and outgoing data, the channel
+   * with higher priority will be used for reception.
    */
   uint8_t dma[2];
 };

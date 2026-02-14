@@ -267,7 +267,12 @@ static enum Result qspiInit(void *object, const void *configBase)
   if ((res = QspiBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  if (!dmaSetup(interface, config->dma[0], config->dma[1]))
+  /* RX channel would have higher DMA priority */
+  const bool highPriorityChannel = config->dma[0] > config->dma[1];
+  const uint8_t rxChannel = config->dma[highPriorityChannel];
+  const uint8_t txChannel = config->dma[!highPriorityChannel];
+
+  if (!dmaSetup(interface, rxChannel, txChannel))
     return E_ERROR;
 
   interface->callback = NULL;

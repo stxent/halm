@@ -42,7 +42,10 @@ struct SerialDmaConfig
   IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
-  /** Mandatory: direct memory access channels. */
+  /**
+   * Mandatory: DMA channels used for incoming and outgoing data, the channel
+   * with higher priority will be used for reception.
+   */
   uint8_t dma[2];
 };
 /*----------------------------------------------------------------------------*/

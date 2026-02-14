@@ -1161,10 +1161,6 @@ static enum Result cardSetParam(void *object, int parameter, const void *data)
 
   switch ((enum IfParameter)parameter)
   {
-    case IF_BLOCKING:
-      device->blocking = true;
-      return E_OK;
-
     case IF_POSITION:
     {
       const uint32_t position = *(const uint32_t *)data;
@@ -1196,6 +1192,10 @@ static enum Result cardSetParam(void *object, int parameter, const void *data)
       device->transfer.position = position;
       return E_OK;
     }
+
+    case IF_BLOCKING:
+      device->blocking = true;
+      return E_OK;
 
     case IF_ZEROCOPY:
       device->blocking = false;

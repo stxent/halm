@@ -358,7 +358,12 @@ static enum Result serialInit(void *object, const void *configBase)
     interface->preallocated = false;
   }
 
-  if (!dmaSetup(interface, config->dma[0], config->dma[1], config->rxChunks))
+  /* RX channel would have higher DMA priority */
+  const bool highPriorityChannel = config->dma[0] > config->dma[1];
+  const uint8_t rxChannel = config->dma[highPriorityChannel];
+  const uint8_t txChannel = config->dma[!highPriorityChannel];
+
+  if (!dmaSetup(interface, rxChannel, txChannel, config->rxChunks))
     return E_ERROR;
 
   interface->callback = NULL;
