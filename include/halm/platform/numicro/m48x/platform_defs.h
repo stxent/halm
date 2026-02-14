@@ -890,8 +890,17 @@ typedef struct
   __rw__ uint32_t SPR[20]; /* Spare registers 0~19 */
   __ne__ uint32_t RESERVED0[28];
   __rw__ uint32_t LXTCTL; /* 32.768 kHz Oscillator Control register */
-  __rw__ uint32_t GPIOCTL0; /* GPIO Control 0 register */
-  __rw__ uint32_t GPIOCTL1; /* GPIO Control 1 register */
+
+  union
+  {
+    __rw__ uint32_t GPIOCTL[2];
+    struct
+    {
+      __rw__ uint32_t GPIOCTL0; /* GPIO Control 0 register */
+      __rw__ uint32_t GPIOCTL1; /* GPIO Control 1 register */
+    };
+  };
+
   __ne__ uint32_t RESERVED1;
   __rw__ uint32_t DSTCTL; /* Daylight Saving Time Control register */
   __ne__ uint32_t RESERVED2[3];

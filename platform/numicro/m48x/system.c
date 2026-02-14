@@ -5,8 +5,8 @@
  */
 
 #include <halm/platform/numicro/flash_defs.h>
-#include <halm/platform/numicro/m48x/system_defs.h>
 #include <halm/platform/numicro/system.h>
+#include <halm/platform/numicro/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcClockReg(enum SysClockBranch);
 static volatile uint32_t *calcResetReg(enum SysBlockReset);

@@ -6,8 +6,8 @@
 
 #include <halm/delay.h>
 #include <halm/platform/numicro/hsusb_base.h>
-#include <halm/platform/numicro/m48x/system_defs.h>
 #include <halm/platform/numicro/system.h>
+#include <halm/platform/numicro/system_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UsbBaseConfig *);

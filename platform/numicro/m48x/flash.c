@@ -223,6 +223,8 @@ static void writeAccessUnlock(const struct Flash *interface)
     value |= ISPCTL_CFGUEN;
   else if (interface->bank == FLASH_LDROM)
     value |= ISPCTL_LDUEN;
+  else if (interface->bank == FLASH_SPROM)
+    value |= ISPCTL_SPUEN;
 
   sysUnlockReg();
   NM_FMC->ISPCTL = value;

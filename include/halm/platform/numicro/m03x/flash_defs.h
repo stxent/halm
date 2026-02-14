@@ -1,5 +1,5 @@
 /*
- * halm/platform/numicro/m48x/flash_defs.h
+ * halm/platform/numicro/m03x/flash_defs.h
  * Copyright (C) 2023 xent
  * Project is distributed under the terms of the MIT License
  */

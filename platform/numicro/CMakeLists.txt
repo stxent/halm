@@ -32,6 +32,10 @@ if(CONFIG_PLATFORM_NUMICRO_ADC_DMA)
     list(APPEND SOURCE_FILES "adc_dma.c")
 endif()
 
+if(CONFIG_PLATFORM_NUMICRO_BOD)
+    list(APPEND SOURCE_FILES "bod.c")
+endif()
+
 if(CONFIG_PLATFORM_NUMICRO_BPWM_BASE)
     list(APPEND SOURCE_FILES "bpwm_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/bpwm_base.c")

@@ -6,10 +6,12 @@
 
 #include <halm/pin.h>
 #include <halm/platform/numicro/m48x/pin_defs.h>
+#include <halm/platform/numicro/rtc_defs.h>
 #include <halm/platform/numicro/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinFunc(uint8_t, uint8_t);
 static inline NM_GPIO_Type *calcPort(uint8_t);
+static inline void disableVbatControl(uint8_t, uint8_t);
 /*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin);
 /*----------------------------------------------------------------------------*/
@@ -23,11 +25,23 @@ static inline NM_GPIO_Type *calcPort(uint8_t port)
   return NM_GPIOA + port;
 }
 /*----------------------------------------------------------------------------*/
+static inline void disableVbatControl(uint8_t port, uint8_t number)
+{
+  if (port != PORT_F || number < 4)
+    return;
+
+  const unsigned int index = (number >> 2) - 1;
+  const unsigned int offset = number & 3;
+
+  NM_RTC->GPIOCTL[index] &= ~GPIOCTL_CTLSEL(offset);
+}
+/*----------------------------------------------------------------------------*/
 static void commonPinInit(struct Pin pin)
 {
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
   pinSchmittTriggerEnabled(pin, true);
+  disableVbatControl(pin.port, pin.number);
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)

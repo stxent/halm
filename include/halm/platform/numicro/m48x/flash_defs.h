@@ -26,6 +26,7 @@
 /*------------------ISP Control register--------------------------------------*/
 #define ISPCTL_ISPEN                    BIT(0)
 #define ISPCTL_BS                       BIT(1)
+#define ISPCTL_SPUEN                    BIT(2)
 #define ISPCTL_APUEN                    BIT(3)
 #define ISPCTL_CFGUEN                   BIT(4)
 #define ISPCTL_LDUEN                    BIT(5)

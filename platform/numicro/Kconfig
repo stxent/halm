@@ -85,6 +85,15 @@ config PLATFORM_NUMICRO_ADC_DMA
 	default y
 	depends on PLATFORM_NUMICRO_ADC_BASE && PLATFORM_NUMICRO_PDMA
 
+config PLATFORM_NUMICRO_BOD
+	bool "Brownout detection"
+	default y
+
+config PLATFORM_NUMICRO_BOD_NO_DEINIT
+	bool
+	default y if PLATFORM_NUMICRO_NO_DEINIT
+	depends on PLATFORM_NUMICRO_BOD
+
 config PLATFORM_NUMICRO_BPWM_BASE
 	bool "BPWM"
 	default y

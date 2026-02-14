@@ -4,8 +4,8 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/platform/numicro/m48x/system_defs.h>
 #include <halm/platform/numicro/system.h>
+#include <halm/platform/numicro/system_defs.h>
 #include <halm/platform/numicro/usb_base.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/

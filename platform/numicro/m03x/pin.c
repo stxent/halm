@@ -6,7 +6,7 @@
 
 #include <halm/pin.h>
 #include <halm/platform/numicro/m03x/pin_defs.h>
-#include <halm/platform/numicro/m03x/system_defs.h>
+#include <halm/platform/numicro/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static inline volatile uint32_t *calcPinFunc(uint8_t, uint8_t);
 static inline NM_GPIO_Type *calcPort(uint8_t);
