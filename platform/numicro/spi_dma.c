@@ -259,7 +259,7 @@ static enum Result spiInit(void *object, const void *configBase)
   const uint8_t rxChannel = config->dma[highPriorityChannel];
   const uint8_t txChannel = config->dma[!highPriorityChannel];
 
-  if (!dmaSetup(interface, config->dma[0], config->dma[1]))
+  if (!dmaSetup(interface, rxChannel, txChannel))
     return E_ERROR;
 
   interface->callback = NULL;
