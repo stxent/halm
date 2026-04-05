@@ -24,6 +24,7 @@ static LPC_CCU_BRANCH_Type *calcBranchReg(enum SysClockBranch branch)
 void sysClockEnable(enum SysClockBranch branch)
 {
   calcBranchReg(branch)->CFG |= CFG_RUN | CFG_AUTO | CFG_WAKEUP;
+  __dsb();
 }
 /*----------------------------------------------------------------------------*/
 void sysClockDisable(enum SysClockBranch branch)
@@ -126,6 +127,8 @@ void sysFlashLatencyUpdate(unsigned int value)
     LPC_CREG->FLASHCFGB = (LPC_CREG->FLASHCFGB & ~FLASHCFG_FLASHTIM_MASK)
         | FLASHCFG_FLASHTIM(value - 1);
   }
+
+  __dsb();
 }
 /*----------------------------------------------------------------------------*/
 void sysFlashLatencyReset(void)

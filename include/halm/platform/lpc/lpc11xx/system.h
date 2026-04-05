@@ -12,7 +12,7 @@
 #define HALM_PLATFORM_LPC_LPC11XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
-#include <xcore/bits.h>
+#include <xcore/asm.h>
 #include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 enum [[gnu::packed]] MemoryRemap
@@ -78,6 +78,7 @@ static inline void sysClockDisable(enum SysClockBranch branch)
 static inline void sysClockEnable(enum SysClockBranch branch)
 {
   LPC_SYSCON->SYSAHBCLKCTRL |= 1UL << branch;
+  __dsb();
 }
 
 static inline void sysPowerDisable(enum SysBlockPower block)
@@ -88,6 +89,7 @@ static inline void sysPowerDisable(enum SysBlockPower block)
 static inline void sysPowerEnable(enum SysBlockPower branch)
 {
   LPC_SYSCON->PDRUNCFG &= ~(1UL << branch);
+  __dsb();
 }
 
 static inline bool sysPowerStatus(enum SysBlockPower block)

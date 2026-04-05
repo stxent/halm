@@ -279,7 +279,6 @@ static enum Result initStepReadExtCSD(struct MMCSD *device)
     do
     {
       status = ifGetParam(device->interface, IF_STATUS, NULL);
-      barrier();
     }
     while (status == E_BUSY);
   }
@@ -482,7 +481,6 @@ static enum Result executeCommand(struct MMCSD *device, uint32_t command,
     do
     {
       status = ifGetParam(device->interface, IF_STATUS, NULL);
-      barrier();
     }
     while (status == E_BUSY);
   }

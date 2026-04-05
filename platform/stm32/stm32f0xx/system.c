@@ -7,6 +7,7 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm32/stm32f0xx/system_defs.h>
 #include <halm/platform/stm32/system.h>
+#include <xcore/asm.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/
 enum
@@ -69,6 +70,7 @@ void sysClockEnable(enum SysClockBranch branch)
   const uint32_t mask = 1UL << (branch & 0x1F);
 
   *reg |= mask;
+  __dsb();
 }
 /*----------------------------------------------------------------------------*/
 bool sysClockStatus(enum SysClockBranch branch)
@@ -104,6 +106,7 @@ void sysFlashLatencyUpdate(unsigned int value)
   }
 
   STM_FLASH->ACR = acr;
+  __dsb();
 }
 /*----------------------------------------------------------------------------*/
 void sysResetEnable(enum SysBlockReset block)
@@ -120,6 +123,7 @@ void sysResetDisable(enum SysBlockReset block)
   const uint32_t mask = 1UL << (block & 0x1F);
 
   *reg &= ~mask;
+  __dsb();
 }
 /*----------------------------------------------------------------------------*/
 void sysResetPulse(enum SysBlockReset block)
@@ -129,4 +133,5 @@ void sysResetPulse(enum SysBlockReset block)
 
   *reg |= mask;
   *reg &= ~mask;
+  __dsb();
 }

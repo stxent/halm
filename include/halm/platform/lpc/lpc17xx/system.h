@@ -17,7 +17,7 @@
 #define HALM_PLATFORM_LPC_LPC17XX_SYSTEM_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/platform/platform_defs.h>
-#include <xcore/bits.h>
+#include <xcore/asm.h>
 #include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
 /* Power control for peripherals register */
@@ -120,6 +120,7 @@ static inline void sysPowerDisable(enum SysBlockPower block)
 static inline void sysPowerEnable(enum SysBlockPower block)
 {
   LPC_SC->PCONP |= 1UL << block;
+  __dsb();
 }
 
 static inline bool sysPowerStatus(enum SysBlockPower block)

@@ -7,6 +7,7 @@
 #include <halm/platform/numicro/flash_defs.h>
 #include <halm/platform/numicro/system.h>
 #include <halm/platform/numicro/system_defs.h>
+#include <xcore/asm.h>
 /*----------------------------------------------------------------------------*/
 static volatile uint32_t *calcClockReg(enum SysClockBranch);
 static volatile uint32_t *calcResetReg(enum SysBlockReset);
@@ -88,6 +89,7 @@ void sysClockEnable(enum SysClockBranch branch)
     sysUnlockReg();
 
   *calcClockReg(branch) |= value;
+  __dsb();
 
   if (protected)
     sysLockReg();
@@ -215,6 +217,7 @@ void sysResetBlock(enum SysBlockReset block)
 
   *reg |= value;
   *reg &= ~value;
+  __dsb();
 
   if (protected)
     sysLockReg();

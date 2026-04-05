@@ -7,6 +7,7 @@
 #include <halm/platform/imxrt/imxrt106x/system_defs.h>
 #include <halm/platform/imxrt/system.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/asm.h>
 /*----------------------------------------------------------------------------*/
 void sysClockDisable(enum SysClockBranch branch)
 {
@@ -24,6 +25,7 @@ void sysClockEnable(enum SysClockBranch branch)
 
   IMX_CCM->CCGR[index] = (IMX_CCM->CCGR[index] & ~CCGR_CG_MASK(offset))
       | CCGR_CG(CG_ON_ALL_MODES, offset);
+  __dsb();
 }
 /*----------------------------------------------------------------------------*/
 bool sysClockStatus(enum SysClockBranch branch)

@@ -55,6 +55,8 @@ void sysClockControl(enum SysClockBranch branch, enum SysClockDiv divisor)
     LPC_SC->PLL0FEED = PLLFEED_FIRST;
     LPC_SC->PLL0FEED = PLLFEED_SECOND;
   }
+
+  __dsb();
 }
 /*----------------------------------------------------------------------------*/
 unsigned int sysFlashLatency(void)
@@ -77,4 +79,5 @@ void sysFlashLatencyUpdate(unsigned int value)
 {
   LPC_SC->FLASHCFG = (LPC_SC->FLASHCFG & ~FLASHCFG_FLASHTIM_MASK)
       | FLASHCFG_FLASHTIM(value - 1);
+  __dsb();
 }
