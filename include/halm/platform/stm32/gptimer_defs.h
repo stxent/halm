@@ -251,6 +251,8 @@ enum
 /* Break generation */
 #define EGR_BG                          BIT(7)
 /*------------------Capture/Compare Mode Registers----------------------------*/
+#define CCMR_MASK(channel)              BIT_FIELD(MASK(8), ((channel) & 1) * 8)
+
 /* Capture/Compare selection */
 enum
 {
@@ -295,7 +297,7 @@ enum
     FIELD_VALUE((reg), CCMR_OCM_MASK(channel), 4 + ((channel) & 1) * 8)
 
 /* Output compare clear enable */
-#define CCMR_OCCE(channel)              BIT(7 + (channel) * 8)
+#define CCMR_OCCE(channel)              BIT(7 + ((channel) & 1) * 8)
 
 /* Input capture prescaler */
 enum
@@ -321,14 +323,12 @@ enum
 #define CCMR_ICF_VALUE(channel, reg) \
     FIELD_VALUE((reg), CCMR_ICF_MASK(channel), 4 + ((channel) & 1) * 8)
 /*------------------Capture/Compare Enable Register---------------------------*/
+#define CCER_MASK(channel)              BIT_FIELD(MASK(2), (channel) * 2)
+
 /* Capture/Compare output enable */
-#define CCER_CCE(channel)               BIT(0 + (channel) * 4)
+#define CCER_CCE(channel)               BIT(0 + (channel) * 2)
 /* Capture/Compare output polarity */
-#define CCER_CCP(channel)               BIT(1 + (channel) * 4)
-/* Capture/Compare complementary output enable (except channel 4) */
-#define CCER_CCNE(channel)              BIT(2 + (channel) * 4)
-/* Capture/Compare complementary output polarity (except channel 4) */
-#define CCER_CCNP(channel)              BIT(3 + (channel) * 4)
+#define CCER_CCP(channel)               BIT(1 + (channel) * 2)
 /*------------------Break and Dead-Time Register------------------------------*/
 /* Dead-time generator setup */
 #define BDTR_DTG(value)                 BIT_FIELD((value), 0)

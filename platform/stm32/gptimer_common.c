@@ -45,7 +45,7 @@ uint8_t gpTimerConfigInputPin(uint8_t channel, PinNumber key,
   return index;
 }
 /*----------------------------------------------------------------------------*/
-uint8_t gpTimerConfigOutputPin(uint8_t channel, PinNumber key)
+uint8_t gpTimerConfigOutputPin(uint8_t channel, PinNumber key, bool value)
 {
   size_t index = 0;
 
@@ -61,10 +61,30 @@ uint8_t gpTimerConfigOutputPin(uint8_t channel, PinNumber key)
     {
       const struct Pin pin = pinInit(key);
 
-      pinOutput(pin, false);
+      pinOutput(pin, value);
       pinSetFunction(pin, pinEntry->value);
       break;
     }
+  }
+
+  assert(index != CHANNEL_COUNT);
+  return index;
+}
+/*----------------------------------------------------------------------------*/
+uint8_t gpTimerGetOutputChannel(uint8_t channel, PinNumber key)
+{
+  size_t index = 0;
+
+  for (; index < CHANNEL_COUNT; ++index)
+  {
+    if (!isOutputChannel(index))
+      continue;
+
+    const struct PinEntry * const pinEntry = pinFind(gpTimerPins, key,
+        PACK_CHANNEL(channel, index));
+
+    if (pinEntry != NULL)
+      break;
   }
 
   assert(index != CHANNEL_COUNT);

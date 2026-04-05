@@ -65,6 +65,10 @@ if(CONFIG_PLATFORM_STM32_GPTIMER)
     list(APPEND SOURCE_FILES "gptimer.c")
 endif()
 
+if(CONFIG_PLATFORM_STM32_GPTIMER_PWM)
+    list(APPEND SOURCE_FILES "gptimer_pwm.c")
+endif()
+
 if(CONFIG_PLATFORM_STM32_I2C_BASE)
     list(APPEND SOURCE_FILES "${CONFIG_GEN_I2C}/i2c_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/i2c_base.c")
