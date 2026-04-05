@@ -39,6 +39,8 @@ struct SpiBaseConfig
   PinNumber sck;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Optional: use pins from peripheral extension. */
+  bool extension;
   /** Mandatory: enable slave mode. */
   bool slave;
 };
@@ -69,8 +71,8 @@ bool spiSetRate(struct SpiBase *, uint32_t);
 uint32_t i2sGetClock(const struct SpiBase *);
 void *i2sGetExtension(const struct SpiBase *);
 uint32_t spiGetClock(const struct SpiBase *);
-void *i2sMakeListDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType, size_t);
-void *spiMakeListDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType, size_t);
+void *i2sMakeCircularDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType);
+void *spiMakeCircularDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType);
 void *spiMakeOneShotDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType);
 
 END_DECLS

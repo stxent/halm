@@ -243,6 +243,11 @@ config PLATFORM_STM32_SPI_RC
 	default y
 	depends on PLATFORM_STM32_SPI_BASE
 
+config PLATFORM_STM32_I2S_DMA
+	bool "I2S driver with DMA"
+	default y
+	depends on PLATFORM_STM32_SPI_BASE && (PLATFORM_STM32_BDMA || PLATFORM_STM32_DMA)
+
 config PLATFORM_STM32_SPI
 	bool "SPI Master with DMA"
 	default y

@@ -4,6 +4,7 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <halm/platform/stm32/bdma_circular.h>
 #include <halm/platform/stm32/bdma_oneshot.h>
 #include <halm/platform/stm32/clocking.h>
 #include <halm/platform/stm32/spi_base.h>
@@ -210,9 +211,33 @@ void SPI2_ISR(void)
 }
 #endif
 /*----------------------------------------------------------------------------*/
+uint32_t i2sGetClock(const struct SpiBase *)
+{
+  return clockFrequency(SystemClock);
+}
+/*----------------------------------------------------------------------------*/
 uint32_t spiGetClock(const struct SpiBase *)
 {
   return clockFrequency(ApbClock);
+}
+/*----------------------------------------------------------------------------*/
+void *i2sMakeCircularDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType)
+{
+  return NULL;
+}
+/*----------------------------------------------------------------------------*/
+void *spiMakeCircularDma(uint8_t, uint8_t stream, enum DmaPriority priority,
+    enum DmaType type)
+{
+  const struct BdmaCircularConfig config = {
+      .event = DMA_GENERIC,
+      .priority = priority,
+      .type = type,
+      .stream = stream,
+      .silent = false
+  };
+
+  return init(BdmaCircular, &config);
 }
 /*----------------------------------------------------------------------------*/
 void *spiMakeOneShotDma(uint8_t, uint8_t stream, enum DmaPriority priority,

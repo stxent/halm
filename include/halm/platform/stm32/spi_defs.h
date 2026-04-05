@@ -8,6 +8,8 @@
 #define HALM_PLATFORM_STM32_SPI_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
+/*----------------------------------------------------------------------------*/
+#define MISO_EXTENSION(channel)         ((channel) + 16)
 /*------------------Control Register 1----------------------------------------*/
 #define CR1_CPHA                        BIT(0)
 #define CR1_CPOL                        BIT(1)

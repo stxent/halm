@@ -5,7 +5,7 @@
  */
 
 #include <halm/platform/stm32/clocking.h>
-#include <halm/platform/stm32/dma_list.h>
+#include <halm/platform/stm32/dma_circular.h>
 #include <halm/platform/stm32/dma_oneshot.h>
 #include <halm/platform/stm32/spi_base.h>
 #include <halm/platform/stm32/spi_defs.h>
@@ -130,6 +130,10 @@ const struct PinEntry spiPins[] = {
         .channel = 1,
         .value = 5
     }, {
+        .key = PIN(PORT_B, 14), /* I2S2ext_SD */
+        .channel = MISO_EXTENSION(1),
+        .value = 6
+    }, {
         .key = PIN(PORT_B, 15), /* SPI2_MOSI/I2S2_SD */
         .channel = 1,
         .value = 5
@@ -137,6 +141,10 @@ const struct PinEntry spiPins[] = {
         .key = PIN(PORT_C, 2), /* SPI2_MISO */
         .channel = 1,
         .value = 5
+    }, {
+        .key = PIN(PORT_C, 2), /* I2S2ext_SD */
+        .channel = MISO_EXTENSION(1),
+        .value = 6
     }, {
         .key = PIN(PORT_C, 3), /* SPI2_MOSI/I2S2_SD */
         .channel = 1,
@@ -157,6 +165,10 @@ const struct PinEntry spiPins[] = {
         .key = PIN(PORT_I, 2), /* SPI2_MISO */
         .channel = 1,
         .value = 5
+    }, {
+        .key = PIN(PORT_I, 2), /* I2S2ext_SD */
+        .channel = MISO_EXTENSION(1),
+        .value = 6
     }, {
         .key = PIN(PORT_I, 3), /* SPI2_MOSI/I2S2_SD */
         .channel = 1,
@@ -181,6 +193,10 @@ const struct PinEntry spiPins[] = {
         .channel = 2,
         .value = 6
     }, {
+        .key = PIN(PORT_B, 4), /* I2S3ext_SD */
+        .channel = MISO_EXTENSION(2),
+        .value = 7
+    }, {
         .key = PIN(PORT_B, 5), /* SPI3_MOSI/I2S3_SD */
         .channel = 2,
         .value = 6
@@ -196,6 +212,10 @@ const struct PinEntry spiPins[] = {
         .key = PIN(PORT_C, 11), /* SPI3_MISO */
         .channel = 2,
         .value = 6
+    }, {
+        .key = PIN(PORT_C, 11), /* I2S3ext_SD */
+        .channel = MISO_EXTENSION(2),
+        .value = 5
     }, {
         .key = PIN(PORT_C, 12), /* SPI3_MOSI/I2S3_SD */
         .channel = 2,
@@ -279,34 +299,34 @@ uint32_t spiGetClock(const struct SpiBase *interface)
   return clockFrequency(interface->channel == SPI1 ? Apb2Clock : Apb1Clock);
 }
 /*----------------------------------------------------------------------------*/
-void *i2sMakeListDma(uint8_t channel, uint8_t stream,
-    enum DmaPriority priority, enum DmaType type, size_t number)
+void *i2sMakeCircularDma(uint8_t channel, uint8_t stream,
+    enum DmaPriority priority, enum DmaType type)
 {
-  const struct DmaListConfig config = {
-      .number = number,
+  const struct DmaCircularConfig config = {
       .event = (type == DMA_TYPE_P2M) ?
           dmaGetEventI2SRx(channel) : dmaGetEventI2STx(channel),
       .priority = priority,
       .type = type,
-      .stream = stream
+      .stream = stream,
+      .silent = false
   };
 
-  return init(DmaList, &config);
+  return init(DmaCircular, &config);
 }
 /*----------------------------------------------------------------------------*/
-void *spiMakeListDma(uint8_t channel, uint8_t stream,
-    enum DmaPriority priority, enum DmaType type, size_t number)
+void *spiMakeCircularDma(uint8_t channel, uint8_t stream,
+    enum DmaPriority priority, enum DmaType type)
 {
-  const struct DmaListConfig config = {
-      .number = number,
+  const struct DmaCircularConfig config = {
       .event = (type == DMA_TYPE_P2M) ?
           dmaGetEventSpiRx(channel) : dmaGetEventSpiTx(channel),
       .priority = priority,
       .type = type,
-      .stream = stream
+      .stream = stream,
+      .silent = false
   };
 
-  return init(DmaList, &config);
+  return init(DmaCircular, &config);
 }
 /*----------------------------------------------------------------------------*/
 void *spiMakeOneShotDma(uint8_t channel, uint8_t stream,

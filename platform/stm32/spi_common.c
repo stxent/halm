@@ -43,8 +43,10 @@ void spiConfigPins(const struct SpiBaseConfig *config)
   {
     if (pinArray[index])
     {
+      const uint8_t channel = (config->extension && index == MISO_INDEX) ?
+          MISO_EXTENSION(config->channel) : config->channel;
       const struct PinEntry * const pinEntry = pinFind(spiPins,
-          pinArray[index], config->channel);
+          pinArray[index], channel);
       assert(pinEntry != NULL);
 
       const struct Pin pin = pinInit(pinArray[index]);

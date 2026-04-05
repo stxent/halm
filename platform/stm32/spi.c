@@ -252,6 +252,7 @@ static enum Result spiInit(void *object, const void *configBase)
       .mosi = config->mosi,
       .sck = config->sck,
       .channel = config->channel,
+      .extension = false,
       .slave = false
   };
   struct Spi * const interface = object;
