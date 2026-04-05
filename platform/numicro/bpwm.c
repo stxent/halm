@@ -273,9 +273,8 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   struct Bpwm * const pwm = object;
   struct BpwmUnit * const unit = config->parent;
 
-  /* Initialize output pin */
-  pwm->channel = bpwmConfigPin(unit->base.channel, config->pin,
-      !config->inversion);
+  /* Find match channel number */
+  pwm->channel = bpwmGetMatchChannel(unit->base.channel, config->pin);
 
   /* Allocate channel */
   if (unitAllocateChannel(unit, pwm->channel))
@@ -284,6 +283,8 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
     uint32_t wgctl0 = reg->WGCTL0;
     uint32_t wgctl1 = reg->WGCTL1;
 
+    pwm->unit = unit;
+
     wgctl0 &= ~(WGCTL0_ZPCTL_MASK(pwm->channel)
         | WGCTL0_PRDPCTL_MASK(pwm->channel));
     wgctl1 &= ~(WGCTL1_CMPUCTL_MASK(pwm->channel)
@@ -291,8 +292,8 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
 
     if (unit->centered)
     {
-      wgctl1 |= WGCTL1_CMPUCTL(pwm->channel, CMPUCTL_HIGH);
-      wgctl1 |= WGCTL1_CMPDCTL(pwm->channel, CMPUCTL_LOW);
+      wgctl1 |= WGCTL1_CMPUCTL(pwm->channel, CMPUCTL_LOW);
+      wgctl1 |= WGCTL1_CMPDCTL(pwm->channel, CMPUCTL_HIGH);
     }
     else
     {
@@ -309,7 +310,11 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
     reg->WGCTL0 = wgctl0;
     reg->WGCTL1 = wgctl1;
 
-    pwm->unit = unit;
+    /* Disable output, set pin to the tri-state mode */
+    reg->POEN &= ~POEN_POEN(pwm->channel);
+    /* Initialize pin */
+    bpwmConfigPin(unit->base.channel, config->pin, config->inversion);
+
     return E_OK;
   }
   else

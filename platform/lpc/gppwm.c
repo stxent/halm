@@ -12,8 +12,9 @@
 #define UNPACK_CHANNEL(value)   (((value) >> 4) & 0x0F)
 #define UNPACK_FUNCTION(value)  ((value) & 0x0F)
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *, uint8_t);
-static uint8_t configMatchPin(uint8_t channel, PinNumber key);
+static inline volatile uint32_t *calcMatchReg(LPC_PWM_Type *, uint8_t);
+static void configMatchPin(uint8_t channel, PinNumber key, bool);
+static uint8_t getMatchChannel(uint8_t channel, PinNumber key);
 static void interruptHandler(void *);
 static void setTimerFrequency(struct GpPwmUnit *, uint32_t);
 static bool unitAllocateChannel(struct GpPwmUnit *, uint8_t);
@@ -105,7 +106,7 @@ const struct PwmClass * const GpPwmDoubleEdge = &(const struct PwmClass){
 /*----------------------------------------------------------------------------*/
 extern const struct PinEntry gpPwmPins[];
 /*----------------------------------------------------------------------------*/
-static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
+static inline volatile uint32_t *calcMatchReg(LPC_PWM_Type *device,
     uint8_t channel)
 {
   assert(channel && channel <= 6);
@@ -116,15 +117,21 @@ static inline volatile uint32_t *calcMatchChannel(LPC_PWM_Type *device,
     return &device->MR4 + (channel - 4);
 }
 /*----------------------------------------------------------------------------*/
-static uint8_t configMatchPin(uint8_t channel, PinNumber key)
+static void configMatchPin(uint8_t channel, PinNumber key, bool value)
 {
   const struct PinEntry * const pinEntry = pinFind(gpPwmPins, key, channel);
   assert(pinEntry != NULL);
 
   const struct Pin pin = pinInit(key);
 
-  pinOutput(pin, false);
+  pinOutput(pin, value);
   pinSetFunction(pin, UNPACK_FUNCTION(pinEntry->value));
+}
+/*----------------------------------------------------------------------------*/
+static uint8_t getMatchChannel(uint8_t channel, PinNumber key)
+{
+  const struct PinEntry * const pinEntry = pinFind(gpPwmPins, key, channel);
+  assert(pinEntry != NULL);
 
   return UNPACK_CHANNEL(pinEntry->value);
 }
@@ -331,8 +338,8 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
   struct GpPwm * const pwm = object;
   struct GpPwmUnit * const unit = config->parent;
 
-  /* Initialize output pin */
-  pwm->channel = configMatchPin(unit->base.channel, config->pin);
+  /* Find match channel number */
+  pwm->channel = getMatchChannel(unit->base.channel, config->pin);
 
   /* Allocate channel */
   if (unitAllocateChannel(unit, pwm->channel))
@@ -346,7 +353,10 @@ static enum Result singleEdgeInit(void *object, const void *configBase)
     pwm->latch = LER_ENABLE(pwm->channel);
 
     /* Calculate pointer to the match register */
-    pwm->value = calcMatchChannel(reg, pwm->channel);
+    pwm->value = calcMatchReg(reg, pwm->channel);
+
+    /* Initialize output pin after output level setup */
+    configMatchPin(unit->base.channel, config->pin, false);
 
     return E_OK;
   }
@@ -409,8 +419,8 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
   struct GpPwmDoubleEdge * const pwm = object;
   struct GpPwmUnit * const unit = config->parent;
 
-  /* Initialize output pin */
-  pwm->channel = configMatchPin(unit->base.channel, config->pin);
+  /* Find match channel number */
+  pwm->channel = getMatchChannel(unit->base.channel, config->pin);
   /* First channel cannot be a double edged output */
   assert(pwm->channel > 1);
 
@@ -427,8 +437,11 @@ static enum Result doubleEdgeInit(void *object, const void *configBase)
     pwm->latch = LER_ENABLE(pwm->channel) | LER_ENABLE(pwm->channel - 1);
 
     /* Calculate pointers to the match registers */
-    pwm->leading = calcMatchChannel(reg, pwm->channel - 1);
-    pwm->trailing = calcMatchChannel(reg, pwm->channel);
+    pwm->leading = calcMatchReg(reg, pwm->channel - 1);
+    pwm->trailing = calcMatchReg(reg, pwm->channel);
+
+    /* Initialize output pin after output level setup */
+    configMatchPin(unit->base.channel, config->pin, false);
 
     return E_OK;
   }

@@ -26,6 +26,14 @@ uint8_t bpwmConfigPin(uint8_t channel, PinNumber key, bool value)
   return UNPACK_CHANNEL(pinEntry->value);
 }
 /*----------------------------------------------------------------------------*/
+uint8_t bpwmGetMatchChannel(uint8_t channel, PinNumber key)
+{
+  const struct PinEntry * const pinEntry = pinFind(bpwmPins, key, channel);
+  assert(pinEntry != NULL);
+
+  return UNPACK_CHANNEL(pinEntry->value);
+}
+/*----------------------------------------------------------------------------*/
 void bpwmSetFrequency(struct BpwmUnitBase *unit, uint32_t frequency)
 {
   NM_BPWM_Type * const reg = unit->reg;
