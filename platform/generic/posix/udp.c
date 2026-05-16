@@ -37,15 +37,16 @@ struct Udp
   pthread_mutex_t rxQueueLock;
 
   uv_poll_t *listener;
-  int client;
   int server;
+
+  struct sockaddr_in client;
+  bool clientConfigured;
 };
 /*----------------------------------------------------------------------------*/
 static void cleanup(struct Udp *, enum Cleanup);
 static void onCloseCallback(uv_handle_t *);
 static void onInterfaceCallback(uv_poll_t *, int, int);
-static enum Result setupSockets(struct Udp *,
-    const struct UdpConfig *);
+static enum Result setupSockets(struct Udp *, const struct UdpConfig *);
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *, const void *);
 static void streamDeinit(void *);
@@ -77,7 +78,6 @@ static void cleanup(struct Udp *interface, enum Cleanup step)
       [[fallthrough]];
     case CLEANUP_NETWORK:
       close(interface->server);
-      close(interface->client);
       [[fallthrough]];
     case CLEANUP_QUEUE:
       byteQueueDeinit(&interface->rxQueue);
@@ -104,8 +104,24 @@ static void onInterfaceCallback(uv_poll_t *handle, int, int)
   ssize_t length;
 
   pthread_mutex_lock(&interface->rxQueueLock);
-  while ((length = recv(interface->server, buffer, sizeof(buffer), 0)) > 0)
-    byteQueuePushArray(&interface->rxQueue, buffer, (size_t)length);
+  do
+  {
+    struct sockaddr_in address;
+    socklen_t addressLength = sizeof(address);
+
+    length = recvfrom(interface->server, buffer, sizeof(buffer), 0,
+        (struct sockaddr *)&address, &addressLength);
+
+    if (!interface->clientConfigured && addressLength)
+    {
+      /* Update client address */
+      interface->client = address;
+    }
+
+    if (length > 0)
+      byteQueuePushArray(&interface->rxQueue, buffer, (size_t)length);
+  }
+  while (length > 0);
   pthread_mutex_unlock(&interface->rxQueueLock);
 
   if (interface->callback != NULL)
@@ -122,38 +138,46 @@ static enum Result setupSockets(struct Udp *interface,
   struct sockaddr_in address;
   enum Result res = E_OK;
 
-  /* Initialize output socket */
-  interface->client = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (interface->client == -1)
-    return E_INTERFACE;
-
+  /* Initialize output address */
   memset(&address, 0, sizeof(address));
-  address.sin_family = AF_INET;
-  address.sin_port = htons(config->clientPort);
-  if (inet_pton(AF_INET, config->clientAddress, &address.sin_addr) <= 0)
+  if (config->clientAddress != NULL && config->clientPort)
   {
-    res = E_VALUE;
-    goto close_client;
+    if (inet_pton(AF_INET, config->clientAddress, &address.sin_addr) <= 0)
+      return E_VALUE;
+
+    address.sin_family = AF_INET;
+    address.sin_port = htons(config->clientPort);
+    interface->clientConfigured = true;
   }
-  if (connect(interface->client, (struct sockaddr *)&address,
-      sizeof(address)) == -1)
+  else
   {
-    res = E_BUSY;
-    goto close_client;
+    if (config->clientAddress != NULL || config->clientPort)
+      return E_VALUE;
+
+    address.sin_family = AF_UNSPEC;
+    interface->clientConfigured = false;
   }
+  interface->client = address;
 
   /* Initialize input socket */
   interface->server = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (interface->server == -1)
-  {
-    res = E_INTERFACE;
-    goto close_client;
-  }
+    return E_INTERFACE;
 
   memset(&address, 0, sizeof(address));
   address.sin_family = AF_INET;
   address.sin_port = htons(config->serverPort);
-  address.sin_addr.s_addr = htonl(INADDR_ANY);
+  if (config->serverAddress != NULL)
+  {
+    if (inet_pton(AF_INET, config->serverAddress, &address.sin_addr) <= 0)
+    {
+      res = E_VALUE;
+      goto close_server;
+    }
+  }
+  else
+    address.sin_addr.s_addr = htonl(INADDR_ANY);
+
   if (bind(interface->server, (struct sockaddr *)&address,
       sizeof(address)) == -1)
   {
@@ -172,8 +196,6 @@ static enum Result setupSockets(struct Udp *interface,
 
 close_server:
   close(interface->server);
-close_client:
-  close(interface->client);
   return res;
 }
 /*----------------------------------------------------------------------------*/
@@ -281,7 +303,15 @@ static size_t streamRead(void *object, void *buffer, size_t length)
 static size_t streamWrite(void *object, const void *buffer, size_t length)
 {
   struct Udp * const interface = object;
-  const int written = send(interface->client, buffer, length, 0);
 
-  return written > 0 ? (size_t)written : 0;
+  if (interface->client.sin_family == AF_INET)
+  {
+    const ssize_t written = sendto(interface->server, buffer, length, 0,
+        (const struct sockaddr *)&interface->client,
+        sizeof(struct sockaddr_in));
+
+    return written > 0 ? (size_t)written : 0;
+  }
+  else
+    return 0;
 }

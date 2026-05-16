@@ -16,6 +16,8 @@ struct UdpConfig
 {
   const char *clientAddress;
   uint16_t clientPort;
+
+  const char *serverAddress;
   uint16_t serverPort;
 };
 /*----------------------------------------------------------------------------*/
