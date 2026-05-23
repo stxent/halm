@@ -75,6 +75,7 @@ foreach(ENTRY ${DIRECTORY_LIST})
 endforeach()
 
 add_library(${PROJECT_NAME} ${LIBRARY_OBJECTS})
+target_compile_definitions(${PROJECT_NAME} INTERFACE ${PUBLIC_DEFS})
 target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBRARY_TARGETS})
 
 # Configure library installation
