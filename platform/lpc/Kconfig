@@ -642,16 +642,6 @@ config PLATFORM_LPC_SPI_DMA_THRESHOLD
 	  Small DMA transfers will be performed using interrupts. This is a
 	  threshold value to switch from interrupt to DMA logic.
 
-config PLATFORM_LPC_ONE_WIRE_SSP
-	bool "1-Wire using SSP peripheral"
-	default y
-	depends on PLATFORM_LPC_SSP_BASE
-
-config PLATFORM_LPC_ONE_WIRE_SSP_SEARCH
-	bool "Device search feature"
-	default y
-	depends on PLATFORM_LPC_ONE_WIRE_SSP
-
 config PLATFORM_LPC_SPIFI
 	bool "SPIFI"
 	default y

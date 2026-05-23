@@ -172,7 +172,7 @@ config PLATFORM_STM32_UART5
 	default y
 	depends on PLATFORM_STM32_UART_BASE
 
-config PLATFORM_STM32_UART6
+config PLATFORM_STM32_USART6
 	bool "USART6"
 	default y
 	depends on PLATFORM_STM32_UART_BASE

@@ -177,14 +177,6 @@ if(CONFIG_PLATFORM_LPC_PININT)
     list(APPEND SOURCE_FILES "${CONFIG_GEN_PININT}/pin_int.c")
 endif()
 
-if(CONFIG_PLATFORM_LPC_ONE_WIRE_SSP)
-    list(APPEND SOURCE_FILES "one_wire_ssp.c")
-endif()
-
-if(CONFIG_PLATFORM_LPC_ONE_WIRE_UART)
-    list(APPEND SOURCE_FILES "${CONFIG_GEN_UART}/one_wire_uart.c")
-endif()
-
 if(CONFIG_PLATFORM_LPC_RIT)
     list(APPEND SOURCE_FILES "rit.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/rit_base.c")
