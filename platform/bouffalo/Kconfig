@@ -1,0 +1,141 @@
+menu "Power settings"
+
+config PM
+	bool "Power management"
+	default y
+	help
+	  This enables support for power management features.
+
+endmenu
+
+menu "Peripherals"
+
+config PLATFORM_BOUFFALO_NO_DEINIT
+	bool "Disable destructors"
+	default n
+
+config PLATFORM_BOUFFALO_DMA
+	bool "DMA"
+	default y
+
+config PLATFORM_BOUFFALO_DMA_PRIORITY
+	int "DMA interrupts priority"
+	default 0
+	depends on PLATFORM_BOUFFALO_DMA
+
+config PLATFORM_BOUFFALO_DMA_SYNC
+	bool "DMA synchronization"
+	default y
+	depends on PLATFORM_BOUFFALO_DMA
+	help
+	  Synchronization logic must be enabled when peripherals
+	  generating DMA requests run on different clocks to the GPDMA.
+	  For peripherals  running on the same clock as the GPDMA,
+	  disabling the synchronization logic improves the DMA request
+	  response time.
+
+config PLATFORM_BOUFFALO_GPTIMER_BASE
+	bool "General Purpose Timer"
+	default y
+
+config PLATFORM_BOUFFALO_GPTIMER_NO_DEINIT
+	bool
+	default y if PLATFORM_BOUFFALO_NO_DEINIT
+	depends on PLATFORM_BOUFFALO_GPTIMER_BASE
+
+config PLATFORM_BOUFFALO_GPTIMER_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_BOUFFALO_GPTIMER_BASE && PM
+
+config PLATFORM_BOUFFALO_GPTIMER
+	bool "Common timer"
+	default y
+	depends on PLATFORM_BOUFFALO_GPTIMER_BASE
+
+choice
+	prompt "Instruction Cache size"
+	default PLATFORM_BOUFFALO_ICACHE_NONE
+
+	config PLATFORM_BOUFFALO_ICACHE_NONE
+		bool "Disabled"
+
+	config PLATFORM_BOUFFALO_ICACHE_8K
+		bool "8K"
+
+	config PLATFORM_BOUFFALO_ICACHE_16K
+		bool "16K"
+
+	config PLATFORM_BOUFFALO_ICACHE_24K
+		bool "24K"
+
+	config PLATFORM_BOUFFALO_ICACHE_32K
+		bool "32K"
+endchoice
+
+config PLATFORM_BOUFFALO_SPI_BASE
+	bool "SPI"
+	default y
+	help
+	  This is the driver for the Serial Peripheral Interface.
+
+config PLATFORM_BOUFFALO_SPI_NO_DEINIT
+	bool
+	default y if PLATFORM_BOUFFALO_NO_DEINIT
+	depends on PLATFORM_BOUFFALO_SPI_BASE
+
+config PLATFORM_BOUFFALO_SPI_PM
+	bool "Power management"
+	default n
+	depends on PLATFORM_BOUFFALO_SPI_BASE && PM
+
+config PLATFORM_BOUFFALO_SPI_RC
+	bool "Runtime configuration"
+	default y
+	depends on PLATFORM_BOUFFALO_SPI_BASE
+
+config PLATFORM_BOUFFALO_SPI
+	bool "Interrupt-driven SPI Master"
+	default y
+	depends on PLATFORM_BOUFFALO_SPI_BASE
+
+config PLATFORM_BOUFFALO_SPI_DMA
+	bool "SPI Master with DMA"
+	default y
+	depends on PLATFORM_BOUFFALO_SPI_BASE && PLATFORM_BOUFFALO_DMA
+
+config PLATFORM_BOUFFALO_UART_BASE
+	bool "UART"
+	default y
+
+config PLATFORM_BOUFFALO_UART_NO_DEINIT
+	bool
+	default y if PLATFORM_BOUFFALO_NO_DEINIT
+	depends on PLATFORM_BOUFFALO_UART_BASE
+
+config PLATFORM_BOUFFALO_UART_PM
+	bool "Power management"
+	default n
+	depends on PM && PLATFORM_BOUFFALO_UART_BASE
+
+config PLATFORM_BOUFFALO_UART_RC
+	bool "Runtime configuration"
+	default y
+	depends on PLATFORM_BOUFFALO_UART_BASE
+
+config PLATFORM_BOUFFALO_UART_WATERMARK
+	bool "Watermark calculation"
+	default n
+	depends on PLATFORM_BOUFFALO_UART_BASE
+
+config PLATFORM_BOUFFALO_SERIAL
+	bool "Interrupt-driven serial port driver"
+	default y
+	depends on PLATFORM_BOUFFALO_UART_BASE
+
+config PLATFORM_BOUFFALO_SERIAL_DMA
+	bool "Serial port driver with DMA"
+	default y
+	depends on PLATFORM_BOUFFALO_UART_BASE && PLATFORM_BOUFFALO_DMA
+
+endmenu
