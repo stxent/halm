@@ -67,10 +67,12 @@ enum [[gnu::packed]] ClockSource
 struct GenericDividerConfig
 {
   /**
-   * Mandatory: integer divider value.
-   * @n The divider value for the Divider A should be in the range from 1 to 4.
-   * @n Divider values for Dividers B, C, D should be in the range from 1 to 16.
-   * @n The divider value for the Divider E should be in the range from 1 to 256.
+   * Mandatory: integer divider value applied to the selected divider.
+   *
+   * Allowed values depend on the specific divider being configured:
+   *   - For Divider A, the value must be in the range 1–4.
+   *   - For Dividers B, C, and D, the value must be in the range 1–16.
+   *   - For Divider E, the value must be in the range 1–256.
    */
   uint16_t divisor;
   /** Mandatory: clock source. */

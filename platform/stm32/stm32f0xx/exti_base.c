@@ -201,7 +201,7 @@ static enum Result extiInit(void *object, const void *configBase)
     sysResetPulse(RST_SYSCFG);
   }
 
-  /* Configure event multiplexor */
+  /* Configure event multiplexer */
   if (interrupt->channel <= EXTI_PIN15)
   {
     const size_t index = interrupt->channel >> 2;

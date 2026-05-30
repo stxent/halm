@@ -14,8 +14,10 @@ extern const struct TimerClass * const Timer;
 struct TimerConfig
 {
   /**
-   * Optional: desired timer tick rate. An actual peripheral frequency is used
-   * when option is set to zero.
+   * Optional: desired timer tick rate in Hz. When this value is zero,
+   * the system uses a default frequency of 1 kHz, which matches
+   * the fundamental system timer granularity (1 millisecond).
+   * The frequency cannot exceed 1 kHz.
    */
   uint32_t frequency;
 };

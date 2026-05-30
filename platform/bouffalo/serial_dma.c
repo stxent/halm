@@ -59,8 +59,8 @@ static enum Result enqueueTxBuffers(struct SerialDma *);
 static void rxDmaHandler(void *);
 static void serialInterruptHandler(void *);
 static void txDmaHandler(void *);
-static void updateRxWatermark(struct SerialDma *, size_t);
-static void updateTxWatermark(struct SerialDma *, size_t);
+static inline void updateRxWatermark(struct SerialDma *, size_t);
+static inline void updateTxWatermark(struct SerialDma *, size_t);
 
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_PM
 static void powerStateHandler(void *, enum PmState);
@@ -254,7 +254,7 @@ static void txDmaHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void updateRxWatermark(struct SerialDma *interface, size_t level)
+static inline void updateRxWatermark(struct SerialDma *interface, size_t level)
 {
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_WATERMARK
   if (level > interface->rxWatermark)
@@ -265,7 +265,7 @@ static void updateRxWatermark(struct SerialDma *interface, size_t level)
 #endif
 }
 /*----------------------------------------------------------------------------*/
-static void updateTxWatermark(struct SerialDma *interface, size_t level)
+static inline void updateTxWatermark(struct SerialDma *interface, size_t level)
 {
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_WATERMARK
   if (level > interface->txWatermark)

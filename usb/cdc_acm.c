@@ -69,8 +69,8 @@ static inline size_t getMaxPacketSize(void);
 static inline size_t getPacketSize(const struct CdcAcm *);
 static inline bool isTxPoolEmpty(const struct CdcAcm *);
 static bool resetEndpoints(struct CdcAcm *);
-static void updateRxWatermark(struct CdcAcm *, size_t);
-static void updateTxWatermark(struct CdcAcm *, size_t);
+static inline void updateRxWatermark(struct CdcAcm *, size_t);
+static inline void updateTxWatermark(struct CdcAcm *, size_t);
 
 #ifdef CONFIG_USB_DEVICE_CDC_ACM_INTERRUPTS
 static void cdcNotificationSent(void *, struct UsbRequest *,
@@ -337,7 +337,7 @@ static void sendStateNotification(struct CdcAcm *interface, uint16_t data)
 }
 #endif
 /*----------------------------------------------------------------------------*/
-static void updateRxWatermark(struct CdcAcm *interface, size_t level)
+static inline void updateRxWatermark(struct CdcAcm *interface, size_t level)
 {
 #ifdef CONFIG_USB_DEVICE_CDC_ACM_WATERMARK
   if (level > interface->rxWatermark)
@@ -348,7 +348,7 @@ static void updateRxWatermark(struct CdcAcm *interface, size_t level)
 #endif
 }
 /*----------------------------------------------------------------------------*/
-static void updateTxWatermark(struct CdcAcm *interface, size_t level)
+static inline void updateTxWatermark(struct CdcAcm *interface, size_t level)
 {
 #ifdef CONFIG_USB_DEVICE_CDC_ACM_WATERMARK
   if (level > interface->txWatermark)

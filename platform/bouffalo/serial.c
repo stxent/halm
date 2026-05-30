@@ -37,8 +37,8 @@ struct Serial
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
-static void updateRxWatermark(struct Serial *, size_t);
-static void updateTxWatermark(struct Serial *, size_t);
+static inline void updateRxWatermark(struct Serial *, size_t);
+static inline void updateTxWatermark(struct Serial *, size_t);
 
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_PM
 static void powerStateHandler(void *, enum PmState);
@@ -129,7 +129,7 @@ static void interruptHandler(void *object)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
-static void updateRxWatermark(struct Serial *interface, size_t level)
+static inline void updateRxWatermark(struct Serial *interface, size_t level)
 {
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_WATERMARK
   if (level > interface->rxWatermark)
@@ -140,7 +140,7 @@ static void updateRxWatermark(struct Serial *interface, size_t level)
 #endif
 }
 /*----------------------------------------------------------------------------*/
-static void updateTxWatermark(struct Serial *interface, size_t level)
+static inline void updateTxWatermark(struct Serial *interface, size_t level)
 {
 #ifdef CONFIG_PLATFORM_BOUFFALO_UART_WATERMARK
   if (level > interface->txWatermark)

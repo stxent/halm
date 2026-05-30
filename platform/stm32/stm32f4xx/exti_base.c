@@ -211,7 +211,7 @@ static enum Result extiInit(void *object, const void *configBase)
   interrupt->channel = config->channel;
   interrupt->handler = NULL;
 
-  /* Configure event multiplexor */
+  /* Configure event multiplexer */
   if (interrupt->channel <= EXTI_PIN15)
   {
     if (!sysClockStatus(CLK_SYSCFG))
