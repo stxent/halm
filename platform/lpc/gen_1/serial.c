@@ -75,13 +75,11 @@ static void interruptHandler(void *object)
 {
   struct Serial * const interface = object;
   LPC_UART_Type * const reg = interface->base.reg;
-  bool event;
 
   /* Interrupt status cleared when performed read operation on IIR register */
-  const uint32_t state = reg->IIR;
-
-  /* Call user handler when receive timeout occurs */
-  event = IIR_INTID_VALUE(state) == INTID_CTI;
+  const uint32_t intid = IIR_INTID_VALUE(reg->IIR);
+  /* Call user handler when data received or receive timeout occurs */
+  bool event = intid == INTID_RDA || intid == INTID_CTI;
 
   /* Byte will be removed from FIFO after reading from RBR register */
   while (reg->LSR & LSR_RDR)
@@ -92,6 +90,8 @@ static void interruptHandler(void *object)
     if (!byteQueueFull(&interface->rxQueue))
       byteQueuePushBack(&interface->rxQueue, data);
   }
+  updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
+
   if (reg->LSR & LSR_THRE)
   {
     const size_t txQueueSize = byteQueueSize(&interface->txQueue);
@@ -110,13 +110,6 @@ static void interruptHandler(void *object)
         reg->THR = byteQueuePopFront(&interface->txQueue);
     }
   }
-
-  /* User function will be called when receive queue is half-full */
-  const size_t rxQueueLevel = byteQueueCapacity(&interface->rxQueue) / 2;
-  const size_t rxQueueSize = byteQueueSize(&interface->rxQueue);
-
-  updateRxWatermark(interface, rxQueueSize);
-  event = event || rxQueueSize >= rxQueueLevel;
 
   if (event && interface->callback != NULL)
     interface->callback(interface->callbackArgument);
