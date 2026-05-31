@@ -14,14 +14,24 @@
 #include <halm/usb/usb_request.h>
 #include <xcore/accel.h>
 #include <assert.h>
+#include <string.h>
 /*----------------------------------------------------------------------------*/
+enum [[gnu::packed]] SetupState
+{
+  SETUP_IDLE,
+  SETUP_OUT,
+  SETUP_READY
+};
+
 struct UsbEndpoint;
 
 /* Endpoint subclass descriptor */
 struct DataEndpointClass
 {
   enum Result (*enqueue)(struct UsbEndpoint *, struct UsbRequest *);
-  void (*isr)(struct UsbEndpoint *, size_t, bool);
+  void (*rxFetch)(struct UsbEndpoint *, size_t);
+  void (*rxHandler)(struct UsbEndpoint *);
+  void (*txHandler)(struct UsbEndpoint *);
 };
 
 struct UsbEndpoint
@@ -50,6 +60,12 @@ struct UsbDevice
   struct UsbEndpoint **endpoints;
   /* Control message handler */
   struct UsbControl *control;
+
+  struct
+  {
+    struct UsbSetupPacket packet;
+    enum SetupState state;
+  } setup;
 
   /* Endpoints configured as isochronous */
   uint16_t isochronous;
@@ -109,8 +125,8 @@ const struct UsbDeviceClass * const UsbDevice =
     .stringErase = devStringErase
 };
 /*----------------------------------------------------------------------------*/
-// static void disableEpIn(struct UsbEndpoint *); // TODO
 static void disableEpOut(struct UsbEndpoint *);
+static void discardOutData(struct UsbDevice *, size_t);
 static void enableEpIn(struct UsbEndpoint *, size_t);
 static void enableEpOut(struct UsbEndpoint *);
 static uint32_t encodeEp0Size(size_t);
@@ -118,12 +134,17 @@ static void flushEpInFifo(struct UsbEndpoint *);
 
 #ifdef CONFIG_PLATFORM_USB_DMA
 static enum Result dmaEpEnqueue(struct UsbEndpoint *, struct UsbRequest *);
-static void dmaEpHandler(struct UsbEndpoint *, size_t, bool);
+static void dmaEpInRetire(struct UsbEndpoint *);
+static void dmaEpOutFetch(struct UsbEndpoint *, size_t);
+static void dmaEpOutRetire(struct UsbEndpoint *);
 #endif
 
 static enum Result sieEpEnqueue(struct UsbEndpoint *, struct UsbRequest *);
-static void sieEpHandler(struct UsbEndpoint *, size_t, bool);
-static bool sieEpReadData(struct UsbEndpoint *, uint8_t *, size_t, size_t,
+static void sieEpHandleSetup(struct UsbEndpoint *, const void *, size_t);
+static void sieEpInRetire(struct UsbEndpoint *);
+static void sieEpOutFetch(struct UsbEndpoint *, size_t);
+static void sieEpOutRetire(struct UsbEndpoint *);
+static bool sieEpReadData(struct UsbDevice *, uint8_t *, size_t, size_t,
     size_t *);
 static void sieEpWriteData(struct UsbEndpoint *, const uint8_t *, size_t);
 /*----------------------------------------------------------------------------*/
@@ -140,14 +161,18 @@ static void epSetStalled(void *, bool);
 static const struct DataEndpointClass * const DmaUsbEndpoint =
     &(const struct DataEndpointClass){
     .enqueue = dmaEpEnqueue,
-    .isr = dmaEpHandler
+    .rxFetch = dmaEpOutFetch,
+    .rxHandler = dmaEpOutRetire,
+    .txHandler = dmaEpInRetire
 };
 #endif
 
 static const struct DataEndpointClass * const SieUsbEndpoint =
     &(const struct DataEndpointClass){
     .enqueue = sieEpEnqueue,
-    .isr = sieEpHandler
+    .rxFetch = sieEpOutFetch,
+    .rxHandler = sieEpOutRetire,
+    .txHandler = sieEpInRetire
 };
 
 static const struct UsbEndpointClass * const UsbEndpoint =
@@ -236,24 +261,50 @@ static void interruptHandler(void *object)
     device->suspended = false;
   }
 
-  if (intStatus & GINTSTS_RXFLVL)
+  if (intStatus & GINTSTS_OEPINT)
   {
-    const uint32_t fifoStatus = reg->GLOBAL.GRXSTSP;
-    const uint8_t epNumber = GRXSTSR_EPNUM_VALUE(fifoStatus);
-    const uint8_t packetStatus = GRXSTSR_PKTSTS_VALUE(fifoStatus);
-    const size_t packetLength = GRXSTSR_BCNT_VALUE(fifoStatus);
+    uint32_t epIntStatus = DAINT_OEPINT_VALUE(reg->DEV.DAINT);
 
-    if (packetStatus == PKTSTS_SETUP_PACKET_RECEIVED
-        || packetStatus == PKTSTS_OUT_PACKET_RECEIVED)
+    while (epIntStatus)
     {
-      struct UsbEndpoint * const ep = device->endpoints[EP_TO_INDEX(epNumber)];
-      const bool setup = packetStatus == PKTSTS_SETUP_PACKET_RECEIVED;
+      const unsigned int index = 31 - countLeadingZeros32(epIntStatus);
+      const uint32_t doepint = reg->DEV_EP_OUT[index].DOEPINT;
+      struct UsbEndpoint * const ep = device->endpoints[EP_TO_INDEX(index)];
 
-      /* New SETUP packet is received, flush endpoint 0 IN FIFO */
-      if (setup && (reg->DEV_EP_IN[0].DIEPTSIZ & DIEPTSIZ0_PKTCNT_MASK))
-        flushEpInFifo(device->endpoints[EP_TO_INDEX(USB_EP_DIRECTION_IN)]);
+      if (doepint & DOEPINT_XFRC)
+      {
+        reg->DEV_EP_OUT[index].DOEPINT = DOEPINT_XFRC;
 
-      ep->subclass->isr(ep, packetLength, setup);
+        if (index == 0)
+        {
+          if (device->setup.state == SETUP_OUT)
+            ep->subclass->rxHandler(ep);
+          else
+            enableEpOut(ep);
+        }
+        else
+        {
+          ep->subclass->rxHandler(ep);
+        }
+      }
+
+      if (doepint & DOEPINT_STUP)
+      {
+        reg->DEV_EP_OUT[index].DOEPINT = DOEPINT_STUP;
+
+        if (device->setup.state != SETUP_IDLE)
+        {
+          sieEpHandleSetup(ep, &device->setup.packet,
+              sizeof(device->setup.packet));
+
+          if (device->setup.state == SETUP_READY)
+            device->setup.state = SETUP_IDLE;
+        }
+
+        enableEpOut(ep);
+      }
+
+      epIntStatus -= 1UL << index;
     }
   }
 
@@ -268,9 +319,56 @@ static void interruptHandler(void *object)
           device->endpoints[EP_TO_INDEX(index | USB_EP_DIRECTION_IN)];
 
       reg->DEV_EP_IN[index].DIEPINT = DIEPINT_XFRC;
+      ep->subclass->txHandler(ep);
 
-      ep->subclass->isr(ep, 0, false);
       epIntStatus -= 1UL << index;
+    }
+  }
+
+  if (intStatus & GINTSTS_RXFLVL)
+  {
+    while (reg->GLOBAL.GINTSTS & GINTSTS_RXFLVL)
+    {
+      const uint32_t fifoStatus = reg->GLOBAL.GRXSTSP;
+      const uint8_t epNumber = GRXSTSR_EPNUM_VALUE(fifoStatus);
+      struct UsbEndpoint * const ep = device->endpoints[EP_TO_INDEX(epNumber)];
+
+      switch (GRXSTSR_PKTSTS_VALUE(fifoStatus))
+      {
+        case PKTSTS_OUT_PACKET_RECEIVED:
+          if (ep->subclass->rxFetch != NULL)
+            ep->subclass->rxFetch(ep, GRXSTSR_BCNT_VALUE(fifoStatus));
+          break;
+
+        case PKTSTS_OUT_TRANSFER_COMPLETED:
+          /* Do nothing */
+          break;
+
+        case PKTSTS_SETUP_TRANSFER_COMPLETED:
+          if (device->setup.state == SETUP_OUT)
+          {
+            /* Prevent the loss of the first FIFO word */
+            enableEpOut(ep); // TODO
+          }
+          break;
+
+        case PKTSTS_SETUP_PACKET_RECEIVED:
+        {
+          sieEpReadData(device, (uint8_t *)&device->setup.packet,
+              sizeof(device->setup.packet), sizeof(device->setup.packet), NULL);
+
+          const uint8_t dir =
+              REQUEST_DIRECTION_VALUE(device->setup.packet.requestType);
+          const bool out = dir == REQUEST_DIRECTION_TO_DEVICE;
+
+          device->setup.state = out && device->setup.packet.length ?
+              SETUP_OUT : SETUP_READY;
+          break;
+        }
+
+        default:
+          break;
+      }
     }
   }
 }
@@ -284,6 +382,7 @@ static void resetDevice(struct UsbDevice *device)
   device->even = false;
   device->suspended = false;
   device->position = MIN(device->base.memoryCapacity >> 1, 1024);
+  device->setup.state = SETUP_IDLE;
 
   /* Disable End of Periodic Frame interrupt */
   reg->GLOBAL.GINTMSK &= ~GINTMSK_EOPFM;
@@ -433,11 +532,11 @@ static enum Result devInit(void *object, const void *configBase)
   reg->GLOBAL.GAHBCFG |= GAHBCFG_GINT;
   reg->GLOBAL.GINTMSK =
       GINTMSK_USBRST | GINTMSK_ENUMDNEM
-      | GINTMSK_RXFLVLM | GINTMSK_IEPINT
+      | GINTMSK_RXFLVLM | GINTMSK_IEPINT | GINTMSK_OEPINT
       | GINTMSK_USBSUSPM | GINTMSK_WUIM;
   reg->DEV.DAINTMSK = 0;
   reg->DEV.DIEPMSK = DIEPMSK_XFRCM;
-  reg->DEV.DOEPMSK = DOEPMSK_XFRCM;
+  reg->DEV.DOEPMSK = DOEPMSK_XFRCM | DOEPMSK_STUPM;
 
 #ifdef CONFIG_PLATFORM_USB_SOF
   reg->GLOBAL.GINTMSK |= GINTMSK_SOFM;
@@ -550,20 +649,20 @@ static void devStringErase(void *object, struct UsbString string)
   usbControlStringErase(device->control, string);
 }
 /*----------------------------------------------------------------------------*/
-// static void disableEpIn(struct UsbEndpoint *ep)
-// {
-//   STM_USB_OTG_Type * const reg = ep->device->base.reg;
-//   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
-
-//   reg->DEV_EP_IN[number].DIEPCTL |= DIEPCTL_SNAK;
-// }
-/*----------------------------------------------------------------------------*/
 static void disableEpOut(struct UsbEndpoint *ep)
 {
   STM_USB_OTG_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
   reg->DEV_EP_OUT[number].DOEPCTL |= DOEPCTL_SNAK;
+}
+/*----------------------------------------------------------------------------*/
+static void discardOutData(struct UsbDevice *device, size_t length)
+{
+  STM_USB_OTG_Type * const reg = device->base.reg;
+
+  for (size_t index = 0; index < length; index += 4)
+    (void)reg->FIFO[0].DATA[0];
 }
 /*----------------------------------------------------------------------------*/
 static void enableEpIn(struct UsbEndpoint *ep, size_t length)
@@ -651,167 +750,212 @@ static void flushEpInFifo(struct UsbEndpoint *ep)
 static enum Result dmaEpEnqueue(struct UsbEndpoint *ep,
     struct UsbRequest *request)
 {
+  if (!ep->device->configured)
+    return E_IDLE;
+
   const IrqState state = irqSave();
+  enum Result res = E_FULL;
 
-  if (pointerQueueFull(&ep->requests))
+  if (!pointerQueueFull(&ep->requests))
   {
-    irqRestore(state);
-    return E_FULL;
-  }
-
-  if (pointerQueueEmpty(&ep->requests))
-  {
-    STM_USB_OTG_Type * const reg = ep->device->base.reg;
-    const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
-
-    if (ep->address & USB_EP_DIRECTION_IN)
+    if (pointerQueueEmpty(&ep->requests))
     {
-      reg->DEV_EP_IN[number].DIEPDMA = (uintptr_t)request->buffer;
-      enableEpIn(ep, request->length);
-    }
-    else
-    {
-      reg->DEV_EP_OUT[number].DOEPDMA = (uintptr_t)request->buffer;
-      enableEpOut(ep);
-    }
-  }
+      STM_USB_OTG_Type * const reg = ep->device->base.reg;
+      const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
-  pointerQueuePushBack(&ep->requests, request);
+      if (ep->address & USB_EP_DIRECTION_IN)
+      {
+        reg->DEV_EP_IN[number].DIEPDMA = (uintptr_t)request->buffer;
+        enableEpIn(ep, request->length);
+      }
+      else
+      {
+        reg->DEV_EP_OUT[number].DOEPDMA = (uintptr_t)request->buffer;
+        enableEpOut(ep);
+      }
+    }
+
+    pointerQueuePushBack(&ep->requests, request);
+    res = E_OK;
+  }
 
   irqRestore(state);
-  return E_OK;
+  return res;
 }
 #endif
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_USB_DMA
-static void dmaEpHandler(struct UsbEndpoint *ep, size_t length, bool setup)
+static void dmaEpInRetire(struct UsbEndpoint *ep)
 {
-  if (pointerQueueEmpty(&ep->requests))
-    return;
+  assert(ep->address & USB_EP_DIRECTION_IN);
 
   STM_USB_OTG_Type * const reg = ep->device->base.reg;
   const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
 
-  if (ep->address & USB_EP_DIRECTION_IN)
+  if (!pointerQueueEmpty(&ep->requests))
   {
-    struct UsbRequest *req = pointerQueueFront(&ep->requests);
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
     pointerQueuePopFront(&ep->requests);
 
-    req->callback(req->argument, req, USB_REQUEST_COMPLETED);
+    request->callback(request->argument, request, USB_REQUEST_COMPLETED);
+  }
 
-    if (!pointerQueueEmpty(&ep->requests))
-    {
-      req = pointerQueueFront(&ep->requests);
+  if (!pointerQueueEmpty(&ep->requests))
+  {
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
 
-      reg->DEV_EP_IN[number].DIEPDMA = (uintptr_t)req->buffer;
-      enableEpIn(ep, req->length);
-    }
-    else
-    {
-      // TODO
-      // disableEpIn(ep);
-    }
+    reg->DEV_EP_IN[number].DIEPDMA = (uintptr_t)request->buffer;
+    enableEpIn(ep, request->length);
+  }
+}
+
+static void dmaEpOutFetch(struct UsbEndpoint *ep, size_t length)
+{
+  // TODO
+  (void)ep;
+  (void)length;
+}
+
+static void dmaEpOutRetire(struct UsbEndpoint *ep)
+{
+  assert(!(ep->address & USB_EP_DIRECTION_IN));
+
+  STM_USB_OTG_Type * const reg = ep->device->base.reg;
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+
+  if (!pointerQueueEmpty(&ep->requests))
+  {
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+    pointerQueuePopFront(&ep->requests);
+
+    // TODO Length
+    request->callback(request->argument, request, USB_REQUEST_COMPLETED);
+  }
+
+  if (!pointerQueueEmpty(&ep->requests))
+  {
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+
+    reg->DEV_EP_OUT[number].DOEPDMA = (uintptr_t)request->buffer;
+    enableEpOut(ep);
   }
   else
-  {
-    struct UsbRequest * const req = pointerQueueFront(&ep->requests);
-    size_t read;
-
-    if (sieEpReadData(ep, req->buffer, req->capacity, length, &read))
-    {
-      const enum UsbRequestStatus requestStatus = setup ?
-          USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
-
-      pointerQueuePopFront(&ep->requests);
-      req->length = read;
-      req->callback(req->argument, req, requestStatus);
-
-      if (!pointerQueueEmpty(&ep->requests))
-      {
-        reg->DEV_EP_OUT[number].DOEPDMA = (uintptr_t)req->buffer;
-        enableEpOut(ep);
-      }
-      else
-        disableEpOut(ep);
-    }
-  }
+    disableEpOut(ep);
 }
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result sieEpEnqueue(struct UsbEndpoint *ep,
     struct UsbRequest *request)
 {
+  const unsigned int number = USB_EP_LOGICAL_ADDRESS(ep->address);
+
+  if (number && !ep->device->configured)
+    return E_IDLE;
+
   const IrqState state = irqSave();
+  enum Result res = E_FULL;
 
-  if (pointerQueueFull(&ep->requests))
+  if (!pointerQueueFull(&ep->requests))
   {
-    irqRestore(state);
-    return E_FULL;
-  }
+    if (pointerQueueEmpty(&ep->requests))
+    {
+      if (ep->address & USB_EP_DIRECTION_IN)
+        sieEpWriteData(ep, request->buffer, request->length);
+      else if (number)
+        enableEpOut(ep);
+    }
 
-  if (pointerQueueEmpty(&ep->requests))
-  {
-    if (ep->address & USB_EP_DIRECTION_IN)
-      sieEpWriteData(ep, request->buffer, request->length);
-    else
-      enableEpOut(ep);
+    pointerQueuePushBack(&ep->requests, request);
+    res = E_OK;
   }
-
-  pointerQueuePushBack(&ep->requests, request);
 
   irqRestore(state);
-  return E_OK;
+  return res;
 }
 /*----------------------------------------------------------------------------*/
-static void sieEpHandler(struct UsbEndpoint *ep, size_t length, bool setup)
+static void sieEpHandleSetup(struct UsbEndpoint *ep, const void *buffer,
+    size_t length)
 {
   if (pointerQueueEmpty(&ep->requests))
     return;
 
-  if (ep->address & USB_EP_DIRECTION_IN)
+  struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+  pointerQueuePopFront(&ep->requests);
+
+  assert(request->capacity >= length);
+  memcpy(request->buffer, buffer, length);
+  request->length = length;
+
+  request->callback(request->argument, request, USB_REQUEST_SETUP);
+}
+/*----------------------------------------------------------------------------*/
+static void sieEpInRetire(struct UsbEndpoint *ep)
+{
+  assert(ep->address & USB_EP_DIRECTION_IN);
+
+  if (!pointerQueueEmpty(&ep->requests))
   {
-    struct UsbRequest *req = pointerQueueFront(&ep->requests);
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
     pointerQueuePopFront(&ep->requests);
 
-    req->callback(req->argument, req, USB_REQUEST_COMPLETED);
+    request->callback(request->argument, request, USB_REQUEST_COMPLETED);
+  }
 
-    if (!pointerQueueEmpty(&ep->requests))
-    {
-      req = pointerQueueFront(&ep->requests);
-      sieEpWriteData(ep, req->buffer, req->length);
-    }
-    else
-    {
-      // TODO
-      // disableEpIn(ep);
-    }
+  /* Enqueue next request */
+  if (!pointerQueueEmpty(&ep->requests))
+  {
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+    sieEpWriteData(ep, request->buffer, request->length);
   }
   else
   {
-    struct UsbRequest * const req = pointerQueueFront(&ep->requests);
-    size_t read;
-
-    if (sieEpReadData(ep, req->buffer, req->capacity, length, &read))
-    {
-      const enum UsbRequestStatus requestStatus = setup ?
-          USB_REQUEST_SETUP : USB_REQUEST_COMPLETED;
-
-      pointerQueuePopFront(&ep->requests);
-      req->length = read;
-      req->callback(req->argument, req, requestStatus);
-
-      if (!pointerQueueEmpty(&ep->requests))
-        enableEpOut(ep);
-      else
-        disableEpOut(ep);
-    }
+    if (!USB_EP_LOGICAL_ADDRESS(ep->address))
+      ep->device->setup.state = SETUP_IDLE;
   }
 }
 /*----------------------------------------------------------------------------*/
-static bool sieEpReadData(struct UsbEndpoint *ep, uint8_t *buffer,
+static void sieEpOutFetch(struct UsbEndpoint *ep, size_t length)
+{
+  assert(!(ep->address & USB_EP_DIRECTION_IN));
+
+  if (pointerQueueEmpty(&ep->requests))
+  {
+    discardOutData(ep->device, length);
+    return;
+  }
+
+  struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+  size_t read;
+
+  if (sieEpReadData(ep->device, request->buffer, request->capacity,
+      length, &read))
+  {
+    request->length = read;
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void sieEpOutRetire(struct UsbEndpoint *ep)
+{
+  assert(!(ep->address & USB_EP_DIRECTION_IN));
+
+  if (!pointerQueueEmpty(&ep->requests))
+  {
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
+    pointerQueuePopFront(&ep->requests);
+
+    request->callback(request->argument, request, USB_REQUEST_COMPLETED);
+  }
+
+  if (USB_EP_LOGICAL_ADDRESS(ep->address) && pointerQueueEmpty(&ep->requests))
+    disableEpOut(ep);
+  else
+    enableEpOut(ep);
+}
+/*----------------------------------------------------------------------------*/
+static bool sieEpReadData(struct UsbDevice *device, uint8_t *buffer,
     size_t capacity, size_t length, size_t *read)
 {
-  STM_USB_OTG_Type * const reg = ep->device->base.reg;
+  STM_USB_OTG_Type * const reg = device->base.reg;
   const bool ok = length <= capacity;
 
   if (ok)
@@ -819,7 +963,9 @@ static bool sieEpReadData(struct UsbEndpoint *ep, uint8_t *buffer,
     uint32_t *start = (uint32_t *)buffer;
     uint32_t * const end = start + (length >> 2);
 
-    *read = length;
+    if (read != NULL)
+      *read = length;
+
     buffer = (uint8_t *)end;
     length &= 3;
 
@@ -878,7 +1024,7 @@ static void sieEpWriteData(struct UsbEndpoint *ep, const uint8_t *buffer,
       switch (length)
       {
         case 3:
-          lastWord = buffer[2] << 16;
+          lastWord |= buffer[2] << 16;
           [[fallthrough]];
         case 2:
           lastWord |= buffer[1] << 8;
@@ -950,10 +1096,10 @@ static void epClear(void *object)
 
   while (!pointerQueueEmpty(&ep->requests))
   {
-    struct UsbRequest * const req = pointerQueueFront(&ep->requests);
+    struct UsbRequest * const request = pointerQueueFront(&ep->requests);
     pointerQueuePopFront(&ep->requests);
 
-    req->callback(req->argument, req, USB_REQUEST_CANCELLED);
+    request->callback(request->argument, request, USB_REQUEST_CANCELLED);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -1054,7 +1200,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
     {
       assert(size <= DOEPCTL_MPSIZ_MASK);
       doeptsiz = DOEPTSIZ_XFRSIZ(size) | DOEPTSIZ_PKTCNT(1);
-      doepctl |= DOEPCTL_MPSIZ(size) | DOEPCTL_USBAEP | DOEPCTL_SD0PID;
+      doepctl |= DOEPCTL_MPSIZ(size) | DOEPCTL_USBAEP;
 
       if (ep->type != ENDPOINT_TYPE_ISOCHRONOUS)
         doepctl |= DOEPCTL_SD0PID;
@@ -1068,6 +1214,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 
     reg->DEV_EP_OUT[number].DOEPTSIZ = doeptsiz;
     reg->DEV_EP_OUT[number].DOEPCTL = doepctl;
+    reg->DEV.DAINTMSK |= DAINTMSK_OEPM(number);
   }
 }
 /*----------------------------------------------------------------------------*/

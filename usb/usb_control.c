@@ -486,8 +486,8 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
 
   if (ready)
   {
-    const uint8_t out = REQUEST_DIRECTION_VALUE(packet->requestType) ==
-        REQUEST_DIRECTION_TO_DEVICE;
+    const uint8_t dir = REQUEST_DIRECTION_VALUE(packet->requestType);
+    const bool out = dir == REQUEST_DIRECTION_TO_DEVICE;
     uint16_t length = 0;
 
     const enum Result res = driverControl(
@@ -578,7 +578,7 @@ static void sendResponse(struct UsbControl *control, const uint8_t *data,
 
     if (chunk)
       memcpy(request->buffer, data, chunk);
-    request->length = (uint16_t)chunk;
+    request->length = chunk;
 
     data += chunk;
     length -= chunk;
