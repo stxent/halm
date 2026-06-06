@@ -215,7 +215,7 @@ config PLATFORM_NUMICRO_FLASH
 	bool "Flash driver"
 	default y
 	help
-	  This enables driver for the internal Flash memory.
+	  This enables driver for the internal flash memory.
 
 config PLATFORM_NUMICRO_GPTIMER_BASE
 	bool "General Purpose Timer"

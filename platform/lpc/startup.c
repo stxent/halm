@@ -25,7 +25,7 @@ void RESET_ISR(void)
     *dst++ = CONFIG_CORE_CORTEX_MEMORY_PATTERN;
 #endif
 
-  /* Copy the data segment initializers from Flash to RAM */
+  /* Copy the data segment initializers from flash to RAM */
   for (dst = &_sdata, src = &_sidata; dst < &_edata;)
     *dst++ = *src++;
 

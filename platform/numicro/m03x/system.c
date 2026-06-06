@@ -47,7 +47,7 @@ static bool calcFlashLatency(uint32_t frequency, unsigned int *cycles,
   {
     *cache = false;
 
-    /* Parts with 16/32/64/128 KiB Flash */
+    /* Parts with 16/32/64/128 KiB flash */
     if (frequency <= 24000000)
     {
       *cycles = 1;
@@ -63,7 +63,7 @@ static bool calcFlashLatency(uint32_t frequency, unsigned int *cycles,
   {
     *cache = true;
 
-    /* Parts with 256/512 KiB Flash */
+    /* Parts with 256/512 KiB flash */
     if (frequency <= 12000000)
     {
       *cycles = 1;

@@ -6,7 +6,7 @@
 
 /**
  * @file
- * Abstract class for SPI NAND and NOR Flash with QSPI interfaces.
+ * Abstract class for SPI NAND and NOR flash with QSPI interfaces.
  */
 
 #ifndef HALM_GENERIC_SPIM_H_

@@ -43,7 +43,7 @@ static enum Result flashGetParam(void *object, int parameter, void *data)
 {
   struct Flash * const interface = object;
 
-  /* Additional Flash parameters */
+  /* Additional flash memory parameters */
   switch ((enum FlashParameter)parameter)
   {
     case IF_FLASH_PAGE_SIZE:
@@ -73,7 +73,7 @@ static enum Result flashSetParam(void *object, int parameter, const void *data)
 {
   struct Flash * const interface = object;
 
-  /* Additional Flash parameters */
+  /* Additional flash memory parameters */
   switch ((enum FlashParameter)parameter)
   {
     case IF_FLASH_ERASE_SECTOR:

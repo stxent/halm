@@ -47,7 +47,7 @@
     (FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_0 \
         - FLASH_SECTORS_BORDER / FLASH_SECTOR_SIZE_1)
 /*----------------------------------------------------------------------------*/
-#define IAP_BASE                (*(volatile uint32_t *)0x10400100UL)
+#define IAP_BASE                0x10400100UL
 /*----------------------------------------------------------------------------*/
 static inline uint8_t addressToBank(uint32_t address)
 {

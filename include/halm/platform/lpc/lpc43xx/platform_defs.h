@@ -2112,7 +2112,7 @@ typedef struct
   __ro__ uint32_t CRSR_INTRAW;
   __ro__ uint32_t CRSR_INTSTAT;
 } LPC_LCD_Type;
-/*------------------SPI Flash Interface---------------------------------------*/
+/*------------------SPI flash Interface---------------------------------------*/
 typedef struct
 {
   __rw__ uint32_t CTRL;

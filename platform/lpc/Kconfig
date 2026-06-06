@@ -300,7 +300,7 @@ config PLATFORM_LPC_FLASH
 	default y
 	select PLATFORM_LPC_IAP
 	help
-	  This enables driver for the internal Flash memory.
+	  This enables driver for the internal flash memory.
 
 config PLATFORM_LPC_GPDMA
 	bool "GPDMA"

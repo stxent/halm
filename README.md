@@ -40,7 +40,7 @@ on your system:
 * **Kconfiglib** or **kconfig‑frontends** — tools for interactive library
   configuration via `menuconfig`.
 * **Xcore** — can be built separately or included as CMake submodule
-  in the project.
+  in the top-level project.
 
 ## Library Contents
 
@@ -60,7 +60,7 @@ across platforms. Supports the following peripherals:
 * QSPI and specialized peripherals with XIP
 * USB FS and HS
 * Ethernet
-* Built‑in Flash and EEPROM
+* Built‑in flash memory and EEPROM
 * External parallel SRAM and SDRAM
 * Clock management and power saving
 * Specialized peripherals
@@ -148,6 +148,7 @@ The following build options are available to customize your build:
       LPC11EXX — NXP LPC11Exx series
       LPC13XX — NXP LPC13xx series
       LPC13UXX — NXP LPC13Uxx series
+      LPC17XX — NXP LPC13xx series
       LPC43XX — NXP LPC43xx series (main M4 core)
       LPC43XX_M0APP — NXP LPC43xx series, M0 application core
       LPC43XX_M0SUB — NXP LPC43xx series, M0 subcore

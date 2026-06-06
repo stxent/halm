@@ -286,7 +286,7 @@ static enum Result flashInit(void *object, const void *configBase)
     }
     else if (capacity > 0)
     {
-      /* Bank 1 is not available on parts with 128 or 256 Kbytes of Flash */
+      /* Bank 1 is not available on parts with 128 or 256 Kbytes of flash */
       if (config->bank == FLASH_BANK_0)
         interface->size = capacity;
       else
@@ -318,7 +318,7 @@ static enum Result flashInit(void *object, const void *configBase)
   {
     if (capacity != 512 * 1024)
     {
-      /* SPROM is not available on parts with 128 or 256 Kbytes of Flash */
+      /* SPROM is not available on parts with 128 or 256 Kbytes of flash */
       res = E_ERROR;
     }
     else
@@ -342,7 +342,7 @@ static enum Result flashGetParam(void *object, int parameter, void *data)
 {
   const struct Flash * const interface = object;
 
-  /* Additional Flash parameters */
+  /* Additional flash memory parameters */
   switch ((enum FlashParameter)parameter)
   {
     case IF_FLASH_BLOCK_SIZE:
@@ -384,7 +384,7 @@ static enum Result flashSetParam(void *object, int parameter, const void *data)
 {
   struct Flash * const interface = object;
 
-  /* Additional Flash options */
+  /* Additional flash memory options */
   switch ((enum FlashParameter)parameter)
   {
     case IF_FLASH_ERASE_BLOCK:
