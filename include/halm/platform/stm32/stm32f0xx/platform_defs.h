@@ -193,7 +193,7 @@ typedef struct
   __rw__ uint32_t CR;
   __rw__ uint32_t APB1FZ;
   __rw__ uint32_t APB2FZ;
-} STM_DBGMCU_Type;
+} STM_DBG_Type;
 /*------------------External Interrupt/Event Controller-----------------------*/
 typedef struct
 {
@@ -220,6 +220,10 @@ typedef struct
 /*------------------Option Bytes----------------------------------------------*/
 typedef struct
 {
+  __ro__ uint32_t UID[3];
+  __ne__ uint16_t RESERVED0[10];
+  __ro__ uint16_t FID;
+  __ne__ uint16_t RESERVED1[25];
   __rw__ uint16_t RDP;
   __rw__ uint16_t USER;
   __rw__ uint16_t DATA0;
@@ -504,7 +508,7 @@ typedef struct
   __ne__ uint8_t RESERVED31[0x400 - sizeof(STM_TIM_Type)];
   STM_TIM_Type TIM17;
   __ne__ uint8_t RESERVED32[0x1000 - sizeof(STM_TIM_Type)];
-  STM_DBGMCU_Type DBGMCU;
+  STM_DBG_Type DBG;
 } APB_DOMAIN_Type;
 
 typedef struct
@@ -530,6 +534,7 @@ typedef struct
 extern AHB1_DOMAIN_Type AHB1_DOMAIN;
 extern AHB2_DOMAIN_Type AHB2_DOMAIN;
 extern APB_DOMAIN_Type  APB_DOMAIN;
+extern STM_OB_Type      OB_DOMAIN;
 /*----------------------------------------------------------------------------*/
 #define STM_TIM2          (&APB_DOMAIN.TIM2)
 #define STM_TIM3          (&APB_DOMAIN.TIM3)
@@ -566,7 +571,7 @@ extern APB_DOMAIN_Type  APB_DOMAIN;
 #define STM_TIM15         (&APB_DOMAIN.TIM15)
 #define STM_TIM16         (&APB_DOMAIN.TIM16)
 #define STM_TIM17         (&APB_DOMAIN.TIM17)
-#define STM_DBGMCU        (&APB_DOMAIN.DBGMCU)
+#define STM_DBG           (&APB_DOMAIN.DBG)
 
 #define STM_DMA1          (&AHB1_DOMAIN.DMA1)
 #define STM_DMA2          (&AHB1_DOMAIN.DMA2)
@@ -581,5 +586,7 @@ extern APB_DOMAIN_Type  APB_DOMAIN;
 #define STM_GPIOD         (&AHB2_DOMAIN.GPIO[3])
 #define STM_GPIOE         (&AHB2_DOMAIN.GPIO[4])
 #define STM_GPIOF         (&AHB2_DOMAIN.GPIO[5])
+
+#define STM_OB            (&OB_DOMAIN)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F0XX_PLATFORM_DEFS_H_ */

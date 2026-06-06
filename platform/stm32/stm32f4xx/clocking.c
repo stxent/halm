@@ -8,7 +8,6 @@
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm32/clocking.h>
 #include <halm/platform/stm32/stm32f4xx/clocking_defs.h>
-#include <halm/platform/stm32/system.h>
 #include <xcore/accel.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -182,6 +181,7 @@ static void flashLatencyUpdate(uint32_t frequency, enum VoltageRange range)
       break;
 
     case VR_2V7_3V6:
+    case VR_2V7_3V6_VPP:
       /* Max frequency is 168 MHz */
       step = 30000000;
       break;

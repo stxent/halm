@@ -18,6 +18,16 @@
 /*----------------------------------------------------------------------------*/
 #include <xcore/helpers.h>
 /*----------------------------------------------------------------------------*/
+enum [[gnu::packed]] VoltageRange
+{
+  VR_DEFAULT,
+  VR_1V7_2V1,
+  VR_2V1_2V4,
+  VR_2V4_2V7,
+  VR_2V7_3V6,
+  VR_2V7_3V6_VPP
+};
+
 enum [[gnu::packed]] SysBlockReset
 {
   RST_GPIOA   = 0,

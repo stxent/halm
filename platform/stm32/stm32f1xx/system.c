@@ -5,6 +5,7 @@
  */
 
 #include <halm/platform/platform_defs.h>
+#include <halm/platform/stm32/flash_defs.h>
 #include <halm/platform/stm32/stm32f1xx/clocking_defs.h>
 #include <halm/platform/stm32/stm32f1xx/system_defs.h>
 #include <halm/platform/stm32/system.h>

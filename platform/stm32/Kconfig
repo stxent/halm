@@ -156,6 +156,12 @@ config PLATFORM_STM32_EXTI_NO_DEINIT
 	default y if PLATFORM_STM32_NO_DEINIT
 	depends on PLATFORM_STM32_EXTI
 
+config PLATFORM_STM32_FLASH
+	bool "Flash driver"
+	default y
+	help
+	  This enables driver for the internal flash memory.
+
 config PLATFORM_STM32_GPTIMER_BASE
 	bool "General Purpose Timer"
 	default y

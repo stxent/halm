@@ -168,6 +168,14 @@ typedef struct
   __ro__ uint32_t DOR2;
   __rw__ uint32_t SR;
 } STM_DAC_Type;
+/*------------------Debug registers-------------------------------------------*/
+typedef struct
+{
+  __ro__ uint32_t IDCODE;
+  __rw__ uint32_t CR;
+  __rw__ uint32_t APB1_FZ;
+  __rw__ uint32_t APB2_FZ;
+} STM_DBG_Type;
 /*------------------Digital Camera Interface----------------------------------*/
 typedef struct
 {
@@ -625,6 +633,20 @@ typedef struct
   __ne__ uint32_t RESERVED0[52];
   __rw__ uint32_t CSR[51];
 } STM_HASH_Type;
+/*------------------Option bytes----------------------------------------------*/
+typedef struct
+{
+  __ne__ uint16_t RESERVED0[4];
+  __ro__ uint16_t WRP_BANK2;
+  __ne__ uint16_t RESERVED1[23811];
+  __ro__ uint32_t UID[3];
+  __ne__ uint16_t RESERVED2[3];
+  __ro__ uint16_t FID;
+  __ne__ uint16_t RESERVED3[8942];
+  __ro__ uint16_t RDP_USER;
+  __ne__ uint16_t RESERVED4[3];
+  __ro__ uint16_t WRP;
+} STM_OB_Type;
 /*------------------Random Number Generator-----------------------------------*/
 typedef struct
 {
@@ -915,12 +937,9 @@ extern AHB2_DOMAIN_Type AHB2_DOMAIN;
 extern AHB3_DOMAIN_Type AHB3_DOMAIN;
 extern APB1_DOMAIN_Type APB1_DOMAIN;
 extern APB2_DOMAIN_Type APB2_DOMAIN;
+extern STM_DBG_Type     DBG_DOMAIN;
+extern STM_OB_Type      OB_DOMAIN;
 /*----------------------------------------------------------------------------*/
-//#define STM_ETHERNET_MAC_BASE   (STM_ETHERNET_BASE)
-//#define STM_ETHERNET_MMC_BASE   (STM_ETHERNET_BASE + 0x0100)
-//#define STM_ETHERNET_PTP_BASE   (STM_ETHERNET_BASE + 0x0700)
-//#define STM_ETHERNET_DMA_BASE   (STM_ETHERNET_BASE + 0x1000)
-
 #define STM_TIM2          (&APB1_DOMAIN.TIM2)
 #define STM_TIM3          (&APB1_DOMAIN.TIM3)
 #define STM_TIM4          (&APB1_DOMAIN.TIM4)
@@ -991,5 +1010,8 @@ extern APB2_DOMAIN_Type APB2_DOMAIN;
 #define STM_RNG           (&AHB2_DOMAIN.RNG)
 
 #define STM_FSMC          (&AHB3_DOMAIN.FSMC)
+
+#define STM_DBG           (&DBG_DOMAIN)
+#define STM_OB            (&OB_DOMAIN)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F4XX_PLATFORM_DEFS_H_ */

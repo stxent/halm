@@ -5,6 +5,7 @@
  */
 
 #include <halm/platform/platform_defs.h>
+#include <halm/platform/stm32/flash_defs.h>
 #include <halm/platform/stm32/stm32f4xx/system_defs.h>
 #include <halm/platform/stm32/system.h>
 #include <xcore/asm.h>
@@ -131,9 +132,9 @@ void sysFlashLatencyUpdate(unsigned int value)
   __dsb();
 }
 /*----------------------------------------------------------------------------*/
-void sysPowerScalingUpdate(bool state)
+void sysPowerScalingUpdate(bool highFrequencyMode)
 {
-  if (state)
+  if (highFrequencyMode)
   {
     /* Enable high-power mode */
     STM_PWR->CR |= PWR_CR_VOS;

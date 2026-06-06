@@ -35,6 +35,15 @@ config PLATFORM_STM32_CAN2
 
 endmenu
 
+menu "Flash"
+
+config PLATFORM_STM32_FLASH_BANK2
+	bool "Flash Bank 2"
+	default y
+	depends on PLATFORM_STM32_FLASH
+
+endmenu
+
 menu "I2C"
 
 config PLATFORM_STM32_I2C1

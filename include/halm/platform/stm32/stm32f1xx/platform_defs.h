@@ -172,6 +172,12 @@ typedef struct
   __ro__ uint32_t DOR2;
   __rw__ uint32_t SR; /* For LD, MD and HD parts */
 } STM_DAC_Type;
+/*------------------Debug registers-------------------------------------------*/
+typedef struct
+{
+  __ro__ uint32_t IDCODE;
+  __rw__ uint32_t CR;
+} STM_DBG_Type;
 /*------------------DMA Controller--------------------------------------------*/
 typedef struct
 {
@@ -298,27 +304,50 @@ typedef struct
 /*------------------Flash interface-------------------------------------------*/
 typedef struct
 {
-  __rw__ uint32_t ACR;
-  __rw__ uint32_t KEYR;
-  __rw__ uint32_t OPTKEYR;
-  __rw__ uint32_t SR;
-  __rw__ uint32_t CR;
-  __rw__ uint32_t AR;
-  __ne__ uint32_t RESERVED0;
-  __rw__ uint32_t OBR;
-  __rw__ uint32_t WRPR;
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t ACR;
+      __rw__ uint32_t KEYR;
+      __rw__ uint32_t OPTKEYR;
+      __rw__ uint32_t SR;
+      __rw__ uint32_t CR;
+      __rw__ uint32_t AR;
+      __ne__ uint32_t RESERVED0;
+      __rw__ uint32_t OBR;
+      __rw__ uint32_t WRPR;
+      __ne__ uint32_t RESERVED1[7];
 
-  /* Offset 0x24: for XL parts */
-  __ne__ uint32_t RESERVED1[8];
-  __rw__ uint32_t KEYR2;
-  __ne__ uint32_t RESERVED2;
-  __rw__ uint32_t SR2;
-  __rw__ uint32_t CR2;
-  __rw__ uint32_t AR2;
+      /* Offset 0x40: for XL parts */
+      __ne__ uint32_t RESERVED2;
+      __rw__ uint32_t KEYR2;
+      __ne__ uint32_t RESERVED3;
+      __rw__ uint32_t SR2;
+      __rw__ uint32_t CR2;
+      __rw__ uint32_t AR2;
+      __ne__ uint32_t RESERVED4[10];
+    };
+
+    struct
+    {
+      __ne__ uint32_t RESERVED0;
+      __rw__ uint32_t KEYR;
+      __ne__ uint32_t RESERVED1;
+      __rw__ uint32_t SR;
+      __rw__ uint32_t CR;
+      __rw__ uint32_t AR;
+      __ne__ uint32_t RESERVED2[10];
+    } BANK[2];
+  };
 } STM_FLASH_Type;
 /*------------------Option Bytes----------------------------------------------*/
 typedef struct
 {
+  __ro__ uint16_t FID;
+  __ne__ uint16_t RESERVED0[3];
+  __ro__ uint32_t UID[3];
+  __ne__ uint16_t RESERVED1[6];
   __rw__ uint16_t RDP;
   __rw__ uint16_t USER;
   __rw__ uint16_t DATA0;
@@ -682,14 +711,10 @@ typedef struct
 extern AHB_DOMAIN_Type  AHB_DOMAIN;
 extern APB1_DOMAIN_Type APB1_DOMAIN;
 extern APB2_DOMAIN_Type APB2_DOMAIN;
+extern STM_DBG_Type     DBG_DOMAIN;
 extern STM_FSMC_Type    FSMC_DOMAIN;
 extern STM_OB_Type      OB_DOMAIN;
 /*----------------------------------------------------------------------------*/
-//#define STM_ETHERNET_MAC_BASE   (STM_ETHERNET_BASE)
-//#define STM_ETHERNET_MMC_BASE   (STM_ETHERNET_BASE + 0x0100)
-//#define STM_ETHERNET_PTP_BASE   (STM_ETHERNET_BASE + 0x0700)
-//#define STM_ETHERNET_DMA_BASE   (STM_ETHERNET_BASE + 0x1000)
-
 #define STM_TIM2          (&APB1_DOMAIN.TIM2)
 #define STM_TIM3          (&APB1_DOMAIN.TIM3)
 #define STM_TIM4          (&APB1_DOMAIN.TIM4)
@@ -750,7 +775,8 @@ extern STM_OB_Type      OB_DOMAIN;
 #define STM_FLASH         (&AHB_DOMAIN.FLASH)
 #define STM_ETHERNET      (&AHB_DOMAIN.ETHERNET)
 
-#define STM_OB            (&OB_DOMAIN)
+#define STM_DBG           (&DBG_DOMAIN)
 #define STM_FSMC          (&FSMC_DOMAIN)
+#define STM_OB            (&OB_DOMAIN)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F1XX_PLATFORM_DEFS_H_ */

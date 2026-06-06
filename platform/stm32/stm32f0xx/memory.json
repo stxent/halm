@@ -39,7 +39,7 @@
       {"offset": "0x14000", "name": "TIM15", "type": "STM_TIM_Type"},
       {"offset": "0x14400", "name": "TIM16", "type": "STM_TIM_Type"},
       {"offset": "0x14800", "name": "TIM17", "type": "STM_TIM_Type"},
-      {"offset": "0x15800", "name": "DBGMCU", "type": "STM_DBGMCU_Type"}
+      {"offset": "0x15800", "name": "DBG", "type": "STM_DBG_Type"}
     ]
   },
   {

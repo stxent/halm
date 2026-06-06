@@ -8,14 +8,6 @@
 #define HALM_PLATFORM_STM32_STM32F0XX_SYSTEM_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
-/*------------------Flash Access Control Register-----------------------------*/
-#define FLASH_ACR_LATENCY(value)        BIT_FIELD((value), 0)
-#define FLASH_ACR_LATENCY_MASK          BIT_FIELD(MASK(3), 0)
-#define FLASH_ACR_LATENCY_VALUE(reg) \
-    FIELD_VALUE((reg), FLASH_ACR_LATENCY_MASK, 0)
-
-#define FLASH_ACR_PRFTBE                BIT(4)
-#define FLASH_ACR_PRFTBS                BIT(5)
 /*------------------Power Control Register------------------------------------*/
 /* Low-power deep sleep */
 #define PWR_CR_LPDS                     BIT(0)
