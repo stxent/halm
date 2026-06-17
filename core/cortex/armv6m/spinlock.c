@@ -46,6 +46,6 @@ bool spinTryLock(Spinlock *lock)
 /*----------------------------------------------------------------------------*/
 void spinUnlock(Spinlock *lock)
 {
-  __dmb(); /* Ensure memory operations completed before releasing lock */
+  __dmb(); /* Ensure memory operations completed before releasing the lock */
   *lock = SPIN_UNLOCKED;
 }

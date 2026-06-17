@@ -80,6 +80,19 @@ void pinOutput(struct Pin pin, bool value)
   reg->MODE = mode;
 }
 /*----------------------------------------------------------------------------*/
+void pinSchmittTriggerEnabled(struct Pin pin, bool enabled)
+{
+  NM_GPIO_Type * const reg = calcPort(pin.port);
+  uint32_t value = reg->SMTEN;
+
+  if (enabled)
+    value |= BIT(pin.number);
+  else
+    value &= ~BIT(pin.number);
+
+  reg->SMTEN = value;
+}
+/*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
   NM_GPIO_Type * const reg = calcPort(pin.port);
@@ -177,17 +190,4 @@ void pinSetType(struct Pin pin, enum PinType type)
   }
 
   reg->MODE = value;
-}
-/*----------------------------------------------------------------------------*/
-void pinSchmittTriggerEnabled(struct Pin pin, bool enabled)
-{
-  NM_GPIO_Type * const reg = calcPort(pin.port);
-  uint32_t value = reg->SMTEN;
-
-  if (enabled)
-    value |= BIT(pin.number);
-  else
-    value &= ~BIT(pin.number);
-
-  reg->SMTEN = value;
 }

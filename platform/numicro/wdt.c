@@ -14,8 +14,8 @@ static void interruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
 static bool wdtFired(const void *);
-static void wdtSetCallback(void *, void (*)(void *), void *);
 static void wdtReload(void *);
+static void wdtSetCallback(void *, void (*)(void *), void *);
 /*----------------------------------------------------------------------------*/
 const struct WatchdogClass * const Wdt = &(const struct WatchdogClass){
     .size = sizeof(struct Wdt),
@@ -23,8 +23,8 @@ const struct WatchdogClass * const Wdt = &(const struct WatchdogClass){
     .deinit = NULL, /* Default destructor */
 
     .fired = wdtFired,
-    .setCallback = wdtSetCallback,
-    .reload = wdtReload
+    .reload = wdtReload,
+    .setCallback = wdtSetCallback
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -91,6 +91,11 @@ static bool wdtFired(const void *object)
   return timer->fired;
 }
 /*----------------------------------------------------------------------------*/
+static void wdtReload(void *)
+{
+  NM_WDT->RSTCNT = RSTCNT_MAGIC_NUMBER;
+}
+/*----------------------------------------------------------------------------*/
 static void wdtSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -106,9 +111,4 @@ static void wdtSetCallback(void *object, void (*callback)(void *),
   sysUnlockReg();
   NM_WDT->CTL = ctl;
   sysLockReg();
-}
-/*----------------------------------------------------------------------------*/
-static void wdtReload(void *)
-{
-  NM_WDT->RSTCNT = RSTCNT_MAGIC_NUMBER;
 }

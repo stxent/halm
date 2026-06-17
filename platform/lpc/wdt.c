@@ -21,8 +21,8 @@ const struct WatchdogClass * const Wdt = &(const struct WatchdogClass){
     .deinit = NULL, /* Default destructor */
 
     .fired = wdtFired,
-    .setCallback = NULL,
-    .reload = wdtReload
+    .reload = wdtReload,
+    .setCallback = NULL
 };
 /*----------------------------------------------------------------------------*/
 static void reloadCounter(void)

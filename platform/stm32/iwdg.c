@@ -19,8 +19,8 @@ const struct WatchdogClass * const Iwdg = &(const struct WatchdogClass){
     .deinit = NULL, /* Default destructor */
 
     .fired = wdtFired,
-    .setCallback = NULL,
-    .reload = wdtReload
+    .reload = wdtReload,
+    .setCallback = NULL
 };
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *object, const void *configBase)

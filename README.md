@@ -1,11 +1,11 @@
 # HALM
 
-![C21](https://img.shields.io/badge/C-21-blue)
+![C23](https://img.shields.io/badge/C-23-blue)
 ![CMake](https://img.shields.io/badge/CMake-3.21+-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A library of basic drivers for microcontrollers. It is written using
-the C21 standard and CMake.
+the C23 standard and CMake.
 
 ## Supported Platforms
 
@@ -148,7 +148,7 @@ The following build options are available to customize your build:
       LPC11EXX — NXP LPC11Exx series
       LPC13XX — NXP LPC13xx series
       LPC13UXX — NXP LPC13Uxx series
-      LPC17XX — NXP LPC13xx series
+      LPC17XX — NXP LPC175x and LPC176x series
       LPC43XX — NXP LPC43xx series (main M4 core)
       LPC43XX_M0APP — NXP LPC43xx series, M0 application core
       LPC43XX_M0SUB — NXP LPC43xx series, M0 subcore

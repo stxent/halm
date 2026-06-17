@@ -20,8 +20,8 @@ struct WatchdogClass
   CLASS_HEADER
 
   bool (*fired)(const void *);
-  void (*setCallback)(void *, void (*)(void *), void *);
   void (*reload)(void *);
+  void (*setCallback)(void *, void (*)(void *), void *);
 };
 
 struct Watchdog

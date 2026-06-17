@@ -48,11 +48,11 @@ void *pinAddress(struct Pin);
 struct Pin pinInit(PinNumber);
 void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
+void pinSchmittTriggerEnabled(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum PinPull);
 void pinSetSlewRate(struct Pin, enum PinSlewRate);
 void pinSetType(struct Pin, enum PinType);
-void pinSchmittTriggerEnabled(struct Pin, bool);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

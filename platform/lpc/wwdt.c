@@ -14,8 +14,8 @@ static void reloadCounter(void);
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
 static bool wdtFired(const void *);
-static void wdtSetCallback(void *, void (*)(void *), void *);
 static void wdtReload(void *);
+static void wdtSetCallback(void *, void (*)(void *), void *);
 /*----------------------------------------------------------------------------*/
 const struct WatchdogClass * const Wwdt = &(const struct WatchdogClass){
     .size = sizeof(struct Wwdt),
@@ -23,8 +23,8 @@ const struct WatchdogClass * const Wwdt = &(const struct WatchdogClass){
     .deinit = NULL, /* Default destructor */
 
     .fired = wdtFired,
-    .setCallback = wdtSetCallback,
-    .reload = wdtReload
+    .reload = wdtReload,
+    .setCallback = wdtSetCallback
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -139,6 +139,11 @@ static bool wdtFired(const void *object)
   return timer->fired;
 }
 /*----------------------------------------------------------------------------*/
+static void wdtReload(void *)
+{
+  reloadCounter();
+}
+/*----------------------------------------------------------------------------*/
 static void wdtSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
@@ -146,9 +151,4 @@ static void wdtSetCallback(void *object, void (*callback)(void *),
 
   timer->callbackArgument = argument;
   timer->callback = callback;
-}
-/*----------------------------------------------------------------------------*/
-static void wdtReload(void *)
-{
-  reloadCounter();
 }

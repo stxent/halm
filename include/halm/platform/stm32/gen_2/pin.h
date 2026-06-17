@@ -35,8 +35,8 @@ void pinInput(struct Pin);
 void pinOutput(struct Pin, bool);
 void pinSetFunction(struct Pin, uint8_t);
 void pinSetPull(struct Pin, enum PinPull);
-void pinSetType(struct Pin, enum PinType);
 void pinSetSlewRate(struct Pin, enum PinSlewRate);
+void pinSetType(struct Pin, enum PinType);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/

@@ -1,25 +1,25 @@
 /*
- * startup.S
+ * startup.s
  * Copyright (C) 2026 xent
  * Project is distributed under the terms of the MIT License
  */
 
 .section .startup
 
-.globl vector_trampoline
+.global vector_trampoline
 vector_trampoline:
     j start_entry
     .align 2
 
-.globl trap_trampoline
+.global trap_trampoline
 trap_trampoline:
     j commonIrqHandler
     .align 2
 
-.globl commonIrqHandler
+.global commonIrqHandler
 .type commonIrqHandler,@function
 
-.globl start_entry
+.global start_entry
 .type start_entry,@function
 
 start_entry:
