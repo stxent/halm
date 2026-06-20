@@ -15,6 +15,23 @@ static bool computeAttributedRegion(uintptr_t, size_t, uint32_t,
     struct MpuRegionConfig *);
 static MpuRegion findFreeRegion(void);
 /*----------------------------------------------------------------------------*/
+/**
+ * Compute MPU region parameters with given attributes.
+ *
+ * Calculates the optimal region configuration (base address and size)
+ * for the MPU, ensuring proper alignment and power‑of‑two size requirements.
+ * Handles subregion disable mask calculation for large regions (> 128 bytes).
+ *
+ * @param address Starting address of the memory region to protect. Will be
+ * aligned down to the nearest region boundary during computation.
+ * @param size Requested size of the region in bytes. Must be non‑zero.
+ * The function rounds this up to the next power of two if necessary.
+ * @param attributes Pre‑computed MPU attribute bits.
+ * @param config Pointer to a structure where the computed configuration
+ * will be stored.
+ * @return @b true if the region configuration was computed successfully
+ * or @b false if the configuration cannot be computed.
+ */
 static bool computeAttributedRegion(uintptr_t address, size_t size,
     uint32_t attributes, struct MpuRegionConfig *config)
 {
@@ -22,7 +39,7 @@ static bool computeAttributedRegion(uintptr_t address, size_t size,
 
   if (size & ((1UL << regionSizePow) - 1))
   {
-    /* Size is not power of two */
+    /* Size is not a power of two */
     ++regionSizePow;
   }
 
@@ -51,17 +68,20 @@ static bool computeAttributedRegion(uintptr_t address, size_t size,
 
   if (regionSize > 128)
   {
-    /* Fill Subregion Disable bits when a region size is greater than 128 */
+    /*
+     * Fill Subregion Disable bits when the region size is greater
+     * than 128 bytes.
+     */
 
     const uint32_t subSizePow = regionSizePow - 3;
     const uint32_t subMask = (1UL << subSizePow) - 1;
     unsigned int sub;
 
-    /* Disable subregions in the beginning of the region */
+    /* Disable subregions at the beginning of the region */
     sub = (address - regionBegAddress) >> subSizePow;
     subregions |= (1 << sub) - 1;
 
-    /* Disable subregions in the end of the region */
+    /* Disable subregions at the end of the region */
     sub = (address + size - regionBegAddress + subMask) >> subSizePow;
     subregions |= 0xFF ^ ((1 << sub) - 1);
   }
@@ -73,6 +93,16 @@ static bool computeAttributedRegion(uintptr_t address, size_t size,
   return true;
 }
 /*----------------------------------------------------------------------------*/
+/**
+ * Find a free (unused) region in the Memory Protection Unit.
+ *
+ * Scans all available MPU regions and returns the index of the first region
+ * that is currently disabled. A region is considered free if both
+ * the enable bit and the size field are zero in its RASR register.
+ *
+ * @return Index of the first free MPU region if found or -1 if no free regions
+ * are available.
+ */
 static MpuRegion findFreeRegion(void)
 {
   const unsigned int count = TYPE_DREGION_VALUE(MPU->TYPE);
@@ -91,14 +121,21 @@ static MpuRegion findFreeRegion(void)
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Add a new region to Memory Protection Unit.
- * @param address Starting address of the region.
- * @param size Region size in bytes.
- * @param preset MPU configuration preset for the region.
- * @param access Privileged and unprivileged access permissions.
- * @param executable Enable instruction fetches for the region.
- * @param shareabe Mark the region as shared, used in multiprocessor systems.
- * @return Region identifier on success or a negative number in case of failure.
+ * Add a new region to the Memory Protection Unit.
+ *
+ * This function computes the MPU configuration and assigns it to a free region.
+ * If successful, the region is configured and enabled in the MPU.
+ *
+ * @param address Starting address of the region, must be aligned appropriately.
+ * @param size Region size in bytes, must be a power of two, minimum 32 bytes.
+ * @param preset MPU configuration preset defining memory type
+ * and caching attributes.
+ * @param access Privileged and unprivileged access permissions for the region.
+ * @param executable If @b true, enables instruction fetches from the region;
+ * if @b false, disables them.
+ * @param shareable If @b true, marks the region as shared.
+ * @return Region identifier on success, or -1 if no free region is available
+ * or configuration fails.
  */
 MpuRegion mpuAddRegion(uintptr_t address, size_t size, enum MpuPreset preset,
     enum MpuAccessPermission access, bool executable, bool shareable)
@@ -111,7 +148,7 @@ MpuRegion mpuAddRegion(uintptr_t address, size_t size, enum MpuPreset preset,
   {
     if ((region = findFreeRegion()) != -1)
     {
-      /* RNR register is already initialized */
+      /* RNR register is already initialized by findFreeRegion() */
       MPU->RBAR = config.address;
       MPU->RASR = config.control;
 
@@ -124,15 +161,23 @@ MpuRegion mpuAddRegion(uintptr_t address, size_t size, enum MpuPreset preset,
 }
 /*----------------------------------------------------------------------------*/
 /**
- * Compute an MPU configuration.
- * @param address Starting address of the region.
- * @param size Region size in bytes.
- * @param preset MPU configuration preset for the region.
- * @param access Privileged and unprivileged access permissions.
- * @param executable Enable instruction fetches for the region.
- * @param shareabe Mark the region as shared, used in multiprocessor systems.
- * @param config Pointer to an MPU region configration structure.
- * @return Status of the operation.
+ * Compute an MPU region configuration based on input parameters.
+ *
+ * Calculates the control register bits (RASR) and base address (RBAR)
+ * for a given region. Handles alignment, size rounding, and attribute mapping.
+ *
+ * @param address Starting address of the region. Will be aligned down
+ * to the nearest region boundary.
+ * @param size Requested region size in bytes. Must be at least 32 bytes;
+ * will be rounded up to the next power of two if needed.
+ * @param preset Memory type preset.
+ * @param access Access permissions for privileged and unprivileged modes.
+ * @param executable If @b false, sets the Execute Never bit to prevent
+ * instruction fetches.
+ * @param shareable If @b true and preset is not DEVICE, sets the Shareable bit.
+ * @param config Pointer to an MPU region configuration structure to be filled.
+ * @return @b true if the configuration was computed successfully,
+ * @b false otherwise.
  */
 bool mpuComputeRegion(uintptr_t address, size_t size, enum MpuPreset preset,
     enum MpuAccessPermission access, bool executable, bool shareable,
@@ -186,6 +231,15 @@ bool mpuComputeRegion(uintptr_t address, size_t size, enum MpuPreset preset,
   return computeAttributedRegion(address, size, attributes, config);
 }
 /*----------------------------------------------------------------------------*/
+/**
+ * Reconfigure an existing MPU region with new settings.
+ *
+ * Updates the address and control registers of a specified MPU region.
+ * The region must already be allocated.
+ *
+ * @param region Identifier of the region to reconfigure.
+ * @param config Pointer to the new MPU region configuration.
+ */
 void mpuReconfigureRegion(MpuRegion region,
     const struct MpuRegionConfig *config)
 {
@@ -200,6 +254,14 @@ void mpuReconfigureRegion(MpuRegion region,
   __isb();
 }
 /*----------------------------------------------------------------------------*/
+/**
+ * Remove and disable an MPU region.
+ *
+ * Clears the control and base address registers for the specified region,
+ * effectively disabling it.
+ *
+ * @param region Identifier of the region to remove.
+ */
 void mpuRemoveRegion(MpuRegion region)
 {
   assert(region >= 0 && region < (MpuRegion)TYPE_DREGION_VALUE(MPU->TYPE));
@@ -214,13 +276,23 @@ void mpuRemoveRegion(MpuRegion region)
   __isb();
 }
 /*----------------------------------------------------------------------------*/
+/**
+ * Reserve an MPU region without configuring it.
+ *
+ * Allocates a free region and marks it as reserved by setting a special
+ * size value. This prevents other functions from using the region until
+ * it is explicitly configured.
+ *
+ * @return Reserved region identifier on success, or -1 if no free region
+ * is available.
+ */
 MpuRegion mpuReserveRegion(void)
 {
   const MpuRegion region = findFreeRegion();
 
   if (region != -1)
   {
-    /* RNR register is already initialized */
+    /* RNR register is already initialized by findFreeRegion() */
     MPU->RASR = RASR_SIZE_RESERVED;
 
     __dsb();
@@ -230,6 +302,11 @@ MpuRegion mpuReserveRegion(void)
   return region;
 }
 /*----------------------------------------------------------------------------*/
+/**
+ * Disable the Memory Protection Unit.
+ *
+ * Turns off the MPU, removing all memory protection.
+ */
 void mpuDisable(void)
 {
   __dsb();
@@ -240,6 +317,13 @@ void mpuDisable(void)
   __isb();
 }
 /*----------------------------------------------------------------------------*/
+/**
+ * Enable the Memory Protection Unit.
+ *
+ * Activates the MPU with default settings:
+ *   - Enables the unit.
+ *   - Allows default memory map for privileged mode.
+ */
 void mpuEnable(void)
 {
   __dsb();
@@ -250,6 +334,13 @@ void mpuEnable(void)
   __isb();
 }
 /*----------------------------------------------------------------------------*/
+/**
+ * Reset the Memory Protection Unit to its default state.
+ *
+ * Performs a full reset of the MPU:
+ *   - Disables the unit.
+ *   - Clears all region configurations.
+ */
 void mpuReset(void)
 {
   const unsigned int count = TYPE_DREGION_VALUE(MPU->TYPE);
