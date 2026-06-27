@@ -41,6 +41,13 @@ struct Bod
   void *callbackArgument;
 
   bool enabled;
+  bool fired;
 };
+/*----------------------------------------------------------------------------*/
+BEGIN_DECLS
+
+bool bodResetFired(const struct Bod *);
+
+END_DECLS
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_BOD_H_ */

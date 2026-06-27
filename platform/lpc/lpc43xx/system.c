@@ -5,8 +5,8 @@
  */
 
 #include <halm/platform/lpc/flash_defs.h>
-#include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
+#include <halm/platform/lpc/system_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <xcore/asm.h>
 #include <assert.h>

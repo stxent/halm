@@ -10,7 +10,7 @@
 #include <halm/generic/spi.h>
 #include <halm/generic/work_queue.h>
 #include <halm/timer.h>
-#include <xcore/crc/crc7.h>
+#include <xcore/crc/crc7_mmc.h>
 #include <xcore/crc/crc16_ccitt.h>
 #include <xcore/memory.h>
 #include <assert.h>
@@ -25,8 +25,8 @@
 #define BUSY_READ_RETRIES     1000
 #define BUSY_WRITE_RETRIES    5000
 
-#define INITIAL_CRC7          0x00
-#define INITIAL_CRC16         0x0000
+#define CRC7_INITIAL          0x00
+#define CRC16_INITIAL         0x0000
 
 #define TOKEN_RETRIES         8
 /*----------------------------------------------------------------------------*/
@@ -549,7 +549,7 @@ static enum State stateComputeCrcAdvance(struct SdioSpi *interface)
 
   for (size_t index = 0; index < count; ++index)
   {
-    interface->crc.pool[index] = crc16CCITTUpdate(INITIAL_CRC16,
+    interface->crc.pool[index] = crc16CCITTUpdate(CRC16_INITIAL,
         (const void *)(interface->transfer.buffer + index * interface->block),
         interface->block);
   }
@@ -566,7 +566,7 @@ static enum State stateVerifyCrcAdvance(struct SdioSpi *interface)
 
   for (size_t index = 0; index < count; ++index)
   {
-    const uint16_t checksum = crc16CCITTUpdate(INITIAL_CRC16,
+    const uint16_t checksum = crc16CCITTUpdate(CRC16_INITIAL,
         (const void *)(interface->transfer.buffer + index * interface->block),
         interface->block);
 
@@ -750,7 +750,7 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
   interface->command.buffer[0] = 0xFF;
   interface->command.buffer[1] = COMMAND_CODE_VALUE(command) | 0x40;
   memcpy(interface->command.buffer + 2, &argument, sizeof(argument));
-  interface->command.buffer[6] = crc7Update(INITIAL_CRC7,
+  interface->command.buffer[6] = crc7MMCUpdate(CRC7_INITIAL,
       interface->command.buffer + 1, 5);
   /* Add end bit */
   interface->command.buffer[6] = (interface->command.buffer[6] << 1) | 0x01;

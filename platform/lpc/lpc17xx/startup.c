@@ -5,8 +5,8 @@
  */
 
 #include <halm/core/cortex/mpu.h>
-#include <halm/platform/lpc/lpc17xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
+#include <halm/platform/lpc/system_defs.h>
 #include <xcore/bits.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/

@@ -5,8 +5,8 @@
  */
 
 #include <halm/platform/lpc/clocking.h>
-#include <halm/platform/lpc/lpc82x/system_defs.h>
 #include <halm/platform/lpc/system.h>
+#include <halm/platform/lpc/system_defs.h>
 #include <halm/platform/lpc/wdt_base.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/

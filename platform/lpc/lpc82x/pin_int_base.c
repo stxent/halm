@@ -6,8 +6,8 @@
 
 #include <halm/platform/lpc/gen_3/pin_int_base.h>
 #include <halm/platform/lpc/lpc82x/pin_defs.h>
-#include <halm/platform/lpc/lpc82x/system_defs.h>
 #include <halm/platform/lpc/system.h>
+#include <halm/platform/lpc/system_defs.h>
 /*----------------------------------------------------------------------------*/
 static int setInstance(struct PinIntBase *);
 /*----------------------------------------------------------------------------*/

@@ -6,6 +6,7 @@
 
 #include <halm/platform/lpc/bod.h>
 #include <halm/platform/lpc/gen_1/bod_defs.h>
+#include <halm/platform/lpc/system_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -68,6 +69,14 @@ static enum Result bodInit(void *object, const void *configBase)
     bod->callback = NULL;
     bod->enabled = false;
 
+    if (LPC_SYSCON->SYSRESSTAT & SYSRESSTAT_BOD)
+    {
+      LPC_SYSCON->SYSRESSTAT = SYSRESSTAT_BOD;
+      bod->fired = true;
+    }
+    else
+      bod->fired = false;
+
     if (config->resetLevel != BOD_RESET_DISABLED)
       bodctrl |= BODCTRL_BODRSTLEV(config->resetLevel - 1) | BODCTRL_BODRSTENA;
     bodctrl |= BODCTRL_BODINTVAL(config->eventLevel - 1);
@@ -127,4 +136,9 @@ static void bodSetCallback(void *object, void (*callback)(void *),
   }
   else
     irqDisable(BOD_IRQ);
+}
+/*----------------------------------------------------------------------------*/
+bool bodResetFired(const struct Bod *bod)
+{
+  return bod->fired;
 }

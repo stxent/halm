@@ -7,8 +7,8 @@
 #include <halm/core/cortex/fpu.h>
 #include <halm/core/cortex/mpu.h>
 #include <halm/core/cortex/nvic.h>
-#include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
+#include <halm/platform/lpc/system_defs.h>
 #include <stddef.h>
 
 extern unsigned long _stext;

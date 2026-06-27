@@ -6,7 +6,7 @@
 
 #include <halm/platform/lpc/bod.h>
 #include <halm/platform/lpc/lpc43xx/event_router.h>
-#include <halm/platform/lpc/lpc43xx/system_defs.h>
+#include <halm/platform/lpc/system_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -53,6 +53,7 @@ static enum Result bodInit(void *object, const void *configBase)
 
   bod->callback = NULL;
   bod->enabled = false;
+  bod->fired = false;
 
   creg |= CREG0_BODLVL1(config->eventLevel);
   creg |= CREG0_BODLVL2(config->resetLevel);
@@ -88,4 +89,9 @@ static void bodSetCallback(void *object, void (*callback)(void *),
 
   bod->callbackArgument = argument;
   bod->callback = callback;
+}
+/*----------------------------------------------------------------------------*/
+bool bodResetFired(const struct Bod *bod)
+{
+  return bod->fired;
 }

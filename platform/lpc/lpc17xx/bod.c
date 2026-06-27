@@ -5,7 +5,7 @@
  */
 
 #include <halm/platform/lpc/bod.h>
-#include <halm/platform/lpc/lpc17xx/system_defs.h>
+#include <halm/platform/lpc/system_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
@@ -59,10 +59,14 @@ static enum Result bodInit(void *object, const void *configBase)
 
   if (setInstance(bod))
   {
+    const uint32_t rsid = LPC_SC->RSID;
+    uint32_t pcon = LPC_SC->PCON & ~(PCON_BODRPM | PCON_BOGD | PCON_BORD);
+
     bod->callback = NULL;
     bod->enabled = false;
+    bod->fired = !(rsid & RSID_POR) && (rsid & RSID_BODR);
 
-    uint32_t pcon = LPC_SC->PCON & ~(PCON_BODRPM | PCON_BOGD | PCON_BORD);
+    LPC_SC->RSID = RSID_BODR;
 
     if (config->resetLevel == BOD_RESET_DISABLED)
       pcon |= PCON_BORD;
@@ -133,4 +137,9 @@ static void bodSetCallback(void *object, void (*callback)(void *),
   }
   else
     irqDisable(BOD_IRQ);
+}
+/*----------------------------------------------------------------------------*/
+bool bodResetFired(const struct Bod *bod)
+{
+  return bod->fired;
 }

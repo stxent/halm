@@ -4,6 +4,10 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#ifndef HALM_PLATFORM_LPC_SYSTEM_DEFS_H_
+#error This header should not be included directly
+#endif
+
 #ifndef HALM_PLATFORM_LPC_LPC13UXX_SYSTEM_DEFS_H_
 #define HALM_PLATFORM_LPC_LPC13UXX_SYSTEM_DEFS_H_
 /*----------------------------------------------------------------------------*/
@@ -44,5 +48,11 @@ enum
 };
 
 #define STARTERP0_PINT(channel)         BIT(channel)
+/*------------------System Reset Status register------------------------------*/
+#define SYSRESSTAT_POR                  BIT(0)
+#define SYSRESSTAT_EXTRST               BIT(1)
+#define SYSRESSTAT_WDT                  BIT(2)
+#define SYSRESSTAT_BOD                  BIT(3)
+#define SYSRESSTAT_SYSRST               BIT(4)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_LPC_LPC13UXX_SYSTEM_DEFS_H_ */

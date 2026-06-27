@@ -5,8 +5,8 @@
  */
 
 #include <halm/platform/lpc/lpc43xx/ethernet_base.h>
-#include <halm/platform/lpc/lpc43xx/system_defs.h>
 #include <halm/platform/lpc/system.h>
+#include <halm/platform/lpc/system_defs.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 enum
