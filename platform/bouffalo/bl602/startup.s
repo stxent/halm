@@ -33,3 +33,4 @@ start_entry:
     call coreStartup
     call platformStartup
     call main
+    call coreShutdown

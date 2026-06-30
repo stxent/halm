@@ -4,20 +4,29 @@
  * Project is distributed under the terms of the MIT License
  */
 
+#include <stddef.h>
+/*----------------------------------------------------------------------------*/
+extern int main(void);
+extern void platformStartup(void);
+/*----------------------------------------------------------------------------*/
 extern unsigned long _sdata;
 extern unsigned long _edata;
 extern unsigned long _sidata;
 extern unsigned long _sbss;
 extern unsigned long _ebss;
 extern unsigned long _stack;
-/*----------------------------------------------------------------------------*/
-extern int main(void);
-extern void platformStartup(void);
+
+typedef void (*func_t)(void);
+[[gnu::weak]] extern func_t __init_array_start;
+[[gnu::weak]] extern func_t __init_array_end;
+[[gnu::weak]] extern func_t __fini_array_start;
+[[gnu::weak]] extern func_t __fini_array_end;
 /*----------------------------------------------------------------------------*/
 void RESET_ISR(void)
 {
   unsigned long *dst;
   unsigned long *src;
+  func_t *func;
 
 #ifdef CONFIG_CORE_CORTEX_MEMORY_DEBUG
   /* Fill the RAM with a predefined pattern */
@@ -33,8 +42,22 @@ void RESET_ISR(void)
   for (dst = &_sbss; dst < &_ebss;)
     *dst++ = 0;
 
+  if (&__init_array_start != NULL)
+  {
+    /* Call C/C++ constructors */
+    for (func = &__init_array_start; func < &__init_array_end; func++)
+      (*func)();
+  }
+
   platformStartup();
   main();
+
+  if (&__fini_array_start != NULL)
+  {
+    /* Call C/C++ destructors */
+    for (func = &__fini_array_start; func < &__fini_array_end; func++)
+      (*func)();
+  }
 
   while (1);
 }

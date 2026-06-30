@@ -5,6 +5,10 @@
  */
 
 #include <xcore/core/riscv/csr.h>
+#include <stddef.h>
+/*----------------------------------------------------------------------------*/
+void coreShutdown(void);
+void coreStartup(void);
 /*----------------------------------------------------------------------------*/
 extern unsigned long _sdata;
 extern unsigned long _edata;
@@ -12,6 +16,26 @@ extern unsigned long _sidata;
 extern unsigned long _sbss;
 extern unsigned long _ebss;
 extern unsigned long _stack;
+
+typedef void (*func_t)(void);
+[[gnu::weak]] extern func_t __init_array_start;
+[[gnu::weak]] extern func_t __init_array_end;
+[[gnu::weak]] extern func_t __fini_array_start;
+[[gnu::weak]] extern func_t __fini_array_end;
+/*----------------------------------------------------------------------------*/
+void coreShutdown(void)
+{
+  if (&__fini_array_start != NULL)
+  {
+    func_t *func;
+
+    /* Call C/C++ destructors */
+    for (func = &__fini_array_start; func < &__fini_array_end; func++)
+      (*func)();
+  }
+
+  while (1);
+}
 /*----------------------------------------------------------------------------*/
 void coreStartup(void)
 {
@@ -31,4 +55,13 @@ void coreStartup(void)
   /* Zero fill the BSS segment */
   for (dst = &_sbss; dst < &_ebss;)
     *dst++ = 0;
+
+  if (&__init_array_start != NULL)
+  {
+    func_t *func;
+
+    /* Call C/C++ constructors */
+    for (func = &__init_array_start; func < &__init_array_end; func++)
+      (*func)();
+  }
 }
