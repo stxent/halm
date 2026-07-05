@@ -14,13 +14,13 @@ extern const struct TimerClass * const GpTimer;
 struct GpTimerConfig
 {
   /**
-   * Optional: desired timer tick rate. An actual peripheral frequency is used
-   * when option is set to zero.
+   * Optional: desired timer tick rate in Hertz. If this field is set to zero,
+   * the actual peripheral frequency will be used as the timer tick rate.
    */
   uint32_t frequency;
-  /** Optional: timer interrupt priority. */
+  /** Optional: interrupt priority for the timer interrupt request. */
   IrqPriority priority;
-  /** Mandatory: peripheral identifier. */
+  /** Mandatory: peripheral identifier number of the timer. */
   uint8_t channel;
 
   struct

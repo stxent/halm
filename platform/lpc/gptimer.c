@@ -90,6 +90,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
   timer->event = (config->event ? config->event : GPTIMER_MATCH0) - 1;
 
   /* Initialize peripheral block */
@@ -112,7 +113,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   /* Configure prescaler and default match value */
   reg->MR[timer->event] = gpTimerGetMaxValue(&timer->base);
   /* Reset the timer after reaching the match register value */
-  reg->MCR = MCR_RESET(timer->event);
+  reg->MCR = config->freerun ? 0 : MCR_RESET(timer->event);
   /* Enable external match to generate signals to other peripherals */
   reg->EMR = EMR_CONTROL(timer->event, CONTROL_TOGGLE);
 
@@ -231,11 +232,11 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimer * const timer = object;
   LPC_TIMER_Type * const reg = timer->base.reg;
-  const uint32_t value = overflow ?
-      overflow - 1 : gpTimerGetMaxValue(&timer->base);
 
-  assert(value <= gpTimerGetMaxValue(&timer->base));
-  reg->MR[timer->event] = value;
+  assert(overflow <= gpTimerGetMaxValue(&timer->base));
+  overflow = overflow ? overflow - 1 : gpTimerGetMaxValue(&timer->base);
+
+  reg->MR[timer->event] = overflow;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)

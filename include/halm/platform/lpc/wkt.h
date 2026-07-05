@@ -17,7 +17,7 @@ struct WktConfig
   PinNumber pin;
   /** Mandatory: clock source. */
   enum WktClockSource source;
-  /** Optional: timer interrupt priority. */
+  /** Optional: interrupt priority for the timer interrupt request. */
   IrqPriority priority;
 };
 

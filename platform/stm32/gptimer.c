@@ -56,7 +56,7 @@ static void interruptHandler(void *object)
   struct GpTimer * const timer = object;
   STM_TIM_Type * const reg = timer->base.reg;
 
-  if (reg->SR & SR_UIF)
+  if (reg->SR & (SR_UIF | SR_CCIF_MASK))
   {
     /* Clear all pending interrupts */
     reg->SR = 0;
@@ -94,7 +94,9 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
   timer->event = config->event;
+  timer->freerun = config->freerun;
 
   /* Initialize peripheral block */
   STM_TIM_Type * const reg = timer->base.reg;
@@ -197,13 +199,17 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   {
     /* Clear pending interrupt flags */
     reg->SR = 0;
+
     /* Enable interrupt request generation on the update event */
-    reg->DIER |= DIER_UIE;
+    if (timer->freerun)
+      reg->DIER |= DIER_CCIE(timer->event - TIM_EVENT_CC1);
+    else
+      reg->DIER |= DIER_UIE;
   }
   else
   {
     /* Disable interrupt request generation */
-    reg->DIER &= ~DIER_UIE;
+    reg->DIER &= ~(DIER_UIE | DIER_CCIE_MASK);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -229,6 +235,9 @@ static uint32_t tmrGetOverflow(const void *object)
   const struct GpTimer * const timer = object;
   const STM_TIM_Type * const reg = timer->base.reg;
 
+  if (timer->freerun && timer->event > TIM_EVENT_UPDATE)
+    return reg->CCR[timer->event - TIM_EVENT_CC1] + 1;
+
   return reg->ARR + 1;
 }
 /*----------------------------------------------------------------------------*/
@@ -238,10 +247,12 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   STM_TIM_Type * const reg = timer->base.reg;
 
   assert(overflow <= getMaxValue(timer->base.flags));
+  overflow = overflow ? overflow - 1 : getMaxValue(timer->base.flags);
 
   if (timer->event > TIM_EVENT_UPDATE)
     reg->CCR[timer->event - TIM_EVENT_CC1] = overflow - 1;
-  reg->ARR = overflow - 1;
+  if (!timer->freerun)
+    reg->ARR = overflow - 1;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)

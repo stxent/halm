@@ -9,7 +9,8 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/timer.h>
 /*----------------------------------------------------------------------------*/
-extern const struct EntityClass * const TimerFactory;
+extern const struct TimerClass * const TicklessFactory;
+extern const struct TimerClass * const TimerFactory;
 
 struct TimerFactoryEntry;
 
@@ -30,6 +31,7 @@ struct TimerFactory
   struct Timer *timer;
 
   uint32_t counter;
+  uint32_t overflow;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS

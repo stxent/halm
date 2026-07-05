@@ -16,11 +16,15 @@ extern const struct Timer64Class * const Pit64;
 
 struct PitConfig
 {
-  /** Optional: timer frequency. Used in chained mode only. */
+  /**
+   * Optional: desired timer tick rate in Hertz. Used in chained mode only.
+   * If this field is set to zero, the actual peripheral frequency will be used
+   * as the timer tick rate.
+   */
   uint32_t frequency;
-  /** Optional: timer interrupt priority. */
+  /** Optional: interrupt priority for the timer interrupt request. */
   IrqPriority priority;
-  /** Mandatory: peripheral identifier. */
+  /** Mandatory: peripheral identifier number of the timer. */
   uint8_t channel;
   /** Optional: enable chained mode to make a frequency divider. */
   bool chain;

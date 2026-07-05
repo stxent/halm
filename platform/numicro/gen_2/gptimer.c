@@ -90,6 +90,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
 
   /* Initialize peripheral block */
   NM_TIMER_Type * const reg = timer->base.reg;
@@ -228,8 +229,8 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   struct GpTimer * const timer = object;
   NM_TIMER_Type * const reg = timer->base.reg;
 
-  assert(overflow > 1 && overflow <= CMP_CMPDAT_MASK);
-  reg->CMP = overflow;
+  assert(!overflow || (overflow > 1 && overflow <= CMP_CMPDAT_MASK));
+  reg->CMP = overflow ? overflow : CMP_CMPDAT_MASK;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
@@ -240,14 +241,13 @@ static uint32_t tmrGetValue(const void *object)
   return reg->CNT;
 }
 /*----------------------------------------------------------------------------*/
-static void tmrSetValue(void *object, uint32_t value)
+static void tmrSetValue(void *object, [[maybe_unused]] uint32_t value)
 {
   struct GpTimer * const timer = object;
   NM_TIMER_Type * const reg = timer->base.reg;
 
   /* Data register is read-only, writing 0 is implemented using reset */
   assert(value == 0);
-  (void)value;
 
   reg->CNT = 0;
   while (reg->CNT & CNT_RSTACT);

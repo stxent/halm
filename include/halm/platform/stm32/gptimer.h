@@ -14,21 +14,23 @@ extern const struct TimerClass * const GpTimer;
 struct GpTimerConfig
 {
   /**
-   * Optional: desired timer tick rate. An actual peripheral frequency is used
-   * when option is set to zero.
+   * Optional: desired timer tick rate in Hertz. If this field is set to zero,
+   * the actual peripheral frequency will be used as the timer tick rate.
    */
   uint32_t frequency;
-  /** Optional: timer interrupt priority. */
+  /** Optional: interrupt priority for the timer interrupt request. */
   IrqPriority priority;
-  /** Mandatory: peripheral identifier. */
+  /** Optional: event used for DMA request and internal request generation. */
+  enum GpTimerEvent event;
+  /** Mandatory: peripheral identifier number of the timer. */
   uint8_t channel;
   /**
-   * Optional: timer event for DMA request and internal request generation.
-   * Timer may support only a part of possible capture/compare events, timer
-   * capabilities should be checked in the datasheet.
-   * Zero disables the generation of the request.
+   * Optional: flag to disable automatic timer reset on overflow
+   * or match events. When set to @b true, enables free-running mode where
+   * the timer counter continues incrementing without being automatically
+   * reset by overflow or compare events.
    */
-  enum GpTimerEvent event;
+  bool freerun;
 };
 
 struct GpTimer
@@ -40,8 +42,10 @@ struct GpTimer
 
   /* Desired timer frequency */
   uint32_t frequency;
-  /* Event used for a DMA request generation */
+  /* Event used for DMA request generation */
   enum GpTimerEvent event;
+  /* Enable free-running mode */
+  bool freerun;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_GPTIMER_H_ */

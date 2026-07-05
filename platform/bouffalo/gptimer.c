@@ -10,7 +10,8 @@
 #include <halm/pm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-#define MATCH_EVENT 0
+#define MATCH_EVENT  0
+#define MAX_OVERFLOW (UINT32_MAX - 1)
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 
@@ -27,6 +28,7 @@ static void tmrSetFrequency(void *, uint32_t);
 static uint32_t tmrGetOverflow(const void *);
 static void tmrSetOverflow(void *, uint32_t);
 static uint32_t tmrGetValue(const void *);
+static void tmrSetValue(void *, uint32_t);
 
 #ifndef CONFIG_PLATFORM_BOUFFALO_GPTIMER_NO_DEINIT
 static void tmrDeinit(void *);
@@ -48,7 +50,7 @@ const struct TimerClass * const GpTimer = &(const struct TimerClass){
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
-    .setValue = NULL
+    .setValue = tmrSetValue
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -103,6 +105,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
 
   /* Initialize peripheral block */
   const uint8_t channel = timer->base.channel;
@@ -112,7 +115,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   BL_TIMER->TICR[channel] = TICR_MASK;
   BL_TIMER->TPLVR[channel] = 0;
   BL_TIMER->TPLCR[channel] = TPLCR_TPLCR(PLCR_MATCH0);
-  BL_TIMER->TMR[channel].MAT[MATCH_EVENT] = UINT32_MAX;
+  BL_TIMER->TMR[channel].MAT[MATCH_EVENT] = MAX_OVERFLOW;
 
   setTimerFrequency(timer, config->frequency);
   timer->frequency = config->frequency;
@@ -201,17 +204,35 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 static uint32_t tmrGetOverflow(const void *object)
 {
   const struct GpTimer * const timer = object;
-  return BL_TIMER->TMR[timer->base.channel].MAT[MATCH_EVENT] + 1;
+  return BL_TIMER->TMR[timer->base.channel].MAT[MATCH_EVENT] + 2;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct GpTimer * const timer = object;
-  BL_TIMER->TMR[timer->base.channel].MAT[MATCH_EVENT] = overflow - 1;
+
+  assert(!overflow || overflow > 1);
+  BL_TIMER->TMR[timer->base.channel].MAT[MATCH_EVENT] = overflow - 2;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
 {
   const struct GpTimer * const timer = object;
   return BL_TIMER->TCVSYN[timer->base.channel];
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetValue(void *object, [[maybe_unused]] uint32_t value)
+{
+  struct GpTimer * const timer = object;
+  const uint32_t mask = TCER_ENABLE(timer->base.channel);
+
+  /* Data register is read-only, writing 0 is implemented using reset */
+  assert(value == 0);
+
+  if (BL_TIMER->TCER & mask)
+  {
+    BL_TIMER->TCER &= ~mask;
+    BL_TIMER->TICR[timer->base.channel] = TICR_MASK;
+    BL_TIMER->TCER |= mask;
+  }
 }

@@ -7,6 +7,7 @@
 #include <halm/platform/generic/timer.h>
 #include <uv.h>
 #include <assert.h>
+#include <limits.h>
 #include <pthread.h>
 #include <stdlib.h>
 /*----------------------------------------------------------------------------*/
@@ -90,7 +91,8 @@ static enum Result tmrInit(void *object, const void *configBase)
   uv_handle_set_data((uv_handle_t *)timer->handle, timer);
 
   timer->callback = NULL;
-  timer->overflow = (uint64_t)-1;
+  timer->callbackArgument = NULL;
+  timer->overflow = UINT32_MAX;
   timer->timestamp = uv_now(uv_default_loop());
   timer->autostop = false;
 
@@ -173,7 +175,7 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct PosixTimer * const timer = object;
 
-  timer->overflow = overflow;
+  timer->overflow = overflow ? overflow : UINT32_MAX;
 
   if (uv_is_active((uv_handle_t *)timer->handle))
   {

@@ -18,7 +18,7 @@ extern const struct TimerClass * const Rit;
  */
 struct RitConfig
 {
-  /** Optional: interrupt priority. */
+  /** Optional: interrupt priority for the timer interrupt request. */
   IrqPriority priority;
 };
 
