@@ -80,6 +80,7 @@ static enum Result tmrInit(void *object, const void *)
     return E_BUSY;
 
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
 
   LPC_ATIMER->CLR_EN = CLR_EN_CLR_EN;
   LPC_ATIMER->CLR_STAT = CLR_STAT_CSTAT;

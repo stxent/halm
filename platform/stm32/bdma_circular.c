@@ -93,9 +93,10 @@ static enum Result streamInit(void *object, const void *configBase)
     stream->base.config |= CCR_TCIE | CCR_TEIE;
     if (!config->silent)
       stream->base.config |= CCR_HTIE;
-
     stream->base.handler = interruptHandler;
+
     stream->callback = NULL;
+    stream->callbackArgument = NULL;
     stream->state = STATE_IDLE;
   }
 

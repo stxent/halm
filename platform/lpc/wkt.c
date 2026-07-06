@@ -77,6 +77,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
   timer->overflow = TIMER_RESOLUTION;
   timer->restart = true;
 

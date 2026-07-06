@@ -244,6 +244,7 @@ static enum Result streamInit(void *object, const void *configBase)
   enum Result res;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
 
   if (pthread_mutex_init(&interface->rxQueueLock, 0))
     return E_ERROR;

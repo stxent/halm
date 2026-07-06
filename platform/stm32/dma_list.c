@@ -131,6 +131,7 @@ static enum Result streamInit(void *object, const void *configBase)
     stream->base.handler = interruptHandler;
   
     stream->callback = NULL;
+    stream->callbackArgument = NULL;
     stream->capacity = config->number;
     stream->index = 0;
     stream->queued = 0;

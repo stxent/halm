@@ -103,6 +103,7 @@ static enum Result clkInit(void *object, const void *configBase)
 
   clock->base.handler = interruptHandler;
   clock->callback = NULL;
+  clock->callbackArgument = NULL;
 
   LPC_RTC_Type * const reg = clock->base.reg;
 

@@ -67,6 +67,7 @@ static enum Result bodInit(void *object, const void *configBase)
     uint32_t bodctrl = 0;
 
     bod->callback = NULL;
+    bod->callbackArgument = NULL;
     bod->enabled = false;
 
     if (LPC_SYSCON->SYSRESSTAT & SYSRESSTAT_BOD)

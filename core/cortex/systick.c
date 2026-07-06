@@ -74,6 +74,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   if (setInstance(timer))
   {
     timer->callback = NULL;
+    timer->callbackArgument = NULL;
 
     /* Configure the timer but leave it in the disabled state */
     SYSTICK->CTRL = CTRL_CLKSOURCE;

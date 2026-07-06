@@ -132,6 +132,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->base.handler = interruptHandler;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->external = 0;
   interface->internal = 0;
   interface->size = config->size;

@@ -86,6 +86,7 @@ static enum Result wdtInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
   timer->fired = (LPC_WWDT->MOD & MOD_WDTOF) != 0;
 
   uint32_t mod = MOD_WDEN | MOD_WDINT;

@@ -146,6 +146,7 @@ static enum Result unitInit(void *object, const void *configBase)
 
   unit->base.handler = interruptHandler;
   unit->callback = NULL;
+  unit->callbackArgument = NULL;
 
   for (size_t index = 0; index < ARRAY_SIZE(unit->instances); ++index)
     unit->instances[index] = NULL;
@@ -308,6 +309,7 @@ static enum Result channelInit(void *object, const void *configBase)
   if (unitSetInstance(unit, capture->channel, capture))
   {
     capture->callback = NULL;
+    capture->callbackArgument = NULL;
     capture->event = config->event;
     capture->unit = unit;
 

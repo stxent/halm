@@ -112,6 +112,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   if (setInstance(timer))
   {
     timer->callback = NULL;
+    timer->callbackArgument = NULL;
 
     setOverflow(UINT64_MAX);
     setCurrentValue(0);

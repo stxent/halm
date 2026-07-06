@@ -233,6 +233,7 @@ static enum Result adcInit(void *object, const void *configBase)
 #endif
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->time = config->time;
 
   if (!dmaSetup(interface, config))

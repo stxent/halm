@@ -276,6 +276,7 @@ static enum Result qspiInit(void *object, const void *configBase)
     return E_ERROR;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->rate = config->rate;
   interface->blocking = true;
 

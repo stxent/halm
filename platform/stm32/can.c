@@ -567,6 +567,7 @@ static enum Result canInit(void *object, const void *configBase)
 
   interface->base.handler = interruptHandler;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->timer = config->timer;
 
 #ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS

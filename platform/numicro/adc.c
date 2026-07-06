@@ -180,6 +180,7 @@ static enum Result adcInit(void *object, const void *configBase)
       | ADCR_TRGCOND(adcMakePinCondition(config->sensitivity));
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->delay = config->delay;
   interface->priority = config->priority;
 

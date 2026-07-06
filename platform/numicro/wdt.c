@@ -52,6 +52,7 @@ static enum Result wdtInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
   timer->fired = (NM_WDT->CTL & CTL_RSTF) != 0;
 
   const uint32_t clock = wdtGetClock(object);

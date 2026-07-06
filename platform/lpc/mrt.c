@@ -68,6 +68,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
   timer->interval = TIMER_RESOLUTION;
 
   LPC_MRT_Type * const reg = timer->base.reg;

@@ -134,6 +134,7 @@ static enum Result unitInit(void *object, const void *configBase)
 
   unit->base.handler = interruptHandler;
   unit->callback = NULL;
+  unit->callbackArgument = NULL;
   unit->centered = config->centered;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;

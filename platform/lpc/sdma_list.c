@@ -156,6 +156,7 @@ static enum Result channelInit(void *object, const void *configBase)
   channel->base.handler = interruptHandler;
 
   channel->callback = NULL;
+  channel->callbackArgument = NULL;
   channel->capacity = config->number;
   channel->index = 0;
   channel->queued = 0;

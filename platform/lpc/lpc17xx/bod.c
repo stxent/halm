@@ -63,6 +63,7 @@ static enum Result bodInit(void *object, const void *configBase)
     uint32_t pcon = LPC_SC->PCON & ~(PCON_BODRPM | PCON_BOGD | PCON_BORD);
 
     bod->callback = NULL;
+    bod->callbackArgument = NULL;
     bod->enabled = false;
     bod->fired = !(rsid & RSID_POR) && (rsid & RSID_BODR);
 

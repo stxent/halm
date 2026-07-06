@@ -132,6 +132,7 @@ static enum Result adcInit(void *object, const void *configBase)
 
   interface->base.handler = interruptHandler;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->count = (uint8_t)count;
   interface->priority = config->priority;
 

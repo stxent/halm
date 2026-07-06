@@ -304,6 +304,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->base.handler = interruptHandler;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->rate = config->rate;
   interface->address = 0;
   interface->blocking = true;

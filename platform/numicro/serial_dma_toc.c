@@ -339,7 +339,8 @@ static enum Result serialInit(void *object, const void *configBase)
   if (!dmaSetup(interface, config->dma[0], config->dma[1], timeout))
     return E_ERROR;
 
-  interface->callback = 0;
+  interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->rxBufferSize = config->rxChunk;
   interface->txBufferSize = 0;
 

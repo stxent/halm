@@ -185,6 +185,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
   pinSetPull(input, config->pull);
 
   interrupt->callback = NULL;
+  interrupt->callbackArgument = NULL;
   interrupt->enabled = false;
   interrupt->event = config->event;
   interrupt->mask = 1UL << input.number;

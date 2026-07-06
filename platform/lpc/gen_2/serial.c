@@ -170,6 +170,7 @@ static enum Result serialInit(void *object, const void *configBase)
 
   interface->base.handler = interruptHandler;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
 
 #ifdef CONFIG_PLATFORM_LPC_UART_WATERMARK
   interface->rxWatermark = 0;

@@ -230,6 +230,7 @@ static enum Result i2cInit(void *object, const void *configBase)
 
   interface->address = 0;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->blocking = true;
   interface->rate = config->rate;
   interface->sendRepeatedStart = false;

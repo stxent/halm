@@ -15,7 +15,7 @@ struct DmaMemCopyHandler
   struct Dma *dma;
 
   void (*callback)(void *, enum Result);
-  void *argument;
+  void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS

@@ -167,6 +167,7 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->base.handler = interruptHandler;
   interface->base.control |= CTL_ADCIEN0;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->priority = config->priority;
   interface->sampling = sampling;
 

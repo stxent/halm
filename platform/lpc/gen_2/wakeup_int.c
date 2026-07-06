@@ -148,6 +148,7 @@ static enum Result wakeupIntInit(void *object, const void *configBase)
   pinSetPull(input, config->pull);
 
   interrupt->callback = NULL;
+  interrupt->callbackArgument = NULL;
   interrupt->channel = channel;
   interrupt->index = channel >> 5;
   interrupt->mask = 1UL << (channel & 0x1F);

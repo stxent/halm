@@ -84,6 +84,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
 
   interrupt->base.handler = interruptHandler;
   interrupt->callback = NULL;
+  interrupt->callbackArgument = NULL;
 
   interrupt->mask = 1 << interrupt->base.channel;
   interrupt->enabled = false;

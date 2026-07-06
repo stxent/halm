@@ -229,6 +229,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
   pinSetPull(input, config->pull);
 
   interrupt->callback = NULL;
+  interrupt->callbackArgument = NULL;
   interrupt->key = config->pin;
   interrupt->mask = 1 << input.number;
   interrupt->event = config->event;

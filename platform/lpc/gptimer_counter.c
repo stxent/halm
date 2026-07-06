@@ -92,6 +92,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->base.handler = interruptHandler;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
   timer->event = (config->event ? config->event : GPTIMER_MATCH0) - 1;
 
   /* Initialize peripheral block */

@@ -789,6 +789,7 @@ static enum Result sdioInit(void *object, const void *configBase)
     interface->timer = NULL;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->wq = config->wq != NULL ? config->wq : WQ_DEFAULT;
   interface->retries = 0;
   interface->block = BLOCK_SIZE_DEFAULT;

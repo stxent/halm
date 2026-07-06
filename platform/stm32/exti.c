@@ -76,6 +76,7 @@ static enum Result extiInit(void *object, const void *configBase)
 
   interrupt->base.handler = interruptHandler;
   interrupt->callback = NULL;
+  interrupt->callbackArgument = NULL;
 
   interrupt->mask = 1UL << interrupt->base.channel;
   interrupt->enabled = false;

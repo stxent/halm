@@ -660,6 +660,7 @@ static enum Result spimInit(void *object, const void *configBase)
 
   interface->base.handler = spimInterruptHandler;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->timer = config->timer;
   interface->status = STATUS_OK;
   interface->blocking = true;

@@ -181,6 +181,7 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->pins = (struct AdcPin *)(interface->buffer + count);
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->count = (uint8_t)count;
 
   interface->control = 0;

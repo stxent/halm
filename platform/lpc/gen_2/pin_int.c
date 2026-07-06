@@ -192,6 +192,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
   pinSetPull(input, config->pull);
 
   interrupt->callback = NULL;
+  interrupt->callbackArgument = NULL;
   interrupt->mask = 1UL << input.number;
   interrupt->channel = input.port;
   interrupt->enabled = false;

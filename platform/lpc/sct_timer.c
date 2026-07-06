@@ -166,6 +166,7 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
   timer->base.handler = interruptHandler;
   timer->base.mask = 1 << timer->event;
   timer->callback = NULL;
+  timer->callbackArgument = NULL;
 
   /* Disable the timer before any configuration is done */
   reg->CTRL_PART[part] = CTRL_HALT;

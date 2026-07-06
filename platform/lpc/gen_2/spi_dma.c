@@ -331,6 +331,7 @@ static enum Result spiInit(void *object, const void *configBase)
     return E_ERROR;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->rate = config->rate;
   interface->sink = NULL;
   interface->blocking = true;

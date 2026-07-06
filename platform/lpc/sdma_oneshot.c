@@ -91,6 +91,7 @@ static enum Result channelInit(void *object, const void *configBase)
   channel->base.handler = interruptHandler;
 
   channel->callback = NULL;
+  channel->callbackArgument = NULL;
   channel->transferConfig = 0;
   channel->state = STATE_IDLE;
 

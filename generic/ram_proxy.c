@@ -40,6 +40,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   struct RamProxy * const interface = object;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->arena = config->arena;
   interface->capacity = config->capacity;
   interface->granule = config->granule ? config->granule : DEFAULT_GRANULE_SIZE;

@@ -92,6 +92,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   struct BufferingProxy * const interface = object;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->pipe = config->pipe;
   interface->rx = config->rx.stream;
   interface->tx = config->tx.stream;

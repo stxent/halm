@@ -355,6 +355,7 @@ static enum Result serialInit(void *object, const void *configBase)
     return E_ERROR;
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->rxChunks = config->rxChunks;
   interface->rxPosition = 0;
   interface->rxBufferSize = config->rxLength / config->rxChunks;

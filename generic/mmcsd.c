@@ -1023,6 +1023,7 @@ static enum Result cardInit(void *object, const void *configBase)
   struct MMCSD * const device = object;
 
   device->callback = NULL;
+  device->callbackArgument = NULL;
 
   device->interface = config->interface;
   device->transfer.position = 0;

@@ -206,6 +206,7 @@ static enum Result adcInit(void *object, const void *configBase)
 
   interface->base.control |= CTL_PDMAEN;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->sampling = sampling;
 
   if (!dmaSetup(interface, config))

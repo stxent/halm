@@ -171,6 +171,7 @@ static enum Result spiInit(void *object, const void *configBase)
 
   interface->base.handler = interruptHandler;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->rate = config->rate;
   interface->rxBuffer = NULL;
   interface->blocking = true;

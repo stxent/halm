@@ -351,6 +351,7 @@ static enum Result serialInit(void *object, const void *configBase)
 
   interface->base.handler = serialInterruptHandler;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->rxBufferSize = config->rxChunk;
   interface->txBufferSize = 0;
 

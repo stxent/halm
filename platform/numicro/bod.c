@@ -82,6 +82,7 @@ static enum Result bodInit(void *object, const void *configBase)
       & ~(BODCTL_BODRSTEN | BODCTL_BODDGSEL_MASK | BODCTL_BODVL_MASK);
 
   bod->callback = NULL;
+  bod->callbackArgument = NULL;
   bod->event = config->event;
 
   bodctl |= BODCTL_BODEN;

@@ -175,6 +175,7 @@ static enum Result unitInit(void *object, const void *configBase)
 
   unit->base.handler = interruptHandler;
   unit->callback = NULL;
+  unit->callbackArgument = NULL;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
   unit->input = config->clock;

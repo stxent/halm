@@ -52,6 +52,7 @@ static enum Result bodInit(void *object, const void *configBase)
   uint32_t creg = LPC_CREG->CREG0 & ~(CREG0_BODLVL1_MASK | CREG0_BODLVL2_MASK);
 
   bod->callback = NULL;
+  bod->callbackArgument = NULL;
   bod->enabled = false;
   bod->fired = false;
 

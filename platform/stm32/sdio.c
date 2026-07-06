@@ -461,6 +461,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   interface->timer = config->timer;
   interface->argument = 0;
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->command = 0;
   interface->count = 0;
   interface->cmdStatus = E_OK;

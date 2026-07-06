@@ -200,6 +200,7 @@ static enum Result adcInit(void *object, const void *configBase)
     interface->config |= CFGR1_RES(RES_12BIT);
 
   interface->callback = NULL;
+  interface->callbackArgument = NULL;
   interface->time = config->time;
 
   if (!dmaSetup(interface, config))

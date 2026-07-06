@@ -72,6 +72,7 @@ static enum Result shInit(void *object, const void *configBase)
   }
 
   handler->callback = NULL;
+  handler->callbackArgument = NULL;
   handler->signum = config->signum;
   uv_handle_set_data((uv_handle_t *)handler->handle, handler);
 
