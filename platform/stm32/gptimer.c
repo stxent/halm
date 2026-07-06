@@ -180,6 +180,8 @@ static void tmrSetAutostop(void *object, bool state)
   struct GpTimer * const timer = object;
   STM_TIM_Type * const reg = timer->base.reg;
 
+  assert(!state || !timer->freerun);
+
   if (state)
     reg->CR1 |= CR1_OPM;
   else

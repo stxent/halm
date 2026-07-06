@@ -39,8 +39,9 @@ struct TimerFactoryEntry
   bool enabled;
 };
 /*----------------------------------------------------------------------------*/
+static inline uint32_t distance(uint32_t, uint32_t, uint32_t);
 static void insertTimer(struct TimerFactoryEntry **, struct TimerFactoryEntry *,
-    uint32_t);
+    uint32_t, uint32_t);
 static void interruptHandler(void *);
 static void interruptHandlerTickless(void *);
 static void removeTimer(struct TimerFactory *,
@@ -165,61 +166,43 @@ const struct TimerClass * const TicklessFactoryEntry =
     .setValue = tmrSetValue
 };
 /*----------------------------------------------------------------------------*/
+static inline uint32_t distance(uint32_t target, uint32_t counter,
+    uint32_t overflow)
+{
+  int32_t delta = (int32_t)(target - counter);
+
+  if (delta < 0)
+    delta += overflow + 1;
+
+  return (uint32_t)delta;
+}
+/*----------------------------------------------------------------------------*/
 static void insertTimer(struct TimerFactoryEntry **head,
-    struct TimerFactoryEntry *timer, uint32_t counter)
+    struct TimerFactoryEntry *timer, uint32_t counter, uint32_t overflow)
 {
   struct TimerFactoryEntry *current = *head;
 
-  if (current != NULL)
+  /* Calculate the relative linear distance of the new timer */
+  const uint32_t delta = distance(timer->timestamp, counter, overflow);
+
+  /* Check for head insertion */
+  if (current == NULL || (delta <
+      distance(current->timestamp, counter, overflow)))
   {
-    int32_t distance;
-    uint32_t timestamp = current->timestamp;
-
-    /* Time of the current timer is overflowed */
-    distance = timer->timestamp - counter;
-    const bool co = distance <= 0;
-
-    /* Time of the current timer is greater or equal to the head timer */
-    distance = timestamp - timer->timestamp;
-    const bool hg = distance >= 0;
-
-    /* Time of the head timer is overflowed */
-    distance = timestamp - counter;
-    const bool ho = distance <= 0;
-
-    if ((!co && (ho ^ hg)) || (co && ho && hg))
-    {
-      timer->next = current;
-      *head = timer;
-    }
-    else
-    {
-      while (current->next != NULL)
-      {
-        timestamp = current->next->timestamp;
-
-        /* Time of the current timer is greater or equal to the next timer */
-        distance = timestamp - timer->timestamp;
-        const bool cg = distance >= 0;
-
-        /* Time of the next timer is overflowed */
-        distance = timestamp - counter;
-        const bool no = distance <= 0;
-
-        if ((no && !co) || ((no || !co) && cg))
-          break;
-
-        current = current->next;
-      }
-
-      timer->next = current->next;
-      current->next = timer;
-    }
+    timer->next = current;
+    *head = timer;
   }
   else
   {
-    timer->next = NULL;
-    *head = timer;
+    /* Queue traversal loop */
+    while (current->next != NULL && (delta >=
+        distance(current->next->timestamp, counter, overflow)))
+    {
+      current = current->next;
+    }
+
+    timer->next = current->next;
+    current->next = timer;
   }
 
   assert(*head == NULL || (*head != (*head)->next));
@@ -262,7 +245,7 @@ static void interruptHandler(void *object)
       /* Append the periodic timer to the main list */
       timer->timestamp = counter + timer->overflow;
       /* Timestamp cannot overflow to incorrect value in this mode */
-      insertTimer(&factory->head, timer, counter);
+      insertTimer(&factory->head, timer, counter, factory->overflow);
     }
   }
 
@@ -272,17 +255,20 @@ static void interruptHandler(void *object)
 static void interruptHandlerTickless(void *object)
 {
   struct TimerFactory * const factory = object;
-  struct TimerFactoryEntry *current;
-  struct TimerFactoryEntry *head = NULL;
-  int32_t distance;
+  const uint32_t overflow = factory->overflow;
+  uint32_t delta;
 
   do
   {
     const uint32_t counter = timerGetValue(factory->timer);
+    struct TimerFactoryEntry *current = factory->head;
+    struct TimerFactoryEntry *head = NULL;
 
-    current = factory->head;
-    while (current != NULL && (int32_t)(counter - current->timestamp) >= 0)
+    while (current != NULL)
     {
+      if (distance(counter, current->timestamp, overflow) >= overflow / 2)
+        break;
+
       struct TimerFactoryEntry * const timer = current;
       current = current->next;
 
@@ -291,9 +277,10 @@ static void interruptHandlerTickless(void *object)
       timer->next = head;
       head = timer;
     }
-    factory->head = current;
 
+    factory->head = current;
     current = head;
+
     while (current != NULL)
     {
       struct TimerFactoryEntry * const timer = current;
@@ -305,26 +292,33 @@ static void interruptHandlerTickless(void *object)
       if (timer->enabled)
       {
         /* Assume that the timer is not rescheduled from another callback */
-        assert((int32_t)(counter - timer->timestamp) >= 0);
+        assert(distance(counter, timer->timestamp, overflow) < overflow / 2);
 
         /* Append the periodic timer to the main list */
-        timer->timestamp = counter + timer->overflow;
-        if (timer->timestamp > factory->overflow)
-          timer->timestamp -= factory->overflow;
-        insertTimer(&factory->head, timer, counter);
+        timer->timestamp += timer->overflow;
+        if (timer->timestamp > overflow)
+          timer->timestamp -= overflow + 1;
+
+        /* Check for incorrect timescale or short time period */
+        assert(distance(counter, timer->timestamp, overflow) >= overflow / 2);
+
+        insertTimer(&factory->head, timer, counter, overflow);
       }
     }
 
     assert(factory->head == NULL || (factory->head != factory->head->next));
 
-    /* Configure time of the next timer interrupt */
+    /*
+     * Configure time of the next timer interrupt. Overflowed wake time
+     * will be normalized during event scheduling.
+     */
     const uint32_t waketime = factory->head != NULL ?
-        factory->head->timestamp : counter + factory->overflow / 2;
+        factory->head->timestamp : counter + overflow / 2;
 
     scheduleTimerEvent(factory, waketime);
-    distance = waketime - timerGetValue(factory->timer);
+    delta = distance(timerGetValue(factory->timer), waketime, overflow);
   }
-  while (distance <= 0);
+  while (delta < overflow / 2);
 }
 /*----------------------------------------------------------------------------*/
 static void removeTimer(struct TimerFactory *factory,
@@ -345,7 +339,7 @@ static inline void scheduleTimerEvent(struct TimerFactory *factory,
     uint32_t value)
 {
   if (++value > factory->overflow)
-    value -= factory->overflow;
+    value -= factory->overflow + 1;
   timerSetOverflow(factory->timer, value);
 }
 /*----------------------------------------------------------------------------*/
@@ -499,7 +493,7 @@ static void tmrEnable(void *object)
   if (timer->enabled)
     removeTimer(factory, timer);
   timer->timestamp = factory->counter + timer->overflow;
-  insertTimer(&factory->head, timer, factory->counter);
+  insertTimer(&factory->head, timer, factory->counter, factory->overflow);
   timer->enabled = true;
 
   irqRestore(state);
@@ -560,7 +554,7 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
    * Overflow values greater than half of the base timer overflow value
    * will lead to incorrect timestamp comparisons.
    */
-  assert(overflow <= timer->factory->overflow / 2);
+  assert(overflow <= (timer->factory->overflow - timer->factory->overflow / 2));
   /* Timer should be disabled to avoid timer rescheduling */
   assert(!timer->enabled);
 
@@ -575,10 +569,10 @@ static uint32_t tmrGetValue(const void *object)
     return 0;
 
   const struct TimerFactory * const factory = timer->factory;
-  const int32_t left = timer->timestamp - timerGetValue(factory);
+  const uint32_t delta = distance(timer->timestamp,
+      timerGetValue(factory), factory->overflow);
 
-  return timer->overflow - (left < 0 ?
-      (uint32_t)left + factory->overflow / 2 : (uint32_t)left);
+  return timer->overflow - delta;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetValue(void *object, [[maybe_unused]] uint32_t value)
@@ -589,7 +583,7 @@ static void tmrSetValue(void *object, [[maybe_unused]] uint32_t value)
   assert(value == 0);
 
   if (timer->enabled)
-    tmrEnable(timer);
+    timerEnable(timer);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrEnableTickless(void *object)
@@ -607,8 +601,8 @@ static void tmrEnableTickless(void *object)
 
   timer->timestamp = counter + timer->overflow;
   if (timer->timestamp > factory->overflow)
-    timer->timestamp -= factory->overflow;
-  insertTimer(&factory->head, timer, counter);
+    timer->timestamp -= factory->overflow + 1;
+  insertTimer(&factory->head, timer, counter, factory->overflow);
   timer->enabled = true;
 
   /* The timer queue was empty, or the new timer has the nearest wake-up time */

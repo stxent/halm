@@ -20,6 +20,10 @@ struct TimerConfig
    * The frequency cannot exceed 1 kHz.
    */
   uint32_t frequency;
+  /** Optional: timer resolution, used in free-running mode only. */
+  uint32_t resolution;
+  /** Optional: enable free-running mode emulation. */
+  bool freerun;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_GENERIC_TIMER_H_ */

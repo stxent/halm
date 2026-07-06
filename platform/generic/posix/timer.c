@@ -11,6 +11,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 /*----------------------------------------------------------------------------*/
+#define TICK_RATE 1000
+
 struct PosixTimer
 {
   struct Timer base;
@@ -22,8 +24,10 @@ struct PosixTimer
 
   uint64_t frequency;
   uint64_t overflow;
+  uint64_t resolution;
   uint64_t timestamp;
   bool autostop;
+  bool freerun;
 };
 /*----------------------------------------------------------------------------*/
 static void onCloseCallback(uv_handle_t *);
@@ -67,10 +71,22 @@ static void onCloseCallback(uv_handle_t *handle)
 static void onTimerCallback(uv_timer_t *handle)
 {
   struct PosixTimer * const timer = uv_handle_get_data((uv_handle_t *)handle);
+  bool event = false;
 
-  timer->timestamp = uv_now(uv_default_loop());
+  if (timer->freerun)
+  {
+    if (++timer->timestamp > timer->resolution)
+      timer->timestamp = 0;
+    if (timer->timestamp == timer->overflow)
+      event = true;
+  }
+  else
+  {
+    timer->timestamp = uv_now(uv_default_loop());
+    event = true;
+  }
 
-  if (timer->callback != NULL)
+  if (event && timer->callback != NULL)
     timer->callback(timer->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -92,18 +108,25 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->callback = NULL;
   timer->callbackArgument = NULL;
-  timer->overflow = UINT32_MAX;
-  timer->timestamp = uv_now(uv_default_loop());
   timer->autostop = false;
 
   if (config != NULL)
   {
-    assert(config->frequency <= 1000);
-    timer->frequency = config->frequency ? config->frequency : 1000;
+    assert(config->frequency <= TICK_RATE);
+    timer->frequency = config->frequency ? config->frequency : TICK_RATE;
+    timer->resolution = config->resolution ?
+        config->resolution - 1 : UINT32_MAX;
+    timer->freerun = config->freerun;
   }
   else
-    timer->frequency = 1000;
+  {
+    timer->frequency = TICK_RATE;
+    timer->resolution = UINT32_MAX;
+    timer->freerun = false;
+  }
 
+  timer->overflow = timer->resolution;
+  timer->timestamp = timer->freerun ? 0 : uv_now(uv_default_loop());
   return E_OK;
 }
 /*----------------------------------------------------------------------------*/
@@ -118,9 +141,19 @@ static void tmrDeinit(void *object)
 static void tmrEnable(void *object)
 {
   struct PosixTimer * const timer = object;
-  const uint64_t period = (timer->overflow * 1000) / timer->frequency;
+  uint64_t period;
 
-  timer->timestamp = uv_now(uv_default_loop());
+  if (timer->freerun)
+  {
+    period = TICK_RATE / timer->frequency;
+    timer->timestamp = 0;
+  }
+  else
+  {
+    period = (timer->overflow * TICK_RATE) / timer->frequency;
+    timer->timestamp = uv_now(uv_default_loop());
+  }
+
   uv_timer_start(timer->handle, onTimerCallback, period,
       timer->autostop ? 0 : period);
 }
@@ -134,6 +167,8 @@ static void tmrDisable(void *object)
 static void tmrSetAutostop(void *object, bool state)
 {
   struct PosixTimer * const timer = object;
+
+  assert(!state || !timer->freerun);
   timer->autostop = state;
 }
 /*----------------------------------------------------------------------------*/
@@ -156,11 +191,12 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 {
   struct PosixTimer * const timer = object;
 
-  timer->frequency = frequency;
+  assert(frequency <= TICK_RATE);
+  timer->frequency = frequency ? frequency : TICK_RATE;
 
   if (uv_is_active((uv_handle_t *)timer->handle))
   {
-    const uint64_t period = (timer->overflow * 1000) / timer->frequency;
+    const uint64_t period = (timer->overflow * TICK_RATE) / timer->frequency;
     uv_timer_set_repeat(timer->handle, period);
   }
 }
@@ -168,16 +204,22 @@ static void tmrSetFrequency(void *object, uint32_t frequency)
 static uint32_t tmrGetOverflow(const void *object)
 {
   const struct PosixTimer * const timer = object;
-  return (uint32_t)timer->overflow;
+  return (uint32_t)(timer->freerun ? timer->overflow + 1 : timer->overflow);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetOverflow(void *object, uint32_t overflow)
 {
   struct PosixTimer * const timer = object;
 
-  timer->overflow = overflow ? overflow : UINT32_MAX;
+  if (timer->freerun)
+    overflow = overflow ? overflow - 1 : timer->resolution;
+  else
+    overflow = overflow ? overflow : timer->resolution;
 
-  if (uv_is_active((uv_handle_t *)timer->handle))
+  timer->overflow = overflow <= timer->resolution ?
+      overflow : timer->resolution;
+
+  if (!timer->freerun && uv_is_active((uv_handle_t *)timer->handle))
   {
     const uint64_t period = (timer->overflow * 1000) / timer->frequency;
     uv_timer_set_repeat(timer->handle, period);
@@ -187,11 +229,20 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
 static uint32_t tmrGetValue(const void *object)
 {
   const struct PosixTimer * const timer = object;
-  return (uint32_t)(uv_now(uv_default_loop()) - timer->timestamp);
+
+  if (timer->freerun)
+    return timer->timestamp;
+  else
+    return (uint32_t)(uv_now(uv_default_loop()) - timer->timestamp);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetValue(void *object, uint32_t value)
 {
   struct PosixTimer * const timer = object;
-  timer->timestamp = (uint32_t)uv_now(uv_default_loop()) - value;
+
+  assert(value <= timer->resolution);
+  if (timer->freerun)
+    timer->timestamp = value;
+  else
+    timer->timestamp = (uint32_t)uv_now(uv_default_loop()) - value;
 }

@@ -178,6 +178,9 @@ static void tmrSetAutostop(void *object, bool state)
   LPC_TIMER_Type * const reg = timer->base.reg;
   const uint32_t mask = MCR_STOP(timer->event);
 
+  /* Ensure that free-running mode is not enabled */
+  assert(!state || reg->MCR != 0);
+
   if (state)
     reg->MCR |= mask;
   else
