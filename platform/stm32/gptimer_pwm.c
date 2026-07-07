@@ -220,7 +220,7 @@ static void unitEnable(void *object)
   /* Clear pending interrupt flags */
   reg->SR = 0;
   /* Start the timer */
-  reg->CR1 |= CR1_CEN;
+  reg->CR1 |= CR1_CEN | CR1_ARPE;
 }
 /*----------------------------------------------------------------------------*/
 static void unitDisable(void *object)
@@ -228,7 +228,7 @@ static void unitDisable(void *object)
   struct GpTimerPwmUnit * const unit = object;
   STM_TIM_Type * const reg = unit->base.reg;
 
-  reg->CR1 &= ~CR1_CEN;
+  reg->CR1 &= ~(CR1_CEN | CR1_ARPE);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t unitGetFrequency(const void *object)

@@ -37,7 +37,7 @@ on your system:
   RISC-V embedded targets.
 * **CMake 3.21 or newer** — used for configuring and generating build
   systems across platforms.
-* **Kconfiglib** or **kconfig‑frontends** — tools for interactive library
+* **Kconfiglib** or **kconfig-frontends** — tools for interactive library
   configuration via `menuconfig`.
 * **Xcore** — can be built separately or included as CMake submodule
   in the top-level project.
@@ -48,7 +48,7 @@ The library includes the following major components:
 
 ### Peripheral Device Drivers
 
-Provides low‑level access to hardware peripherals, with a consistent API
+Provides low-level access to hardware peripherals, with a consistent API
 across platforms. Supports the following peripherals:
 
 * ADC and DAC
@@ -56,18 +56,18 @@ across platforms. Supports the following peripherals:
 * GPIO
 * Timers and watchdog
 * External interrupts
-* UART, SPI, I2C, I2S, CAN, SDIO (in blocking and zero‑copy modes)
+* UART, SPI, I2C, I2S, CAN, SDIO (in blocking and zero-copy modes)
 * QSPI and specialized peripherals with XIP
 * USB FS and HS
 * Ethernet
-* Built‑in flash memory and EEPROM
+* Built-in flash memory and EEPROM
 * External parallel SRAM and SDRAM
 * Clock management and power saving
 * Specialized peripherals
 
 ### Generic Drivers
 
-Higher‑level software components that abstract common patterns:
+Higher-level software components that abstract common patterns:
 
 * Software timers
 * Task queues
@@ -77,8 +77,8 @@ Higher‑level software components that abstract common patterns:
 
 Support for USB device functionality:
 
-* Platform‑dependent parts
-* Platform‑independent drivers for CDC, HID, MSC and UAC
+* Platform-dependent parts
+* Platform-independent drivers for CDC, HID, MSC and UAC
 * Composite devices
 
 ## Usage Examples
@@ -133,8 +133,8 @@ make
 make install
 ```
 
-The toolchain file sets up the cross‑compiler, and the PLATFORM variable tells
-which MCU‑specific code to include.
+The toolchain file sets up the cross-compiler, and the PLATFORM variable tells
+which MCU-specific code to include.
 
 ## Build Options
 

@@ -19,14 +19,14 @@ static MpuRegion findFreeRegion(void);
  * Compute MPU region parameters with given attributes.
  *
  * Calculates the optimal region configuration (base address and size)
- * for the MPU, ensuring proper alignment and power‑of‑two size requirements.
+ * for the MPU, ensuring proper alignment and power-of-two size requirements.
  * Handles subregion disable mask calculation for large regions (> 128 bytes).
  *
  * @param address Starting address of the memory region to protect. Will be
  * aligned down to the nearest region boundary during computation.
- * @param size Requested size of the region in bytes. Must be non‑zero.
+ * @param size Requested size of the region in bytes. Must be non-zero.
  * The function rounds this up to the next power of two if necessary.
- * @param attributes Pre‑computed MPU attribute bits.
+ * @param attributes Pre-computed MPU attribute bits.
  * @param config Pointer to a structure where the computed configuration
  * will be stored.
  * @return @b true if the region configuration was computed successfully

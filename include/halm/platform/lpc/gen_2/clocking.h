@@ -98,7 +98,7 @@ struct PllConfig
 struct WdtOscConfig
 {
   /**
-   * Optional: clock frequency divisor. Divisor range is 2 to 64 in step of 2.
+   * Optional: clock frequency divisor. Divisor range is 2 to 64 in steps of 2.
    */
   uint16_t divisor;
   /** Optional: oscillator frequency. */

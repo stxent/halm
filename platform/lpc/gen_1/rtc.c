@@ -236,13 +236,26 @@ static time64_t clkTime(void *object)
     };
     time64_t timestamp = 0;
 
-    if (rtMakeEpochTime(&timestamp, &dateTime) == E_OK)
+    if (rtMakeEpochTime(&timestamp, &dateTime))
       return timestamp;
   }
 
   return 0;
 }
 /*----------------------------------------------------------------------------*/
+/**
+ * Calculate the new calibration value for the RTC.
+ *
+ * This function calculates the new calibration value based on the difference
+ * between the global time and the local time. If there is no previous sync,
+ * zero is returned.
+ *
+ * @param globaltime The current global time.
+ * @param localtime The current local time from the RTC.
+ * @param prevSync The timestamp of the last synchronization.
+ * @param prevCalib The previous calibration value.
+ * @return The new calibration value or zero in case of error.
+ */
 int32_t rtcCalcCalibration(time64_t globaltime, time64_t localtime,
     time64_t prevSync, int32_t prevCalib)
 {

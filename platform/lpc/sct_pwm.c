@@ -174,6 +174,8 @@ static enum Result unitInit(void *object, const void *configBase)
     return E_BUSY;
 
   unit->base.handler = interruptHandler;
+  unit->base.mask = 1 << unit->event;
+
   unit->callback = NULL;
   unit->callbackArgument = NULL;
   unit->frequency = config->frequency;
@@ -182,10 +184,8 @@ static enum Result unitInit(void *object, const void *configBase)
   unit->centered = config->centered;
 
   LPC_SCT_Type * const reg = unit->base.reg;
-  const uint16_t eventMask = 1 << unit->event;
   const unsigned int part = unit->base.part == SCT_HIGH;
 
-  unit->base.mask = eventMask;
   reg->CTRL_PART[part] = CTRL_HALT;
 
   if (unit->centered)
@@ -208,7 +208,7 @@ static enum Result unitInit(void *object, const void *configBase)
   setUnitResolution(unit, unit->event, unit->resolution);
 
   /* Enable match mode for match/capture registers */
-  reg->REGMODE_PART[part] &= ~eventMask;
+  reg->REGMODE_PART[part] &= ~unit->base.mask;
 
   /* Configure event */
   reg->EV[unit->event].CTRL =
@@ -221,7 +221,7 @@ static enum Result unitInit(void *object, const void *configBase)
   reg->STATE_PART[part] = 0;
   reg->EV[unit->event].STATE = 0x00000001;
   /* Enable timer clearing on allocated event */
-  reg->LIMIT_PART[part] = eventMask;
+  reg->LIMIT_PART[part] = unit->base.mask;
 
   /* Priority is same for both timer parts */
   irqSetPriority(unit->base.irq, config->priority);
@@ -256,7 +256,6 @@ static void unitSetCallback(void *object, void (*callback)(void *),
 {
   struct SctPwmUnit * const unit = object;
   LPC_SCT_Type * const reg = unit->base.reg;
-  const uint16_t eventMask = 1 << unit->event;
 
   unit->callbackArgument = argument;
   unit->callback = callback;
@@ -264,12 +263,12 @@ static void unitSetCallback(void *object, void (*callback)(void *),
   if (unit->callback != NULL)
   {
     /* Clear pending requests */
-    reg->EVFLAG = eventMask;
+    reg->EVFLAG = unit->base.mask;
     /* Enable interrupt requests */
-    reg->EVEN |= eventMask;
+    reg->EVEN |= unit->base.mask;
   }
   else
-    reg->EVEN &= ~eventMask;
+    reg->EVEN &= ~unit->base.mask;
 }
 /*----------------------------------------------------------------------------*/
 static void unitEnable(void *object)
@@ -461,7 +460,7 @@ static void singleEdgeDisable(void *object)
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
-  const uint16_t eventMask = (1 << pwm->event) | (1 << unit->event);
+  const uint16_t eventMask = unit->base.mask | (1 << pwm->event);
   const unsigned int pwmIndex = pwm->channel - 1;
 
   /* Set or clear synchronously */
@@ -684,7 +683,7 @@ static void doubleEdgeDisable(void *object)
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = pwm->unit;
   LPC_SCT_Type * const reg = unit->base.reg;
-  const uint16_t eventMask = (1 << pwm->trailingEvent) | (1 << unit->event);
+  const uint16_t eventMask = unit->base.mask | (1 << pwm->trailingEvent);
   const unsigned int pwmIndex = pwm->channel - 1;
 
   /* Set or clear synchronously */
