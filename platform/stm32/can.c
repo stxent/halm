@@ -279,12 +279,19 @@ static void interruptHandler(void *object)
 #endif
     }
 
-    /* All other flags except for RFOM are read-only or write-1-to-clear */
+    /* Other flags are read-only or write-1-to-clear */
     reg->RFR[0] = RF_RFOM;
   }
 
   updateRxWatermark(interface, pointerQueueSize(&interface->rxQueue));
   updateTxWatermark(interface, pointerQueueSize(&interface->txQueue));
+
+  /* Clear pending requests */
+  if (reg->TSR & TSR_RQCP_MASK)
+  {
+    /* Other flags are read-only or write-1-to-clear */
+    reg->TSR = TSR_RQCP_MASK;
+  }
 
   /* Write pending messages */
   while (!pointerQueueEmpty(&interface->txQueue) && (reg->TSR & TSR_TME_MASK))
@@ -298,18 +305,8 @@ static void interruptHandler(void *object)
 
     queued = true;
   }
-
-  if (pointerQueueEmpty(&interface->txQueue))
-  {
-    if (queued)
-    {
-      event = true;
-    }
-    else if ((reg->TSR & TSR_TME_MASK) == TSR_TME_MASK)
-    {
-      reg->IER &= ~IER_TMEIE;
-    }
-  }
+  if (pointerQueueEmpty(&interface->txQueue) && queued)
+    event = true;
 
   /* Handle bus errors */
   if (reg->MSR & MSR_ERRI)
@@ -323,7 +320,7 @@ static void interruptHandler(void *object)
     }
 #endif
 
-    reg->MSR &= ~MSR_ERRI;
+    reg->MSR = MSR_ERRI;
   }
 
   if (event && interface->callback != NULL)
@@ -813,8 +810,6 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   if (pointerQueueEmpty(&interface->txQueue)
       && (reg->TSR & TSR_TME_MASK) == TSR_TME_MASK)
   {
-    reg->IER |= IER_TMEIE;
-
     while (position < length && (reg->TSR & TSR_TME_MASK) != 0)
     {
       struct CANStandardMessage message;

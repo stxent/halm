@@ -51,6 +51,8 @@
 /*------------------Transmit Status Register----------------------------------*/
 /* Request completed */
 #define TSR_RQCP(mailbox)               BIT((mailbox) << 3)
+#define TSR_RQCP_MASK \
+    (TSR_RQCP(0) | TSR_RQCP(1) | TSR_RQCP(2))
 /* Transmission OK */
 #define TSR_TXOK(mailbox)               BIT(((mailbox) << 3) + 1)
 /* Arbitration lost */
