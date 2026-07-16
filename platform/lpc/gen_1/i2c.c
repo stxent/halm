@@ -266,12 +266,12 @@ static enum Result i2cGetParam(void *object, int parameter, void *data)
 {
   struct I2C * const interface = object;
 
-#ifndef CONFIG_PLATFORM_LPC_I2C_RC
-  (void)data;
-#endif
-
   switch ((enum IfParameter)parameter)
   {
+    case IF_ADDRESS:
+      *(uint32_t *)data = interface->address;
+      return E_OK;
+
 #ifdef CONFIG_PLATFORM_LPC_I2C_RC
     case IF_RATE:
       *(uint32_t *)data = i2cGetRate(object);

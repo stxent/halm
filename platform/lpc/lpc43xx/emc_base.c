@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/irq.h>
 #include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/emc_base.h>
 #include <halm/platform/lpc/emc_defs.h>

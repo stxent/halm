@@ -314,10 +314,8 @@ static void interruptHandler(void *object)
 #ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
     const uint8_t error = ESR_LEC_VALUE(reg->ESR);
 
-    if (error != LEC_NO_ERROR && error != LEC_UNUSED)
-    {
+    if (error != LEC_NO_ERROR)
       ++interface->errorCount;
-    }
 #endif
 
     reg->MSR = MSR_ERRI;

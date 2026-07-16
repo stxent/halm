@@ -463,6 +463,10 @@ static enum Result spifiGetParam(void *object, int parameter, void *data)
 
   switch ((enum SPIMParameter)parameter)
   {
+    case IF_SPIM_MODE:
+      *(uint8_t *)data = (reg->CTRL & CTRL_MODE3) ? 3 : 0;
+      return E_OK;
+
     case IF_SPIM_MEMORY_MAPPED_ADDRESS:
       *(uintptr_t *)data = (uintptr_t)spifiGetAddress(interface);
       return E_OK;

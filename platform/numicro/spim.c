@@ -742,6 +742,10 @@ static enum Result spimGetParam(void *object, int parameter, void *data)
 
   switch ((enum SPIMParameter)parameter)
   {
+    case IF_SPIM_MODE:
+      *(uint8_t *)data = 0;
+      return E_OK;
+
     case IF_SPIM_MEMORY_MAPPED_ADDRESS:
       *(uintptr_t *)data = (uintptr_t)spimGetAddress(interface);
       return E_OK;

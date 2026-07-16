@@ -306,12 +306,23 @@ static enum Result i2cGetParam(void *object, int parameter, void *data)
 {
   struct I2C * const interface = object;
 
-#ifndef CONFIG_PLATFORM_STM32_I2C_RC
-  (void)data;
-#endif
+  /* Additional I2C parameters */
+  switch ((enum I2CParameter)parameter)
+  {
+    case IF_I2C_10BIT_ADDRESS:
+      *(uint8_t *)data = (interface->address & ADDRESS_TYPE_10BIT) ? 1 : 0;
+      return E_OK;
+
+    default:
+      break;
+  }
 
   switch ((enum IfParameter)parameter)
   {
+    case IF_ADDRESS:
+      *(uint32_t *)data = interface->address;
+      return E_OK;
+
 #ifdef CONFIG_PLATFORM_STM32_I2C_RC
     case IF_RATE:
       *(uint32_t *)data = i2cGetRate(object);
