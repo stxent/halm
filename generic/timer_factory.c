@@ -37,6 +37,7 @@ struct TimerFactoryEntry
   uint32_t timestamp;
   bool continuous;
   bool enabled;
+  bool scheduled;
 };
 /*----------------------------------------------------------------------------*/
 static inline uint32_t distance(uint32_t, uint32_t, uint32_t);
@@ -44,8 +45,7 @@ static void insertTimer(struct TimerFactoryEntry **, struct TimerFactoryEntry *,
     uint32_t, uint32_t);
 static void interruptHandler(void *);
 static void interruptHandlerTickless(void *);
-static void removeTimer(struct TimerFactory *,
-    const struct TimerFactoryEntry *);
+static void removeTimer(struct TimerFactory *, struct TimerFactoryEntry *);
 static inline void scheduleTimerEvent(struct TimerFactory *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result factoryInit(void *, const void *);
@@ -221,8 +221,8 @@ static void interruptHandler(void *object)
     struct TimerFactoryEntry * const timer = current;
     current = current->next;
 
-    if (!timer->continuous)
-      timer->enabled = false;
+    timer->enabled = false;
+    timer->scheduled = timer->continuous;
     timer->next = head;
     head = timer;
   }
@@ -237,10 +237,11 @@ static void interruptHandler(void *object)
     timer->next = NULL;
     timer->callback(timer->callbackArgument);
 
-    if (timer->enabled)
+    if (timer->scheduled)
     {
-      /* Assume that the timer is not rescheduled from another callback */
-      assert(counter == timer->timestamp);
+      /* Check that the timer is not rescheduled from another callback */
+      assert(!timer->enabled);
+      timer->enabled = true;
 
       /* Append the periodic timer to the main list */
       timer->timestamp = counter + timer->overflow;
@@ -272,8 +273,8 @@ static void interruptHandlerTickless(void *object)
       struct TimerFactoryEntry * const timer = current;
       current = current->next;
 
-      if (!timer->continuous)
-        timer->enabled = false;
+      timer->enabled = false;
+      timer->scheduled = timer->continuous;
       timer->next = head;
       head = timer;
     }
@@ -289,10 +290,11 @@ static void interruptHandlerTickless(void *object)
       timer->next = NULL;
       timer->callback(timer->callbackArgument);
 
-      if (timer->enabled)
+      if (timer->scheduled)
       {
-        /* Assume that the timer is not rescheduled from another callback */
-        assert(distance(counter, timer->timestamp, overflow) < overflow / 2);
+        /* Check that the timer is not rescheduled from another callback */
+        assert(!timer->enabled);
+        timer->enabled = true;
 
         /* Append the periodic timer to the main list */
         timer->timestamp += timer->overflow;
@@ -322,7 +324,7 @@ static void interruptHandlerTickless(void *object)
 }
 /*----------------------------------------------------------------------------*/
 static void removeTimer(struct TimerFactory *factory,
-    const struct TimerFactoryEntry *timer)
+    struct TimerFactoryEntry *timer)
 {
   struct TimerFactoryEntry **current = &factory->head;
 
@@ -331,6 +333,7 @@ static void removeTimer(struct TimerFactory *factory,
 
   if (*current != NULL)
     *current = timer->next;
+  timer->next = NULL;
 
   assert(factory->head == NULL || (factory->head != factory->head->next));
 }
@@ -472,6 +475,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   timer->timestamp = timerGetValue(timer->factory);
   timer->continuous = true;
   timer->enabled = false;
+  timer->scheduled = false;
 
   return E_OK;
 }
@@ -487,11 +491,10 @@ static void tmrEnable(void *object)
   struct TimerFactory * const factory = timer->factory;
 
   assert(timer->callback != NULL);
+  assert(!timer->enabled && timer->next == NULL);
 
   const IrqState state = irqSave();
 
-  if (timer->enabled)
-    removeTimer(factory, timer);
   timer->timestamp = factory->counter + timer->overflow;
   insertTimer(&factory->head, timer, factory->counter, factory->overflow);
   timer->enabled = true;
@@ -583,7 +586,10 @@ static void tmrSetValue(void *object, [[maybe_unused]] uint32_t value)
   assert(value == 0);
 
   if (timer->enabled)
+  {
+    timerDisable(timer);
     timerEnable(timer);
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void tmrEnableTickless(void *object)
@@ -592,12 +598,10 @@ static void tmrEnableTickless(void *object)
   struct TimerFactory * const factory = timer->factory;
 
   assert(timer->callback != NULL);
+  assert(!timer->enabled && timer->next == NULL);
 
   const IrqState state = irqSave();
   const uint32_t counter = timerGetValue(timer->factory);
-
-  if (timer->enabled)
-    removeTimer(factory, timer);
 
   timer->timestamp = counter + timer->overflow;
   if (timer->timestamp > factory->overflow)
