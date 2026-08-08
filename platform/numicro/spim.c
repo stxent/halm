@@ -649,7 +649,8 @@ static enum Result spimInit(void *object, const void *configBase)
       .io1 = config->io1,
       .io2 = config->io2,
       .io3 = config->io3,
-      .sck = config->sck
+      .sck = config->sck,
+      .speed = config->speed
   };
   struct Spim * const interface = object;
   enum Result res;

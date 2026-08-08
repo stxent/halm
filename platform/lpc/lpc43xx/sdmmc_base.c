@@ -193,6 +193,7 @@ static void configPins(struct SdmmcBase *interface,
 
     pinInput(pin);
     pinSetFunction(pin, pinEntry->value);
+    pinSetSlewRate(pin, config->speed);
   }
 
   interface->wide = wide;

@@ -36,6 +36,8 @@ struct SdioConfig
   PinNumber dat3;
   /** Optional: interrupt priority. */
   IrqPriority priority;
+  /** Optional: pin signaling slew rate. */
+  enum PinSlewRate speed;
 
   struct
   {

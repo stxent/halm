@@ -10,7 +10,6 @@
 #include <halm/irq.h>
 #include <halm/pin.h>
 #include <xcore/entity.h>
-#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const SpimBase;
 
@@ -34,6 +33,8 @@ struct SpimBaseConfig
   PinNumber io3;
   /** Mandatory: serial clock output. */
   PinNumber sck;
+  /** Optional: pin signaling slew rate. */
+  enum PinSlewRate speed;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
 };

@@ -15,32 +15,34 @@ struct EmcSramConfig
 {
   struct
   {
-    /** Optional: bus turnaround time, ns. */
+    /** Optional: bus turnaround time (ns). */
     uint32_t turnaround;
 
-    /** Mandatory: delay from the address change to the output enable, ns. */
+    /** Mandatory: delay from address change to output enable (ns). */
     uint32_t oe;
-    /** Mandatory: delay from the chip select to the read access, ns. */
+    /** Mandatory: delay from chip select to read access (ns). */
     uint32_t rd;
-    /** Mandatory: delay from the chip select to the write enable, ns. */
+    /** Mandatory: delay from chip select to write enable (ns). */
     uint32_t we;
-    /** Mandatory: delay from the chip select to the write access, ns. */
+    /** Mandatory: delay from chip select to write access (ns). */
     uint32_t wr;
   } timings;
 
   struct {
-    /** Mandatory: address bus width. */
+    /** Mandatory: address bus width in bits. */
     uint8_t address;
-    /** Mandatory: data bus width. */
+    /** Mandatory: data bus width in bits. */
     uint8_t data;
   } width;
 
-  /** Mandatory: channel number. */
+  /** Optional: pin signaling slew rate. */
+  enum PinSlewRate speed;
+  /** Mandatory: hardware channel number. */
   uint8_t channel;
 
   /** Optional: enable read and write buffers. */
   bool buffering;
-  /** Optional: use both Write Enable signal and Byte Lane Select signals. */
+  /** Optional: enable both Write Enable and Byte Lane Select signals. */
   bool useWriteEnable;
 };
 

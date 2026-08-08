@@ -437,7 +437,8 @@ static enum Result sdioInit(void *object, const void *configBase)
       .dat0 = config->dat0,
       .dat1 = config->dat1,
       .dat2 = config->dat2,
-      .dat3 = config->dat3
+      .dat3 = config->dat3,
+      .speed = config->speed
   };
   struct Sdio * const interface = object;
   enum Result res;

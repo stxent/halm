@@ -381,6 +381,7 @@ static enum Result sdioInit(void *object, const void *configBase)
       .dat1 = config->dat1,
       .dat2 = config->dat2,
       .dat3 = config->dat3,
+      .speed = config->speed,
       .channel = config->channel
   };
   struct Sdh * const interface = object;

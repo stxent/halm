@@ -27,6 +27,8 @@ struct SdhBaseConfig
   PinNumber dat2;
   /** Optional: data line 3. */
   PinNumber dat3;
+  /** Optional: pin signaling slew rate. */
+  enum PinSlewRate speed;
   /* Mandatory: peripheral identifier. */
   uint8_t channel;
 };

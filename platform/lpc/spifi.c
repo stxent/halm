@@ -380,7 +380,9 @@ static enum Result spifiInit(void *object, const void *configBase)
       .io1 = config->io1,
       .io2 = config->io2,
       .io3 = config->io3,
-      .sck = config->sck
+      .sck = config->sck,
+      .speed = config->speed,
+      .channel = config->channel
   };
   struct Spifi * const interface = object;
   enum Result res;

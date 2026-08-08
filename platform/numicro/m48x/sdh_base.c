@@ -239,6 +239,7 @@ static void configPins(struct SdhBase *interface,
 
     pinInput(pin);
     pinSetFunction(pin, pinEntry->value);
+    pinSetSlewRate(pin, config->speed);
   }
 
   interface->wide = wide;

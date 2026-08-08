@@ -18,9 +18,9 @@ struct Timer;
 
 struct SdmmcConfig
 {
-  /** Optional: timer for data timeout calculation. */
+  /** Optional: timer used for data timeout calculations. */
   void *timer;
-  /** Mandatory: data rate. */
+  /** Mandatory: maximum operational clock frequency in Hz. */
   uint32_t rate;
   /** Mandatory: clock line. */
   PinNumber clk;
@@ -34,8 +34,10 @@ struct SdmmcConfig
   PinNumber dat2;
   /** Optional: data line 3. */
   PinNumber dat3;
-  /** Optional: interrupt priority. */
+  /** Optional: interrupt priority level. */
   IrqPriority priority;
+  /** Optional: pin signaling slew rate. */
+  enum PinSlewRate speed;
 };
 
 struct Sdmmc

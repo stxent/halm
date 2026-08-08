@@ -12,7 +12,7 @@
 #include <xcore/helpers.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-static void configClockPins(uint8_t, uint8_t, const bool *);
+static void configClockPins(uint8_t, uint8_t, const bool *, enum PinSlewRate);
 static void configMemoryTimings(const struct EmcSdramConfig *);
 static void issueConfigSequence(struct EmcSdram *,
     const struct EmcSdramConfig *);
@@ -39,7 +39,8 @@ extern const struct EmcPinDescription emcControlPinMap;
 extern const struct PinGroupEntry emcDataPins[];
 extern const PinNumber emcDataPinMap[];
 /*----------------------------------------------------------------------------*/
-static void configClockPins(uint8_t device, uint8_t total, const bool *clocks)
+static void configClockPins(uint8_t device, uint8_t total, const bool *clocks,
+    enum PinSlewRate speed)
 {
   /*
    * Clock and Clock Feedback mapping:
@@ -84,6 +85,7 @@ static void configClockPins(uint8_t device, uint8_t total, const bool *clocks)
 
     assert(group);
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, speed);
   }
 
   /* Clock 1 */
@@ -104,6 +106,7 @@ static void configClockPins(uint8_t device, uint8_t total, const bool *clocks)
 
     assert(group);
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, speed);
   }
 
   /* Clock 2 and Clock 23 */
@@ -128,6 +131,7 @@ static void configClockPins(uint8_t device, uint8_t total, const bool *clocks)
 
     assert(group);
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, speed);
   }
 
   /* Clock 3 */
@@ -148,6 +152,7 @@ static void configClockPins(uint8_t device, uint8_t total, const bool *clocks)
 
     assert(group);
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, speed);
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -281,7 +286,8 @@ static enum Result sdramInit(void *object, const void *configBase)
   struct Pin pin;
 
   /* Clock and Clock Feedback pins */
-  configClockPins(config->width.device, config->width.bus, config->clocks);
+  configClockPins(config->width.device, config->width.bus, config->clocks,
+      config->speed);
 
   /* Chip Select pin */
   group = pinGroupFind(emcControlPins, emcControlPinMap.dycs[channel],
@@ -289,6 +295,7 @@ static enum Result sdramInit(void *object, const void *configBase)
   assert(group != NULL);
   pinOutput((pin = pinInit(emcControlPinMap.dycs[channel])), true);
   pinSetFunction(pin, group->value);
+  pinSetSlewRate(pin, config->speed);
 
   /* Address bus */
   for (size_t index = 0; index < 12; ++index)
@@ -298,6 +305,7 @@ static enum Result sdramInit(void *object, const void *configBase)
     assert(group != NULL);
     pinOutput((pin = pinInit(emcAddressPinMap[index])), false);
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, config->speed);
   }
 
   /* Bank Select pins */
@@ -308,6 +316,7 @@ static enum Result sdramInit(void *object, const void *configBase)
     assert(group);
     pinOutput((pin = pinInit(emcAddressPinMap[13])), false);
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, config->speed);
   }
   if (config->banks == 4)
   {
@@ -316,6 +325,7 @@ static enum Result sdramInit(void *object, const void *configBase)
     assert(group);
     pinOutput((pin = pinInit(emcAddressPinMap[14])), false);
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, config->speed);
   }
 
   /* Data bus */
@@ -326,6 +336,7 @@ static enum Result sdramInit(void *object, const void *configBase)
     assert(group != NULL);
     pinInput((pin = pinInit(emcDataPinMap[index])));
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, config->speed);
   }
 
   /* Data Mask Output pins */
@@ -336,6 +347,7 @@ static enum Result sdramInit(void *object, const void *configBase)
     assert(group);
     pinInput((pin = pinInit(emcControlPinMap.dqmout[index])));
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, config->speed);
   }
 
   /* Clock Enable pin */
@@ -344,6 +356,7 @@ static enum Result sdramInit(void *object, const void *configBase)
   assert(group != NULL);
   pinOutput((pin = pinInit(emcControlPinMap.ckeout[channel])), false);
   pinSetFunction(pin, group->value);
+  pinSetSlewRate(pin, config->speed);
 
   /* CAS pin */
   group = pinGroupFind(emcControlPins, emcControlPinMap.cas,
@@ -351,6 +364,7 @@ static enum Result sdramInit(void *object, const void *configBase)
   assert(group != NULL);
   pinOutput((pin = pinInit(emcControlPinMap.cas)), true);
   pinSetFunction(pin, group->value);
+  pinSetSlewRate(pin, config->speed);
 
   /* RAS pin */
   group = pinGroupFind(emcControlPins, emcControlPinMap.ras,
@@ -358,6 +372,7 @@ static enum Result sdramInit(void *object, const void *configBase)
   assert(group != NULL);
   pinOutput((pin = pinInit(emcControlPinMap.ras)), true);
   pinSetFunction(pin, group->value);
+  pinSetSlewRate(pin, config->speed);
 
   /* Write Enable pin */
   group = pinGroupFind(emcControlPins, emcControlPinMap.we,
@@ -365,6 +380,7 @@ static enum Result sdramInit(void *object, const void *configBase)
   assert(group != NULL);
   pinOutput((pin = pinInit(emcControlPinMap.we)), true);
   pinSetFunction(pin, group->value);
+  pinSetSlewRate(pin, config->speed);
 
   /* Configure address mapping */
 

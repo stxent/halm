@@ -163,6 +163,7 @@ static void configPins(struct SpimBase *interface,
 
     pinInput(pin);
     pinSetFunction(pin, pinEntry->value);
+    pinSetSlewRate(pin, config->speed);
   }
 
   interface->wide = wide;

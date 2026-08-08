@@ -41,6 +41,7 @@ void sdioConfigPins(struct SdioBase *interface,
 
     pinInput(pin);
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, config->speed);
   }
 
   interface->width = width;

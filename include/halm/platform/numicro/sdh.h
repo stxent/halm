@@ -17,7 +17,7 @@ struct Timer;
 
 struct SdhConfig
 {
-  /** Optional: timer for data timeout calculation. */
+  /** Optional: timer used for data timeout calculations. */
   void *timer;
   /** Mandatory: data rate. */
   uint32_t rate;
@@ -35,6 +35,8 @@ struct SdhConfig
   PinNumber dat3;
   /** Optional: interrupt priority. */
   IrqPriority priority;
+  /** Optional: pin signaling slew rate. */
+  enum PinSlewRate speed;
   /* Mandatory: peripheral identifier. */
   uint8_t channel;
 };

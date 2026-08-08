@@ -9,54 +9,54 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/generic/spim.h>
 #include <halm/platform/lpc/spifi_base.h>
-#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Spifi;
 
 struct SpifiConfig
 {
   /**
-   * Optional: minimum chip select high time before a next command,
-   * measured in serial clock periods. In case of zero value a maximum possible
-   * delay will be used. When set, it should be in the range from 1 to 16.
+   * Optional: minimum chip select high time before the next command,
+   * measured in serial clock periods. If set to zero, the maximum possible
+   * delay is used. Valid values range from 1 to 16.
    */
   uint32_t delay;
   /**
-   * Optional: maximum chip select low time after a last memory access in
-   * memory-mapped mode, measured in serial clock periods. In case of zero
-   * value a maximum possible timeout will be used. When set, it should be
-   * in the range from 1 to 65536.
+   * Optional: maximum chip select low time after the last memory access in
+   * memory-mapped mode, measured in serial clock periods. If set to zero,
+   * the maximum possible timeout is used. Valid values range from 1 to 65536.
    */
   uint32_t timeout;
   /** Mandatory: chip select pin. */
   PinNumber cs;
   /**
-   * Mandatory: data output in single-wire mode, input/output pin 0
-   * in dual or quad mode.
+   * Mandatory: data output pin in single-wire mode, or input/output pin 0
+   * in dual/quad-wire modes.
    */
   PinNumber io0;
   /**
-   * Mandatory: data input in single-wire mode, input/output pin 1
-   * in dual or quad mode.
+   * Mandatory: data input pin in single-wire mode, or input/output pin 1
+   * in dual/quad-wire modes.
    */
   PinNumber io1;
-  /** Optional: input/output pin 2 in quad mode. */
+  /** Optional: input/output pin 2 in quad-wire mode. */
   PinNumber io2;
-  /** Optional: input/output pin 3 in quad mode. */
+  /** Optional: input/output pin 3 in quad-wire mode. */
   PinNumber io3;
-  /** Mandatory: serial clock output. */
+  /** Mandatory: serial clock output pin. */
   PinNumber sck;
   /** Optional: interrupt priority. */
   IrqPriority priority;
-  /** Mandatory: peripheral identifier. */
+  /** Optional: pin signaling slew rate. */
+  enum PinSlewRate speed;
+  /** Mandatory: hardware peripheral channel number. */
   uint8_t channel;
-  /** Mandatory: direct memory access channels. */
+  /** Mandatory: Direct Memory Access (DMA) channel number. */
   uint8_t dma;
-  /** Mandatory: mode number. */
+  /** Mandatory: SPI mode number (e.g., Mode 0 or Mode 3). */
   uint8_t mode;
   /**
-   * Optional: use large 128 MB memory-mapped region instead of 64 MB region
-   * with debug capabilites.
+   * Optional: enable the large 128 MB memory-mapped region instead of the
+   * 64 MB region with debug capabilities.
    */
   bool large;
 };

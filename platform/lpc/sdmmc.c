@@ -8,7 +8,6 @@
 #include <halm/generic/sdio_defs.h>
 #include <halm/platform/lpc/dma_sdmmc.h>
 #include <halm/platform/lpc/pin_int.h>
-#include <halm/platform/lpc/sdmmc.h>
 #include <halm/platform/lpc/sdmmc_defs.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/pm.h>
@@ -326,7 +325,8 @@ static enum Result sdioInit(void *object, const void *configBase)
       .dat0 = config->dat0,
       .dat1 = config->dat1,
       .dat2 = config->dat2,
-      .dat3 = config->dat3
+      .dat3 = config->dat3,
+      .speed = config->speed
   };
   struct Sdmmc * const interface = object;
   enum Result res;

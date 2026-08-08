@@ -77,6 +77,7 @@ static void configPins(struct SpifiBase *interface,
 
     pinInput(pin);
     pinSetFunction(pin, group->value);
+    pinSetSlewRate(pin, config->speed);
   }
 
   interface->wide = wide;

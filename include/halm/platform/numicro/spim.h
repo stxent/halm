@@ -9,7 +9,6 @@
 /*----------------------------------------------------------------------------*/
 #include <halm/generic/spim.h>
 #include <halm/platform/numicro/spim_base.h>
-#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Spim;
 
@@ -66,6 +65,8 @@ struct SpimConfig
   PinNumber sck;
   /** Optional: interrupt priority. */
   IrqPriority priority;
+  /** Optional: pin signaling slew rate. */
+  enum PinSlewRate speed;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Optional: disable cache function. */
