@@ -11,7 +11,6 @@
 #include <halm/irq.h>
 #include <halm/pin.h>
 #include <halm/platform/stm32/dma.h>
-#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 #undef HEADER_PATH
 #define HEADER_PATH <halm/platform/PLATFORM_TYPE/PLATFORM/uart_base.h>

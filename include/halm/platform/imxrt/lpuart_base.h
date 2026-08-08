@@ -10,7 +10,6 @@
 #include <halm/generic/serial.h>
 #include <halm/irq.h>
 #include <halm/pin.h>
-#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const LpUartBase;
 

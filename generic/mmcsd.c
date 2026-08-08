@@ -7,10 +7,8 @@
 #include <halm/delay.h>
 #include <halm/generic/mmcsd.h>
 #include <halm/generic/mmcsd_defs.h>
-#include <halm/generic/sdio.h>
 #include <halm/generic/sdio_defs.h>
 #include <xcore/asm.h>
-#include <xcore/bits.h>
 #include <xcore/memory.h>
 #include <assert.h>
 #include <string.h>

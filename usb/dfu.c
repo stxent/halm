@@ -9,7 +9,6 @@
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
-#include <xcore/memory.h>
 #include <assert.h>
 #include <limits.h>
 #include <string.h>

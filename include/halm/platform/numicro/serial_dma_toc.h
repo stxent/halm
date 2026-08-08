@@ -11,8 +11,6 @@
 #include <halm/irq.h>
 #include <halm/pin.h>
 #include <halm/platform/numicro/pdma_base.h>
-#include <xcore/interface.h>
-#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SerialDmaTOC;
 

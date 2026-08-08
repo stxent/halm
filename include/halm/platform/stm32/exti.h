@@ -8,7 +8,6 @@
 #define HALM_PLATFORM_STM32_EXTI_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/interrupt.h>
-#include <halm/irq.h>
 #include <halm/platform/stm32/exti_base.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterruptClass * const Exti;

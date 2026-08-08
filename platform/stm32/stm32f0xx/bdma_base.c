@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/irq.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm32/bdma_base.h>
 #include <halm/platform/stm32/bdma_defs.h>
@@ -19,18 +18,18 @@
  */
 
 #ifdef CONFIG_PLATFORM_STM32_BDMA1
-#define DMA1_STREAM_COUNT 7
+#  define DMA1_STREAM_COUNT 7
 #else
-#define DMA1_STREAM_COUNT 0
+#  define DMA1_STREAM_COUNT 0
 #endif
 
 #ifdef CONFIG_PLATFORM_STM32_BDMA2
-#define DMA2_STREAM_COUNT 5
+#  define DMA2_STREAM_COUNT 5
 #else
-#define DMA2_STREAM_COUNT 0
+#  define DMA2_STREAM_COUNT 0
 #endif
 
-#define STREAM_COUNT      (DMA1_STREAM_COUNT + DMA2_STREAM_COUNT)
+#define STREAM_COUNT (DMA1_STREAM_COUNT + DMA2_STREAM_COUNT)
 
 #define STREAM_ENCODE(controller, stream) \
     ((controller) * DMA1_STREAM_COUNT + (stream))

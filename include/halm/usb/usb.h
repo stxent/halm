@@ -15,7 +15,6 @@
 #include <halm/usb/usb_string.h>
 #include <xcore/bits.h>
 #include <xcore/entity.h>
-#include <stdint.h>
 /*----------------------------------------------------------------------------*/
 #define USB_EP_DIRECTION_IN           BIT(7)
 #define USB_EP_ADDRESS(value)         (value)

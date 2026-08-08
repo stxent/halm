@@ -5,7 +5,6 @@
  */
 
 #include <halm/generic/pointer_array.h>
-#include <halm/usb/usb.h>
 #include <halm/usb/usb_control.h>
 #include <halm/usb/usb_control_defs.h>
 #include <halm/usb/usb_defs.h>

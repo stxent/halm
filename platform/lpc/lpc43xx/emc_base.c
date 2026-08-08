@@ -10,7 +10,6 @@
 #include <halm/platform/lpc/system.h>
 #include <halm/platform/lpc/system_defs.h>
 #include <xcore/atomic.h>
-#include <xcore/bits.h>
 #include <assert.h>
 #include <stddef.h>
 /*----------------------------------------------------------------------------*/

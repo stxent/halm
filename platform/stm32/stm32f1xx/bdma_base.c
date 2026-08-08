@@ -4,7 +4,6 @@
  * Project is distributed under the terms of the MIT License
  */
 
-#include <halm/irq.h>
 #include <halm/platform/platform_defs.h>
 #include <halm/platform/stm32/bdma_base.h>
 #include <halm/platform/stm32/bdma_defs.h>

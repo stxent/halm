@@ -8,7 +8,6 @@
 #define HALM_USB_CDC_ACM_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/generic/serial.h>
-#include <xcore/interface.h>
 #include <stdint.h>
 /*----------------------------------------------------------------------------*/
 enum CdcAcmParameter

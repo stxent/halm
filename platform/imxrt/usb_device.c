@@ -5,7 +5,6 @@
  */
 
 #include <halm/core/cortex/cache.h>
-#include <halm/platform/imxrt/usb_base.h>
 #include <halm/platform/imxrt/usb_defs.h>
 #include <halm/platform/imxrt/usb_device.h>
 #include <halm/usb/usb_control.h>

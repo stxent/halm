@@ -10,7 +10,6 @@
 #include <halm/generic/pointer_array.h>
 #include <halm/generic/pointer_queue.h>
 #include <halm/usb/msc_defs.h>
-#include <halm/usb/usb.h>
 #include <halm/usb/usb_request.h>
 /*----------------------------------------------------------------------------*/
 struct Interface;

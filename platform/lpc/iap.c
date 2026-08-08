@@ -8,7 +8,6 @@
 #include <halm/platform/lpc/clocking.h>
 #include <halm/platform/lpc/flash_defs.h>
 #include <halm/platform/lpc/iap.h>
-#include <halm/target.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 enum IapCommand

@@ -10,7 +10,6 @@
 #include <halm/usb/uac.h>
 #include <halm/usb/uac_base.h>
 #include <halm/usb/uac_defs.h>
-#include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
 #include <halm/usb/usb_trace.h>
 #include <xcore/memory.h>

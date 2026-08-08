@@ -8,6 +8,7 @@
 #define HALM_USB_USB_CONTROL_H_
 /*----------------------------------------------------------------------------*/
 #include <halm/usb/usb_string.h>
+#include <xcore/error.h>
 /*----------------------------------------------------------------------------*/
 extern const struct EntityClass * const UsbControl;
 

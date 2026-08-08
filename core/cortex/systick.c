@@ -7,7 +7,6 @@
 #include <halm/clock.h>
 #include <halm/core/cortex/systick.h>
 #include <halm/core/cortex/systick_defs.h>
-#include <xcore/bits.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SysTick *);

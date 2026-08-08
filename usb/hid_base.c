@@ -5,7 +5,6 @@
  */
 
 #include <halm/usb/hid.h>
-#include <halm/usb/hid_base.h>
 #include <halm/usb/hid_defs.h>
 #include <halm/usb/usb_defs.h>
 #include <halm/usb/usb_request.h>
