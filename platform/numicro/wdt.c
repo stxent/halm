@@ -8,6 +8,7 @@
 #include <halm/platform/numicro/wdt.h>
 #include <halm/platform/numicro/wdt_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/accel.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
@@ -55,18 +56,21 @@ static enum Result wdtInit(void *object, const void *configBase)
   timer->callbackArgument = NULL;
   timer->fired = (NM_WDT->CTL & CTL_RSTF) != 0;
 
-  const uint32_t clock = wdtGetClock(object);
-  const uint32_t prescaler = config->period * clock / 1000;
-  uint32_t ctl = CTL_RSTF | CTL_IF | CTL_WKEN | CTL_WKF | CTL_WDTEN;
-  uint32_t interval = 4;
+  const uint32_t frequency = wdtGetClock(object);
+  if (!frequency)
+    return E_ERROR;
 
-  while ((1UL << interval) < prescaler)
-    interval += 2;
-  assert(interval <= 18);
+  const uint32_t limit = (1000UL << WDT_TIMER_RESOLUTION) / frequency;
+  if (config->period >= limit)
+    return E_VALUE;
+
+  const uint32_t period = frequency * config->period / 1000;
+  const uint32_t interval = 31 - countLeadingZeros32(period);
+  uint32_t ctl = CTL_RSTF | CTL_IF | CTL_WKEN | CTL_WKF | CTL_WDTEN;
 
   if (!config->disarmed)
     ctl |= CTL_RSTEN;
-  ctl |= CTL_TOUTSEL((interval - 4) >> 1);
+  ctl |= CTL_TOUTSEL((interval - 3) >> 1);
 
   sysUnlockReg();
   /* Reset counter */

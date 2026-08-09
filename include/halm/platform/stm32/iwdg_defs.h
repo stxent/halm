@@ -14,5 +14,7 @@
 #define KR_UNLOCK                       0x5555
 /*------------------Reload register-------------------------------------------*/
 #define RLR_RL_MAX                      MASK(12)
+#define RLR_RL_MAX_DIV                  MASK(12 + 8)
+#define RLR_RL_MAX_POW                  12
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_IWDG_DEFS_H_ */

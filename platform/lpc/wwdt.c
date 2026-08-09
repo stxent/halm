@@ -67,11 +67,15 @@ static enum Result wdtInit(void *object, const void *configBase)
   const struct WwdtConfig * const config = configBase;
   assert(config != NULL);
   assert(!config->disarmed || !config->window);
+  assert(config->period > config->window);
 
-  const uint64_t clock = (((1ULL << 32) + 3999) / 4000) * wdtGetClock(object);
-  const uint32_t timeout = (clock * config->period) >> 32;
+  /* WDT oscillator frequency tolerance is 40 percents */
+  const uint32_t frequency = wdtGetClock(object) / 4000;
+  if (!frequency)
+      return E_ERROR;
 
-  if (timeout >= (1 << 24))
+  const uint64_t period = (uint64_t)frequency * config->period;
+  if (period > TC_MAX || (uint32_t)period < TC_MIN)
     return E_VALUE;
 
   const struct WdtBaseConfig baseConfig = {
@@ -97,9 +101,12 @@ static enum Result wdtInit(void *object, const void *configBase)
 
   if (!config->disarmed && config->window)
   {
-    const uint32_t window = (clock * config->window) >> 32;
+    const uint32_t window = frequency * config->window;
 
-    LPC_WWDT->WINDOW = MIN(WINDOW_MAX, window);
+    if (window > WINDOW_MAX)
+      return E_VALUE;
+
+    LPC_WWDT->WINDOW = window;
     LPC_WWDT->WARNINT = MIN(WARNINT_MAX, window);
 
     mod |= MOD_WDPROTECT;
@@ -110,7 +117,7 @@ static enum Result wdtInit(void *object, const void *configBase)
     LPC_WWDT->WARNINT = 0;
   }
 
-  LPC_WWDT->TC = timeout;
+  LPC_WWDT->TC = period;
   LPC_WWDT->MOD = mod;
 
   /* Enable the counter */

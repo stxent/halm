@@ -7,6 +7,7 @@
 #include <halm/platform/stm32/iwdg.h>
 #include <halm/platform/stm32/iwdg_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <xcore/accel.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static enum Result wdtInit(void *, const void *);
@@ -35,25 +36,22 @@ static enum Result wdtInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  const uint32_t frequency = iwdgGetClock(object);
+  const uint32_t frequency = iwdgGetClock(object) / 1000;
   if (!frequency)
     return E_ERROR;
 
-  const uint32_t prescaler = config->period * frequency / 1000;
-  uint32_t divider = 2;
-  uint32_t reload;
+  const uint64_t period = (uint64_t)frequency * config->period;
+  if (period > RLR_RL_MAX_DIV)
+    return E_VALUE;
 
-  while (divider < 8 && (prescaler >> divider) > RLR_RL_MAX)
-    ++divider;
-
-  reload = config->period * (frequency / (1UL << divider)) / 1000;
-  if (reload > RLR_RL_MAX)
-    reload = RLR_RL_MAX;
+  const uint32_t resolution = 31 - countLeadingZeros32((uint32_t)period);
+  const uint32_t prescaler = resolution >= RLR_RL_MAX_POW ?
+      resolution - (RLR_RL_MAX_POW - 1) : 2;
 
   STM_IWDG->KR = KR_UNLOCK;
-  STM_IWDG->RLR = reload;
+  STM_IWDG->RLR = (uint32_t)period >> prescaler;
   STM_IWDG->KR = KR_UNLOCK;
-  STM_IWDG->PR = divider;
+  STM_IWDG->PR = prescaler - 2;
 
   /* Enable counter */
   STM_IWDG->KR = KR_START;

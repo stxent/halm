@@ -50,15 +50,21 @@ static enum Result wdtInit(void *object, const void *configBase)
   if (res != E_OK)
     return res;
 
-  const uint64_t clock = (((1ULL << 32) + 3999) / 4000) * wdtGetClock(object);
-  const uint32_t timeout = (clock * config->period) >> 32;
+  /* WDT oscillator frequency tolerance is 40 percents */
+  const uint32_t frequency = wdtGetClock(object) / 4000;
+  if (!frequency)
+      return E_ERROR;
 
-  if (timeout > (0xFFFFFFFFUL >> (32 - WDT_TIMER_RESOLUTION)))
+  const uint64_t period = (uint64_t)frequency * config->period;
+
+  if (period > (0xFFFFFFFFUL >> (32 - WDT_TIMER_RESOLUTION)))
+    return E_VALUE;
+  if ((uint32_t)period < TC_MIN)
     return E_VALUE;
 
   timer->fired = (LPC_WDT->MOD & MOD_WDTOF) != 0;
 
-  LPC_WDT->TC = timeout;
+  LPC_WDT->TC = period;
   LPC_WDT->MOD = MOD_WDEN | MOD_WDRESET | MOD_WDINT;
 
   const IrqState state = irqSave();

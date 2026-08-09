@@ -30,6 +30,9 @@
 #define CLKSEL_WDSEL(value)             BIT_FIELD((value), 0)
 #define CLKSEL_WDSEL_VALUE(reg)         FIELD_VALUE((reg), CLKSEL_WDSEL_MASK, 0)
 #define CLKSEL_LOCK                     BIT(31)
+/*------------------Timer Constant register-----------------------------------*/
+#define TC_MIN                          MASK(8)
+#define TC_MAX                          MASK(24)
 /*------------------Timer Warning Interrupt register--------------------------*/
 #define WARNINT_MAX                     MASK(10)
 /*------------------Timer Window register-------------------------------------*/
