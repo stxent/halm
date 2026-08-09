@@ -15,12 +15,12 @@ enum UacParameter
   /**
    * Retrieve extended information about current interface status.
    * Interface status is a bitmask, possible values are defined in the
-   * \a enum \a UacFlags. Parameter type is \a uint8_t.
+   * \p enum \p UacFlags. Parameter type is \p uint8_t.
    */
   IF_UAC_STATUS = IF_PARAMETER_END,
   /**
    * Update information about rate feedback. Integer format is Q16.16,
-   * parameter type is \a uint32_t.
+   * parameter type is \p uint32_t.
    */
   IF_UAC_FEEDBACK
 };

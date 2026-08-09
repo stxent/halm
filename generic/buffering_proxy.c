@@ -238,7 +238,8 @@ static enum Result interfaceSetParam(void *object, int parameter,
   return ifSetParam(interface->pipe, parameter, data);
 }
 /*----------------------------------------------------------------------------*/
-static size_t interfaceRead(void *object, void *buffer, size_t length)
+static size_t interfaceRead(void *object, void *buffer,
+    [[maybe_unused]] size_t length)
 {
   struct BufferingProxy * const interface = object;
   uint8_t *bufferPosition = buffer;
@@ -259,7 +260,6 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
 
     memcpy(bufferPosition, request->buffer, bytesToRead);
     bufferPosition += bytesToRead;
-    length -= bytesToRead;
 
     if (streamEnqueue(interface->rx, request) != E_OK)
     {

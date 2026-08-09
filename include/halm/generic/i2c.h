@@ -22,7 +22,7 @@ enum I2CParameter
    */
   IF_I2C_BUS_RECOVERY,
   /**
-   * Enable 10-bit device address mode. Parameter type is \a uint8_t. Possible
+   * Enable 10-bit device address mode. Parameter type is \p uint8_t. Possible
    * values: 0 to disable 10-bit address mode and 1 to enable it. This mode
    * is disabled by default.
    */

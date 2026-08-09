@@ -18,7 +18,7 @@ enum SPIMParameter
 {
   /**
    * SPI mode, consisting of phase and clock settings.
-   * Possible values are 0 to 3. Parameter type is \a uint8_t.
+   * Possible values are 0 to 3. Parameter type is \p uint8_t.
    */
   IF_SPIM_MODE = IF_QSPI_MODE,
   /** Enable dual I/O mode. */
@@ -37,10 +37,10 @@ enum SPIMParameter
   IF_SPIM_INDIRECT = IF_QSPI_PARAMETER_END,
   /** Enable memory-mapped mode. */
   IF_SPIM_MEMORY_MAPPED,
-  /** Get the memory-mapped address. Parameter type is \a uintptr_t. */
+  /** Get the memory-mapped address. Parameter type is \p uintptr_t. */
   IF_SPIM_MEMORY_MAPPED_ADDRESS,
 
-  /** Operation code. Parameter type is \a uint8_t. */
+  /** Operation code. Parameter type is \p uint8_t. */
   IF_SPIM_COMMAND,
   /** Disable operation code phase. */
   IF_SPIM_COMMAND_NONE,
@@ -49,7 +49,7 @@ enum SPIMParameter
   /** Enable serial mode for operation code phase. */
   IF_SPIM_COMMAND_SERIAL,
 
-  /** Number of delay or dummy bytes. Parameter type is \a uint8_t. */
+  /** Number of delay or dummy bytes. Parameter type is \p uint8_t. */
   IF_SPIM_DELAY_LENGTH,
   /** Disable dummy-cycles phase. */
   IF_SPIM_DELAY_NONE,
@@ -60,17 +60,17 @@ enum SPIMParameter
 
   /**
    * Set 8-bit memory address. This address length is non-standard and may be
-   * unsupported on some platforms. Parameter type is \a uint32_t.
+   * unsupported on some platforms. Parameter type is \p uint32_t.
    */
   IF_SPIM_ADDRESS_8,
   /**
    * Set 16-bit memory address. This address length is non-standard and may be
-   * unsupported on some platforms. Parameter type is \a uint32_t.
+   * unsupported on some platforms. Parameter type is \p uint32_t.
    */
   IF_SPIM_ADDRESS_16,
-  /** Set 24-bit memory address. Parameter type is \a uint32_t. */
+  /** Set 24-bit memory address. Parameter type is \p uint32_t. */
   IF_SPIM_ADDRESS_24,
-  /** Set 32-bit memory address. Parameter type is \a uint32_t. */
+  /** Set 32-bit memory address. Parameter type is \p uint32_t. */
   IF_SPIM_ADDRESS_32,
   /** Disable address field phase. */
   IF_SPIM_ADDRESS_NONE,
@@ -79,7 +79,7 @@ enum SPIMParameter
   /** Enable serial mode for address phase. */
   IF_SPIM_ADDRESS_SERIAL,
 
-  /** Set 8-bit post-address data. Parameter type is \a uint32_t. */
+  /** Set 8-bit post-address data. Parameter type is \p uint32_t. */
   IF_SPIM_POST_ADDRESS_8,
   /** Disable post-address field phase. */
   IF_SPIM_POST_ADDRESS_NONE,
@@ -95,14 +95,14 @@ enum SPIMParameter
   /**
    * Set an index of a polling bit and enable the poll mode for a next command.
    * Hardware polls the memory until this bit becomes cleared.
-   * Parameter type is \a uint8_t.
+   * Parameter type is \p uint8_t.
    */
   IF_SPIM_DATA_POLL_BIT,
   /** Enable parallel mode for data phase. */
   IF_SPIM_DATA_PARALLEL,
   /** Enable serial mode for data phase. */
   IF_SPIM_DATA_SERIAL,
-  /** Command response. Parameter type is \a uint32_t. */
+  /** Command response. Parameter type is \p uint32_t. */
   IF_SPIM_RESPONSE,
 
   /** End of the list. */

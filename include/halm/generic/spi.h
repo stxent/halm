@@ -14,12 +14,12 @@ enum SPIParameter
   /**
    * Change interface mode, consisting of phase and clock settings,
    * or read the current settings. Possible values are 0 to 3.
-   * Parameter type is \a uint8_t.
+   * Parameter type is \p uint8_t.
    */
   IF_SPI_MODE = IF_PARAMETER_END,
   /**
    * Change word width of the interface or read the current settings.
-   * Parameter type is \a uint8_t.
+   * Parameter type is \p uint8_t.
    */
   IF_SPI_WIDTH,
   /**

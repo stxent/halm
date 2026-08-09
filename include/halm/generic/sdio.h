@@ -39,18 +39,18 @@ enum SDIOParameter
 {
   /**
    * Interface connection type. Possible values are defined in the
-   * \a enum \a SDIOMode. Parameter type is \a uint8_t.
+   * \p enum \p SDIOMode. Parameter type is \p uint8_t.
    */
   IF_SDIO_MODE = IF_PARAMETER_END,
   /** Execute a prepared command. Data pointer should be set to zero. */
   IF_SDIO_EXECUTE,
-  /** SDIO command argument. Parameter type is \a uint32_t. */
+  /** SDIO command argument. Parameter type is \p uint32_t. */
   IF_SDIO_ARGUMENT,
-  /** SDIO command code. Parameter type is \a uint32_t. */
+  /** SDIO command code. Parameter type is \p uint32_t. */
   IF_SDIO_COMMAND,
-  /** SDIO response. Parameter type is an array of 4 \a uint32_t. */
+  /** SDIO response. Parameter type is an array of 4 \p uint32_t. */
   IF_SDIO_RESPONSE,
-  /** Size of the single block. Parameter type is \a uint32_t. */
+  /** Size of the single block. Parameter type is \p uint32_t. */
   IF_SDIO_BLOCK_SIZE
 };
 

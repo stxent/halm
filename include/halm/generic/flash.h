@@ -12,17 +12,17 @@
 /*----------------------------------------------------------------------------*/
 enum FlashParameter
 {
-  /** Get block size. Parameter type is \a uint32_t. */
+  /** Get block size. Parameter type is \p uint32_t. */
   IF_FLASH_BLOCK_SIZE = IF_PARAMETER_END,
-  /** Get sector size. Parameter type is \a uint32_t. */
+  /** Get sector size. Parameter type is \p uint32_t. */
   IF_FLASH_SECTOR_SIZE,
-  /** Get page size. Parameter type is \a uint32_t. */
+  /** Get page size. Parameter type is \p uint32_t. */
   IF_FLASH_PAGE_SIZE,
-  /** Erase block at a relative address. Parameter type is \a uint32_t. */
+  /** Erase block at a relative address. Parameter type is \p uint32_t. */
   IF_FLASH_ERASE_BLOCK,
-  /** Erase sector at a relative address. Parameter type is \a uint32_t. */
+  /** Erase sector at a relative address. Parameter type is \p uint32_t. */
   IF_FLASH_ERASE_SECTOR,
-  /** Erase page at a relative address. Parameter type is \a uint32_t. */
+  /** Erase page at a relative address. Parameter type is \p uint32_t. */
   IF_FLASH_ERASE_PAGE,
   /** Place memory device in a power down mode. */
   IF_FLASH_SUSPEND,
