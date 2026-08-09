@@ -99,13 +99,16 @@ static bool calcTimings(const struct Can *, uint32_t, uint32_t *, uint32_t *);
 static void dropMessage(struct Can *, size_t);
 static bool fetchStandardMessage(const void *, struct CANStandardMessage *);
 static uint32_t getBusRate(const struct Can *);
+static bool getBusRetransmissionMode(const struct Can *);
 static void interruptHandler(void *);
 static void invalidateMessageObject(struct Can *, size_t);
 static bool isNextMessageValid(const void *);
 static void listenForMessage(struct Can *, size_t, uint32_t, uint32_t);
 static void readMessage(struct Can *, struct CANStandardMessage *, size_t);
+static void resetQueues(struct Can *);
 static void setBusMode(struct Can *, enum Mode);
 static bool setBusRate(struct Can *, uint32_t);
+static void setBusRetransmissionMode(struct Can *, bool);
 static void updateRxWatermark(struct Can *, size_t);
 static void updateTxWatermark(struct Can *, size_t);
 static void writeMessage(struct Can *, const struct CANStandardMessage *,
@@ -319,6 +322,12 @@ static uint32_t getBusRate(const struct Can *interface)
       BTIME_TSEG1_VALUE(btime) + BTIME_TSEG2_VALUE(btime) + 3;
 
   return apbClock / prescaler / width;
+}
+/*----------------------------------------------------------------------------*/
+static bool getBusRetransmissionMode(const struct Can *interface)
+{
+  const NM_CAN_Type * const reg = interface->base.reg;
+  return (reg->CON & CON_DAR) == 0;
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -542,6 +551,31 @@ static void readMessage(struct Can *interface,
 #endif
 }
 /*----------------------------------------------------------------------------*/
+static void resetQueues(struct Can *interface)
+{
+  irqDisable(interface->base.irq);
+
+  while (!pointerQueueEmpty(&interface->txQueue))
+  {
+    struct CANStandardMessage * const message =
+        pointerQueueFront(&interface->txQueue);
+
+    pointerQueuePopFront(&interface->txQueue);
+    pointerArrayPushBack(&interface->pool, message);
+  }
+
+  while (!pointerQueueEmpty(&interface->rxQueue))
+  {
+    struct CANStandardMessage * const message =
+        pointerQueueFront(&interface->rxQueue);
+
+    pointerQueuePopFront(&interface->rxQueue);
+    pointerArrayPushBack(&interface->pool, message);
+  }
+
+  irqEnable(interface->base.irq);
+}
+/*----------------------------------------------------------------------------*/
 static void setBusMode(struct Can *interface, enum Mode mode)
 {
   NM_CAN_Type * const reg = interface->base.reg;
@@ -565,6 +599,9 @@ static void setBusMode(struct Can *interface, enum Mode mode)
       control &= ~CON_TEST;
       break;
   }
+
+  /* Return pending message descriptors to the pool */
+  resetQueues(interface);
 
   /*
    * Test functions are only active when the TEST bit
@@ -590,6 +627,19 @@ static bool setBusRate(struct Can *interface, uint32_t rate)
   reg->CON = state;
 
   return true;
+}
+/*----------------------------------------------------------------------------*/
+static void setBusRetransmissionMode(struct Can *interface, bool enabled)
+{
+  NM_CAN_Type * const reg = interface->base.reg;
+  uint32_t control = reg->CON;
+
+  if (enabled)
+    control &= ~CON_DAR;
+  else
+    control |= CON_DAR;
+
+  reg->CON = control;
 }
 /*----------------------------------------------------------------------------*/
 static void updateRxWatermark(struct Can *interface, size_t level)
@@ -885,6 +935,10 @@ static enum Result canGetParam(void *object, int parameter, void *data)
 
   switch ((enum CANParameter)parameter)
   {
+    case IF_CAN_RETRANSMISSION:
+      *(uint8_t *)data = getBusRetransmissionMode(interface) ? 1 : 0;
+      return E_OK;
+
 #ifdef CONFIG_PLATFORM_NUMICRO_CAN_COUNTERS
     case IF_CAN_ERRORS:
       *(uint32_t *)data = interface->errorCount;
@@ -962,6 +1016,10 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
 
     case IF_CAN_LOOPBACK:
       setBusMode(interface, MODE_LOOPBACK);
+      return E_OK;
+
+    case IF_CAN_RETRANSMISSION:
+      setBusRetransmissionMode(interface, *(const uint8_t *)data);
       return E_OK;
 
 #ifdef CONFIG_PLATFORM_NUMICRO_CAN_FILTERS

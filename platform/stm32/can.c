@@ -70,12 +70,15 @@ static bool calcSegments(uint8_t, uint8_t *, uint8_t *);
 static bool calcTimings(const struct Can *, uint32_t, uint32_t *);
 static bool fetchStandardMessage(const void *, struct CANStandardMessage *);
 static uint32_t getBusRate(const struct Can *);
+static bool getBusRetransmissionMode(const struct Can *);
 static void interruptHandler(void *);
 static void readMessage(struct Can *, struct CANStandardMessage *,
     unsigned int);
+static void resetQueues(struct Can *);
 static void sendMessage(struct Can *, const struct CANStandardMessage *);
 static void setBusMode(struct Can *, enum Mode);
 static bool setBusRate(struct Can *, uint32_t);
+static void setBusRetransmissionMode(struct Can *, bool);
 static void setupAcceptanceFilter(struct Can *, unsigned int, unsigned int,
     bool, uint32_t, uint32_t);
 static void updateRxWatermark(struct Can *, size_t);
@@ -238,6 +241,12 @@ static uint32_t getBusRate(const struct Can *interface)
   return apbClock / prescaler / width;
 }
 /*----------------------------------------------------------------------------*/
+static bool getBusRetransmissionMode(const struct Can *interface)
+{
+  const STM_CAN_Type * const reg = interface->base.reg;
+  return (reg->MCR & MCR_NART) == 0;
+}
+/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
 {
   struct Can * const interface = object;
@@ -367,6 +376,31 @@ static void readMessage(struct Can *interface,
 #endif
 }
 /*----------------------------------------------------------------------------*/
+static void resetQueues(struct Can *interface)
+{
+  const IrqState state = irqSave();
+
+  while (!pointerQueueEmpty(&interface->txQueue))
+  {
+    struct CANStandardMessage * const message =
+        pointerQueueFront(&interface->txQueue);
+
+    pointerQueuePopFront(&interface->txQueue);
+    pointerArrayPushBack(&interface->pool, message);
+  }
+
+  while (!pointerQueueEmpty(&interface->rxQueue))
+  {
+    struct CANStandardMessage * const message =
+        pointerQueueFront(&interface->rxQueue);
+
+    pointerQueuePopFront(&interface->rxQueue);
+    pointerArrayPushBack(&interface->pool, message);
+  }
+
+  irqRestore(state);
+}
+/*----------------------------------------------------------------------------*/
 static void sendMessage(struct Can *interface,
     const struct CANStandardMessage *message)
 {
@@ -433,6 +467,9 @@ static void setBusMode(struct Can *interface, enum Mode mode)
       break;
   }
 
+  /* Return pending message descriptors to the pool */
+  resetQueues(interface);
+
   if (value != reg->BTR)
   {
     /* Enter initialization mode */
@@ -464,6 +501,19 @@ static bool setBusRate(struct Can *interface, uint32_t rate)
   reg->MCR &= ~MCR_INRQ;
 
   return true;
+}
+/*----------------------------------------------------------------------------*/
+static void setBusRetransmissionMode(struct Can *interface, bool enabled)
+{
+  STM_CAN_Type * const reg = interface->base.reg;
+  uint32_t control = reg->MCR;
+
+  if (enabled)
+    control &= ~MCR_NART;
+  else
+    control |= MCR_NART;
+
+  reg->MCR = control;
 }
 /*----------------------------------------------------------------------------*/
 static void setupAcceptanceFilter(struct Can *interface, unsigned int number,
@@ -617,6 +667,11 @@ static enum Result canInit(void *object, const void *configBase)
   /* Enable FIFO0 message pending interrupt */
   reg->IER = IER_FMPIE0 | IER_FOVIE0 | IER_ERRIE;
 
+  if (interface->base.irq.sce != interface->base.irq.rx0)
+  {
+    irqSetPriority(interface->base.irq.sce, config->priority);
+    irqEnable(interface->base.irq.sce);
+  }
   if (interface->base.irq.tx != interface->base.irq.rx0)
   {
     irqSetPriority(interface->base.irq.tx, config->priority);
@@ -638,6 +693,7 @@ static void canDeinit(void *object)
   /* Disable all interrupts */
   irqDisable(interface->base.irq.rx0);
   irqDisable(interface->base.irq.tx);
+  irqDisable(interface->base.irq.sce);
   reg->IER = 0;
 
 #ifdef CONFIG_PLATFORM_STM32_CAN_PM
@@ -668,6 +724,10 @@ static enum Result canGetParam(void *object, int parameter, void *data)
 
   switch ((enum CANParameter)parameter)
   {
+    case IF_CAN_RETRANSMISSION:
+      *(uint8_t *)data = getBusRetransmissionMode(interface) ? 1 : 0;
+      return E_OK;
+
 #ifdef CONFIG_PLATFORM_STM32_CAN_COUNTERS
     case IF_CAN_ERRORS:
       *(uint32_t *)data = interface->errorCount;
@@ -747,6 +807,10 @@ static enum Result canSetParam(void *object, int parameter, const void *data)
       setBusMode(interface, MODE_LOOPBACK);
       return E_OK;
 
+    case IF_CAN_RETRANSMISSION:
+      setBusRetransmissionMode(interface, *(const uint8_t *)data);
+      return E_OK;
+
     default:
       break;
   }
@@ -784,10 +848,10 @@ static size_t canRead(void *object, void *buffer, size_t length)
     assert(length - position >= sizeof(*message));
     memcpy((uint8_t *)buffer + position, message, sizeof(*message));
 
-    irqDisable(interface->base.irq.rx0);
+    const IrqState state = irqSave();
     pointerQueuePopFront(&interface->rxQueue);
     pointerArrayPushBack(&interface->pool, message);
-    irqEnable(interface->base.irq.rx0);
+    irqRestore(state);
 
     position += sizeof(*message);
   }
@@ -803,7 +867,7 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
   bool error = false;
 
   /* Provide atomic access to the message queue */
-  irqDisable(interface->base.irq.tx);
+  IrqState state = irqSave();
 
   if (pointerQueueEmpty(&interface->txQueue)
       && (reg->TSR & TSR_TME_MASK) == TSR_TME_MASK)
@@ -829,6 +893,8 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
     }
   }
 
+  irqRestore(state);
+
   while (!error && position < length && !pointerQueueFull(&interface->txQueue))
   {
     struct CANStandardMessage * const message =
@@ -836,8 +902,10 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
 
     if (fetchStandardMessage((const uint8_t *)buffer + position, message))
     {
+      state = irqSave();
       pointerArrayPopBack(&interface->pool);
       pointerQueuePushBack(&interface->txQueue, message);
+      irqRestore(state);
 
       position += sizeof(struct CANStandardMessage);
     }
@@ -848,6 +916,5 @@ static size_t canWrite(void *object, const void *buffer, size_t length)
     }
   }
 
-  irqEnable(interface->base.irq.tx);
   return position;
 }
