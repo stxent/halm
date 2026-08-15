@@ -34,13 +34,21 @@ enum [[gnu::packed]] ClockSource
 struct ExternalOscConfig
 {
   /**
-   * Mandatory: frequency of the external crystal oscillator or
-   * an external clock source. The input frequency range is 4 to 32 MHz.
+   * Mandatory: frequency of the crystal oscillator or external clock source.
+   *
+   * This field specifies the operating frequency of the external clock input,
+   * which may be either a crystal oscillator or an external clock signal.
+   * The supported frequency range is strictly limited to 4 MHz to 32 MHz
+   * (inclusive).
    */
   uint32_t frequency;
+
   /**
-   * Optional: enable bypass. Bypassing should be enabled when using
-   * an external clock source instead of the crystal oscillator.
+   * Optional: enable bypass mode.
+   *
+   * When enabled, this flag configures the oscillator circuit to bypass the
+   * internal crystal oscillator path and directly accept an external clock
+   * signal as the reference source.
    */
   bool bypass;
 };
@@ -66,59 +74,54 @@ struct MainClockConfig
 /* Require a MainClockConfig structure */
 extern const struct ClockClass * const MainClock;
 /*----------------------------------------------------------------------------*/
-struct AudioPllConfig
+struct PllConfig
 {
   /**
-   * Mandatory: PLL main output divisor. Possible values should be in the range
-   * of 2 to 7.
+   * Mandatory: PLL output divisor.
+   *
+   * This field defines the division factor applied to the PLL output frequency.
+   * The valid range depends on the PLL type:
+   * - **Audio PLL**: the divisor must be in the range of 2 to 7.
+   * - **System PLL**: only specific even values are supported: 2, 4, 6, 8.
    */
   uint16_t divisor;
+
   /**
-   * Mandatory: PLL multiplier. PLL VCO frequency should be in the range
-   * of 192 to 432 MHz.
+   * Mandatory: input clock multiplier. This field specifies the multiplication
+   * factor applied to the input clock to achieve the desired PLL operating
+   * frequency. The effective frequency range
+   * - **Audio PLL**: operates within the range of 192 MHz to 432 MHz.
+   * - **System PLL**: operates within the range of 64 MHz to 432 MHz.
+   *
+   * @note The actual output frequency is calculated as:
+   *       `output = (input * multiplier) / divisor`.
    */
   uint16_t multiplier;
+
   /**
-   * Mandatory: clock source.
-   * @n Available options:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
+   * Mandatory: clock source selection.
+   *
+   * Specifies the source of the input clock signal for the PLL.
+   * Available options:
+   * - @b CLOCK_INTERNAL: uses the on-chip internal oscillator.
+   * - @b CLOCK_EXTERNAL: uses an external clock signal.
    */
   enum ClockSource source;
 };
 
-/* Requires an AudioPllConfig structure */
+/* Require a PllConfig structure */
 extern const struct ClockClass * const AudioPll;
-/*----------------------------------------------------------------------------*/
-struct MainPllConfig
-{
-  /** Mandatory: PLL main output divisor. Possible values are 2, 4, 6 and 8. */
-  uint16_t divisor;
-  /**
-   * Mandatory: PLL multiplier. PLL VCO frequency should be in the range
-   * of 64 to 432 MHz.
-   */
-  uint16_t multiplier;
-  /**
-   * Mandatory: clock source.
-   * @n Available options:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
-   */
-  enum ClockSource source;
-};
-
-/* Requires a MainPllConfig structure */
 extern const struct ClockClass * const MainPll;
 /*----------------------------------------------------------------------------*/
 struct SystemClockConfig
 {
   /**
    * Mandatory: system clock source.
-   * @n Available sources are:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_EXTERNAL.
-   *   - @b CLOCK_PLL.
+   *
+   * Available sources are:
+   * - @b CLOCK_INTERNAL
+   * - @b CLOCK_EXTERNAL
+   * - @b CLOCK_PLL
    */
   enum ClockSource source;
 };

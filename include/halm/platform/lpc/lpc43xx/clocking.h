@@ -71,7 +71,7 @@ struct GenericDividerConfig
    *
    * Allowed values depend on the specific divider being configured:
    *   - For Divider A, the value must be in the range 1–4.
-   *   - For Dividers B, C, and D, the value must be in the range 1–16.
+   *   - For Dividers B, C and D, the value must be in the range 1–16.
    *   - For Divider E, the value must be in the range 1–256.
    */
   uint16_t divisor;
@@ -89,13 +89,23 @@ extern const struct ClockClass * const DividerE;
 struct ExternalOscConfig
 {
   /**
-   * Mandatory: frequency of the external crystal oscillator or
-   * an external clock source.
+   * Mandatory: frequency of the crystal oscillator or external clock source.
+   *
+   * This field specifies the operating frequency of the external clock input,
+   * which may be either a crystal oscillator or an external clock signal.
+   * The supported frequency range depends on the source type:
+   * - General supported range: 1 MHz to 50 MHz (inclusive).
+   * - When using a crystal oscillator: the maximum input frequency is limited
+   *   to 25 MHz.
    */
   uint32_t frequency;
+
   /**
-   * Optional: enable bypass. Bypassing should be enabled when using
-   * an external clock source instead of the crystal oscillator.
+   * Optional: enable bypass mode.
+   *
+   * When enabled, this flag configures the oscillator circuit to bypass the
+   * internal crystal oscillator path and directly accept an external clock
+   * signal as the reference source.
    */
   bool bypass;
 };
@@ -111,28 +121,48 @@ struct PllConfig
 {
   /**
    * Mandatory: PLL output divisor.
-   * @n Audio PLL and USB PLL divisor must be set to 1 or be in the range
-   * of 2 to 64 in steps of 2.
-   * @n System PLL accepts a limited set of values: 1, 2, 4, 8 and 16.
+   *
+   * This field defines the division factor applied to the PLL output frequency.
+   * The valid values depend on the PLL type:
+   * - **Audio PLL** and **USB PLL**: the divisor may be set to 1, or within
+   *   the range of 2 to 64 (inclusive) in steps of 2.
+   * - **System PLL**: only specific values are supported: 1, 2, 4, 8 and 16.
    */
   uint16_t divisor;
+
   /**
    * Mandatory: input clock multiplier.
-   * @n Audio PLL and USB PLL operate in the range from 275 MHz to 550 MHz,
-   * multiplier range is 1 to 32768. To get the best phase-noise and
-   * jitter performance, the even value has to be used.
-   * @n System PLL operates in the range from 156 MHz to 320 MHz,
-   * multiplier range is 1 to 256.
+   *
+   * This field specifies the multiplication factor applied to the input clock
+   * to achieve the desired PLL operating frequency. Constraints vary by type:
+   * - **Audio PLL** and **USB PLL**:
+   *   - Operating frequency range: 275 MHz to 550 MHz.
+   *   - Multiplier range: 1 to 32768.
+   *   - For optimal phase noise and jitter performance, it is recommended
+   *     to use even multiplier values.
+   * - **System PLL**:
+   *   - Operating frequency range: 156 MHz to 320 MHz.
+   *   - Multiplier range: 1 to 256.
+   *
+   * @note The final output frequency is determined by the formula:
+   *       `output = (input * multiplier) / divisor`.
    */
   uint16_t multiplier;
+
   /**
-   * Mandatory: clock source.
-   * @n The input frequency range for Audio PLL (PLL0AUDIO)
-   * and USB PLL (PLL0USB) is 14 kHz to 150 MHz. The input from
-   * an external crystal is limited to 25 MHz.
-   * @n The range for System PLL (PLL1) is 1 to 50 MHz. The input from
-   * an external crystal is limited to 25 MHz.
-   **/
+   * Mandatory: clock source selection.
+   *
+   * Specifies the source of the input reference clock for the PLL. The supported
+   * input frequency ranges depend on the PLL instance:
+   * - For **Audio PLL** (PLL0AUDIO) and **USB PLL** (PLL0USB):
+   *   - Supported input frequency range: 14 kHz to 150 MHz.
+   *   - When using an external crystal oscillator, the input frequency
+   *     is limited to a maximum of 25 MHz.
+   * - For **System PLL** (PLL1):
+   *   - Supported input frequency range: 1 MHz to 50 MHz.
+   *   - When using an external crystal oscillator, the input frequency
+   *     is limited to a maximum of 25 MHz.
+   */
   enum ClockSource source;
 };
 
@@ -174,9 +204,21 @@ extern const struct ClockClass * const Usb1Clock;
 /*----------------------------------------------------------------------------*/
 struct ClockOutputConfig
 {
-  /** Mandatory: output pin. */
+  /**
+   * Mandatory: output pin.
+   *
+   * Specifies the pin number used to output the generated clock signal.
+   * The exact pin mapping and availability depend on the device configuration.
+   */
   PinNumber pin;
-  /** Mandatory: clock source. */
+
+  /**
+   * Mandatory: clock source selection.
+   *
+   * Specifies the source of the input reference clock used to generate the
+   * output clock signal. The set of available sources may vary depending
+   * on the device capabilities.
+   */
   enum ClockSource source;
 };
 

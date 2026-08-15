@@ -35,14 +35,18 @@ struct DividedClockConfig
 {
   /**
    * Mandatory: input clock divisor.
-   * @n The divider value for SOC clock should be from 1 to 256.
-   * @n The divider value for I2C clock should be from 1 to 256.
-   * @n The divider value for SPI clock should be from 1 to 32.
+   *
+   * This field defines the division factor applied to the input clock for
+   * various peripheral and system clocks. The valid range depends
+   * on the target clock domain:
+   * - @b SOC clock: divisor must be in the range of 1 to 256 (inclusive).
+   * - @b I2C clock: divisor must be in the range of 1 to 256 (inclusive).
+   * - @b SPI clock: divisor must be in the range of 1 to 32 (inclusive).
    */
   uint16_t divisor;
 };
 
-/* Requires an DividedClockConfig structure */
+/* Require an DividedClockConfig structure */
 extern const struct ClockClass * const I2CClock;
 extern const struct ClockClass * const SocClock;
 extern const struct ClockClass * const SpiClock;
@@ -50,8 +54,14 @@ extern const struct ClockClass * const SpiClock;
 struct ExternalOscConfig
 {
   /**
-   * Mandatory: frequency of the external crystal oscillator or
-   * an external clock source.
+   * Mandatory: frequency of the crystal oscillator or external
+   * clock source in Hz.
+   *
+   * Allowed values:
+   * - 24 MHz   -> 24'000'000 Hz
+   * - 32 MHz   -> 32'000'000 Hz
+   * - 38.4 MHz -> 38'400'000 Hz
+   * - 40 MHz   -> 40'000'000 Hz
    */
   uint32_t frequency;
 };
@@ -61,13 +71,26 @@ extern const struct ClockClass * const ExternalOsc;
 /*----------------------------------------------------------------------------*/
 struct GenericClockConfig
 {
-  /** Optional: input clock divisor in the range from 1 to 255. */
+  /**
+   * Optional: input clock divisor.
+   *
+   * This field defines the division factor applied to the input clock before
+   * generating the output clock signal. The valid divisor range is
+   * from 1 to 255 (inclusive). A divisor of 1 results in no division.
+   */
   uint16_t divisor;
-  /** Mandatory: clock source. */
+
+  /**
+   * Mandatory: clock source selection.
+   *
+   * Specifies the source of the input reference clock used to generate the
+   * output clock signal. The set of available sources may vary depending
+   * on the device capabilities.
+   */
   enum ClockSource source;
 };
 
-/* Requires a GenericClockConfig structure */
+/* Require a GenericClockConfig structure */
 extern const struct ClockClass * const FlashClock;
 extern const struct ClockClass * const MainClock;
 extern const struct ClockClass * const UartClock;

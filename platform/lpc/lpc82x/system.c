@@ -19,10 +19,12 @@ unsigned int sysFlashLatencyFromFrequency(uint32_t frequency)
 /*----------------------------------------------------------------------------*/
 /**
  * Set the flash access time.
+ *
+ * Possible values and recommended operating frequencies:
+ * - 1 clock: up to 30 MHz.
+ * - 2 clocks: more than 30 MHz.
+ *
  * @param value Flash access time in CPU clocks.
- * @n Possible values and recommended operating frequencies:
- *   - 1 clock: up to 30 MHz.
- *   - 2 clocks: more than 30 MHz.
  */
 void sysFlashLatencyUpdate(unsigned int value)
 {

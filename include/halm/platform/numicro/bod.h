@@ -22,10 +22,11 @@ struct BodConfig
 {
   /**
    * Optional: event type, may be left unused when BOD interrupt is not enabled.
-   * @n Available options:
-   *   - @b INPUT_RISING.
-   *   - @b INPUT_FALLING.
-   *   - @b INPUT_TOGGLE.
+   *
+   * Available options:
+   * - @b INPUT_RISING
+   * - @b INPUT_FALLING
+   * - @b INPUT_TOGGLE
    */
   enum InputEvent event;
   /** Mandatory: brown-out detector threshold voltage. */

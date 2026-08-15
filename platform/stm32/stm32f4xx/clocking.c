@@ -311,7 +311,7 @@ static void audioPllDisable(const void *)
 /*----------------------------------------------------------------------------*/
 static enum Result audioPllEnable(const void *, const void *configBase)
 {
-  const struct MainPllConfig * const config = configBase;
+  const struct PllConfig * const config = configBase;
   assert(config != NULL);
   assert(config->divisor);
 
@@ -375,7 +375,7 @@ static void mainPllDisable(const void *)
 /*----------------------------------------------------------------------------*/
 static enum Result mainPllEnable(const void *, const void *configBase)
 {
-  const struct MainPllConfig * const config = configBase;
+  const struct PllConfig * const config = configBase;
   assert(config != NULL);
 
   uint32_t cfgr = STM_RCC->PLLCFGR;

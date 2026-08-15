@@ -89,10 +89,12 @@ unsigned int sysFlashLatency(void)
 /*----------------------------------------------------------------------------*/
 /**
  * Set the flash access time.
+ *
+ * Possible values and recommended operating frequencies:
+ * - 1 clock cycle: up to 24 MHz.
+ * - 2 clock cycles: up to 48 MHz.
+ *
  * @param value Flash access time in CPU clocks.
- * @n Possible values and recommended operating frequencies:
- *   - 1 clock: up to 24 MHz.
- *   - 2 clocks: up to 48 MHz.
  */
 void sysFlashLatencyUpdate(unsigned int value)
 {

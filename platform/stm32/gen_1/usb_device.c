@@ -42,12 +42,12 @@ struct UsbEndpoint
   /**
    * Transfer state. There are 4 states for double-buffered IN transfers
    * and 3 states for double-buffered OUT transfers.
-   * @n IN transfer states:
+   * - IN transfer states:
    *   - 3: initialization before sending the first packet.
    *   - 2: transmission of the first packet is started.
    *   - 1: transmission of the dummy packet is started.
    *   - 0: work state.
-   * @n OUT transfer states:
+   * - OUT transfer states:
    *   - 2: reception of the first packet.
    *   - 1: reception of the second packet.
    *   - 0: work state.

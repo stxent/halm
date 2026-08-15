@@ -89,7 +89,7 @@ struct ExtendedClockConfig
 {
   /** Optional: clock divider value. */
   uint16_t divisor;
-  /** Mandatory: clock source. */
+  /** Mandatory: clock source selection. */
   enum ClockSource source;
 };
 
@@ -107,13 +107,16 @@ extern const struct ClockClass * const UartClock;
 struct PllConfig
 {
   /**
-   * Mandatory: PLL loop divider value.
-   * @n Divider values for PFD should be in the range from 12 to 35.
-   * @n The divider value for the PLL1 (ARM PLL) should be in the range
-   * from 54 to 108. Output frequency is additionally divided by 2.
-   * @n The divider value for the PLL2 (System PLL) should be 20 or 22.
-   * @n The divider value for the PLL3 (USB1 PLL) should be 20 or 22.
-   * @n The divider value for the PLL7 (USB2 PLL) should be 20 or 22.
+   * @brief Mandatory: PLL loop divider value.
+   *
+   * This field specifies the division factor used in the PLL feedback loop,
+   * with constraints varying by PLL type and function:
+   * - @b PFD: divider must be in the range of 12 to 35 (inclusive).
+   * - @b PLL1 (ARM PLL): divider must be in the range of 54 to 108 (inclusive).
+   *   Note that the final output frequency is additionally divided by 2.
+   * - @b PLL2 (System PLL): allowed values are strictly 20 or 22.
+   * - @b PLL3 (USB1 PLL): allowed values are strictly 20 or 22.
+   * - @b PLL7 (USB2 PLL): allowed values are strictly 20 or 22.
    */
   uint16_t divisor;
 };

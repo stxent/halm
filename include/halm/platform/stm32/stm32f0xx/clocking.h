@@ -45,11 +45,12 @@ enum [[gnu::packed]] AdcClockSource
 struct AdcClockConfig
 {
   /**
-   * Mandatory: clock source.
-   * @n Available options:
-   *   - @b ADC_CLOCK_INTERNAL_14.
-   *   - @b ADC_CLOCK_APB_DIV_2.
-   *   - @b ADC_CLOCK_APB_DIV_4.
+   * Mandatory: clock source selection.
+   *
+   * Available options:
+   * - @b ADC_CLOCK_INTERNAL_14
+   * - @b ADC_CLOCK_APB_DIV_2
+   * - @b ADC_CLOCK_APB_DIV_4
    */
   enum AdcClockSource source;
 };
@@ -60,13 +61,21 @@ extern const struct ClockClass * const AdcClock;
 struct ExternalOscConfig
 {
   /**
-   * Mandatory: frequency of the external crystal oscillator or
-   * an external clock source. The input frequency range is 4 to 32 MHz.
+   * Mandatory: frequency of the crystal oscillator or external clock source.
+   *
+   * This field specifies the operating frequency of the external clock input,
+   * which may be either a crystal oscillator or an external clock signal.
+   * The supported frequency range is strictly limited to 4 MHz to 32 MHz
+   * (inclusive).
    */
   uint32_t frequency;
+
   /**
-   * Optional: enable bypass. Bypassing should be enabled when using
-   * an external clock source instead of the crystal oscillator.
+   * Optional: enable bypass mode.
+   *
+   * When enabled, this flag configures the oscillator circuit to bypass the
+   * internal crystal oscillator path and directly accept an external clock
+   * signal as the reference source.
    */
   bool bypass;
 };
@@ -82,16 +91,35 @@ extern const struct ClockClass * const InternalOsc48;
 /*----------------------------------------------------------------------------*/
 struct SystemPllConfig
 {
-  /** Mandatory: PLL input divisor. Divisor range is 1 to 16. */
-  uint16_t divisor;
-  /** Mandatory: PLL multiplier. The multiplier range is 2 to 16. */
-  uint16_t multiplier;
   /**
-   * Mandatory: clock source.
-   * @n Available options:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_INTERNAL_48.
-   *   - @b CLOCK_EXTERNAL.
+   * Mandatory: PLL input divisor.
+   *
+   * This field defines the division factor applied to the input clock before
+   * it is fed into the PLL. The valid divisor may be set to any integer value
+   * in the range of 1 to 16 (inclusive).
+   */
+  uint16_t divisor;
+
+  /**
+   * Mandatory: PLL multiplier.
+   *
+   * This field specifies the multiplication factor applied to the pre-divided
+   * input clock to achieve the desired PLL operating frequency. The allowed
+   * multiplier range is 2 to 16 (inclusive).
+   *
+   * @note The final output frequency is determined by the formula:
+   *       `output = (input * multiplier) / divisor`.
+   */
+  uint16_t multiplier;
+
+  /**
+   * Mandatory: clock source selection.
+   *
+   * Specifies the source of the input reference clock for the PLL. Available
+   * options are:
+   * - @b CLOCK_INTERNAL
+   * - @b CLOCK_INTERNAL_48
+   * - @b CLOCK_EXTERNAL
    */
   enum ClockSource source;
 };
@@ -102,20 +130,21 @@ extern const struct ClockClass * const SystemPll;
 struct GenericClockConfig
 {
   /**
-   * Mandatory: clock source.
-   * @n Available sources for system clock are:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_INTERNAL_48.
-   *   - @b CLOCK_EXTERNAL.
-   *   - @b CLOCK_PLL.
-   * @n Available sources for I2C1 interface are:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_SYSTEM.
-   * @n Available sources for USART1, USART2 and USART3 interfaces are:
-   *   - @b CLOCK_INTERNAL.
-   *   - @b CLOCK_RTC.
-   *   - @b CLOCK_APB.
-   *   - @b CLOCK_SYSTEM.
+   * Mandatory: clock source selection.
+   *
+   * - Available sources for system clock are:
+   *   - @b CLOCK_INTERNAL
+   *   - @b CLOCK_INTERNAL_48
+   *   - @b CLOCK_EXTERNAL
+   *   - @b CLOCK_PLL
+   * - Available sources for I2C1 interface are:
+   *   - @b CLOCK_INTERNAL
+   *   - @b CLOCK_SYSTEM
+   * - Available sources for USART1, USART2 and USART3 interfaces are:
+   *   - @b CLOCK_INTERNAL
+   *   - @b CLOCK_RTC
+   *   - @b CLOCK_APB
+   *   - @b CLOCK_SYSTEM
    */
   enum ClockSource source;
 };
@@ -131,8 +160,9 @@ struct BusClockConfig
 {
   /**
    * Mandatory: bus clock divisor.
-   * @n Available options for AHB: 2, 4, 8, 16, 64, 128, 256, 512.
-   * @n Available options for APB: 2, 4, 8, 16.
+   *
+   * - Available options for @b AHB: 2, 4, 8, 16, 64, 128, 256, 512.
+   * - Available options for @b APB: 2, 4, 8, 16.
    */
   uint16_t divisor;
 };

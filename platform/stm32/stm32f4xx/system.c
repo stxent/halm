@@ -103,14 +103,16 @@ unsigned int sysFlashLatency(void)
 /*----------------------------------------------------------------------------*/
 /**
  * Set the flash access time.
+ *
+ * Possible values and operating frequencies for 2.7V - 3.6V voltage range:
+ * - 1 clock cycle: up to 30 MHz.
+ * - 2 clock cycles: up to 60 MHz.
+ * - 3 clock cycles: up to 90 MHz.
+ * - 4 clock cycles: up to 120 MHz.
+ * - 5 clock cycles: up to 150 MHz.
+ * - 6 clock cycles: up to 168 MHz.
+ *
  * @param value Flash access time in CPU clocks.
- * @n Possible values and operating frequencies for 2.7V - 3.6V voltage range:
- *   - 1 clock: up to 30 MHz.
- *   - 2 clocks: up to 60 MHz.
- *   - 3 clocks: up to 90 MHz.
- *   - 4 clocks: up to 120 MHz.
- *   - 5 clocks: up to 150 MHz.
- *   - 6 clocks: up to 168 MHz.
  */
 void sysFlashLatencyUpdate(unsigned int value)
 {
