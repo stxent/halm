@@ -46,7 +46,6 @@ static void insertTimer(struct TimerFactoryEntry **, struct TimerFactoryEntry *,
 static void interruptHandler(void *);
 static void interruptHandlerTickless(void *);
 static void removeTimer(struct TimerFactory *, struct TimerFactoryEntry *);
-static inline void scheduleTimerEvent(struct TimerFactory *, uint32_t);
 /*----------------------------------------------------------------------------*/
 static enum Result factoryInit(void *, const void *);
 static void factoryDeinit(void *);
@@ -310,10 +309,12 @@ static void interruptHandlerTickless(void *object)
      * Configure time of the next timer interrupt. Overflowed wake time
      * will be normalized during event scheduling.
      */
-    const uint32_t waketime = factory->head != NULL ?
-        factory->head->timestamp + 1 : counter + overflow;
+    uint32_t waketime = factory->head != NULL ?
+        (factory->head->timestamp + 1) : (counter + overflow / 2);
 
-    scheduleTimerEvent(factory, waketime);
+    if (waketime > factory->overflow)
+      waketime -= factory->overflow + 1;
+    timerSetOverflow(factory->timer, waketime);
 
     counter = timerGetValue(factory->timer);
     delta = distance(counter, waketime, overflow);
@@ -334,14 +335,6 @@ static void removeTimer(struct TimerFactory *factory,
   timer->next = NULL;
 
   assert(*current == NULL || (*current != (*current)->next));
-}
-/*----------------------------------------------------------------------------*/
-static inline void scheduleTimerEvent(struct TimerFactory *factory,
-    uint32_t value)
-{
-  if (value > factory->overflow)
-    value -= factory->overflow + 1;
-  timerSetOverflow(factory->timer, value);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result factoryInit(void *object, const void *configBase)
@@ -432,7 +425,7 @@ static enum Result factoryInitTickless(void *object, const void *configBase)
   factory->counter = 0;
   factory->overflow = timerGetOverflow(factory->timer) - 1;
 
-  timerSetOverflow(factory->timer, factory->overflow);
+  timerSetOverflow(factory->timer, factory->overflow / 2);
   timerSetCallback(factory->timer, interruptHandlerTickless, factory);
   return E_OK;
 }
@@ -511,6 +504,7 @@ static void tmrDisable(void *object)
     removeTimer(timer->factory, timer);
   }
 
+  timer->scheduled = false;
   irqRestore(state);
 }
 /*----------------------------------------------------------------------------*/
@@ -609,7 +603,13 @@ static void tmrEnableTickless(void *object)
 
   /* The timer queue was empty, or the new timer has the nearest wake-up time */
   if (factory->head == timer)
-    scheduleTimerEvent(factory, timer->timestamp + 1);
+  {
+    uint32_t waketime = timer->timestamp + 1;
+
+    if (waketime > factory->overflow)
+      waketime -= factory->overflow + 1;
+    timerSetOverflow(factory->timer, waketime);
+  }
 
   irqRestore(state);
 }
