@@ -62,6 +62,11 @@ if(CONFIG_PLATFORM_STM32_FLASH)
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/flash_base.c")
 endif()
 
+if(CONFIG_PLATFORM_STM32_FSMC)
+    list(APPEND SOURCE_FILES "fsmc_sram.c")
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/fsmc_base.c")
+endif()
+
 if(CONFIG_PLATFORM_STM32_GPTIMER_BASE)
     list(APPEND SOURCE_FILES "gptimer_common.c")
     list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/gptimer_base.c")

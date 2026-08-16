@@ -162,6 +162,18 @@ config PLATFORM_STM32_FLASH
 	help
 	  This enables driver for the internal flash memory.
 
+config PLATFORM_STM32_FSMC
+	bool "FSMC"
+	default y
+	depends on FAMILY_STM32F4XX
+	help
+	  This enables driver for the Flexible External Memory Controller.
+
+config PLATFORM_STM32_FSMC_NO_DEINIT
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
+	depends on PLATFORM_STM32_FSMC
+
 config PLATFORM_STM32_GPTIMER_BASE
 	bool "General Purpose Timer"
 	default y

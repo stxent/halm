@@ -328,17 +328,28 @@ typedef struct
   __rw__ uint32_t OPTCR;
 } STM_FLASH_Type;
 /*------------------Flexible Static Memory Controller-------------------------*/
-// TODO Verify
 typedef struct
 {
-  __rw__ uint32_t BCR1;
-  __rw__ uint32_t BTR1;
-  __rw__ uint32_t BCR2;
-  __rw__ uint32_t BTR2;
-  __rw__ uint32_t BCR3;
-  __rw__ uint32_t BTR3;
-  __rw__ uint32_t BCR4;
-  __rw__ uint32_t BTR4;
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t BCR1;
+      __rw__ uint32_t BTR1;
+      __rw__ uint32_t BCR2;
+      __rw__ uint32_t BTR2;
+      __rw__ uint32_t BCR3;
+      __rw__ uint32_t BTR3;
+      __rw__ uint32_t BCR4;
+      __rw__ uint32_t BTR4;
+    };
+
+    struct
+    {
+      __rw__ uint32_t BCR;
+      __rw__ uint32_t BTR;
+    } BANK[4];
+  };
   __ne__ uint32_t RESERVED0[16];
 
   /* Offset 0x060 */
@@ -368,13 +379,26 @@ typedef struct
   __ne__ uint32_t RESERVED5[20];
 
   /* Offset 0x104 */
-  __rw__ uint32_t BWTR1;
-  __ne__ uint32_t RESERVED6;
-  __rw__ uint32_t BWTR2;
-  __ne__ uint32_t RESERVED7;
-  __rw__ uint32_t BWTR3;
-  __ne__ uint32_t RESERVED8;
-  __rw__ uint32_t BWTR4;
+  union
+  {
+    struct
+    {
+      __rw__ uint32_t BWTR1;
+      __ne__ uint32_t RESERVED6;
+      __rw__ uint32_t BWTR2;
+      __ne__ uint32_t RESERVED7;
+      __rw__ uint32_t BWTR3;
+      __ne__ uint32_t RESERVED8;
+      __rw__ uint32_t BWTR4;
+      __ne__ uint32_t RESERVED9;
+    };
+
+    struct
+    {
+      __rw__ uint32_t BWTR;
+      __ne__ uint32_t RESERVED;
+    } BANK_W[4];
+  };
 } STM_FSMC_Type;
 /*------------------General Purpose Input/Output------------------------------*/
 typedef struct
@@ -1013,5 +1037,11 @@ extern STM_OB_Type      OB_DOMAIN;
 
 #define STM_DBG           (&DBG_DOMAIN)
 #define STM_OB            (&OB_DOMAIN)
+/*----------------------------------------------------------------------------*/
+/* External memory regions */
+#define STM_FSMC_BANK1_BASE 0x60000000UL
+#define STM_FSMC_BANK2_BASE 0x70000000UL
+#define STM_FSMC_BANK3_BASE 0x80000000UL
+#define STM_FSMC_BANK4_BASE 0x90000000UL
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_STM32F4XX_PLATFORM_DEFS_H_ */
