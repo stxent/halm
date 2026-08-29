@@ -250,6 +250,7 @@ static enum Result qspiInit(void *object, const void *configBase)
 {
   const struct QspiConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->dma[0] != config->dma[1]);
 
   const struct QspiBaseConfig baseConfig = {
       .cs = 0,

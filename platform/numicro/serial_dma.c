@@ -309,6 +309,7 @@ static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->dma[0] != config->dma[1]);
   assert(config->rxChunks > 0 && config->rxLength > 0 && config->txLength > 0);
   assert(config->rxLength / config->rxChunks <= PDMA_MAX_TRANSFER_SIZE);
   assert(config->rxLength % config->rxChunks == 0);

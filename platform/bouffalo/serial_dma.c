@@ -291,6 +291,7 @@ static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->dma[0] != config->dma[1]);
   assert(config->rxChunk % 2 == 0);
   assert(config->rxChunk > 0 && config->rxChunk <= DMA_MAX_TRANSFER_SIZE);
   assert(config->rxLength > 0 && config->txLength > 0);
@@ -328,7 +329,11 @@ static enum Result serialInit(void *object, const void *configBase)
   interface->txWatermark = 0;
 #endif
 
-  if (!dmaSetup(interface, config->dma[0], config->dma[1]))
+  const bool highPriorityChannel = config->dma[0] > config->dma[1];
+  const uint8_t rxChannel = config->dma[highPriorityChannel];
+  const uint8_t txChannel = config->dma[!highPriorityChannel];
+
+  if (!dmaSetup(interface, rxChannel, txChannel))
     return E_ERROR;
 
   BL_UART_Type * const reg = interface->base.reg;

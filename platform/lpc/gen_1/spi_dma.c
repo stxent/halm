@@ -385,6 +385,7 @@ static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->dma[0] != config->dma[1]);
 
   const struct SspBaseConfig baseConfig = {
       .cs = 0,
@@ -395,8 +396,6 @@ static enum Result spiInit(void *object, const void *configBase)
   };
   struct SpiDma * const interface = object;
   enum Result res;
-
-  assert(config->dma[0] != config->dma[1]);
 
   /* Call base class constructor */
   if ((res = SspBase->init(interface, &baseConfig)) != E_OK)

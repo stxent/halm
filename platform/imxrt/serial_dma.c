@@ -317,6 +317,7 @@ static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->dma[0] != config->dma[1]);
   assert(config->rxChunk > 0 && config->rxLength > 0 && config->txLength > 0);
   assert(config->rxChunk % MEM_ALIGNMENT == 0);
   assert(config->txLength % MEM_ALIGNMENT == 0);

@@ -239,6 +239,7 @@ static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
   assert(config != NULL);
+  assert(config->dma[0] != config->dma[1]);
 
   const struct SpiBaseConfig baseConfig = {
       .cs = 0,
