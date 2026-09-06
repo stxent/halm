@@ -209,14 +209,25 @@ static bool readResidue(struct SerialDmaTOC *interface)
   if (interface->rxPosition < chunk)
     residue += chunk;
 
-  const size_t pending =
-      interface->rxBufferSize - interface->rxPosition - residue;
+  const size_t pending = interface->rxBufferSize - interface->rxPosition;
 
-  if (pending)
+  if (residue > pending)
+  {
+    /*
+     * Full DMA transfer is completed, but the DMA interrupt is not yet
+     * processed. Ignore this transfer timeout event and process a fully
+     * received buffer.
+     */
+    return false;
+  }
+
+  const size_t count = pending - residue;
+
+  if (count)
   {
     byteQueuePushArray(&interface->rxQueue,
-        interface->rxBuffer + interface->rxPosition, pending);
-    interface->rxPosition += pending;
+        interface->rxBuffer + interface->rxPosition, count);
+    interface->rxPosition += count;
   }
 
   return true;
@@ -231,14 +242,24 @@ static void rxDmaHandler(void *object)
 
   if (status == E_BUSY || !readResidue(interface))
   {
-    const size_t index = dmaQueued(interface->rxDma);
+    size_t index = dmaQueued(interface->rxDma);
     assert(index >= 1 && index <= 2);
 
     const size_t end = interface->rxBufferSize >> (2 - index);
-    const size_t pending = end - interface->rxPosition;
+    size_t count;
+
+    if (end < interface->rxPosition)
+    {
+      /* Half of the reception buffer is partially lost, recover the state */
+      count = interface->rxBufferSize >> 1;
+      index ^= 0x3;
+      interface->rxPosition = end - count;
+    }
+    else
+      count = end - interface->rxPosition;
 
     byteQueuePushArray(&interface->rxQueue,
-        interface->rxBuffer + interface->rxPosition, pending);
+        interface->rxBuffer + interface->rxPosition, count);
     interface->rxPosition = index == 1 ? (interface->rxBufferSize >> 1) : 0;
   }
 

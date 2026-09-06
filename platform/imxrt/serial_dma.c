@@ -196,8 +196,8 @@ static bool readResidue(struct SerialDma *interface)
   if (residue > pending)
   {
     /*
-     * DMA transfer is completed but DMA interrupt is not yet processed.
-     * Ignore this event and process received bytes later in the DMA callback.
+     * DMA transfer is completed, but the DMA interrupt is not yet processed.
+     * Ignore this event and process the received bytes later in the DMA ISR.
      */
     return false;
   }
@@ -221,14 +221,24 @@ static bool readResidue(struct SerialDma *interface)
 static void rxDmaHandler(void *object)
 {
   struct SerialDma * const interface = object;
-  const size_t index = dmaQueued(interface->rxDma);
+  size_t index = dmaQueued(interface->rxDma);
   bool event = false;
 
   assert(index >= 1 && index <= 2);
   assert(dmaStatus(interface->rxDma) == E_BUSY);
 
   const size_t end = interface->rxBufferSize >> (2 - index);
-  const size_t count = end - interface->rxPosition;
+  size_t count;
+
+  if (end < interface->rxPosition)
+  {
+    /* Half of the reception buffer is partially lost, recover the state */
+    count = interface->rxBufferSize >> 1;
+    index ^= 0x3;
+    interface->rxPosition = end - count;
+  }
+  else
+    count = end - interface->rxPosition;
 
   if (count)
   {

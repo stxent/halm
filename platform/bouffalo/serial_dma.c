@@ -183,13 +183,23 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
 static void rxDmaHandler(void *object)
 {
   struct SerialDma * const interface = object;
-  const size_t index = dmaQueued(interface->rxDma);
+  size_t index = dmaQueued(interface->rxDma);
 
   assert(index >= 1 && index <= 2);
   assert(dmaStatus(interface->rxDma) == E_BUSY);
 
   const size_t end = interface->rxBufferSize >> (2 - index);
-  const size_t count = end - interface->rxPosition;
+  size_t count;
+
+  if (end < interface->rxPosition)
+  {
+    /* Half of the reception buffer is partially lost, recover the state */
+    count = interface->rxBufferSize >> 1;
+    index ^= 0x3;
+    interface->rxPosition = end - count;
+  }
+  else
+    count = end - interface->rxPosition;
 
   byteQueuePushArray(&interface->rxQueue,
       interface->rxBuffer + interface->rxPosition, count);
@@ -219,14 +229,24 @@ static void serialInterruptHandler(void *object)
     if (interface->rxPosition < chunk)
       residue += chunk;
 
-    const size_t pending =
-        interface->rxBufferSize - interface->rxPosition - residue;
+    const size_t pending = interface->rxBufferSize - interface->rxPosition;
 
-    if (pending)
+    if (residue > pending)
+    {
+      /*
+       * DMA transfer is completed, but the DMA interrupt is not yet processed.
+       * Ignore this event and process the received bytes later in the DMA ISR.
+       */
+      return;
+    }
+
+    const size_t count = pending - residue;
+
+    if (count)
     {
       byteQueuePushArray(&interface->rxQueue,
-          interface->rxBuffer + interface->rxPosition, pending);
-      interface->rxPosition += pending;
+          interface->rxBuffer + interface->rxPosition, count);
+      interface->rxPosition += count;
 
       updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
 
