@@ -47,7 +47,8 @@ static enum Result sramInit(void *object, const void *configBase)
       || config->width.data == 32);
 
   struct EmcSram * const memory = object;
-  uint8_t channel = config->channel;
+  const unsigned int byteLanes = config->width.data / 8;
+  const uint8_t channel = config->channel;
 
   /* Try to register module */
   if (!emcSetStaticMemoryDescriptor(channel, NULL, object))
@@ -55,8 +56,8 @@ static enum Result sramInit(void *object, const void *configBase)
 
   memory->channel = channel;
   memory->address = emcGetStaticMemoryAddress(channel);
+  memory->size = (1UL << config->width.address) * byteLanes;
 
-  const unsigned int byteLanes = config->width.data / 8;
   const struct PinGroupEntry *group;
   struct Pin pin;
 

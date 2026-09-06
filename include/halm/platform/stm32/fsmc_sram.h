@@ -50,6 +50,8 @@ struct FsmcSram
 
   /* Starting address of the memory */
   void *address;
+  /* Memory size */
+  uint32_t size;
   /* Subbank index */
   uint8_t subbank;
 };
@@ -59,6 +61,11 @@ BEGIN_DECLS
 static inline void *fsmcSramAddress(const struct FsmcSram *memory)
 {
   return memory->address;
+}
+
+static inline size_t fsmcSramSize(const struct FsmcSram *memory)
+{
+  return (size_t)memory->size;
 }
 
 END_DECLS

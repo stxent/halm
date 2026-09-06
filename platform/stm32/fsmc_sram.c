@@ -45,6 +45,7 @@ static enum Result sramInit(void *object, const void *configBase)
   assert(config->width.data == 8 || config->width.data == 16);
 
   struct FsmcSram * const memory = object;
+  const unsigned int byteLanes = config->width.data / 8;
   const uint8_t bank = 0; /* Bank 1 is used for NOR/PSRAM memory */
 
   /* Try to register module */
@@ -53,8 +54,8 @@ static enum Result sramInit(void *object, const void *configBase)
 
   memory->subbank = config->subbank;
   memory->address = fsmcGetMemoryAddress(bank, memory->subbank);
+  memory->size = (1UL << config->width.address) * byteLanes;
 
-  const unsigned int byteLanes = config->width.data / 8;
   const struct PinGroupEntry *group;
   struct Pin pin;
 
