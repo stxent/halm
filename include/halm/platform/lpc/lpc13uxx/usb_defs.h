@@ -11,7 +11,6 @@
 /*----------------------------------------------------------------------------*/
 /* Aligned along 64-byte boundary */
 #define BUFFER_ALIGNMENT  64
-//#define SETUP_BUFFER_SIZE BUFFER_ALIGNMENT
 
 #define USB_EP_NUMBER     10
 #define USB_EP_LIST_SIZE  (sizeof(uint32_t) * USB_EP_NUMBER * 2)

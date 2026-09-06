@@ -53,8 +53,8 @@
 #define FRAMECNT_MFRAMECNT_VALUE(reg) \
     FIELD_VALUE((reg), FRAMECNT_MFRAMECNT_MASK, 0)
 
-#define FRAMECNT_FRAMECNT_MASK         BIT_FIELD(MASK(11), 3)
-#define FRAMECNT_FRAMECNT(value)       BIT_FIELD((value), 3)
+#define FRAMECNT_FRAMECNT_MASK          BIT_FIELD(MASK(11), 3)
+#define FRAMECNT_FRAMECNT(value)        BIT_FIELD((value), 3)
 #define FRAMECNT_FRAMECNT_VALUE(reg) \
     FIELD_VALUE((reg), FRAMECNT_FRAMECNT_MASK, 3)
 /*------------------Test Mode register----------------------------------------*/
@@ -122,7 +122,7 @@ enum
 #define DMACTL_SGEN                     BIT(6)
 #define DMACTL_DMARST                   BIT(7)
 #define DMACTL_SVINEP                   BIT(8)
-/*------------------Endpoint Interrupt Status register-------------------------*/
+/*------------------Endpoint Interrupt Status register------------------------*/
 #define EPINTSTS_BUFFULLIF              BIT(0)
 #define EPINTSTS_BUFEMPTYIF             BIT(1)
 #define EPINTSTS_SHORTTXIF              BIT(2)

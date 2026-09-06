@@ -62,7 +62,7 @@ enum
 
 #define MCAUSE_MPP(value)               BIT_FIELD((value), 28)
 #define MCAUSE_MPP_MASK                 BIT_FIELD(MASK(2), 28)
-#define MCAUSE_MPP_VALUE(reg) \         FIELD_VALUE((reg), MCAUSE_MPP_MASK, 28)
+#define MCAUSE_MPP_VALUE(reg)           FIELD_VALUE((reg), MCAUSE_MPP_MASK, 28)
 
 #define MCAUSE_MINHV                    BIT(30)
 #define MCAUSE_INTERRUPT                BIT(31)

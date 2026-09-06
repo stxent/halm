@@ -118,41 +118,41 @@ enum
     FIELD_VALUE((reg), URX_RTO_TIMER_RXRTOVA_MASK, 0)
 #define URX_RTO_TIMER_RXRTOVA_MAX       255
 /*------------------Interrupts Status register--------------------------------*/
-#define INT_STS_TEIN              BIT(0) /* utx_end_int */
-#define INT_STS_REIN              BIT(1) /* urx_end_int */
-#define INT_STS_TFIN              BIT(2) /* utx_fifo_int */
-#define INT_STS_RFIN              BIT(3) /* urx_fifo_int */
-#define INT_STS_RRTOIN            BIT(4) /* urx_rto_int */
-#define INT_STS_RPCEIN            BIT(5) /* urx_pce_int */
-#define INT_STS_TFERIN            BIT(6) /* utx_fer_int */
-#define INT_STS_RFERIN            BIT(7) /* urx_fer_int */
+#define INT_STS_TEIN                    BIT(0) /* utx_end_int */
+#define INT_STS_REIN                    BIT(1) /* urx_end_int */
+#define INT_STS_TFIN                    BIT(2) /* utx_fifo_int */
+#define INT_STS_RFIN                    BIT(3) /* urx_fifo_int */
+#define INT_STS_RRTOIN                  BIT(4) /* urx_rto_int */
+#define INT_STS_RPCEIN                  BIT(5) /* urx_pce_int */
+#define INT_STS_TFERIN                  BIT(6) /* utx_fer_int */
+#define INT_STS_RFERIN                  BIT(7) /* urx_fer_int */
 /*------------------Interrupts Mask register----------------------------------*/
-#define INT_MASK_TEMS              BIT(0) /* utx_end_int */
-#define INT_MASK_REMS              BIT(1) /* urx_end_int */
-#define INT_MASK_TFMS              BIT(2) /* utx_fifo_int */
-#define INT_MASK_RFMS              BIT(3) /* urx_fifo_int */
-#define INT_MASK_RRTOMASK          BIT(4) /* urx_rto_int */
-#define INT_MASK_RPCEMASK          BIT(5) /* urx_pce_int */
-#define INT_MASK_TFERMASK          BIT(6) /* utx_fer_int */
-#define INT_MASK_RFERMASK          BIT(7) /* urx_fer_int */
-#define INT_MASK_ALL               MASK(8)
+#define INT_MASK_TEMS                   BIT(0) /* utx_end_int */
+#define INT_MASK_REMS                   BIT(1) /* urx_end_int */
+#define INT_MASK_TFMS                   BIT(2) /* utx_fifo_int */
+#define INT_MASK_RFMS                   BIT(3) /* urx_fifo_int */
+#define INT_MASK_RRTOMASK               BIT(4) /* urx_rto_int */
+#define INT_MASK_RPCEMASK               BIT(5) /* urx_pce_int */
+#define INT_MASK_TFERMASK               BIT(6) /* utx_fer_int */
+#define INT_MASK_RFERMASK               BIT(7) /* urx_fer_int */
+#define INT_MASK_ALL                    MASK(8)
 /*------------------Interrupts Clear register---------------------------------*/
-#define INT_CLEAR_TECL             BIT(0) /* utx_end_int */
-#define INT_CLEAR_RECL             BIT(1) /* urx_end_int */
-#define INT_CLEAR_RRTOCLR          BIT(4) /* urx_rto_int */
-#define INT_CLEAR_RPCECLR          BIT(5) /* urx_pce_int */
+#define INT_CLEAR_TECL                  BIT(0) /* utx_end_int */
+#define INT_CLEAR_RECL                  BIT(1) /* urx_end_int */
+#define INT_CLEAR_RRTOCLR               BIT(4) /* urx_rto_int */
+#define INT_CLEAR_RPCECLR               BIT(5) /* urx_pce_int */
 /*------------------Interrupts Enable register--------------------------------*/
-#define INT_EN_TEND                BIT(0) /* utx_end_int */
-#define INT_EN_REND                BIT(1) /* urx_end_int */
-#define INT_EN_TFIF                BIT(2) /* utx_fifo_int */
-#define INT_EN_RFIF                BIT(3) /* urx_fifo_int */
-#define INT_EN_RRTO                BIT(4) /* urx_rto_int */
-#define INT_EN_RPCE                BIT(5) /* urx_pce_int */
-#define INT_EN_TFER                BIT(6) /* utx_fer_int */
-#define INT_EN_RFER                BIT(7) /* urx_fer_int */
+#define INT_EN_TEND                     BIT(0) /* utx_end_int */
+#define INT_EN_REND                     BIT(1) /* urx_end_int */
+#define INT_EN_TFIF                     BIT(2) /* utx_fifo_int */
+#define INT_EN_RFIF                     BIT(3) /* urx_fifo_int */
+#define INT_EN_RRTO                     BIT(4) /* urx_rto_int */
+#define INT_EN_RPCE                     BIT(5) /* urx_pce_int */
+#define INT_EN_TFER                     BIT(6) /* utx_fer_int */
+#define INT_EN_RFER                     BIT(7) /* urx_fer_int */
 /*------------------Status register-------------------------------------------*/
-#define STATUS_TBB                 BIT(0)
-#define STATUS_RBB                 BIT(1)
+#define STATUS_TBB                      BIT(0)
+#define STATUS_RBB                      BIT(1)
 /*------------------Abuto Baud detection control register---------------------*/
 #define STS_URX_ABR_PRD_ABRPRDS(value) \
     BIT_FIELD((value), 0)

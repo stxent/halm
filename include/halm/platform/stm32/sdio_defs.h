@@ -66,7 +66,7 @@ enum
 #define CMD_WAITPEND                    BIT(9)
 #define CMD_CPSMEN                      BIT(10)
 #define CMD_SDIOSuspend                 BIT(11)
-#define CMD_ENCMDCompletion             BIT(12)
+#define CMD_ENCMDCompl                  BIT(12)
 #define CMD_nIEN                        BIT(13)
 #define CMD_ATACMD                      BIT(14)
 /*------------------Data Control register-------------------------------------*/

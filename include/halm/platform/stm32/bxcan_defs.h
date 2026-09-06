@@ -83,7 +83,7 @@
 #define RF_FOVR                         BIT(4)
 /* Release output mailbox */
 #define RF_RFOM                         BIT(5)
-/*------------------Interrupt Enable Register----------------------------------*/
+/*------------------Interrupt Enable Register---------------------------------*/
 /* Transmit mailbox empty interrupt enable */
 #define IER_TMEIE                       BIT(0)
 /* FIFO 0 message pending interrupt enable */

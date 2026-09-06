@@ -145,8 +145,8 @@ enum
     FIELD_VALUE((reg), MAC_FLOW_CTRL_PT_MASK, 16)
 /*------------------MAC VLAN Tag register-------------------------------------*/
 /* VLAN Tag Identifier for Receive Frames */
-#define MAC_VLAN_TAG_VL(value)         BIT_FIELD((value), 0)
-#define MAC_VLAN_TAG_VL_MASK           BIT_FIELD(MASK(16), 0)
+#define MAC_VLAN_TAG_VL(value)          BIT_FIELD((value), 0)
+#define MAC_VLAN_TAG_VL_MASK            BIT_FIELD(MASK(16), 0)
 #define MAC_VLAN_TAG_VL_VALUE(reg) \
     FIELD_VALUE((reg), MAC_VLAN_TAG_VL_MASK, 0)
 
