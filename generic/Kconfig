@@ -50,6 +50,10 @@ config GENERIC_SDIO_SPI_CRC
 	default y
 	depends on GENERIC_SDIO_SPI
 
+config GENERIC_TASK_SEQUENCE
+	bool "Task Sequence"
+	default y
+
 config GENERIC_TIMER_FACTORY
 	bool "Software Timer Factory"
 	default y

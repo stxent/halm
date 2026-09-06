@@ -32,6 +32,10 @@ if(CONFIG_GENERIC_SDIO_SPI)
     list(APPEND SOURCE_FILES "sdio_spi.c")
 endif()
 
+if(CONFIG_GENERIC_TASK_SEQUENCE)
+    list(APPEND SOURCE_FILES "task_sequence.c")
+endif()
+
 if(CONFIG_GENERIC_TIMER_FACTORY)
     list(APPEND SOURCE_FILES "timer_factory.c")
 endif()

@@ -25,7 +25,7 @@ struct TimerFactoryConfig
 
 struct TimerFactory
 {
-  struct Entity base;
+  struct Timer base;
 
   struct TimerFactoryEntry *head;
   struct Timer *timer;
