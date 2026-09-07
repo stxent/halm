@@ -137,7 +137,7 @@ static void interruptHandler(void *object)
   updateRxWatermark(interface, rxQueueSize);
   event = event || rxQueueSize >= rxQueueLevel;
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -177,7 +177,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct LpUartBaseConfig baseConfig = {
       .rx = config->rx,
@@ -197,8 +197,8 @@ static enum Result serialInit(void *object, const void *configBase)
     return E_MEMORY;
 
   interface->base.handler = interruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
 
 #ifdef CONFIG_PLATFORM_IMXRT_LPUART_WATERMARK
   interface->rxWatermark = 0;

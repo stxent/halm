@@ -421,7 +421,7 @@ static void interruptHandler(void *object)
       event = true;
   }
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -806,7 +806,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result canInit(void *object, const void *configBase)
 {
   const struct CanConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->filters <= RX_COUNT);
 
   const struct CanBaseConfig baseConfig = {
@@ -831,7 +831,7 @@ static enum Result canInit(void *object, const void *configBase)
     return E_MEMORY;
 
   interface->arena = malloc(sizeof(struct CANStandardMessage) * poolSize);
-  if (interface->arena == NULL)
+  if (interface->arena == nullptr)
     return E_MEMORY;
 
 #ifdef CONFIG_PLATFORM_LPC_CAN_FILTERS
@@ -840,8 +840,8 @@ static enum Result canInit(void *object, const void *configBase)
 #endif
 
   interface->base.handler = interruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rate = config->rate;
   interface->timer = config->timer;
 

@@ -86,7 +86,7 @@ static void onTimerCallback(uv_timer_t *handle)
     event = true;
   }
 
-  if (event && timer->callback != NULL)
+  if (event && timer->callback != nullptr)
     timer->callback(timer->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -96,7 +96,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   struct PosixTimer * const timer = object;
 
   timer->handle = malloc(sizeof(uv_timer_t));
-  if (timer->handle == NULL)
+  if (timer->handle == nullptr)
     return E_MEMORY;
 
   if (uv_timer_init(uv_default_loop(), timer->handle) < 0)
@@ -106,11 +106,11 @@ static enum Result tmrInit(void *object, const void *configBase)
   }
   uv_handle_set_data((uv_handle_t *)timer->handle, timer);
 
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
   timer->autostop = false;
 
-  if (config != NULL)
+  if (config != nullptr)
   {
     assert(config->frequency <= TICK_RATE);
     timer->frequency = config->frequency ? config->frequency : TICK_RATE;
@@ -134,7 +134,7 @@ static void tmrDeinit(void *object)
 {
   struct PosixTimer * const timer = object;
 
-  uv_handle_set_data((uv_handle_t *)timer->handle, NULL);
+  uv_handle_set_data((uv_handle_t *)timer->handle, nullptr);
   uv_close((uv_handle_t *)timer->handle, onCloseCallback);
 }
 /*----------------------------------------------------------------------------*/

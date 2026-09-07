@@ -146,7 +146,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
     const struct PinEntry * const swjPinEntry =
         pinFind(swjPins, PIN(pin.port, pin.number), 0);
 
-    if (swjPinEntry != NULL)
+    if (swjPinEntry != nullptr)
       pinSetFunction(pin, swjPinEntry->value);
   }
   else if (function == PIN_ANALOG)

@@ -47,11 +47,11 @@ const struct PinGroupEntry sdioPinGroups[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SdioBase *instance = NULL;
+static struct SdioBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SdioBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -99,7 +99,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   /* Reset registers to default values */
   sysResetPulse(RST_SDIO);
 
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = SDIO_IRQ;
   interface->reg = STM_SDIO;
 
@@ -109,5 +109,5 @@ static enum Result sdioInit(void *object, const void *configBase)
 static void sdioDeinit(void *)
 {
   sysClockDisable(CLK_SDIO);
-  instance = NULL;
+  instance = nullptr;
 }

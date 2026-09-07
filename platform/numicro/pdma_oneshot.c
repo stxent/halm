@@ -65,14 +65,14 @@ static void interruptHandler(void *object, enum Result res)
 
   channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
-  if (channel->callback != NULL)
+  if (channel->callback != nullptr)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct PdmaOneShotConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct PdmaBaseConfig baseConfig = {
       .event = config->event,
@@ -87,8 +87,8 @@ static enum Result channelInit(void *object, const void *configBase)
   {
     channel->base.control |= DSCT_CTL_OPMODE(OPMODE_BASIC);
     channel->base.handler = interruptHandler;
-    channel->callback = NULL;
-    channel->callbackArgument = NULL;
+    channel->callback = nullptr;
+    channel->callbackArgument = nullptr;
     channel->state = STATE_IDLE;
     channel->fixed = true;
   }
@@ -233,7 +233,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   const uint32_t control = channel->base.control;
   const uint32_t transfers = size >> DSCT_CTL_TXWIDTH_VALUE(control);
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!((uintptr_t)destination % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
   assert(!((uintptr_t)source % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
   assert(!(size % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));

@@ -38,7 +38,7 @@ const struct TimerClass * const Pit = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
-    .setAutostop = NULL,
+    .setAutostop = nullptr,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
@@ -56,12 +56,12 @@ const struct Timer64Class * const Pit64 = &(const struct Timer64Class){
 
         .enable = tmrEnable,
         .disable = tmrDisable,
-        .setAutostop = NULL,
-        .setCallback = NULL,
+        .setAutostop = nullptr,
+        .setCallback = nullptr,
         .getFrequency = tmrGetFrequency,
-        .setFrequency = NULL,
-        .getOverflow = NULL,
-        .setOverflow = NULL,
+        .setFrequency = nullptr,
+        .getOverflow = nullptr,
+        .setOverflow = nullptr,
         .getValue = tmrGetValue,
         .setValue = tmrSetValue
     },
@@ -79,7 +79,7 @@ static void interruptHandler(void *object)
     /* Clear pending interrupt flag */
     reg->CHANNEL[timer->base.counter].TFLG = TFLG_TIF;
 
-    if (timer->callback != NULL)
+    if (timer->callback != nullptr)
       timer->callback(timer->callbackArgument);
   }
 }
@@ -105,7 +105,7 @@ static void setTimerFrequency(struct Pit *timer, uint32_t frequency)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct PitConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct PitBaseConfig baseConfig = {
       .channel = config->channel,
@@ -119,8 +119,8 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
 
   IMX_PIT_Type * const reg = timer->base.reg;
 
@@ -196,7 +196,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callback = callback;
   timer->callbackArgument = argument;
 
-  if (timer->callback != NULL)
+  if (timer->callback != nullptr)
   {
     reg->CHANNEL[timer->base.counter].TFLG = TFLG_TIF;
     reg->CHANNEL[timer->base.counter].TCTRL |= TCTRL_TIE;

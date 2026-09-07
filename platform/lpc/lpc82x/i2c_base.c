@@ -60,13 +60,13 @@ static const struct I2CBlockDescriptor i2cBlockEntries[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2CBase *instances[4] = {NULL};
+static struct I2CBase *instances[4] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct I2CBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -162,7 +162,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   sysResetPulse(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -180,6 +180,6 @@ static void i2cDeinit(void *object)
   const struct I2CBase * const interface = object;
 
   sysClockDisable(i2cBlockEntries[interface->channel].clock);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

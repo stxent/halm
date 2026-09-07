@@ -187,7 +187,7 @@ static void buildDescriptorTable(struct UacBase *driver)
   }
 
   assert((size_t)(entry - driver->table) < ARRAY_SIZE(driver->table));
-  *entry = NULL;
+  *entry = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static void interfaceAssociationDescriptor(const void *object,
@@ -1178,7 +1178,7 @@ static enum Result handleOutInterfaceRequest(struct UacBase *driver,
 static enum Result driverInit(void *object, const void *configBase)
 {
   const struct UacBaseConfig * const config = configBase;
-  assert(config->owner != NULL);
+  assert(config->owner != nullptr);
 
   struct UacBase * const driver = object;
 

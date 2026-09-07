@@ -48,7 +48,7 @@ static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     configDescriptor,
     interfaceDescriptor,
     functionalDescriptor,
-    NULL
+    nullptr
 };
 /*----------------------------------------------------------------------------*/
 static void deviceDescriptor(const void *, struct UsbDescriptor *header,
@@ -57,7 +57,7 @@ static void deviceDescriptor(const void *, struct UsbDescriptor *header,
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     static const struct UsbDeviceDescriptor descriptor = {
         .length = sizeof(struct UsbDeviceDescriptor),
@@ -86,7 +86,7 @@ static void configDescriptor(const void *, struct UsbDescriptor *header,
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     static const struct UsbConfigurationDescriptor descriptor = {
         .length = sizeof(struct UsbConfigurationDescriptor),
@@ -114,7 +114,7 @@ static void interfaceDescriptor(const void *object,
   header->length = sizeof(struct UsbInterfaceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_INTERFACE;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     const struct UsbInterfaceDescriptor descriptor = {
         .length = sizeof(struct UsbInterfaceDescriptor),
@@ -140,7 +140,7 @@ static void functionalDescriptor(const void *object,
   header->length = sizeof(struct DfuFunctionalDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DFU_FUNCTIONAL;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     struct DfuFunctionalDescriptor descriptor = {
         .length = sizeof(struct DfuFunctionalDescriptor),
@@ -152,11 +152,11 @@ static void functionalDescriptor(const void *object,
     };
 
     descriptor.attributes = DFU_MANIFESTATION_TOLERANT;
-    if (driver->onDetachRequest != NULL)
+    if (driver->onDetachRequest != nullptr)
       descriptor.attributes |= DFU_WILL_DETACH;
-    if (driver->onDownloadRequest != NULL)
+    if (driver->onDownloadRequest != nullptr)
       descriptor.attributes |= DFU_CAN_DNLOAD;
-    if (driver->onUploadRequest != NULL)
+    if (driver->onUploadRequest != nullptr)
       descriptor.attributes |= DFU_CAN_UPLOAD;
 
     memcpy(payload, &descriptor, sizeof(descriptor));
@@ -187,7 +187,7 @@ static void onTimerOverflow(void *argument)
 static enum Result processDownloadRequest(struct Dfu *driver,
     const void *payload, uint16_t payloadLength)
 {
-  if (driver->onDownloadRequest == NULL)
+  if (driver->onDownloadRequest == nullptr)
   {
     setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
     return E_INVALID;
@@ -211,7 +211,7 @@ static enum Result processDownloadRequest(struct Dfu *driver,
    * User-space code must not use timeouts when the timer is not
    * initialized.
    */
-  assert(driver->timer != NULL || !driver->timeout);
+  assert(driver->timer != nullptr || !driver->timeout);
 
   if (written == payloadLength)
   {
@@ -233,7 +233,7 @@ static enum Result processDownloadRequest(struct Dfu *driver,
 static void processGetStatusRequest(struct Dfu *driver, void *response,
     uint16_t *responseLength)
 {
-  const bool enableTimer = driver->timer != NULL && driver->timeout;
+  const bool enableTimer = driver->timer != nullptr && driver->timeout;
 
   switch ((enum DfuState)driver->state)
   {
@@ -280,7 +280,7 @@ static void processGetStatusRequest(struct Dfu *driver, void *response,
 static enum Result processUploadRequest(struct Dfu *driver,
     uint16_t requestedLength, void *response, uint16_t *responseLength)
 {
-  if (driver->onUploadRequest == NULL)
+  if (driver->onUploadRequest == nullptr)
   {
     setStatus(driver, DFU_STATUS_ERR_STALLEDPKT);
     return E_INVALID;
@@ -326,27 +326,27 @@ static void setStatus(struct Dfu *driver, enum DfuStatus status)
 static enum Result driverInit(void *object, const void *configBase)
 {
   const struct DfuConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->device != NULL);
+  assert(config != nullptr);
+  assert(config->device != nullptr);
   assert(config->transferSize);
 
   struct Dfu * const driver = object;
 
   driver->device = config->device;
-  driver->callbackArgument = NULL;
-  driver->onDetachRequest = NULL;
-  driver->onDownloadRequest = NULL;
-  driver->onUploadRequest = NULL;
+  driver->callbackArgument = nullptr;
+  driver->onDetachRequest = nullptr;
+  driver->onDownloadRequest = nullptr;
+  driver->onUploadRequest = nullptr;
   driver->transferSize = config->transferSize;
 
-  if (config->timer != NULL)
+  if (config->timer != nullptr)
   {
     driver->timer = config->timer;
     timerSetAutostop(driver->timer, true);
     timerSetCallback(driver->timer, onTimerOverflow, driver);
   }
   else
-    driver->timer = NULL;
+    driver->timer = nullptr;
 
   resetDriver(driver);
 
@@ -360,8 +360,8 @@ static void driverDeinit(void *object)
 
   usbDevUnbind(driver->device, driver);
 
-  if (driver->timer != NULL)
-    timerSetCallback(driver->timer, NULL, NULL);
+  if (driver->timer != nullptr)
+    timerSetCallback(driver->timer, nullptr, nullptr);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result driverControl(void *object,
@@ -454,7 +454,7 @@ static enum Result driverControl(void *object,
     {
       usbTrace("dfu at %u: detach request", driver->interfaceIndex);
 
-      if (driver->onDetachRequest != NULL)
+      if (driver->onDetachRequest != nullptr)
       {
         driver->onDetachRequest(driver->callbackArgument, packet->value);
         driver->state = STATE_APP_IDLE;

@@ -54,11 +54,11 @@ const struct InterfaceClass * const AdcDmaStream =
     .init = adcInit,
     .deinit = adcDeinit,
 
-    .setCallback = NULL,
+    .setCallback = nullptr,
     .getParam = adcGetParam,
     .setParam = adcSetParam,
-    .read = NULL,
-    .write = NULL
+    .read = nullptr,
+    .write = nullptr
 };
 
 const struct StreamClass * const AdcDmaStreamHandler =
@@ -144,7 +144,7 @@ static bool dmaSetup(struct AdcDmaStream *interface, uint8_t channel,
 
   interface->dma = init(SdmaList, &dmaConfig);
 
-  if (interface->dma != NULL)
+  if (interface->dma != nullptr)
   {
     dmaConfigure(interface->dma, &dmaSettings);
     dmaSetCallback(interface->dma, dmaHandler, interface);
@@ -157,8 +157,8 @@ static bool dmaSetup(struct AdcDmaStream *interface, uint8_t channel,
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaStreamConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->pins != NULL && *config->pins);
+  assert(config != nullptr);
+  assert(config->pins != nullptr && *config->pins);
   assert(config->event < ADC_EVENT_END);
   assert(!config->preemption || (config->sequence & 1) == 0);
   assert(config->sensitivity <= INPUT_FALLING);
@@ -189,11 +189,11 @@ static enum Result adcInit(void *object, const void *configBase)
     return E_ERROR;
 
   interface->stream = init(AdcDmaStreamHandler, &streamConfig);
-  if (interface->stream == NULL)
+  if (interface->stream == nullptr)
     return E_ERROR;
 
   interface->pins = malloc(sizeof(struct AdcPin) * count);
-  if (interface->pins == NULL)
+  if (interface->pins == nullptr)
     return E_MEMORY;
 
   interface->count = (uint8_t)count;
@@ -259,11 +259,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   switch ((enum IfParameter)parameter)
   {
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.sequence, NULL,
+      return adcSetInstance(interface->base.sequence, nullptr,
           &interface->base) ? E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.sequence, &interface->base, NULL);
+      adcSetInstance(interface->base.sequence, &interface->base, nullptr);
       return E_OK;
 
     default:
@@ -308,7 +308,7 @@ static enum Result adcHandlerEnqueue(void *object,
   struct AdcDmaStream * const interface = stream->parent;
 
   assert(adcGetInstance(interface->base.sequence) == &interface->base);
-  assert(request != NULL && request->callback != NULL);
+  assert(request != nullptr && request->callback != nullptr);
   /* Ensure the buffer has enough space and is aligned on the sample size */
   assert(request->capacity / (interface->count * sizeof(uint16_t)) >= 2);
   assert(request->capacity % (interface->count * sizeof(uint16_t)) == 0);

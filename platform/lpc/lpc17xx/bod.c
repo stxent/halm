@@ -32,11 +32,11 @@ const struct InterruptClass * const Bod = &(const struct InterruptClass){
     .setCallback = bodSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct Bod *instance = NULL;
+static struct Bod *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Bod *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -53,7 +53,7 @@ void BOD_ISR(void)
 static enum Result bodInit(void *object, const void *configBase)
 {
   const struct BodConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   struct Bod * const bod = object;
 
@@ -62,8 +62,8 @@ static enum Result bodInit(void *object, const void *configBase)
     const uint32_t rsid = LPC_SC->RSID;
     uint32_t pcon = LPC_SC->PCON & ~(PCON_BODRPM | PCON_BOGD | PCON_BORD);
 
-    bod->callback = NULL;
-    bod->callbackArgument = NULL;
+    bod->callback = nullptr;
+    bod->callbackArgument = nullptr;
     bod->enabled = false;
     bod->fired = !(rsid & RSID_POR) && (rsid & RSID_BODR);
 
@@ -98,7 +98,7 @@ static void bodDeinit(void *)
   LPC_SC->PCON |= PCON_BORD;
   LPC_SC->PCON |= PCON_BODRPM | PCON_BOGD;
 
-  instance = NULL;
+  instance = nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -108,7 +108,7 @@ static void bodEnable(void *object)
 
   bod->enabled = true;
 
-  if (bod->callback != NULL)
+  if (bod->callback != nullptr)
   {
     irqClearPending(BOD_IRQ);
     irqEnable(BOD_IRQ);
@@ -131,7 +131,7 @@ static void bodSetCallback(void *object, void (*callback)(void *),
   bod->callbackArgument = argument;
   bod->callback = callback;
 
-  if (bod->enabled && bod->callback != NULL)
+  if (bod->enabled && bod->callback != nullptr)
   {
     irqClearPending(BOD_IRQ);
     irqEnable(BOD_IRQ);

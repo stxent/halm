@@ -48,7 +48,7 @@ const struct EntityClass * const SctBase = &(const struct EntityClass){
 };
 /*----------------------------------------------------------------------------*/
 static struct TimerHandler instance = {
-    .parts = {NULL, NULL},
+    .parts = {nullptr, nullptr},
     .events = MASK(SCT_EVENT_COUNT),
     .inputs = MASK(SCT_INPUT_END - 1),
     .outputs = MASK(SCT_OUTPUT_END - 1)
@@ -56,7 +56,7 @@ static struct TimerHandler instance = {
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(void)
 {
-  return instance.parts[0] != NULL || instance.parts[1] != NULL;
+  return instance.parts[0] != nullptr || instance.parts[1] != nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
@@ -65,7 +65,7 @@ static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
 
   if (timerPart == SCT_UNIFIED)
   {
-    if (instance.parts[0] == NULL && instance.parts[1] == NULL)
+    if (instance.parts[0] == nullptr && instance.parts[1] == nullptr)
     {
       instance.parts[0] = timer;
       attached = true;
@@ -79,7 +79,7 @@ static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
      * If the SCT is operating as two 16-bit counters, events can only modify
      * the state of the outputs when neither counter is halted.
      */
-    if (instance.parts[part] == NULL)
+    if (instance.parts[part] == nullptr)
     {
       instance.parts[part] = timer;
       attached = true;
@@ -93,7 +93,7 @@ static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
 static void timerHandlerDetach(enum SctPart timerPart)
 {
   const unsigned int part = timerPart == SCT_HIGH;
-  instance.parts[part] = NULL;
+  instance.parts[part] = nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -101,10 +101,10 @@ void SCT_ISR(void)
 {
   const uint16_t state = LPC_SCT->EVFLAG;
 
-  if (instance.parts[0] != NULL && (instance.parts[0]->mask & state))
+  if (instance.parts[0] != nullptr && (instance.parts[0]->mask & state))
     instance.parts[0]->handler(instance.parts[0]);
 
-  if (instance.parts[1] != NULL && (instance.parts[1]->mask & state))
+  if (instance.parts[1] != nullptr && (instance.parts[1]->mask & state))
     instance.parts[1]->handler(instance.parts[1]);
 
   /* Clear interrupt flags */
@@ -236,7 +236,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   if (timerHandlerAttach(config->part, timer))
   {
     timer->channel = config->channel;
-    timer->handler = NULL;
+    timer->handler = nullptr;
     timer->irq = SCT_IRQ;
     timer->mask = 0;
     timer->part = config->part;

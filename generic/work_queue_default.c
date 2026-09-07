@@ -6,4 +6,4 @@
 
 #include <halm/wq.h>
 /*----------------------------------------------------------------------------*/
-void *WQ_DEFAULT = NULL;
+void *WQ_DEFAULT = nullptr;

@@ -57,7 +57,7 @@ struct Pin pinInit(PinNumber id)
 /*----------------------------------------------------------------------------*/
 void pinInput(struct Pin pin)
 {
-  assert(pin.reg != NULL);
+  assert(pin.reg != nullptr);
   commonPinInit(pin.port);
 
   STM_GPIO_Type * const reg = pin.reg;
@@ -71,7 +71,7 @@ void pinInput(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, bool value)
 {
-  assert(pin.reg != NULL);
+  assert(pin.reg != nullptr);
   commonPinInit(pin.port);
 
   pinSetType(pin, PIN_PUSHPULL);

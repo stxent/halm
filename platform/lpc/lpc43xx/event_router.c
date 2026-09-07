@@ -39,7 +39,7 @@ static const struct EntityClass * const EventRouter =
     .deinit = deletedDestructorTrap
 };
 /*----------------------------------------------------------------------------*/
-static struct EventRouter *erInstance = NULL;
+static struct EventRouter *erInstance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool entryComparator(const void *element, void *argument)
 {
@@ -51,11 +51,11 @@ static void notifyObservers(uint32_t status)
 {
   EroListNode *current = eroListFront(&erInstance->observers);
 
-  while (current != NULL)
+  while (current != nullptr)
   {
     const struct EventRouterObserver * const entry = eroListData(current);
 
-    if ((status & entry->events) && entry->callback != NULL)
+    if ((status & entry->events) && entry->callback != nullptr)
       entry->callback(entry->object);
     current = eroListNext(current);
   }
@@ -90,9 +90,9 @@ enum Result erRegister(void (*callback)(void *), void *object, uint32_t events)
   if (events == 0)
     return E_VALUE;
 
-  if (erInstance == NULL)
-    erInstance = init(EventRouter, NULL);
-  if (erInstance == NULL)
+  if (erInstance == nullptr)
+    erInstance = init(EventRouter, nullptr);
+  if (erInstance == nullptr)
     return E_ERROR;
 
   if (eroListPushFront(&erInstance->observers,
@@ -111,13 +111,13 @@ enum Result erRegister(void (*callback)(void *), void *object, uint32_t events)
 /*----------------------------------------------------------------------------*/
 void erUnregister(const void *object)
 {
-  assert(erInstance != NULL);
+  assert(erInstance != nullptr);
 
   EroListNode *current = eroListFront(&erInstance->observers);
   uint32_t others = 0;
   uint32_t target = 0;
 
-  while (current != NULL)
+  while (current != nullptr)
   {
     const struct EventRouterObserver * const entry = eroListData(current);
 

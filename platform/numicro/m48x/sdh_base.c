@@ -205,7 +205,7 @@ const struct PinEntry sdhPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SdhBase *instances[2] = {NULL};
+static struct SdhBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SdhBase *interface,
     const struct SdhBaseConfig *config)
@@ -249,7 +249,7 @@ static bool setInstance(uint8_t channel, struct SdhBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -354,7 +354,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   sysResetBlock(reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
 
   return E_OK;
 }
@@ -365,6 +365,6 @@ static void sdioDeinit(void *object)
   const struct SdhBase * const interface = object;
 
   sysClockDisable(interface->channel ? CLK_SDH1 : CLK_SDH0);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

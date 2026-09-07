@@ -151,7 +151,7 @@ static IMX_GPIO_Type *calcPortBase(uint8_t port, uint8_t number)
   };
 
   if (port == PORT_USB || (port == PORT_SNVS && number >= PIN_SNVS_TEST_MODE))
-    return NULL;
+    return nullptr;
 
   return gpioPortMap[port];
 }
@@ -160,7 +160,7 @@ static void commonPinInit(struct Pin pin)
 {
   volatile uint32_t * const gpr = getPortRemapReg(pin);
 
-  if (gpr != NULL)
+  if (gpr != nullptr)
     *gpr &= ~(1UL << pin.number);
 
   enablePortClock(pin);
@@ -176,7 +176,7 @@ static void enablePortClock(struct Pin pin)
       CLK_GPIO1, CLK_GPIO2, CLK_GPIO3, CLK_GPIO4, CLK_GPIO5
   };
 
-  if (pin.reg != NULL && !sysClockStatus(gpioClockMap[pin.port]))
+  if (pin.reg != nullptr && !sysClockStatus(gpioClockMap[pin.port]))
     sysClockEnable(gpioClockMap[pin.port]);
 }
 /*----------------------------------------------------------------------------*/
@@ -201,7 +201,7 @@ static volatile uint32_t *getPortRemapReg(struct Pin pin)
   static const uint8_t portRemapIndices[] = {26, 27, 28, 29};
 
   return pin.port < ARRAY_SIZE(portRemapIndices) ?
-      &IMX_IOMUXC_GPR->GPR[portRemapIndices[pin.port]] : NULL;
+      &IMX_IOMUXC_GPR->GPR[portRemapIndices[pin.port]] : nullptr;
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)
@@ -216,7 +216,7 @@ struct Pin pinInit(PinNumber id)
 
   const struct PinGroupEntry * const group = pinGroupFind(gpioPins, id, 0);
 
-  if (group != NULL)
+  if (group != nullptr)
   {
     const struct PinDescriptor begin = {
         .number = PIN_TO_OFFSET(group->begin),
@@ -231,7 +231,7 @@ struct Pin pinInit(PinNumber id)
   {
     pin.port = current.port;
     pin.number = current.number;
-    pin.reg = NULL;
+    pin.reg = nullptr;
   }
 
   return pin;
@@ -247,7 +247,7 @@ void pinInput(struct Pin pin)
   volatile uint32_t * const pad = getPadControlReg(pin);
   *pad = (*pad & ~PAD_CTL_DSE_MASK) | PAD_CTL_HYS;
 
-  if (pin.reg != NULL)
+  if (pin.reg != nullptr)
     ((IMX_GPIO_Type *)pin.reg)->GDIR &= ~(1UL << pin.number);
 }
 /*----------------------------------------------------------------------------*/
@@ -261,7 +261,7 @@ void pinOutput(struct Pin pin, bool value)
   volatile uint32_t * const pad = getPadControlReg(pin);
   *pad = (*pad & ~(PAD_CTL_DSE_MASK | PAD_CTL_HYS)) | PAD_CTL_DSE(DSE_R0);
 
-  if (pin.reg != NULL)
+  if (pin.reg != nullptr)
   {
     pinWrite(pin, value);
     ((IMX_GPIO_Type *)pin.reg)->GDIR |= 1UL << pin.number;

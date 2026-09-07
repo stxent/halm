@@ -118,14 +118,14 @@ static void interruptHandler(void *object, enum Result res)
     event = true;
   }
 
-  if (event && channel->callback != NULL)
+  if (event && channel->callback != nullptr)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct PdmaListConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->number > 0);
 
   const struct PdmaBaseConfig baseConfig = {
@@ -140,12 +140,12 @@ static enum Result channelInit(void *object, const void *configBase)
     return res;
 
   channel->list = memalign(4, sizeof(struct PdmaEntry) * config->number);
-  if (channel->list == NULL)
+  if (channel->list == nullptr)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
-  channel->callback = NULL;
-  channel->callbackArgument = NULL;
+  channel->callback = nullptr;
+  channel->callbackArgument = nullptr;
   channel->capacity = config->number;
   channel->index = 0;
   channel->queued = 0;
@@ -309,7 +309,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   const uint32_t control = channel->base.control;
   const uint32_t transfers = size >> DSCT_CTL_TXWIDTH_VALUE(control);
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!((uintptr_t)destination % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
   assert(!((uintptr_t)source % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
   assert(!(size % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
@@ -323,7 +323,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   }
 
   struct PdmaEntry * const current = channel->list + channel->index;
-  struct PdmaEntry *previous = NULL;
+  struct PdmaEntry *previous = nullptr;
 
   if (channel->queued)
   {
@@ -341,7 +341,7 @@ static void channelAppend(void *object, void *destination, const void *source,
       | DSCT_CTL_TXCNT(transfers - 1);
   current->next = 0;
 
-  if (previous != NULL)
+  if (previous != nullptr)
   {
     /* Change mode of the previous element from basic to scatter-gather */
     previous->control &= ~DSCT_CTL_OPMODE_MASK;

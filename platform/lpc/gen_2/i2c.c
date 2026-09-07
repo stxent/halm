@@ -124,7 +124,7 @@ static void interruptHandler(void *object)
     irqDisable(interface->base.irq);
   }
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -142,7 +142,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2CConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct I2CBaseConfig baseConfig = {
       .channel = config->channel,
@@ -159,8 +159,8 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->base.handler = interruptHandler;
 
   interface->address = 0;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->blocking = true;
   interface->rate = config->rate;
   interface->sendRepeatedStart = false;

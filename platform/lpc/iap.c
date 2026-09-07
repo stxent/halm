@@ -61,7 +61,7 @@ static enum Result copyRamToFlash(uint32_t address, const void *buffer,
       frequency / 1000
   };
 
-  return iap(CMD_COPY_RAM_TO_FLASH, NULL, 0,
+  return iap(CMD_COPY_RAM_TO_FLASH, nullptr, 0,
       parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
@@ -74,7 +74,7 @@ static enum Result compareRegions(uint32_t address, const void *buffer,
       length
   };
 
-  return iap(CMD_COMPARE, NULL, 0, parameters, ARRAY_SIZE(parameters));
+  return iap(CMD_COMPARE, nullptr, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
 static enum Result iap(enum IapCommand command, unsigned long *results,
@@ -109,7 +109,7 @@ static enum Result prepareSectorToWrite(unsigned long sector,
       bank
   };
 
-  return iap(CMD_PREPARE_FOR_WRITE, NULL, 0,
+  return iap(CMD_PREPARE_FOR_WRITE, nullptr, 0,
       parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
@@ -123,7 +123,7 @@ enum Result eepromReadBuffer(uint32_t address, void *buffer, size_t length)
       frequency / 1000
   };
 
-  return iap(CMD_EEPROM_READ, NULL, 0, parameters, ARRAY_SIZE(parameters));
+  return iap(CMD_EEPROM_READ, nullptr, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
 enum Result eepromWriteBuffer(uint32_t address, const void *buffer,
@@ -137,7 +137,7 @@ enum Result eepromWriteBuffer(uint32_t address, const void *buffer,
       frequency / 1000
   };
 
-  return iap(CMD_EEPROM_WRITE, NULL, 0, parameters, ARRAY_SIZE(parameters));
+  return iap(CMD_EEPROM_WRITE, nullptr, 0, parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
 enum Result flashActivateBootBank(unsigned int bank)
@@ -148,7 +148,7 @@ enum Result flashActivateBootBank(unsigned int bank)
       frequency / 1000
   };
 
-  return iap(CMD_SET_ACTIVE_BOOT_BANK, NULL, 0,
+  return iap(CMD_SET_ACTIVE_BOOT_BANK, nullptr, 0,
       parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
@@ -161,7 +161,7 @@ enum Result flashBlankCheckSector(uint32_t address, bool uniform)
       addressToBank(address)
   };
 
-  return iap(CMD_BLANK_CHECK_SECTORS, NULL, 0,
+  return iap(CMD_BLANK_CHECK_SECTORS, nullptr, 0,
       parameters, ARRAY_SIZE(parameters));
 }
 /*----------------------------------------------------------------------------*/
@@ -182,7 +182,7 @@ enum Result flashErasePage(uint32_t address, bool uniform)
         frequency / 1000
     };
 
-    res = iap(CMD_ERASE_PAGE, NULL, 0, parameters, ARRAY_SIZE(parameters));
+    res = iap(CMD_ERASE_PAGE, nullptr, 0, parameters, ARRAY_SIZE(parameters));
   }
 
   irqRestore(state);
@@ -207,7 +207,7 @@ enum Result flashEraseSector(uint32_t address, bool uniform)
         bank
     };
 
-    res = iap(CMD_ERASE_SECTORS, NULL, 0,
+    res = iap(CMD_ERASE_SECTORS, nullptr, 0,
         parameters, ARRAY_SIZE(parameters));
   }
 
@@ -217,14 +217,14 @@ enum Result flashEraseSector(uint32_t address, bool uniform)
 /*----------------------------------------------------------------------------*/
 void flashInitWrite(void)
 {
-  iap(CMD_INIT, NULL, 0, NULL, 0);
+  iap(CMD_INIT, nullptr, 0, nullptr, 0);
 }
 /*----------------------------------------------------------------------------*/
 uint32_t flashReadId(void)
 {
   unsigned long id[1];
 
-  iap(CMD_READ_PART_ID, id, ARRAY_SIZE(id), NULL, 0);
+  iap(CMD_READ_PART_ID, id, ARRAY_SIZE(id), nullptr, 0);
   return id[0];
 }
 /*----------------------------------------------------------------------------*/
@@ -232,7 +232,7 @@ uint32_t flashReadConfigId(void)
 {
   unsigned long id[2];
 
-  iap(CMD_READ_PART_ID, id, ARRAY_SIZE(id), NULL, 0);
+  iap(CMD_READ_PART_ID, id, ARRAY_SIZE(id), nullptr, 0);
   return id[1];
 }
 /*----------------------------------------------------------------------------*/

@@ -18,11 +18,11 @@ static void wdtReload(void *);
 const struct WatchdogClass * const Wdt = &(const struct WatchdogClass){
     .size = sizeof(struct Wdt),
     .init = wdtInit,
-    .deinit = NULL, /* Default destructor */
+    .deinit = nullptr, /* Default destructor */
 
     .fired = wdtFired,
     .reload = wdtReload,
-    .setCallback = NULL
+    .setCallback = nullptr
 };
 /*----------------------------------------------------------------------------*/
 static void reloadCounter(void)
@@ -38,7 +38,7 @@ static void reloadCounter(void)
 static enum Result wdtInit(void *object, const void *configBase)
 {
   const struct WdtConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct WdtBaseConfig baseConfig = {
       .source = config->source

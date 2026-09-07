@@ -53,14 +53,14 @@ const struct TimerClass * const BpwmUnit = &(const struct TimerClass){
 
     .enable = unitEnable,
     .disable = unitDisable,
-    .setAutostop = NULL,
+    .setAutostop = nullptr,
     .setCallback = unitSetCallback,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
     .getOverflow = unitGetOverflow,
     .setOverflow = unitSetOverflow,
-    .getValue = NULL,
-    .setValue = NULL
+    .getValue = nullptr,
+    .setValue = nullptr
 };
 
 const struct PwmClass * const Bpwm = &(const struct PwmClass){
@@ -119,7 +119,7 @@ static void unitReleaseChannel(struct BpwmUnit *unit, uint8_t channel)
 static enum Result unitInit(void *object, const void *configBase)
 {
   const struct BpwmUnitConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->resolution >= 2);
 
   const struct BpwmUnitBaseConfig baseConfig = {
@@ -133,8 +133,8 @@ static enum Result unitInit(void *object, const void *configBase)
     return res;
 
   unit->base.handler = interruptHandler;
-  unit->callback = NULL;
-  unit->callbackArgument = NULL;
+  unit->callback = nullptr;
+  unit->callbackArgument = nullptr;
   unit->centered = config->centered;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
@@ -227,7 +227,7 @@ static void unitSetCallback(void *object, void (*callback)(void *),
   unit->callbackArgument = argument;
   unit->callback = callback;
 
-  if (unit->callback != NULL)
+  if (unit->callback != nullptr)
   {
     /* Clear Period Interrupt flag and enable Period Interrupt */
     reg->INTSTS = INTSTS_PIF0;
@@ -269,7 +269,7 @@ static void unitSetOverflow(void *object, uint32_t overflow)
 static enum Result singleEdgeInit(void *object, const void *configBase)
 {
   const struct BpwmConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   struct Bpwm * const pwm = object;
   struct BpwmUnit * const unit = config->parent;

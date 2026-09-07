@@ -27,13 +27,13 @@ const struct EntityClass * const MrtBase = &(const struct EntityClass){
     .deinit = tmrDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct MrtBase *instances[4] = {NULL};
+static struct MrtBase *instances[4] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct MrtBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -77,7 +77,7 @@ static enum Result tmrInit(void *object, const void *configBase)
     return E_BUSY;
 
   timer->channel = config->channel;
-  timer->handler = NULL;
+  timer->handler = nullptr;
   timer->reg = LPC_MRT;
 
   if (!sysClockStatus(CLK_MRT))
@@ -99,11 +99,11 @@ static void tmrDeinit(void *object)
   const struct MrtBase * const timer = object;
   bool active = false;
 
-  instances[timer->channel] = NULL;
+  instances[timer->channel] = nullptr;
 
   for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
   {
-    if (instances[index] != NULL)
+    if (instances[index] != nullptr)
     {
       active = true;
       break;

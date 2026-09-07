@@ -41,12 +41,12 @@ const struct PinEntry dacPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct DacBase *instance = NULL;
+static struct DacBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static void configOutputPin(PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(dacPins, key, 0);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
 
@@ -67,7 +67,7 @@ static void releaseOutputPin(PinNumber)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct DacBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -110,6 +110,6 @@ static void dacDeinit(void *object)
   sysClockDisable(CLK_APB3_DAC);
   releaseOutputPin(interface->pin);
 
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

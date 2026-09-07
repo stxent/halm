@@ -22,7 +22,7 @@ const struct InterfaceClass * const RamProxy =
     &(const struct InterfaceClass){
     .size = sizeof(struct RamProxy),
     .init = interfaceInit,
-    .deinit = NULL, /* Default destructor */
+    .deinit = nullptr, /* Default destructor */
 
     .setCallback = interfaceSetCallback,
     .getParam = interfaceGetParam,
@@ -34,13 +34,13 @@ const struct InterfaceClass * const RamProxy =
 static enum Result interfaceInit(void *object, const void *configBase)
 {
   const struct RamProxyConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->arena != NULL && config->capacity > 0);
+  assert(config != nullptr);
+  assert(config->arena != nullptr && config->capacity > 0);
 
   struct RamProxy * const interface = object;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->arena = config->arena;
   interface->capacity = config->capacity;
   interface->granule = config->granule ? config->granule : DEFAULT_GRANULE_SIZE;

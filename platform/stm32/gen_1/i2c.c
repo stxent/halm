@@ -88,7 +88,7 @@ static bool dmaSetup(struct I2C *interface, uint8_t rxStream, uint8_t txStream)
       DMA_PRIORITY_MEDIUM,
       DMA_TYPE_P2M
   );
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
   dmaConfigure(interface->rxDma, &rxDmaSettings);
   dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
@@ -99,7 +99,7 @@ static bool dmaSetup(struct I2C *interface, uint8_t rxStream, uint8_t txStream)
       DMA_PRIORITY_MEDIUM,
       DMA_TYPE_M2P
   );
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
   dmaConfigure(interface->txDma, &txDmaSettings);
   dmaSetCallback(interface->txDma, txDmaHandler, interface);
@@ -210,7 +210,7 @@ static void interruptHandler(void *object)
     event = true;
   }
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -245,7 +245,7 @@ static void rxDmaHandler(void *object)
   interface->status = dmaStatus(interface->rxDma) == E_OK ?
       STATUS_OK : STATUS_ERROR;
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -263,7 +263,7 @@ static void txDmaHandler(void *object)
     interface->sendRepeatedStart = false;
     interface->status = STATUS_ERROR;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
   else
@@ -284,7 +284,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2CConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct I2CBaseConfig baseConfig = {
       .channel = config->channel,
@@ -303,8 +303,8 @@ static enum Result i2cInit(void *object, const void *configBase)
 
   interface->base.handler = interruptHandler;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rate = config->rate;
   interface->address = 0;
   interface->blocking = true;

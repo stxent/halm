@@ -64,7 +64,7 @@ struct Pin pinInit(PinNumber id)
 /*----------------------------------------------------------------------------*/
 void pinInput(struct Pin pin)
 {
-  if (pin.reg == NULL)
+  if (pin.reg == nullptr)
     return;
 
   commonPinInit(pin);
@@ -73,7 +73,7 @@ void pinInput(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 void pinOutput(struct Pin pin, bool value)
 {
-  if (pin.reg == NULL)
+  if (pin.reg == nullptr)
     return;
 
   commonPinInit(pin);
@@ -83,7 +83,7 @@ void pinOutput(struct Pin pin, bool value)
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
-  if (pin.reg == NULL)
+  if (pin.reg == nullptr)
     return;
 
   volatile uint32_t * const reg = pin.reg;
@@ -118,7 +118,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum PinPull pull)
 {
-  if (pin.reg == NULL || isI2CPin(pin))
+  if (pin.reg == nullptr || isI2CPin(pin))
     return;
 
   volatile uint32_t * const reg = pin.reg;
@@ -145,7 +145,7 @@ void pinSetPull(struct Pin pin, enum PinPull pull)
 void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 {
   /* Slew rate control is available only for I2C pins */
-  if (pin.reg == NULL || !isI2CPin(pin))
+  if (pin.reg == nullptr || !isI2CPin(pin))
     return;
 
   volatile uint32_t * const reg = calcControlReg(pin.port, pin.number);
@@ -161,7 +161,7 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
 /*----------------------------------------------------------------------------*/
 void pinSetType(struct Pin pin, enum PinType type)
 {
-  if (pin.reg == NULL || isI2CPin(pin))
+  if (pin.reg == nullptr || isI2CPin(pin))
     return;
 
   volatile uint32_t * const reg = pin.reg;

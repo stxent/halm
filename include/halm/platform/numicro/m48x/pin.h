@@ -75,7 +75,7 @@ static inline void pinSet(struct Pin pin)
 
 static inline struct Pin pinStub(void)
 {
-  return (struct Pin){NULL, 0, 0};
+  return (struct Pin){nullptr, 0, 0};
 }
 
 static inline void pinToggle(struct Pin pin)
@@ -86,7 +86,7 @@ static inline void pinToggle(struct Pin pin)
 
 static inline bool pinValid(struct Pin pin)
 {
-  return pin.reg != NULL;
+  return pin.reg != nullptr;
 }
 
 static inline void pinWrite(struct Pin pin, bool value)

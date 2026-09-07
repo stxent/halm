@@ -32,12 +32,12 @@ static enum Result channelInit(void *, const void *);
 const struct EntityClass * const SdmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = channelInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static struct DmaController controller = {
-    .instances = {NULL},
-    .descriptors = NULL
+    .instances = {nullptr},
+    .descriptors = nullptr
 };
 /*----------------------------------------------------------------------------*/
 static bool dmaControllerInit(void)
@@ -45,7 +45,7 @@ static bool dmaControllerInit(void)
   const size_t descriptorTableSize = sizeof(struct SdmaEntry) * CHANNEL_COUNT;
 
   controller.descriptors = memalign(512, descriptorTableSize);
-  if (controller.descriptors == NULL)
+  if (controller.descriptors == nullptr)
     return false;
   memset(controller.descriptors, 0, descriptorTableSize);
 
@@ -81,14 +81,14 @@ uint32_t sdmaBaseCalcTransferConfig(const struct SdmaBase *descriptor,
 /*----------------------------------------------------------------------------*/
 void sdmaResetInstance(uint8_t channel)
 {
-  controller.instances[channel] = NULL;
+  controller.instances[channel] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 bool sdmaSetInstance(uint8_t channel, struct SdmaBase *object)
 {
   assert(channel < CHANNEL_COUNT);
 
-  void *expected = NULL;
+  void *expected = nullptr;
 
   return compareExchangePointer(&controller.instances[channel],
       &expected, object);
@@ -161,7 +161,7 @@ static enum Result channelInit(void *object, const void *configBase)
       return E_MEMORY;
   }
 
-  channel->handler = NULL;
+  channel->handler = nullptr;
   channel->reg = &LPC_SDMA->CHANNELS[number];
 
   channel->head = controller.descriptors + number;

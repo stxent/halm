@@ -300,10 +300,10 @@ static void resetDevice(struct UsbDevice *device)
   {
     struct UsbEndpoint **ep = &device->endpoints[index];
 
-    if (*ep != NULL)
+    if (*ep != nullptr)
     {
       (*ep)->index = 0;
-      *ep = NULL;
+      *ep = nullptr;
     }
   }
 }
@@ -311,7 +311,7 @@ static void resetDevice(struct UsbDevice *device)
 static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
@@ -358,11 +358,11 @@ static enum Result devInit(void *object, const void *configBase)
   device->zlp = false;
 
   for (size_t index = 0; index < EP_COUNT; ++index)
-    device->endpoints[index] = NULL;
+    device->endpoints[index] = nullptr;
 
   /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
-  if (device->control == NULL)
+  if (device->control == nullptr)
     return E_ERROR;
 
   /* Reset system variables and configure interrupts */
@@ -838,8 +838,8 @@ static void controlEpEnable(void *object, uint8_t, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static enum Result controlEpEnqueue(void *object, struct UsbRequest *request)
 {
-  assert(request != NULL);
-  assert(request->callback != NULL);
+  assert(request != nullptr);
+  assert(request->callback != nullptr);
 
   struct ControlUsbEndpoint * const ep = object;
   const IrqState state = irqSave();
@@ -940,7 +940,7 @@ static void dataEpDisable(void *object)
   channel->EPINTEN = 0;
 
   assert(device->endpoints[ep->index] == ep);
-  device->endpoints[ep->index] = NULL;
+  device->endpoints[ep->index] = nullptr;
 
   ep->index = 0;
 }
@@ -958,7 +958,7 @@ static void dataEpEnable(void *object, uint8_t type, uint16_t size)
   {
     struct UsbEndpoint * const current = device->endpoints[ep->index];
 
-    if (current == NULL)
+    if (current == nullptr)
       break;
 
     ++ep->index;
@@ -1020,8 +1020,8 @@ static void dataEpEnable(void *object, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static enum Result dataEpEnqueue(void *object, struct UsbRequest *request)
 {
-  assert(request != NULL);
-  assert(request->callback != NULL);
+  assert(request != nullptr);
+  assert(request->callback != nullptr);
 
   struct UsbEndpoint * const ep = object;
   NM_HSUSBD_EP_Type * const channel = epGetChannel(ep);

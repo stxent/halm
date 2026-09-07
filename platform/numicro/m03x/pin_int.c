@@ -63,7 +63,7 @@ const struct InterruptClass * const PinInt = &(const struct InterruptClass){
     .setCallback = pinIntSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct PinIntHandler *handlers[2] = {NULL};
+static struct PinIntHandler *handlers[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static inline NM_GPIO_Type *calcPort(uint8_t port)
 {
@@ -105,7 +105,7 @@ static void enableInterrupt(const struct PinInt *interrupt)
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t group, uint8_t port)
 {
-  assert(handlers[group] != NULL);
+  assert(handlers[group] != nullptr);
 
   NM_GPIO_Type * const reg = calcPort(port);
   PointerList * const list = &handlers[group]->list;
@@ -115,13 +115,13 @@ static void processInterrupt(uint8_t group, uint8_t port)
   /* Clear pending interrupt flags */
   reg->INTSRC = status;
 
-  while (current != NULL)
+  while (current != nullptr)
   {
     struct PinInt * const interrupt = *pointerListData(current);
 
     if (status & interrupt->mask)
     {
-      if (interrupt->callback != NULL)
+      if (interrupt->callback != nullptr)
         interrupt->callback(interrupt->callbackArgument);
     }
 
@@ -156,18 +156,18 @@ void GPIO_PCPDPEPF_ISR(void)
 static enum Result pinIntHandlerAttach(uint8_t group, PinNumber key,
     struct PinInt *interrupt)
 {
-  if (handlers[group] == NULL)
+  if (handlers[group] == nullptr)
   {
     const struct PinIntHandlerConfig config = {group};
     handlers[group] = init(PinIntHandler, &config);
   }
-  assert(handlers[group] != NULL);
+  assert(handlers[group] != nullptr);
 
   PointerList * const list = &handlers[group]->list;
   PointerListNode *current = pointerListFront(list);
 
   /* Check for duplicates */
-  while (current != NULL)
+  while (current != nullptr)
   {
     struct PinInt * const entry = *pointerListData(current);
 
@@ -186,7 +186,7 @@ static void pinIntHandlerDetach(struct PinInt *interrupt)
 {
   const uint8_t group = calcPortGroup(interrupt->port);
 
-  assert(pointerListFind(&handlers[group]->list, interrupt) != NULL);
+  assert(pointerListFind(&handlers[group]->list, interrupt) != nullptr);
   pointerListErase(&handlers[group]->list, interrupt);
 }
 #endif
@@ -209,7 +209,7 @@ static enum Result pinIntHandlerInit(void *object, const void *configBase)
 static enum Result pinIntInit(void *object, const void *configBase)
 {
   const struct PinIntConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->pull == PIN_NOPULL);
 
   const struct Pin input = pinInit(config->pin);
@@ -228,8 +228,8 @@ static enum Result pinIntInit(void *object, const void *configBase)
   pinInput(input);
   pinSetPull(input, config->pull);
 
-  interrupt->callback = NULL;
-  interrupt->callbackArgument = NULL;
+  interrupt->callback = nullptr;
+  interrupt->callbackArgument = nullptr;
   interrupt->key = config->pin;
   interrupt->mask = 1 << input.number;
   interrupt->event = config->event;
@@ -259,7 +259,7 @@ static void pinIntEnable(void *object)
 
   interrupt->enabled = true;
 
-  if (interrupt->callback != NULL)
+  if (interrupt->callback != nullptr)
     enableInterrupt(interrupt);
 }
 /*----------------------------------------------------------------------------*/
@@ -279,7 +279,7 @@ static void pinIntSetCallback(void *object, void (*callback)(void *),
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
 
-  if (interrupt->enabled && interrupt->callback != NULL)
+  if (interrupt->enabled && interrupt->callback != nullptr)
     enableInterrupt(interrupt);
   else
     disableInterrupt(interrupt);

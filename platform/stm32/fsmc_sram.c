@@ -41,7 +41,7 @@ static inline uint32_t timeToTicks(uint32_t time, uint32_t cycle)
 static enum Result sramInit(void *object, const void *configBase)
 {
   const struct FsmcSramConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->width.data == 8 || config->width.data == 16);
 
   struct FsmcSram * const memory = object;
@@ -49,7 +49,7 @@ static enum Result sramInit(void *object, const void *configBase)
   const uint8_t bank = 0; /* Bank 1 is used for NOR/PSRAM memory */
 
   /* Try to register module */
-  if (!fsmcSetMemoryDescriptor(bank, NULL, object))
+  if (!fsmcSetMemoryDescriptor(bank, nullptr, object))
     return E_BUSY;
 
   memory->subbank = config->subbank;
@@ -63,7 +63,7 @@ static enum Result sramInit(void *object, const void *configBase)
   for (size_t index = 0; index < config->width.address; ++index)
   {
     group = pinGroupFind(fsmcAddressPins, fsmcAddressPinMap[index], 0);
-    assert(group != NULL);
+    assert(group != nullptr);
     pinOutput((pin = pinInit(fsmcAddressPinMap[index])), false);
     pinSetFunction(pin, group->value);
     pinSetSlewRate(pin, config->speed);
@@ -73,7 +73,7 @@ static enum Result sramInit(void *object, const void *configBase)
   for (size_t index = 0; index < config->width.data; ++index)
   {
     group = pinGroupFind(fsmcDataPins, fsmcDataPinMap[index], 0);
-    assert(group != NULL);
+    assert(group != nullptr);
     pinInput((pin = pinInit(fsmcDataPinMap[index])));
     pinSetFunction(pin, group->value);
     pinSetSlewRate(pin, config->speed);
@@ -81,7 +81,7 @@ static enum Result sramInit(void *object, const void *configBase)
 
   /* Output Enable pin */
   group = pinGroupFind(fsmcControlPins, fsmcControlPinMap.noe, 0);
-  assert(group != NULL);
+  assert(group != nullptr);
   pinOutput((pin = pinInit(fsmcControlPinMap.noe)), true);
   pinSetFunction(pin, group->value);
   pinSetSlewRate(pin, config->speed);
@@ -100,7 +100,7 @@ static enum Result sramInit(void *object, const void *configBase)
   if (config->useWriteEnable)
   {
     group = pinGroupFind(fsmcControlPins, fsmcControlPinMap.nwe, 0);
-    assert(group != NULL);
+    assert(group != nullptr);
     pinOutput((pin = pinInit(fsmcControlPinMap.nwe)), true);
     pinSetFunction(pin, group->value);
     pinSetSlewRate(pin, config->speed);
@@ -109,7 +109,7 @@ static enum Result sramInit(void *object, const void *configBase)
   /* Chip Select pin */
   group = pinGroupFind(fsmcControlPins,
       fsmcControlPinMap.ne[memory->subbank], 0);
-  assert(group != NULL);
+  assert(group != nullptr);
   pinOutput((pin = pinInit(fsmcControlPinMap.ne[memory->subbank])), true);
   pinSetFunction(pin, group->value);
   pinSetSlewRate(pin, config->speed);
@@ -167,6 +167,6 @@ static enum Result sramInit(void *object, const void *configBase)
 static void sramDeinit(void *object)
 {
   struct FsmcSram * const memory = object;
-  fsmcSetMemoryDescriptor(memory->subbank, object, NULL);
+  fsmcSetMemoryDescriptor(memory->subbank, object, nullptr);
 }
 #endif

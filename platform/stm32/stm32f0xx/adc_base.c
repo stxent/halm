@@ -56,7 +56,7 @@ const struct PinGroupEntry adcPinGroups[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct AdcBase *instance = NULL;
+static struct AdcBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 void ADC1_ISR(void)
 {
@@ -107,7 +107,7 @@ static enum Result adcInit(void *object, const void *configBase)
 
   struct AdcBase * const interface = object;
 
-  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
+  if (!config->shared && !adcSetInstance(config->channel, nullptr, interface))
     return E_BUSY;
 
   if (!sysClockStatus(CLK_ADC))
@@ -117,7 +117,7 @@ static enum Result adcInit(void *object, const void *configBase)
   }
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->reg = STM_ADC;
 
   if (!irqStatus(ADC1_COMP_IRQ))
@@ -134,6 +134,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct AdcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, NULL);
+  adcSetInstance(interface->channel, interface, nullptr);
 }
 #endif

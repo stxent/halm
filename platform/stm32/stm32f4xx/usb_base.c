@@ -134,7 +134,7 @@ const struct PinEntry usbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UsbBase *instances[2] = {NULL};
+static struct UsbBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UsbBaseConfig *config)
 {
@@ -157,7 +157,7 @@ static void configPins(const struct UsbBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(usbPins,
           pinArray[index], config->channel);
-      assert(pinEntry != NULL);
+      assert(pinEntry != nullptr);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -171,7 +171,7 @@ static void configPins(const struct UsbBaseConfig *config)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct UsbBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -240,7 +240,7 @@ static enum Result devInit(void *object, const void *configBase)
     sysResetPulse(RST_OTGFS);
 
     device->reg = STM_USB_OTG_FS;
-    device->handler = NULL;
+    device->handler = nullptr;
     device->irq = OTG_FS_IRQ;
     device->memoryCapacity = 1280;
     device->channel = 0;
@@ -258,7 +258,7 @@ static enum Result devInit(void *object, const void *configBase)
     sysResetPulse(RST_OTGHS);
 
     device->reg = STM_USB_OTG_HS;
-    device->handler = NULL;
+    device->handler = nullptr;
     device->irq = OTG_HS_IRQ;
     device->memoryCapacity = 4096;
     device->channel = 1;
@@ -297,6 +297,6 @@ static void devDeinit(void *object)
   else
     sysClockDisable(CLK_OTGHS);
 
-  instances[device->channel] = NULL;
+  instances[device->channel] = nullptr;
 }
 #endif

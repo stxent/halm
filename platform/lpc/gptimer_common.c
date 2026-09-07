@@ -26,7 +26,7 @@ uint8_t gpTimerConfigCapturePin(uint8_t channel, PinNumber key,
 {
   const struct PinEntry * const pinEntry =
       pinFind(gpTimerCapturePins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
   const uint8_t number = UNPACK_CHANNEL(pinEntry->value);
@@ -43,7 +43,7 @@ uint8_t gpTimerConfigMatchPin(uint8_t channel, PinNumber key, bool value)
 {
   const struct PinEntry * const pinEntry =
       pinFind(gpTimerMatchPins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
 
@@ -57,7 +57,7 @@ uint8_t gpTimerGetMatchChannel(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry =
       pinFind(gpTimerMatchPins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   return UNPACK_CHANNEL(pinEntry->value);
 }

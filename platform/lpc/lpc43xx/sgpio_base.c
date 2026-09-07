@@ -230,11 +230,11 @@ const struct PinGroupEntry sgpioPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SgpioBase *instance = NULL;
+static struct SgpioBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SgpioBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -251,7 +251,7 @@ void SGPIO_ISR(void)
 enum SgpioPin sgpioConfigPin(PinNumber key, enum PinPull pull)
 {
   const struct PinGroupEntry * const group = pinGroupFind(sgpioPins, key, 0);
-  assert(group != NULL);
+  assert(group != nullptr);
 
   const uint8_t offset = PIN_TO_OFFSET(key) - PIN_TO_OFFSET(group->begin);
   const struct Pin pin = pinInit(key);
@@ -385,7 +385,7 @@ static enum Result unitInit(void *object, const void *)
   /* Reset registers to default values */
   sysResetEnable(RST_SGPIO);
 
-  unit->handler = NULL;
+  unit->handler = nullptr;
   unit->irq = SGPIO_IRQ;
   unit->reg = LPC_SGPIO;
 
@@ -396,6 +396,6 @@ static enum Result unitInit(void *object, const void *)
 static void unitDeinit(void *)
 {
   sysClockDisable(CLK_PERIPH_SGPIO);
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

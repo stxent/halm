@@ -382,7 +382,7 @@ struct Pin pinInit(PinNumber id)
 
   const struct PinGroupEntry * const group = pinGroupFind(gpioPins, id, 0);
 
-  if (group != NULL)
+  if (group != nullptr)
   {
     const struct PinDescriptor begin = {
         .number = PIN_TO_OFFSET(group->begin),
@@ -455,7 +455,7 @@ void pinOutput(struct Pin pin, bool value)
 /*----------------------------------------------------------------------------*/
 void pinSetFunction(struct Pin pin, uint8_t function)
 {
-  if (pin.reg == NULL)
+  if (pin.reg == nullptr)
     return;
 
   volatile uint32_t * const reg = pin.reg;
@@ -488,7 +488,7 @@ void pinSetFunction(struct Pin pin, uint8_t function)
 /*----------------------------------------------------------------------------*/
 void pinSetPull(struct Pin pin, enum PinPull pull)
 {
-  if (pin.reg == NULL)
+  if (pin.reg == nullptr)
     return;
 
   volatile uint32_t * const reg = pin.reg;
@@ -527,7 +527,7 @@ void pinSetSlewRate(struct Pin pin, enum PinSlewRate rate)
     return;
   }
 
-  if (pin.reg == NULL)
+  if (pin.reg == nullptr)
     return;
 
   volatile uint32_t * const reg = pin.reg;

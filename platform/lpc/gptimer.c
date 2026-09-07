@@ -75,7 +75,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->event < GPTIMER_EVENT_END);
 
   const struct GpTimerBaseConfig baseConfig = {
@@ -89,8 +89,8 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
   timer->event = (config->event ? config->event : GPTIMER_MATCH0) - 1;
 
   /* Initialize peripheral block */
@@ -197,7 +197,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  if (timer->callback != NULL)
+  if (timer->callback != nullptr)
   {
     reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
     reg->MCR |= mask;

@@ -73,8 +73,8 @@ static void onTimerEvent(void *argument)
 static enum Result taskSequenceInit(void *object, const void *configBase)
 {
   const struct TaskSequenceConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->timer != NULL && config->wq != NULL);
+  assert(config != nullptr);
+  assert(config->timer != nullptr && config->wq != nullptr);
   assert(config->size);
 
   struct TaskSequence * const seq = object;
@@ -98,14 +98,14 @@ static void taskSequenceDeinit(void *object)
   struct TaskSequence * const seq = object;
 
   timerDisable(seq->timer);
-  timerSetCallback(seq->timer, NULL, NULL);
+  timerSetCallback(seq->timer, nullptr, nullptr);
   tsTaskArrayDeinit(&seq->tasks);
 }
 /*----------------------------------------------------------------------------*/
 enum Result tsAdd(struct TaskSequence *seq, void (*callback)(void *),
     void *argument, unsigned long delay)
 {
-  assert(callback != NULL);
+  assert(callback != nullptr);
 
   if (!tsTaskArrayFull(&seq->tasks))
   {

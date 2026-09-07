@@ -65,14 +65,14 @@ static void interruptHandler(void *object, enum Result res)
   bdmaResetInstance(stream->base.number);
   stream->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
-  if (stream->callback != NULL)
+  if (stream->callback != nullptr)
     stream->callback(stream->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object, const void *configBase)
 {
   const struct BdmaOneShotConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct BdmaBaseConfig baseConfig = {
       .event = config->event,
@@ -90,8 +90,8 @@ static enum Result streamInit(void *object, const void *configBase)
     stream->base.config |= CCR_TCIE | CCR_TEIE;
     stream->base.handler = interruptHandler;
 
-    stream->callback = NULL;
-    stream->callbackArgument = NULL;
+    stream->callback = nullptr;
+    stream->callbackArgument = nullptr;
     stream->state = STATE_IDLE;
   }
 
@@ -238,7 +238,7 @@ static void streamAppend(void *object, void *destination, const void *source,
   uintptr_t periphAddress;
   uint32_t transfers;
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!(size % (1 << CCR_PSIZE_VALUE(config))));
   assert(!(size % (1 << CCR_MSIZE_VALUE(config))));
   assert(stream->state != STATE_BUSY && stream->state != STATE_READY);

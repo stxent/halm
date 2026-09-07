@@ -134,13 +134,13 @@ static bool dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
   };
 
   interface->rxDma = init(GpDmaList, &rxDmaConfig);
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
   dmaConfigure(interface->rxDma, &dmaSettings[0]);
   dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
 
   interface->txDma = init(GpDmaOneShot, &txDmaConfig);
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
   dmaConfigure(interface->txDma, &dmaSettings[1]);
   dmaSetCallback(interface->txDma, txDmaHandler, interface);
@@ -238,7 +238,7 @@ static void rxDmaHandler(void *object)
   if (rxQueueReady(interface))
     enqueueRxBuffers(interface);
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -273,7 +273,7 @@ static void txDmaHandler(void *object)
   else
     event = true;
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -317,7 +317,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->dma[0] != config->dma[1]);
   assert(config->rxChunks > 0 && config->rxLength > 0 && config->txLength > 0);
   assert(config->rxLength / config->rxChunks <= GPDMA_MAX_TRANSFER_SIZE);
@@ -339,7 +339,7 @@ static enum Result serialInit(void *object, const void *configBase)
   if (!uartCalcRate(&interface->base, config->rate, &rateConfig))
     return E_VALUE;
 
-  if (config->arena != NULL)
+  if (config->arena != nullptr)
   {
     uint8_t * const arena = config->arena;
 
@@ -367,8 +367,8 @@ static enum Result serialInit(void *object, const void *configBase)
   if (!dmaSetup(interface, rxChannel, txChannel, config->rxChunks))
     return E_ERROR;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rxChunks = config->rxChunks;
   interface->rxPosition = 0;
   interface->rxBufferSize = config->rxLength / config->rxChunks;

@@ -96,11 +96,11 @@ const struct PinEntry gpPwmPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct GpPwmUnitBase *instance = NULL;
+static struct GpPwmUnitBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct GpPwmUnitBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -129,7 +129,7 @@ static enum Result unitInit(void *object, const void *configBase)
 
   if (setInstance(unit))
   {
-    unit->handler = NULL;
+    unit->handler = nullptr;
     unit->channel = 0;
     unit->irq = PWM1_IRQ;
     unit->reg = LPC_PWM1;
@@ -147,6 +147,6 @@ static enum Result unitInit(void *object, const void *configBase)
 static void unitDeinit(void *)
 {
   sysPowerDisable(PWR_PWM1);
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

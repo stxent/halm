@@ -26,7 +26,7 @@ const struct EntityClass * const UartBase = &(const struct EntityClass){
     .deinit = uartDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct UartBase *instances[3] = {NULL};
+static struct UartBase *instances[3] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UartBaseConfig *config)
 {
@@ -53,7 +53,7 @@ static bool setInstance(uint8_t channel, struct UartBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -118,7 +118,7 @@ static enum Result uartInit(void *object, const void *configBase)
   sysResetPulse(RST_UART0 + config->channel);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = UART0_IRQ + config->channel;
 
   /* Enable UART clock */
@@ -141,11 +141,11 @@ static void uartDeinit(void *object)
   size_t index;
 
   sysClockDisable(CLK_UART0 + interface->channel);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 
   for (index = 0; index < ARRAY_SIZE(instances); ++index)
   {
-    if (instances[index] != NULL)
+    if (instances[index] != nullptr)
       break;
   }
 

@@ -334,13 +334,13 @@ const struct PinEntry lpUartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct LpUartBase *instances[8] = {NULL};
+static struct LpUartBase *instances[8] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct LpUartBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -411,7 +411,7 @@ static enum Result uartInit(void *object, const void *configBase)
   sysClockEnable(entry->clock);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -424,6 +424,6 @@ static void uartDeinit(void *object)
   const struct LpUartBase * const interface = object;
 
   sysClockDisable(lpUartBlockEntries[interface->channel].clock);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

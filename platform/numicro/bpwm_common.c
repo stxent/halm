@@ -16,7 +16,7 @@ extern const struct PinEntry bpwmPins[];
 uint8_t bpwmConfigPin(uint8_t channel, PinNumber key, bool value)
 {
   const struct PinEntry * const pinEntry = pinFind(bpwmPins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
 
@@ -29,7 +29,7 @@ uint8_t bpwmConfigPin(uint8_t channel, PinNumber key, bool value)
 uint8_t bpwmGetMatchChannel(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(bpwmPins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   return UNPACK_CHANNEL(pinEntry->value);
 }

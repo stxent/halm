@@ -246,13 +246,13 @@ const struct PinEntry bpwmPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct BpwmUnitBase *instances[2] = {NULL};
+static struct BpwmUnitBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct BpwmUnitBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -277,7 +277,7 @@ void BPWM1_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t bpwmGetClock(const struct BpwmUnitBase *unit)
 {
-  const void *clock = NULL;
+  const void *clock = nullptr;
 
   switch (unit->channel)
   {
@@ -339,7 +339,7 @@ static enum Result unitInit(void *object, const void *configBase)
   sysResetBlock(reset);
 
   unit->channel = config->channel;
-  unit->handler = NULL;
+  unit->handler = nullptr;
 
   return E_OK;
 }
@@ -350,6 +350,6 @@ static void unitDeinit(void *object)
   const struct BpwmUnitBase * const unit = object;
 
   sysClockDisable(unit->channel ? CLK_BPWM1 : CLK_BPWM0);
-  instances[unit->channel] = NULL;
+  instances[unit->channel] = nullptr;
 }
 #endif

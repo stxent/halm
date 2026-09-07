@@ -33,7 +33,7 @@ const struct EntityClass * const SpiBase = &(const struct EntityClass){
     .deinit = spiDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct SpiBase *instances[2] = {NULL};
+static struct SpiBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct SpiBaseConfig *config)
 {
@@ -59,7 +59,7 @@ static bool setInstance(uint8_t channel, struct SpiBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -112,7 +112,7 @@ static enum Result spiInit(void *object, const void *configBase)
   sysResetPulse(RST_SPI0 + config->channel);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = SPI0_IRQ + config->channel;
 
   return E_OK;
@@ -124,6 +124,6 @@ static void spiDeinit(void *object)
   const struct SpiBase * const interface = object;
 
   sysClockDisable(CLK_SPI0 + interface->channel);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

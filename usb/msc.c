@@ -127,29 +127,29 @@ static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     interfaceDescriptor,
     rxEndpointDescriptor,
     txEndpointDescriptor,
-    NULL
+    nullptr
 };
 /*----------------------------------------------------------------------------*/
 static const struct StateEntry stateTable[] = {
     [STATE_IDLE]                    = {stateIdleEnter, stateIdleRun},
-    [STATE_TEST_UNIT_READY]         = {stateTestUnitReadyEnter, NULL},
-    [STATE_REQUEST_SENSE]           = {stateRequestSenseEnter, NULL},
-    [STATE_INQUIRY]                 = {stateInquiryEnter, NULL},
-    [STATE_MODE_SENSE]              = {stateModeSenseEnter, NULL},
-    [STATE_MEDIUM_REMOVAL]          = {stateMediumRemovalEnter, NULL},
-    [STATE_READ_FORMAT_CAPACITIES]  = {stateReadFormatCapacitiesEnter, NULL},
-    [STATE_READ_CAPACITY]           = {stateReadCapacityEnter, NULL},
-    [STATE_READ_SETUP]              = {stateReadSetupEnter, NULL},
+    [STATE_TEST_UNIT_READY]         = {stateTestUnitReadyEnter, nullptr},
+    [STATE_REQUEST_SENSE]           = {stateRequestSenseEnter, nullptr},
+    [STATE_INQUIRY]                 = {stateInquiryEnter, nullptr},
+    [STATE_MODE_SENSE]              = {stateModeSenseEnter, nullptr},
+    [STATE_MEDIUM_REMOVAL]          = {stateMediumRemovalEnter, nullptr},
+    [STATE_READ_FORMAT_CAPACITIES]  = {stateReadFormatCapacitiesEnter, nullptr},
+    [STATE_READ_CAPACITY]           = {stateReadCapacityEnter, nullptr},
+    [STATE_READ_SETUP]              = {stateReadSetupEnter, nullptr},
     [STATE_READ]                    = {stateReadEnter, stateReadWriteRun},
-    [STATE_WRITE_SETUP]             = {stateWriteSetupEnter, NULL},
+    [STATE_WRITE_SETUP]             = {stateWriteSetupEnter, nullptr},
     [STATE_WRITE]                   = {stateWriteEnter, stateReadWriteRun},
-    [STATE_VERIFY]                  = {stateVerifyEnter, NULL},
+    [STATE_VERIFY]                  = {stateVerifyEnter, nullptr},
     [STATE_ACK]                     = {stateAckEnter, stateAckRun},
-    [STATE_ACK_STALL]               = {NULL, stateAckStallRun},
-    [STATE_COMPLETED]               = {NULL, stateCompletedRun},
+    [STATE_ACK_STALL]               = {nullptr, stateAckStallRun},
+    [STATE_COMPLETED]               = {nullptr, stateCompletedRun},
     [STATE_FAILURE]                 = {stateFailureEnter, stateFailureRun},
     [STATE_ERROR]                   = {stateErrorEnter, stateErrorRun},
-    [STATE_SUSPEND]                 = {stateSuspendEnter, NULL}
+    [STATE_SUSPEND]                 = {stateSuspendEnter, nullptr}
 };
 /*----------------------------------------------------------------------------*/
 static inline void *allocBufferMemory(size_t size)
@@ -376,7 +376,7 @@ static enum State stateMediumRemovalEnter(struct Msc *driver)
     {
       driver->lun[index].flags = flags;
 
-      if (driver->callback != NULL)
+      if (driver->callback != nullptr)
         driver->callback(driver->callbackArgument);
     }
 
@@ -462,7 +462,7 @@ static enum State stateReadWriteRun(struct Msc *driver)
       }
 
       driver->lun[index].flags |= FLAG_FAILURE;
-      if (driver->callback != NULL)
+      if (driver->callback != nullptr)
         driver->callback(driver->callbackArgument);
 
       return STATE_FAILURE;
@@ -633,7 +633,7 @@ static enum State stateReadEnter(struct Msc *driver)
     driver->lun[index].asc = SCSI_ASC_ME_READERROR;
 
     driver->lun[index].flags |= FLAG_FAILURE;
-    if (driver->callback != NULL)
+    if (driver->callback != nullptr)
       driver->callback(driver->callbackArgument);
 
     return STATE_FAILURE;
@@ -769,7 +769,7 @@ static enum State stateWriteEnter(struct Msc *driver)
     driver->lun[index].asc = SCSI_ASC_ME_WRITEFAULT;
 
     driver->lun[index].flags |= FLAG_FAILURE;
-    if (driver->callback != NULL)
+    if (driver->callback != nullptr)
       driver->callback(driver->callbackArgument);
 
     return STATE_FAILURE;
@@ -871,7 +871,7 @@ static void dispatch(struct Msc *driver)
   enum State current = driver->context.state;
   enum State previous = current;
 
-  if (stateTable[current].run != NULL)
+  if (stateTable[current].run != nullptr)
     current = stateTable[current].run(driver);
 
   while (current != previous)
@@ -883,7 +883,7 @@ static void dispatch(struct Msc *driver)
 
     previous = current;
 
-    if (stateTable[current].enter != NULL)
+    if (stateTable[current].enter != nullptr)
       current = stateTable[current].enter(driver);
   }
 
@@ -898,7 +898,7 @@ static inline bool isInputDataValid(size_t length, uint8_t flags)
 static enum State sendResponse(struct Msc *driver, uint32_t tag,
     uint32_t residue, const void *buffer, size_t length)
 {
-  assert(buffer != NULL);
+  assert(buffer != nullptr);
   assert(length);
 
   const size_t dataLength = MIN(length, residue);
@@ -929,7 +929,7 @@ static void deviceDescriptor(const void *, struct UsbDescriptor *header,
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     static const struct UsbDeviceDescriptor descriptor = {
         .length = sizeof(struct UsbDeviceDescriptor),
@@ -958,7 +958,7 @@ static void configDescriptor(const void *, struct UsbDescriptor *header,
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     static const struct UsbConfigurationDescriptor descriptor = {
         .length = sizeof(struct UsbConfigurationDescriptor),
@@ -986,7 +986,7 @@ static void interfaceDescriptor(const void *object,
   header->length = sizeof(struct UsbInterfaceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_INTERFACE;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     const struct UsbInterfaceDescriptor descriptor = {
         .length = sizeof(struct UsbInterfaceDescriptor),
@@ -1012,7 +1012,7 @@ static void rxEndpointDescriptor(const void *object,
   header->length = sizeof(struct UsbEndpointDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     const struct UsbEndpointDescriptor descriptor = {
         .length = sizeof(struct UsbEndpointDescriptor),
@@ -1035,7 +1035,7 @@ static void txEndpointDescriptor(const void *object,
   header->length = sizeof(struct UsbEndpointDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     const struct UsbEndpointDescriptor descriptor = {
         .length = sizeof(struct UsbEndpointDescriptor),
@@ -1106,14 +1106,14 @@ static void resetEndpoints(struct Msc *driver)
 static enum Result driverInit(void *object, const void *configBase)
 {
   const struct MscConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->device != NULL);
+  assert(config != nullptr);
+  assert(config->device != nullptr);
   assert(config->size && !(config->size & (MSC_BLOCK_SIZE - 1)));
 
   struct Msc * const driver = object;
 
-  driver->callback = NULL;
-  driver->callbackArgument = NULL;
+  driver->callback = nullptr;
+  driver->callbackArgument = nullptr;
   driver->bufferSize = config->size;
   driver->device = config->device;
   driver->blockSize = MSC_BLOCK_SIZE;
@@ -1121,10 +1121,10 @@ static enum Result driverInit(void *object, const void *configBase)
   driver->endpoints.rx = config->endpoints.rx;
   driver->endpoints.tx = config->endpoints.tx;
 
-  if (config->arena == NULL)
+  if (config->arena == nullptr)
   {
     driver->buffer = allocBufferMemory(driver->bufferSize);
-    if (driver->buffer == NULL)
+    if (driver->buffer == nullptr)
       return E_MEMORY;
     driver->preallocated = false;
   }
@@ -1142,14 +1142,14 @@ static enum Result driverInit(void *object, const void *configBase)
   driver->context.state = STATE_SUSPEND;
 
   driver->rxEp = usbDevCreateEndpoint(driver->device, driver->endpoints.rx);
-  if (driver->rxEp == NULL)
+  if (driver->rxEp == nullptr)
     return E_ERROR;
   driver->txEp = usbDevCreateEndpoint(driver->device, driver->endpoints.tx);
-  if (driver->txEp == NULL)
+  if (driver->txEp == nullptr)
     return E_ERROR;
 
   driver->datapath = malloc(sizeof(struct MscQueryHandler));
-  if (driver->datapath == NULL)
+  if (driver->datapath == nullptr)
     return E_MEMORY;
 
   const enum Result res = datapathInit(driver->datapath, driver, dispatch);
@@ -1231,7 +1231,7 @@ static void driverNotify(void *object, unsigned int event)
 enum Result mscAttachUnit(struct Msc *driver, uint8_t index, void *interface)
 {
   assert(index < ARRAY_SIZE(driver->lun));
-  assert(interface != NULL);
+  assert(interface != nullptr);
 
   uint64_t capacity;
   const enum Result res = ifGetParam(interface, IF_SIZE_64, &capacity);
@@ -1258,7 +1258,7 @@ void mscDetachUnit(struct Msc *driver, uint8_t index)
 
   const IrqState state = irqSave();
 
-  driver->lun[index].interface = NULL;
+  driver->lun[index].interface = nullptr;
   driver->lun[index].blocks = 0;
   driver->lun[index].sense = SCSI_SK_NO_SENSE;
   driver->lun[index].asc = SCSI_ASC_NOSENSE;

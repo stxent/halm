@@ -65,14 +65,14 @@ static void interruptHandler(void *object, enum Result res)
 
   channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
-  if (channel->callback != NULL)
+  if (channel->callback != nullptr)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct SdmaOneShotConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct SdmaBaseConfig baseConfig = {
       .request = config->request,
@@ -90,8 +90,8 @@ static enum Result channelInit(void *object, const void *configBase)
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = NULL;
-  channel->callbackArgument = NULL;
+  channel->callback = nullptr;
+  channel->callbackArgument = nullptr;
   channel->transferConfig = 0;
   channel->state = STATE_IDLE;
 
@@ -100,7 +100,7 @@ static enum Result channelInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
-  if (SdmaBase->deinit != NULL)
+  if (SdmaBase->deinit != nullptr)
     SdmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
@@ -241,7 +241,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   const unsigned int width = XFERCFG_WIDTH_VALUE(transferConfig);
   const uint32_t count = (size >> width) - 1;
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!((uintptr_t)destination % (1 << width)));
   assert(!((uintptr_t)source % (1 << width)));
   assert(count <= SDMA_MAX_TRANSFER_SIZE && ((count + 1) << width) == size);

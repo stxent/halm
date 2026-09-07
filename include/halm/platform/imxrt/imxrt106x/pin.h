@@ -87,7 +87,7 @@ static inline void pinSet(struct Pin pin)
 
 static inline struct Pin pinStub(void)
 {
-  return (struct Pin){NULL, 0xFFFF, 0xFF, 0xFF};
+  return (struct Pin){nullptr, 0xFFFF, 0xFF, 0xFF};
 }
 
 static inline void pinToggle(struct Pin pin)

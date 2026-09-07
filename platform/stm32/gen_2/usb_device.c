@@ -336,7 +336,7 @@ static void interruptHandler(void *object)
       switch (GRXSTSR_PKTSTS_VALUE(fifoStatus))
       {
         case PKTSTS_OUT_PACKET_RECEIVED:
-          if (ep->subclass->rxFetch != NULL)
+          if (ep->subclass->rxFetch != nullptr)
             ep->subclass->rxFetch(ep, GRXSTSR_BCNT_VALUE(fifoStatus));
           break;
 
@@ -356,7 +356,7 @@ static void interruptHandler(void *object)
         {
           sieEpReadData(device, (uint8_t *)&device->setup.packet,
               sizeof(device->setup.packet), sizeof(device->setup.packet),
-              NULL);
+              nullptr);
 
           const uint8_t dir =
               REQUEST_DIRECTION_VALUE(device->setup.packet.requestType);
@@ -410,7 +410,7 @@ static void resetDevice(struct UsbDevice *device)
 
   /* Reset all enabled endpoints except for Control Endpoints */
   for (size_t index = 2; index < device->base.numberOfEndpoints; ++index)
-    device->endpoints[index] = NULL;
+    device->endpoints[index] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static void toggleIsochronousEndpoints(struct UsbDevice *device)
@@ -440,7 +440,7 @@ static void toggleIsochronousEndpoints(struct UsbDevice *device)
 static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
@@ -469,15 +469,15 @@ static enum Result devInit(void *object, const void *configBase)
 
   device->endpoints = malloc(device->base.numberOfEndpoints
       * sizeof(struct UsbEndpoint *));
-  if (device->endpoints == NULL)
+  if (device->endpoints == nullptr)
     return E_MEMORY;
 
   for (size_t index = 0; index < device->base.numberOfEndpoints; ++index)
-    device->endpoints[index] = NULL;
+    device->endpoints[index] = nullptr;
 
   /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
-  if (device->control == NULL)
+  if (device->control == nullptr)
     return E_ERROR;
 
   STM_USB_OTG_Type * const reg = device->base.reg;
@@ -578,7 +578,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   if (index < 2)
   {
     /* Set Control Endpoints immediately after creation */
-    assert(device->endpoints[index] == NULL);
+    assert(device->endpoints[index] == nullptr);
     device->endpoints[index] = ep;
   }
 
@@ -964,7 +964,7 @@ static bool sieEpReadData(struct UsbDevice *device, uint8_t *buffer,
     uint32_t *start = (uint32_t *)buffer;
     uint32_t * const end = start + (length >> 2);
 
-    if (read != NULL)
+    if (read != nullptr)
       *read = length;
 
     buffer = (uint8_t *)end;
@@ -1084,7 +1084,7 @@ static void epDeinit(void *object)
   if (index < 2)
   {
     assert(device->endpoints[index] == ep);
-    device->endpoints[index] = NULL;
+    device->endpoints[index] = nullptr;
   }
 
   assert(pointerQueueEmpty(&ep->requests));
@@ -1122,7 +1122,7 @@ static void epDisable(void *object)
   const unsigned int index = EP_TO_INDEX(ep->address);
 
   if (index >= 2 && device->endpoints[index] == ep)
-    device->endpoints[index] = NULL;
+    device->endpoints[index] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static void epEnable(void *object, uint8_t type, uint16_t size)
@@ -1135,7 +1135,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 
   if (index >= 2)
   {
-    assert(device->endpoints[index] == NULL);
+    assert(device->endpoints[index] == nullptr);
     device->endpoints[index] = ep;
   }
 
@@ -1221,8 +1221,8 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
-  assert(request != NULL);
-  assert(request->callback != NULL);
+  assert(request != nullptr);
+  assert(request->callback != nullptr);
 
   struct UsbEndpoint * const ep = object;
   return ep->subclass->enqueue(ep, request);

@@ -38,7 +38,7 @@ const struct TimerClass * const Wkt = &(const struct TimerClass){
     .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
-    .setFrequency = NULL,
+    .setFrequency = nullptr,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
@@ -55,14 +55,14 @@ static void interruptHandler(void *object)
   if (timer->restart)
     reg->COUNT = timer->overflow;
 
-  if (timer->callback != NULL)
+  if (timer->callback != nullptr)
     timer->callback(timer->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct WktConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct WktBaseConfig baseConfig = {
       .pin = config->pin,
@@ -76,8 +76,8 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
   timer->overflow = TIMER_RESOLUTION;
   timer->restart = true;
 

@@ -133,7 +133,7 @@ const struct PinEntry i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2CBase *instances[2] = {NULL};
+static struct I2CBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static const struct I2CBlockDescriptor *findDescriptor(uint8_t channel)
 {
@@ -143,12 +143,12 @@ static const struct I2CBlockDescriptor *findDescriptor(uint8_t channel)
       return &i2cBlockEntries[index];
   }
 
-  return NULL;
+  return nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct I2CBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -204,7 +204,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   const struct I2CBlockDescriptor * const entry =
       findDescriptor(config->channel);
 
-  assert(entry != NULL);
+  assert(entry != nullptr);
   if (!setInstance(config->channel, interface))
     return E_BUSY;
 
@@ -212,7 +212,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   sysResetPulse(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq.er = IRQ_RESERVED;
   interface->irq.ev = entry->irq;
   interface->reg = entry->reg;
@@ -233,6 +233,6 @@ static void i2cDeinit(void *object)
       findDescriptor(interface->channel);
 
   sysClockDisable(entry->clock);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

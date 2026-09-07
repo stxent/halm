@@ -43,7 +43,7 @@ const struct TimerClass * const GpTimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
-    .setAutostop = NULL,
+    .setAutostop = nullptr,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
@@ -91,7 +91,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
@@ -104,8 +104,8 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
 
   /* Initialize peripheral block */
   const uint8_t channel = timer->base.channel;
@@ -170,7 +170,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  if (timer->callback != NULL)
+  if (timer->callback != nullptr)
   {
     /* Clear pending interrupt flags */
     BL_TIMER->TICR[channel] = TICR_MASK;

@@ -42,7 +42,7 @@ void RESET_ISR(void)
   for (dst = &_sbss; dst < &_ebss;)
     *dst++ = 0;
 
-  if (&__init_array_start != NULL)
+  if (&__init_array_start != nullptr)
   {
     /* Call C/C++ constructors */
     for (func = &__init_array_start; func < &__init_array_end; func++)
@@ -52,7 +52,7 @@ void RESET_ISR(void)
   platformStartup();
   main();
 
-  if (&__fini_array_start != NULL)
+  if (&__fini_array_start != nullptr)
   {
     /* Call C/C++ destructors */
     for (func = &__fini_array_start; func < &__fini_array_end; func++)

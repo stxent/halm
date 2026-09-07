@@ -187,7 +187,7 @@ const PinNumber fsmcDataPinMap[] = {
     PIN(PORT_E, 15), PIN(PORT_D, 8),  PIN(PORT_D, 9),  PIN(PORT_D, 10)
 };
 /*----------------------------------------------------------------------------*/
-static struct FsmcHandler *fsmcHandler = NULL;
+static struct FsmcHandler *fsmcHandler = nullptr;
 /*----------------------------------------------------------------------------*/
 uint32_t fsmcGetClock(void)
 {
@@ -213,7 +213,7 @@ void *fsmcGetMemoryAddress(uint8_t bank, uint8_t subbank)
       return (void *)STM_FSMC_BANK4_BASE;
 
     default:
-      return NULL;
+      return nullptr;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -226,7 +226,7 @@ bool fsmcSetMemoryDescriptor(uint8_t bank, const struct Entity *current,
   {
     if (compareExchangePointer(&fsmcHandler->memory[bank], &current, memory))
     {
-      fsmcSwitchEnabled(memory != NULL);
+      fsmcSwitchEnabled(memory != nullptr);
       return true;
     }
   }
@@ -236,10 +236,10 @@ bool fsmcSetMemoryDescriptor(uint8_t bank, const struct Entity *current,
 /*----------------------------------------------------------------------------*/
 static bool fsmcHandlerInstantiate(void)
 {
-  if (fsmcHandler == NULL)
-    fsmcHandler = init(FsmcHandler, NULL);
+  if (fsmcHandler == nullptr)
+    fsmcHandler = init(FsmcHandler, nullptr);
 
-  return fsmcHandler != NULL;
+  return fsmcHandler != nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static void fsmcSwitchEnabled(bool state)
@@ -257,7 +257,7 @@ static void fsmcSwitchEnabled(bool state)
 
     for (size_t index = 0; index < ARRAY_SIZE(fsmcHandler->memory); ++index)
     {
-      if (fsmcHandler->memory[index] != NULL)
+      if (fsmcHandler->memory[index] != nullptr)
       {
         allChannelsDisabled = false;
         break;
@@ -277,7 +277,7 @@ static enum Result fsmcHandlerInit(void *object, const void *)
   struct FsmcHandler * const handler = object;
 
   for (size_t channel = 0; channel < ARRAY_SIZE(handler->memory); ++channel)
-    handler->memory[channel] = NULL;
+    handler->memory[channel] = nullptr;
 
   return E_OK;
 }

@@ -16,14 +16,14 @@ static enum Result wdtInit(void *, const void *);
 const struct EntityClass * const WdtBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = wdtInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static struct WdtBase *instance = NULL;
+static struct WdtBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct WdtBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -51,7 +51,7 @@ static enum Result wdtInit(void *object, const void *)
     /* Enable clock to peripheral */
     sysClockEnable(CLK_WDT);
 
-    timer->handler = NULL;
+    timer->handler = nullptr;
     timer->irq = WDT_IRQ;
     return E_OK;
   }

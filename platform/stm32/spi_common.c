@@ -14,7 +14,7 @@ extern const struct PinEntry spiPins[];
 void i2sConfigClockPin(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(spiPins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
 
@@ -47,7 +47,7 @@ void spiConfigPins(const struct SpiBaseConfig *config)
           MISO_EXTENSION(config->channel) : config->channel;
       const struct PinEntry * const pinEntry = pinFind(spiPins,
           pinArray[index], channel);
-      assert(pinEntry != NULL);
+      assert(pinEntry != nullptr);
 
       const struct Pin pin = pinInit(pinArray[index]);
       const bool isOutput = (index != MISO_INDEX) ^ (config->slave == true);

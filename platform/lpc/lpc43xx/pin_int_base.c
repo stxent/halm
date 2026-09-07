@@ -25,7 +25,7 @@ const struct EntityClass * const PinIntBase = &(const struct EntityClass){
     .deinit = pinIntDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct PinIntBase *instances[8] = {NULL};
+static struct PinIntBase *instances[8] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static IrqNumber findIrqNumber(uint8_t channel)
 {
@@ -50,7 +50,7 @@ static int setInstance(struct PinIntBase *interrupt)
   /* Find free interrupt */
   for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
   {
-    if (instances[index] == NULL && findIrqNumber(index) != -1)
+    if (instances[index] == nullptr && findIrqNumber(index) != -1)
     {
       instances[index] = interrupt;
       return (int)index;
@@ -111,7 +111,7 @@ static enum Result pinIntInit(void *object, const void *configBase)
     return E_BUSY;
 
   interrupt->channel = (uint8_t)channel;
-  interrupt->handler = NULL;
+  interrupt->handler = nullptr;
   interrupt->irq = findIrqNumber(interrupt->channel);
 
   volatile uint32_t * const reg = LPC_SCU->PINTSEL + (interrupt->channel >> 2);
@@ -127,6 +127,6 @@ static enum Result pinIntInit(void *object, const void *configBase)
 static void pinIntDeinit(void *object)
 {
   const struct PinIntBase * const interrupt = object;
-  instances[interrupt->channel] = NULL;
+  instances[interrupt->channel] = nullptr;
 }
 #endif

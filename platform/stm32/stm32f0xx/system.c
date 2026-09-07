@@ -35,7 +35,7 @@ static inline volatile uint32_t *blockToResetReg(enum SysBlockReset block)
       return &STM_RCC->APB2RSTR;
 
     default:
-      return NULL;
+      return nullptr;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -53,7 +53,7 @@ static inline volatile uint32_t *branchToEnableReg(enum SysClockBranch branch)
       return &STM_RCC->APB2ENR;
 
     default:
-      return NULL;
+      return nullptr;
   }
 }
 /*----------------------------------------------------------------------------*/

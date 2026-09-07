@@ -218,7 +218,7 @@ const struct PinEntry canPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct CanBase *instances[3] = {NULL};
+static struct CanBase *instances[3] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static uint8_t channelToIndex(uint8_t channel)
 {
@@ -252,7 +252,7 @@ static void configPins(const struct CanBaseConfig *config)
   if (config->rx)
   {
     pinEntry = pinFind(canPins, config->rx, config->channel);
-    assert(pinEntry != NULL);
+    assert(pinEntry != nullptr);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -261,7 +261,7 @@ static void configPins(const struct CanBaseConfig *config)
   if (config->tx)
   {
     pinEntry = pinFind(canPins, config->tx, config->channel);
-    assert(pinEntry != NULL);
+    assert(pinEntry != nullptr);
     pinInput((pin = pinInit(config->tx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -271,7 +271,7 @@ static bool setInstance(uint8_t channel, struct CanBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -327,7 +327,7 @@ static enum Result canInit(void *object, const void *configBase)
   sysResetBlock(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -342,6 +342,6 @@ static void canDeinit(void *object)
       &canBlockEntries[channelToIndex(interface->channel)];
 
   sysClockDisable(entry->clock);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

@@ -118,7 +118,7 @@ const struct PinGroupEntry adcPinGroups[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct AdcBase *instances[3] = {NULL};
+static struct AdcBase *instances[3] = {nullptr};
 /*----------------------------------------------------------------------------*/
 void ADC_ISR(void)
 {
@@ -197,12 +197,12 @@ static enum Result adcInit(void *object, const void *configBase)
   struct AdcBase * const interface = object;
   bool enabled = false;
 
-  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
+  if (!config->shared && !adcSetInstance(config->channel, nullptr, interface))
     return E_BUSY;
 
   interface->channel = config->channel;
-  interface->handler = NULL;
-  interface->reg = NULL;
+  interface->handler = nullptr;
+  interface->reg = nullptr;
 
   switch (config->channel)
   {
@@ -233,7 +233,7 @@ static enum Result adcInit(void *object, const void *configBase)
     default:
       break;
   }
-  assert(interface->reg != NULL);
+  assert(interface->reg != nullptr);
 
   if (!enabled)
   {
@@ -278,6 +278,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct AdcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, NULL);
+  adcSetInstance(interface->channel, interface, nullptr);
 }
 #endif

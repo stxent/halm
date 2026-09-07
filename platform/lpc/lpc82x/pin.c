@@ -47,7 +47,7 @@ static bool isI2CPin(struct Pin pin)
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)
 {
-  struct Pin pin = (struct Pin){NULL, 0, 0};
+  struct Pin pin = (struct Pin){nullptr, 0, 0};
 
   if (PIN_TO_PORT(id) == 0)
   {

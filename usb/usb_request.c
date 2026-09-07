@@ -19,20 +19,20 @@ static const UsbDescriptorFunctor *findEntry(const void *driver, uint8_t type,
 {
   const UsbDescriptorFunctor *descriptor = usbDriverDescribe(driver);
 
-  if (descriptor != NULL)
+  if (descriptor != nullptr)
   {
-    while (*descriptor != NULL)
+    while (*descriptor != nullptr)
     {
       struct UsbDescriptor header;
 
-      (*descriptor)(driver, &header, NULL);
+      (*descriptor)(driver, &header, nullptr);
       if (header.descriptorType == type && !index--)
         return descriptor;
       ++descriptor;
     }
   }
 
-  return NULL;
+  return nullptr;
 }
 /*----------------------------------------------------------------------------*/
 void usbRequestInit(struct UsbRequest *request, void *buffer, uint16_t capacity,
@@ -56,7 +56,7 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
   const UsbDescriptorFunctor *entry = findEntry(driver,
       descriptorType, descriptorIndex);
 
-  if (entry == NULL)
+  if (entry == nullptr)
   {
     usbTrace("control: descriptor %u:%u not found",
         descriptorType, descriptorIndex);
@@ -66,7 +66,7 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
   struct UsbDescriptor header;
   uint16_t length;
 
-  (*entry)(driver, &header, NULL);
+  (*entry)(driver, &header, nullptr);
 
   if (header.descriptorType == DESCRIPTOR_TYPE_CONFIGURATION)
   {
@@ -81,12 +81,12 @@ enum Result usbExtractDescriptorData(const void *driver, uint16_t keyword,
   assert(length > 0 && length <= maxResponseLength);
   (void)maxResponseLength;
 
-  assert(responseLength != NULL);
+  assert(responseLength != nullptr);
   *responseLength = length;
 
-  while (length > 0 && *entry != NULL)
+  while (length > 0 && *entry != nullptr)
   {
-    assert(((*entry)(driver, &header, NULL), length >= header.length));
+    assert(((*entry)(driver, &header, nullptr), length >= header.length));
     (*entry)(driver, &header, response);
 
     response = (void *)((uintptr_t)response + header.length);

@@ -37,10 +37,10 @@ const struct TimerClass * const MachineTimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
-    .setAutostop = NULL,
+    .setAutostop = nullptr,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
-    .setFrequency = NULL,
+    .setFrequency = nullptr,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
@@ -55,10 +55,10 @@ const struct Timer64Class * const MachineTimer64 = &(const struct Timer64Class){
 
         .enable = tmrEnable,
         .disable = tmrDisable,
-        .setAutostop = NULL,
+        .setAutostop = nullptr,
         .setCallback = tmrSetCallback,
         .getFrequency = tmrGetFrequency,
-        .setFrequency = NULL,
+        .setFrequency = nullptr,
         .getOverflow = tmrGetOverflow,
         .setOverflow = tmrSetOverflow,
         .getValue = tmrGetValue,
@@ -69,7 +69,7 @@ const struct Timer64Class * const MachineTimer64 = &(const struct Timer64Class){
     .setValue64 = tmrSetValue64
 };
 /*----------------------------------------------------------------------------*/
-static struct MachineTimer *instance = NULL;
+static struct MachineTimer *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static void setCurrentValue(uint64_t value)
 {
@@ -80,7 +80,7 @@ static void setCurrentValue(uint64_t value)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct MachineTimer *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -100,7 +100,7 @@ static void setOverflow(uint64_t value)
 {
   setCurrentValue(0);
 
-  if (instance != NULL && instance->callback != NULL)
+  if (instance != nullptr && instance->callback != nullptr)
     instance->callback(instance->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -111,13 +111,13 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   if (setInstance(timer))
   {
-    timer->callback = NULL;
-    timer->callbackArgument = NULL;
+    timer->callback = nullptr;
+    timer->callbackArgument = nullptr;
 
     setOverflow(UINT64_MAX);
     setCurrentValue(0);
 
-    if (config != NULL)
+    if (config != nullptr)
       irqSetPriority(CLIC_MTIP_IRQ, config->priority);
 
     return E_OK;
@@ -130,7 +130,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *)
 {
   irqDisable(CLIC_MTIP_IRQ);
-  instance = NULL;
+  instance = nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/

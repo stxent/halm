@@ -142,31 +142,31 @@ static size_t sdioRead(void *, void *, size_t);
 static size_t sdioWrite(void *, const void *, size_t);
 /*----------------------------------------------------------------------------*/
 static const struct StateEntry stateTable[] = {
-    [STATE_IDLE]        = {NULL, NULL, STATE_IDLE},
-    [STATE_INIT]        = {stateInitEnter, NULL, STATE_SEND_CMD},
-    [STATE_SEND_CMD]    = {stateSendCommandEnter, NULL, STATE_WAIT_RESP},
+    [STATE_IDLE]        = {nullptr, nullptr, STATE_IDLE},
+    [STATE_INIT]        = {stateInitEnter, nullptr, STATE_SEND_CMD},
+    [STATE_SEND_CMD]    = {stateSendCommandEnter, nullptr, STATE_WAIT_RESP},
     [STATE_WAIT_RESP]   = {stateWaitRespEnter, stateWaitRespAdvance, 0},
     [STATE_READ_SHORT]  = {stateReadShortEnter, stateReadShortAdvance, 0},
     [STATE_WAIT_LONG]   = {stateRequestToken, stateWaitLongAdvance, 0},
     [STATE_READ_LONG]   = {stateReadLongEnter, stateReadLongAdvance, 0},
     [STATE_WAIT_READ]   = {stateRequestToken, stateWaitReadAdvance, 0},
-    [STATE_READ_DATA]   = {stateReadDataEnter, NULL, STATE_READ_CRC},
+    [STATE_READ_DATA]   = {stateReadDataEnter, nullptr, STATE_READ_CRC},
     [STATE_READ_CRC]    = {stateReadCrcEnter, stateReadCrcAdvance, 0},
     [STATE_READ_DELAY]  = {stateDelayEnter, stateReadDelayAdvance, 0},
-    [STATE_WRITE_TOKEN] = {stateWriteTokenEnter, NULL, STATE_WRITE_DATA},
-    [STATE_WRITE_DATA]  = {stateWriteDataEnter, NULL, STATE_WRITE_CRC},
-    [STATE_WRITE_CRC]   = {stateWriteCrcEnter, NULL, STATE_WAIT_WRITE},
+    [STATE_WRITE_TOKEN] = {stateWriteTokenEnter, nullptr, STATE_WRITE_DATA},
+    [STATE_WRITE_DATA]  = {stateWriteDataEnter, nullptr, STATE_WRITE_CRC},
+    [STATE_WRITE_CRC]   = {stateWriteCrcEnter, nullptr, STATE_WAIT_WRITE},
     [STATE_WAIT_WRITE]  = {stateRequestToken, stateWaitWriteAdvance, 0},
     [STATE_WRITE_DELAY] = {stateDelayEnter, stateWriteDelayAdvance, 0},
     [STATE_WRITE_BUSY]  = {stateRequestToken, stateWriteBusyAdvance, 0},
-    [STATE_WRITE_STOP]  = {stateWriteStopEnter, NULL, STATE_WRITE_BUSY},
+    [STATE_WRITE_STOP]  = {stateWriteStopEnter, nullptr, STATE_WRITE_BUSY},
 
 #ifdef CONFIG_GENERIC_SDIO_SPI_CRC
     [STATE_COMPUTE_CRC] = {stateCrcEnter, stateComputeCrcAdvance, 0},
     [STATE_VERIFY_CRC]  = {stateCrcEnter, stateVerifyCrcAdvance, 0}
 #else
-    [STATE_COMPUTE_CRC] = {NULL, NULL, 0},
-    [STATE_VERIFY_CRC]  = {NULL, NULL, 0}
+    [STATE_COMPUTE_CRC] = {nullptr, nullptr, 0},
+    [STATE_VERIFY_CRC]  = {nullptr, nullptr, 0}
 #endif
 };
 /*----------------------------------------------------------------------------*/
@@ -613,14 +613,14 @@ static void autoStopTransmission(struct SdioSpi *interface)
 static void busInit(struct SdioSpi *interface)
 {
   /* Lock the interface */
-  ifSetParam(interface->bus, IF_ACQUIRE, NULL);
+  ifSetParam(interface->bus, IF_ACQUIRE, nullptr);
 
   if (interface->rate)
     ifSetParam(interface->bus, IF_RATE, &interface->rate);
 
   ifSetParam(interface->bus, IF_SPI_MODE, &(uint8_t){0});
-  ifSetParam(interface->bus, IF_SPI_UNIDIRECTIONAL, NULL);
-  ifSetParam(interface->bus, IF_ZEROCOPY, NULL);
+  ifSetParam(interface->bus, IF_SPI_UNIDIRECTIONAL, nullptr);
+  ifSetParam(interface->bus, IF_ZEROCOPY, nullptr);
   ifSetCallback(interface->bus, interruptHandler, interface);
 }
 /*----------------------------------------------------------------------------*/
@@ -678,10 +678,10 @@ static void interruptHandler(void *object)
     pinSet(interface->cs);
 
     /* Release the bus */
-    ifSetCallback(interface->bus, NULL, NULL);
-    ifSetParam(interface->bus, IF_RELEASE, NULL);
+    ifSetCallback(interface->bus, nullptr, nullptr);
+    ifSetParam(interface->bus, IF_RELEASE, nullptr);
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -762,10 +762,10 @@ static void sendCommand(struct SdioSpi *interface, uint32_t command,
 static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdioSpiConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->interface != NULL);
+  assert(config != nullptr);
+  assert(config->interface != nullptr);
   /* Check zero-copy capability */
-  assert(ifSetParam(config->interface, IF_ZEROCOPY, NULL) == E_OK);
+  assert(ifSetParam(config->interface, IF_ZEROCOPY, nullptr) == E_OK);
 
   struct SdioSpi * const interface = object;
   enum Result res;
@@ -779,18 +779,18 @@ static enum Result sdioInit(void *object, const void *configBase)
   if ((res = ifGetParam(interface->bus, IF_RATE, &interface->rate)) != E_OK)
     return res;
 
-  if (config->timer != NULL)
+  if (config->timer != nullptr)
   {
     interface->timer = config->timer;
     timerSetAutostop(interface->timer, true);
     timerSetCallback(interface->timer, interruptHandler, interface);
   }
   else
-    interface->timer = NULL;
+    interface->timer = nullptr;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
-  interface->wq = config->wq != NULL ? config->wq : WQ_DEFAULT;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
+  interface->wq = config->wq != nullptr ? config->wq : WQ_DEFAULT;
   interface->retries = 0;
   interface->block = BLOCK_SIZE_DEFAULT;
   interface->state = STATE_IDLE;
@@ -801,17 +801,17 @@ static enum Result sdioInit(void *object, const void *configBase)
   {
     interface->crc.capacity = config->blocks;
     interface->crc.pool = malloc(interface->crc.capacity * sizeof(uint16_t));
-    if (interface->crc.pool == NULL)
+    if (interface->crc.pool == nullptr)
       return E_MEMORY;
   }
   else
   {
-    interface->crc.pool = NULL;
+    interface->crc.pool = nullptr;
     interface->crc.capacity = 0;
   }
 #else
   assert(config->blocks == 0);
-  interface->crc.pool = NULL;
+  interface->crc.pool = nullptr;
   interface->crc.capacity = 0;
 #endif
 
@@ -833,9 +833,9 @@ static void sdioDeinit(void *object)
 {
   struct SdioSpi * const interface = object;
 
-  if (interface->timer != NULL)
-    timerSetCallback(interface->timer, NULL, NULL);
-  ifSetCallback(interface->bus, NULL, NULL);
+  if (interface->timer != nullptr)
+    timerSetCallback(interface->timer, nullptr, nullptr);
+  ifSetCallback(interface->bus, nullptr, nullptr);
 
   free(interface->crc.pool);
 }

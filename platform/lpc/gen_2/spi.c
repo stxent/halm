@@ -69,7 +69,7 @@ static void interruptHandler(void *object)
   {
     if (interface->txLeft)
     {
-      if (interface->txBuffer != NULL)
+      if (interface->txBuffer != nullptr)
         reg->TXDAT = *interface->txBuffer++;
       else
         reg->TXDAT = DUMMY_FRAME;
@@ -80,7 +80,7 @@ static void interruptHandler(void *object)
     {
       reg->INTENCLR = INTENCLR_TXRDYEN;
 
-      if (interface->rxBuffer == NULL)
+      if (interface->rxBuffer == nullptr)
         event = true;
     }
   }
@@ -89,10 +89,10 @@ static void interruptHandler(void *object)
   {
     reg->STAT = STAT_SSA | STAT_SSD | STAT_ENDTRANSFER;
 
-    interface->rxBuffer = NULL;
-    interface->txBuffer = NULL;
+    interface->rxBuffer = nullptr;
+    interface->txBuffer = nullptr;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -113,7 +113,7 @@ static size_t transferData(struct Spi *interface, size_t length)
   LPC_SPI_Type * const reg = interface->base.reg;
 
   interface->txLeft = length;
-  if (interface->rxBuffer != NULL)
+  if (interface->rxBuffer != nullptr)
   {
     interface->rxLeft = length;
     reg->TXCTL &= ~TXCTL_RXIGNORE;
@@ -132,7 +132,7 @@ static size_t transferData(struct Spi *interface, size_t length)
 
   if (interface->blocking)
   {
-    while (interface->rxBuffer != NULL || interface->txBuffer != NULL)
+    while (interface->rxBuffer != nullptr || interface->txBuffer != nullptr)
       barrier();
   }
 
@@ -142,7 +142,7 @@ static size_t transferData(struct Spi *interface, size_t length)
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct SpiBaseConfig baseConfig = {
       .cs = 0,
@@ -159,10 +159,10 @@ static enum Result spiInit(void *object, const void *configBase)
     return res;
 
   interface->base.handler = interruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rate = config->rate;
-  interface->rxBuffer = NULL;
+  interface->rxBuffer = nullptr;
   interface->blocking = true;
   interface->unidir = true;
 
@@ -327,7 +327,7 @@ static size_t spiRead(void *object, void *buffer, size_t length)
   interface->rxBuffer = buffer;
   if (interface->unidir)
   {
-    interface->txBuffer = NULL;
+    interface->txBuffer = nullptr;
     return transferData(interface, length);
   }
   else

@@ -59,7 +59,7 @@ static void dmaHandler(void *object)
   {
     reg->STAT = STAT_SSA | STAT_SSD | STAT_ENDTRANSFER;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
   else
@@ -111,12 +111,12 @@ static bool dmaSetup(struct SpiDma *interface, uint8_t priority)
 #endif
 
   interface->rxDma = init(dmaClassDescriptor, &dmaConfigs[0]);
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
   dmaSetCallback(interface->rxDma, dmaHandler, interface);
 
   interface->txDma = init(dmaClassDescriptor, &dmaConfigs[1]);
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
   dmaSetCallback(interface->txDma, dmaHandler, interface);
 
@@ -246,13 +246,13 @@ static size_t transferDataDma(struct SpiDma *interface, const void *source,
 {
   LPC_SPI_Type * const reg = interface->base.reg;
 
-  if (sink == NULL)
+  if (sink == nullptr)
     reg->TXCTL |= TXCTL_RXIGNORE;
   else
     reg->TXCTL &= ~TXCTL_RXIGNORE;
 
   interface->invoked = false;
-  interface->sink = NULL;
+  interface->sink = nullptr;
 
 #if CONFIG_PLATFORM_LPC_SPI_DMA_CHAIN > 1
   size_t pending = length;
@@ -263,7 +263,7 @@ static size_t transferDataDma(struct SpiDma *interface, const void *source,
   {
     const size_t chunk = MIN(pending, SDMA_MAX_TRANSFER_SIZE);
 
-    if (sink != NULL)
+    if (sink != nullptr)
     {
       dmaAppend(interface->rxDma, (void *)rxAddress, (const void *)&reg->RXDAT,
           chunk);
@@ -278,14 +278,14 @@ static size_t transferDataDma(struct SpiDma *interface, const void *source,
   }
   while (pending);
 #else
-  if (sink != NULL)
+  if (sink != nullptr)
     dmaAppend(interface->rxDma, sink, (const void *)&reg->RXDAT, length);
   dmaAppend(interface->txDma, (void *)&reg->TXDAT, source, length);
 #endif
 
   enum Result res = E_OK;
 
-  if (sink != NULL)
+  if (sink != nullptr)
     res = dmaEnable(interface->rxDma);
   else
     interface->invoked = true;
@@ -302,7 +302,7 @@ static size_t transferDataDma(struct SpiDma *interface, const void *source,
   }
   else
   {
-    if (sink != NULL)
+    if (sink != nullptr)
       dmaDisable(interface->rxDma);
     return 0;
   }
@@ -311,7 +311,7 @@ static size_t transferDataDma(struct SpiDma *interface, const void *source,
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct SpiBaseConfig baseConfig = {
       .cs = 0,
@@ -330,10 +330,10 @@ static enum Result spiInit(void *object, const void *configBase)
   if (!dmaSetup(interface, config->priority))
     return E_ERROR;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rate = config->rate;
-  interface->sink = NULL;
+  interface->sink = nullptr;
   interface->blocking = true;
   interface->unidir = true;
 
@@ -516,10 +516,10 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
 
   struct SpiDma * const interface = object;
 
-  if (interface->sink == NULL)
+  if (interface->sink == nullptr)
   {
     dmaSetupTx(interface->rxDma, interface->txDma);
-    return transferDataDma(interface, buffer, NULL, length);
+    return transferDataDma(interface, buffer, nullptr, length);
   }
   else
   {

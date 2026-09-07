@@ -131,11 +131,11 @@ const struct PinEntry gpTimerPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct GpTimerBase *instances[4] = {NULL};
+static struct GpTimerBase *instances[4] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -166,7 +166,7 @@ void TMR3_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t gpTimerGetClock(const struct GpTimerBase *timer)
 {
-  const void *clock = NULL;
+  const void *clock = nullptr;
 
   switch (timer->channel)
   {
@@ -208,7 +208,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   sysResetBlock(RST_TMR0 + config->channel);
 
   timer->channel = config->channel;
-  timer->handler = NULL;
+  timer->handler = nullptr;
   timer->irq = TMR0_IRQ + config->channel;
   timer->reg = timerBlockMap[config->channel];
 
@@ -221,6 +221,6 @@ static void tmrDeinit(void *object)
   const struct GpTimerBase * const timer = object;
 
   sysClockDisable(CLK_TMR0 + timer->channel);
-  instances[timer->channel] = NULL;
+  instances[timer->channel] = nullptr;
 }
 #endif

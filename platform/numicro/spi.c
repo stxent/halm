@@ -56,7 +56,7 @@ static void interruptHandler(void *object)
   const uint32_t status = reg->STATUS;
   const size_t received = STATUS_RXCNT_VALUE(status);
 
-  if (interface->rxBuffer != NULL)
+  if (interface->rxBuffer != nullptr)
   {
     for (size_t index = 0; index < received; ++index)
       *interface->rxBuffer++ = reg->RX;
@@ -77,7 +77,7 @@ static void interruptHandler(void *object)
 
     interface->txLeft -= pending;
 
-    if (interface->txBuffer != NULL)
+    if (interface->txBuffer != nullptr)
     {
       while (pending--)
         reg->TX = *interface->txBuffer++;
@@ -99,9 +99,9 @@ static void interruptHandler(void *object)
      * Reset the pointer to an input buffer only. The pointer for
      * an output buffer will be reinitialized in read and write functions.
      */
-    interface->rxBuffer = NULL;
+    interface->rxBuffer = nullptr;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
   else if (interface->rxLeft < FIFO_DEPTH / 2)
@@ -145,7 +145,7 @@ static size_t transferData(struct Spi *interface, size_t length)
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct SpiBaseConfig baseConfig = {
       .cs = 0,
@@ -162,10 +162,10 @@ static enum Result spiInit(void *object, const void *configBase)
     return res;
 
   interface->base.handler = interruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rate = config->rate;
-  interface->rxBuffer = NULL;
+  interface->rxBuffer = nullptr;
   interface->blocking = true;
   interface->unidir = true;
 
@@ -343,7 +343,7 @@ static size_t spiRead(void *object, void *buffer, size_t length)
   interface->rxBuffer = buffer;
   if (interface->unidir)
   {
-    interface->txBuffer = NULL;
+    interface->txBuffer = nullptr;
     return transferData(interface, length);
   }
   else

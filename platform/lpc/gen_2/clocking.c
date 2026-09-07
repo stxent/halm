@@ -97,10 +97,10 @@ const struct ClockClass * const WdtOsc = &(const struct ClockClass){
 };
 
 const struct ClockClass * const SystemClock = &(const struct ClockClass){
-    .disable = NULL,
-    .enable = NULL,
+    .disable = nullptr,
+    .enable = nullptr,
     .frequency = systemClockFrequency,
-    .ready = NULL
+    .ready = nullptr
 };
 
 const struct ClockClass * const SystemPll = &(const struct ClockClass){
@@ -216,21 +216,21 @@ static uint32_t branchClockFrequency(int source)
   switch (source)
   {
     case CLOCK_INTERNAL:
-      return intOscFrequency(NULL);
+      return intOscFrequency(nullptr);
 
     case CLOCK_EXTERNAL:
-      return extOscFrequency(NULL);
+      return extOscFrequency(nullptr);
 
     case CLOCK_PLL:
-      return sysPllFrequency(NULL);
+      return sysPllFrequency(nullptr);
 
 #ifdef LPC_USB_CLOCK
     case CLOCK_USB_PLL:
-      return usbPllFrequency(NULL);
+      return usbPllFrequency(nullptr);
 #endif
 
     case CLOCK_WDT:
-      return wdtOscFrequency(NULL);
+      return wdtOscFrequency(nullptr);
 
     default:
       return 0;
@@ -239,7 +239,7 @@ static uint32_t branchClockFrequency(int source)
 /*----------------------------------------------------------------------------*/
 static struct ClockDescriptor *calcBranchDescriptor(enum ClockBranch branch)
 {
-  volatile uint32_t *base = NULL;
+  volatile uint32_t *base = nullptr;
 
   switch (branch)
   {
@@ -275,11 +275,11 @@ static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divisor,
   switch (source)
   {
     case CLOCK_INTERNAL:
-      frequency = intOscFrequency(NULL);
+      frequency = intOscFrequency(nullptr);
       break;
 
     case CLOCK_EXTERNAL:
-      frequency = extOscFrequency(NULL);
+      frequency = extOscFrequency(nullptr);
       break;
 
     default:
@@ -326,7 +326,7 @@ static void extOscDisable(const void *)
 static enum Result extOscEnable(const void *, const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->frequency >= 1000000 && config->frequency <= 25000000);
 
   uint32_t buffer = 0;
@@ -426,7 +426,7 @@ static void wdtOscDisable(const void *)
 static enum Result wdtOscEnable(const void *, const void *configBase)
 {
   const struct WdtOscConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->frequency <= WDT_FREQ_4600);
   assert(config->divisor <= 64 && config->divisor % 2 == 0);
 
@@ -469,7 +469,7 @@ static void sysPllDisable(const void *)
 static enum Result sysPllEnable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->source == CLOCK_EXTERNAL || config->source == CLOCK_INTERNAL);
 
   const uint32_t control = calcPllValues(config->multiplier, config->divisor);
@@ -515,7 +515,7 @@ static void usbPllDisable(const void *)
 static enum Result usbPllEnable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->source == CLOCK_EXTERNAL);
 
   const uint32_t control = calcPllValues(config->multiplier, config->divisor);
@@ -559,7 +559,7 @@ static bool usbPllReady(const void *)
 static enum Result clockOutputEnable(const void *, const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct GenericClockConfig baseConfig = {
       .source = config->source,
@@ -583,7 +583,7 @@ static void branchDisable(const void *clockBase)
 static enum Result branchEnable(const void *clockBase, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct GenericClockClass * const clock = clockBase;
   struct ClockDescriptor * const descriptor =
@@ -640,7 +640,7 @@ static uint32_t branchFrequency(const void *clockBase)
   uint32_t baseFrequency;
 
   if (source == CLOCK_MAIN)
-    baseFrequency = systemClockFrequency(NULL);
+    baseFrequency = systemClockFrequency(nullptr);
   else
     baseFrequency = branchClockFrequency(source);
 

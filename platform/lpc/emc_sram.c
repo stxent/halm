@@ -42,7 +42,7 @@ static inline uint32_t timeToTicks(uint32_t time, uint32_t cycle)
 static enum Result sramInit(void *object, const void *configBase)
 {
   const struct EmcSramConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->width.data == 8 || config->width.data == 16
       || config->width.data == 32);
 
@@ -51,7 +51,7 @@ static enum Result sramInit(void *object, const void *configBase)
   const uint8_t channel = config->channel;
 
   /* Try to register module */
-  if (!emcSetStaticMemoryDescriptor(channel, NULL, object))
+  if (!emcSetStaticMemoryDescriptor(channel, nullptr, object))
     return E_BUSY;
 
   memory->channel = channel;
@@ -66,7 +66,7 @@ static enum Result sramInit(void *object, const void *configBase)
   {
     group = pinGroupFind(emcAddressPins, emcAddressPinMap[lane],
         EMC_PIN_CHANNEL_DEFAULT);
-    assert(group != NULL);
+    assert(group != nullptr);
     pinOutput((pin = pinInit(emcAddressPinMap[lane])), false);
     pinSetFunction(pin, group->value);
     pinSetSlewRate(pin, config->speed);
@@ -77,7 +77,7 @@ static enum Result sramInit(void *object, const void *configBase)
   {
     group = pinGroupFind(emcDataPins, emcDataPinMap[index],
         EMC_PIN_CHANNEL_DEFAULT);
-    assert(group != NULL);
+    assert(group != nullptr);
     pinInput((pin = pinInit(emcDataPinMap[index])));
     pinSetFunction(pin, group->value);
     pinSetSlewRate(pin, config->speed);
@@ -86,7 +86,7 @@ static enum Result sramInit(void *object, const void *configBase)
   /* Output Enable pin */
   group = pinGroupFind(emcControlPins, emcControlPinMap.oe,
       EMC_PIN_CHANNEL_DEFAULT);
-  assert(group != NULL);
+  assert(group != nullptr);
   pinOutput((pin = pinInit(emcControlPinMap.oe)), true);
   pinSetFunction(pin, group->value);
   pinSetSlewRate(pin, config->speed);
@@ -107,7 +107,7 @@ static enum Result sramInit(void *object, const void *configBase)
   {
     group = pinGroupFind(emcControlPins, emcControlPinMap.we,
         EMC_PIN_CHANNEL_DEFAULT);
-    assert(group != NULL);
+    assert(group != nullptr);
     pinOutput((pin = pinInit(emcControlPinMap.we)), true);
     pinSetFunction(pin, group->value);
     pinSetSlewRate(pin, config->speed);
@@ -116,7 +116,7 @@ static enum Result sramInit(void *object, const void *configBase)
   /* Chip Select pin */
   group = pinGroupFind(emcControlPins, emcControlPinMap.cs[channel],
       EMC_PIN_CHANNEL_DEFAULT);
-  assert(group != NULL);
+  assert(group != nullptr);
   pinOutput((pin = pinInit(emcControlPinMap.cs[config->channel])), true);
   pinSetFunction(pin, group->value);
   pinSetSlewRate(pin, config->speed);
@@ -189,6 +189,6 @@ static enum Result sramInit(void *object, const void *configBase)
 static void sramDeinit(void *object)
 {
   struct EmcSram * const memory = object;
-  emcSetStaticMemoryDescriptor(memory->channel, object, NULL);
+  emcSetStaticMemoryDescriptor(memory->channel, object, nullptr);
 }
 #endif

@@ -159,7 +159,7 @@ const struct PinEntry sdmmcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SdmmcBase *instance = NULL;
+static struct SdmmcBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SdmmcBase *interface,
     const struct SdmmcBaseConfig *config)
@@ -187,7 +187,7 @@ static void configPins(struct SdmmcBase *interface,
 
     const struct PinEntry * const pinEntry = pinFind(sdmmcPins,
         pinArray[index], 0);
-    assert(pinEntry != NULL);
+    assert(pinEntry != nullptr);
 
     const struct Pin pin = pinInit(pinArray[index]);
 
@@ -201,7 +201,7 @@ static void configPins(struct SdmmcBase *interface,
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SdmmcBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -238,7 +238,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   /* Initialize SD/MMC delay register */
   LPC_SCU->SDDELAY = SDDELAY_SAMPLE(0x08) | SDDELAY_DRV(0x0F);
 
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = SDIO_IRQ;
   interface->reg = LPC_SDMMC;
 
@@ -250,5 +250,5 @@ static void sdioDeinit(void *)
   sysClockDisable(CLK_SDIO);
   sysClockDisable(CLK_M4_SDIO);
 
-  instance = NULL;
+  instance = nullptr;
 }

@@ -60,7 +60,7 @@ const struct PinEntry usbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UsbBase *instance = NULL;
+static struct UsbBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UsbBaseConfig *config)
 {
@@ -74,7 +74,7 @@ static void configPins(const struct UsbBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
           config->channel);
-      assert(pinEntry != NULL);
+      assert(pinEntry != nullptr);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -86,7 +86,7 @@ static void configPins(const struct UsbBaseConfig *config)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct UsbBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -113,7 +113,7 @@ static enum Result devInit(void *object, const void *configBase)
   sysPowerEnable(PWR_USB);
 
   device->channel = 0;
-  device->handler = NULL;
+  device->handler = nullptr;
   device->irq = USB_IRQ;
   device->reg = LPC_USB;
 
@@ -140,6 +140,6 @@ static void devDeinit(void *object)
   /* Disable power */
   sysPowerDisable(PWR_USB);
 
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

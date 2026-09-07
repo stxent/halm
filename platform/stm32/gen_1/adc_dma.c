@@ -43,7 +43,7 @@ const struct InterfaceClass * const AdcDma = &(const struct InterfaceClass){
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = NULL
+    .write = nullptr
 };
 /*----------------------------------------------------------------------------*/
 static size_t calcPinCount(const PinNumber *pins)
@@ -60,7 +60,7 @@ static void dmaHandler(void *object)
 {
   struct AdcDma * const interface = object;
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -83,7 +83,7 @@ static bool dmaSetup(struct AdcDma *interface,
   interface->dma = adcMakeCircularDma(config->channel, config->dma,
       DMA_PRIORITY_MEDIUM, true);
 
-  if (interface->dma != NULL)
+  if (interface->dma != nullptr)
   {
     dmaConfigure(interface->dma, &dmaSettings);
     dmaSetCallback(interface->dma, dmaHandler, interface);
@@ -179,10 +179,10 @@ static void stopConversion(struct AdcDma *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert((config->accuracy - 6 <= 6 && config->accuracy % 2 == 0)
       || !config->accuracy);
-  assert(config->pins != NULL);
+  assert(config->pins != nullptr);
   assert(config->event != ADC_SOFTWARE && config->event < ADC_EVENT_END);
   assert(config->sensitivity != INPUT_HIGH && config->sensitivity != INPUT_LOW);
   assert(config->time < ADC_SAMPLING_TIME_END);
@@ -206,13 +206,13 @@ static enum Result adcInit(void *object, const void *configBase)
 
   /* Allocate buffer for conversion results */
   interface->buffer = malloc(interface->count * sizeof(uint16_t));
-  if (interface->buffer == NULL)
+  if (interface->buffer == nullptr)
     return E_MEMORY;
   memset(interface->buffer, 0, interface->count * sizeof(uint16_t));
 
   /* Allocate buffer for pin descriptors */
   interface->pins = malloc(sizeof(struct AdcPin) * interface->count);
-  if (interface->pins == NULL)
+  if (interface->pins == nullptr)
     return E_MEMORY;
   adcSetupPins(&interface->base, config->pins, interface->pins,
       interface->count);
@@ -232,8 +232,8 @@ static enum Result adcInit(void *object, const void *configBase)
   interface->control2 |= CR2_CAL;
 #endif
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->time = config->time;
 
   if (!dmaSetup(interface, config))
@@ -315,11 +315,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_STM32_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL,
+      return adcSetInstance(interface->base.channel, nullptr,
           &interface->base) ? E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, &interface->base, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, nullptr);
       return E_OK;
 #endif
 

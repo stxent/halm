@@ -79,7 +79,7 @@ static void interruptHandler(void *object, enum Result res)
     channel->state = STATE_ERROR;
   }
 
-  if (channel->callback != NULL)
+  if (channel->callback != nullptr)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -92,7 +92,7 @@ static inline int32_t widthToBytes(enum EdmaWidth width)
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct EdmaCircularConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct EdmaBaseConfig baseConfig = {
       .event = config->event,
@@ -108,8 +108,8 @@ static enum Result channelInit(void *object, const void *configBase)
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = NULL;
-  channel->callbackArgument = NULL;
+  channel->callback = nullptr;
+  channel->callbackArgument = nullptr;
   channel->silent = config->silent;
   channel->state = STATE_IDLE;
 
@@ -126,7 +126,7 @@ static enum Result channelInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
-  if (EdmaBase->deinit != NULL)
+  if (EdmaBase->deinit != nullptr)
     EdmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
@@ -263,7 +263,7 @@ static void channelAppend(void *object, void *destination, const void *source,
 {
   struct EdmaCircular * const channel = object;
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!((uintptr_t)destination
       % (1 << TCD_ATTR_DSIZE(channel->attributes))));
   assert(!((uintptr_t)source

@@ -77,7 +77,7 @@ static void interruptHandler(void *object, enum Result res)
     gpDmaResetInstance(channel->base.number);
   }
 
-  if (channel->callback != NULL)
+  if (channel->callback != nullptr)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -98,7 +98,7 @@ static void startTransfer(struct GpDmaCircular *channel,
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaCircularConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->number > 0);
 
   const struct GpDmaBaseConfig baseConfig = {
@@ -114,13 +114,13 @@ static enum Result channelInit(void *object, const void *configBase)
     return res;
 
   channel->list = memalign(4, sizeof(struct GpDmaEntry) * config->number);
-  if (channel->list == NULL)
+  if (channel->list == nullptr)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = NULL;
-  channel->callbackArgument = NULL;
+  channel->callback = nullptr;
+  channel->callbackArgument = nullptr;
   channel->capacity = config->number;
   channel->queued = 0;
   channel->control = 0;
@@ -137,7 +137,7 @@ static void channelDeinit(void *object)
 
   free(channel->list);
 
-  if (GpDmaBase->deinit != NULL)
+  if (GpDmaBase->deinit != nullptr)
     GpDmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
@@ -259,7 +259,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   const uint32_t control = channel->control;
   const uint32_t transfers = size >> CONTROL_DST_WIDTH_VALUE(control);
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!((uintptr_t)destination % (1 << CONTROL_DST_WIDTH_VALUE(control))));
   assert(!(size % (1 << CONTROL_DST_WIDTH_VALUE(control))));
   assert(!((uintptr_t)source % (1 << CONTROL_SRC_WIDTH_VALUE(control))));
@@ -272,7 +272,7 @@ static void channelAppend(void *object, void *destination, const void *source,
     channel->queued = 0;
 
   struct GpDmaEntry * const entry = channel->list + channel->queued;
-  struct GpDmaEntry *previous = NULL;
+  struct GpDmaEntry *previous = nullptr;
 
   if (channel->queued)
     previous = channel->list + (channel->queued - 1);
@@ -281,7 +281,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   entry->destination = (uintptr_t)destination;
   entry->control = control | CONTROL_SIZE(transfers);
 
-  if (channel->callback != NULL || channel->oneshot)
+  if (channel->callback != nullptr || channel->oneshot)
     entry->control |= CONTROL_INT;
 
   if (!channel->oneshot)
@@ -289,7 +289,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   else
     entry->next = 0;
 
-  if (previous != NULL)
+  if (previous != nullptr)
   {
     if (channel->silent)
       previous->control &= ~CONTROL_INT;

@@ -111,7 +111,7 @@ const struct PinEntry usbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UsbBase *instances[2] = {NULL};
+static struct UsbBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UsbBaseConfig *config)
 {
@@ -125,7 +125,7 @@ static void configPins(const struct UsbBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
           config->channel);
-      assert(pinEntry != NULL);
+      assert(pinEntry != nullptr);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -139,7 +139,7 @@ static bool setInstance(uint8_t channel, struct UsbBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -221,16 +221,16 @@ static enum Result devInit(void *object, const void *configBase)
   }
 
   device->channel = config->channel;
-  device->handler = NULL;
+  device->handler = nullptr;
 
   device->td.heads =
       memalign(2048, sizeof(struct QueueHead) * device->td.numberOfEndpoints);
-  if (device->td.heads == NULL)
+  if (device->td.heads == nullptr)
     return E_MEMORY;
 
   device->td.memory =
       memalign(32, sizeof(struct TransferDescriptor) * ENDPOINT_REQUESTS);
-  if (device->td.memory == NULL)
+  if (device->td.memory == nullptr)
     return E_MEMORY;
 
   if (!pointerArrayInit(&device->td.descriptors, ENDPOINT_REQUESTS))
@@ -265,6 +265,6 @@ static void devDeinit(void *object)
     sysClockDisable(CLK_M4_USB1);
   }
 
-  instances[device->channel] = NULL;
+  instances[device->channel] = nullptr;
 }
 #endif

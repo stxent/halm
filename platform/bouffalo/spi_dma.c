@@ -55,7 +55,7 @@ static void dmaHandler(void *object)
 
   if (interface->invoked)
   {
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
   else
@@ -78,11 +78,11 @@ static bool dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
   };
 
   interface->rxDma = init(DmaOneShot, &dmaConfigs[0]);
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
 
   interface->txDma = init(DmaOneShot, &dmaConfigs[1]);
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
 
   dmaSetCallback(interface->rxDma, dmaHandler, interface);
@@ -216,7 +216,7 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
   BL_SPI_Type * const reg = interface->base.reg;
 
   interface->invoked = false;
-  interface->sink = NULL;
+  interface->sink = nullptr;
 
   reg->FIFO_CONFIG0 = FIFO_CONFIG0_TFC | FIFO_CONFIG0_RFC;
   reg->FIFO_CONFIG0 = FIFO_CONFIG0_DMATEN | FIFO_CONFIG0_DMAREN;
@@ -245,7 +245,7 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->dma[0] != config->dma[1]);
 
   const struct SpiBaseConfig baseConfig = {
@@ -270,10 +270,10 @@ static enum Result spiInit(void *object, const void *configBase)
   if (!dmaSetup(interface, rxChannel, txChannel))
     return E_ERROR;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rate = config->rate;
-  interface->sink = NULL;
+  interface->sink = nullptr;
   interface->blocking = true;
   interface->unidir = true;
 
@@ -457,7 +457,7 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
 
   struct SpiDma * const interface = object;
 
-  if (interface->sink == NULL)
+  if (interface->sink == nullptr)
   {
     dmaSetupTx(interface->rxDma, interface->txDma);
     return transferData(interface, buffer, &interface->dummy, length);

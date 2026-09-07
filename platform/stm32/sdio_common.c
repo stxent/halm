@@ -35,7 +35,7 @@ void sdioConfigPins(struct SdioBase *interface,
 
     const struct PinGroupEntry * const group = pinGroupFind(sdioPinGroups,
         pinArray[index], 0);
-    assert(group != NULL);
+    assert(group != nullptr);
 
     const struct Pin pin = pinInit(pinArray[index]);
 

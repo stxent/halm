@@ -26,16 +26,16 @@ enum CANFlags
 
 enum CANParameter
 {
-  /** Enable active mode. The data pointer must be set to @b NULL. */
+  /** Enable active mode. The data pointer must be set to @b nullptr. */
   IF_CAN_ACTIVE = IF_PARAMETER_END,
 
   /**
    * Enable listener mode. This mode is set by default. The data pointer
-   * must be set to @b NULL.
+   * must be set to @b nullptr.
    */
   IF_CAN_LISTENER,
 
-  /** Enable loopback mode. The data pointer must be set to @b NULL. */
+  /** Enable loopback mode. The data pointer must be set to @b nullptr. */
   IF_CAN_LOOPBACK,
 
   /**

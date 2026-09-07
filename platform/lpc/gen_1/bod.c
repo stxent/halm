@@ -33,11 +33,11 @@ const struct InterruptClass * const Bod = &(const struct InterruptClass){
     .setCallback = bodSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct Bod *instance = NULL;
+static struct Bod *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Bod *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -54,7 +54,7 @@ void BOD_ISR(void)
 static enum Result bodInit(void *object, const void *configBase)
 {
   const struct BodConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->eventLevel >= BOD_EVENT_MIN
       && config->eventLevel <= BOD_EVENT_MAX);
   assert(config->resetLevel >= BOD_RESET_DISABLED
@@ -66,8 +66,8 @@ static enum Result bodInit(void *object, const void *configBase)
   {
     uint32_t bodctrl = 0;
 
-    bod->callback = NULL;
-    bod->callbackArgument = NULL;
+    bod->callback = nullptr;
+    bod->callbackArgument = nullptr;
     bod->enabled = false;
 
     if (LPC_SYSCON->SYSRESSTAT & SYSRESSTAT_BOD)
@@ -97,7 +97,7 @@ static void bodDeinit(void *)
   irqDisable(BOD_IRQ);
   LPC_SYSCON->BODCTRL &= ~BODCTRL_BODRSTENA;
 
-  instance = NULL;
+  instance = nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -107,7 +107,7 @@ static void bodEnable(void *object)
 
   bod->enabled = true;
 
-  if (bod->callback != NULL)
+  if (bod->callback != nullptr)
   {
     irqClearPending(BOD_IRQ);
     irqEnable(BOD_IRQ);
@@ -130,7 +130,7 @@ static void bodSetCallback(void *object, void (*callback)(void *),
   bod->callbackArgument = argument;
   bod->callback = callback;
 
-  if (bod->enabled && bod->callback != NULL)
+  if (bod->enabled && bod->callback != nullptr)
   {
     irqClearPending(BOD_IRQ);
     irqEnable(BOD_IRQ);

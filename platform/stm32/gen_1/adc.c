@@ -42,7 +42,7 @@ const struct InterfaceClass * const Adc = &(const struct InterfaceClass){
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = NULL
+    .write = nullptr
 };
 /*----------------------------------------------------------------------------*/
 static size_t calcPinCount(const PinNumber *pins)
@@ -72,7 +72,7 @@ static void interruptHandler(void *object)
     ++pin;
   }
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -141,10 +141,10 @@ static void stopConversion(struct Adc *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert((config->accuracy - 6 <= 6 && config->accuracy % 2 == 0)
       || !config->accuracy);
-  assert(config->pins != NULL);
+  assert(config->pins != nullptr);
   assert(config->event != ADC_INJ_SOFTWARE
       && config->event < ADC_INJ_EVENT_END);
   assert(config->sensitivity != INPUT_HIGH && config->sensitivity != INPUT_LOW);
@@ -169,13 +169,13 @@ static enum Result adcInit(void *object, const void *configBase)
 
   /* Allocate buffer for conversion results */
   interface->buffer = malloc(sizeof(uint16_t) * interface->count);
-  if (interface->buffer == NULL)
+  if (interface->buffer == nullptr)
     return E_MEMORY;
   memset(interface->buffer, 0, sizeof(uint16_t) * interface->count);
 
   /* Allocate buffer for pin descriptors */
   interface->pins = malloc(sizeof(struct AdcPin) * interface->count);
-  if (interface->pins == NULL)
+  if (interface->pins == nullptr)
     return E_MEMORY;
   adcSetupPins(&interface->base, config->pins, interface->pins,
       interface->count);
@@ -196,8 +196,8 @@ static enum Result adcInit(void *object, const void *configBase)
 #endif
 
   interface->base.handler = interruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->time = config->time;
 
   return E_OK;
@@ -282,11 +282,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_STM32_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL,
+      return adcSetInstance(interface->base.channel, nullptr,
           &interface->base) ? E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, &interface->base, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, nullptr);
       return E_OK;
 #endif
 

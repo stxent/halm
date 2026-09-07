@@ -206,7 +206,7 @@ static void updateAhbClock(uint32_t configuration, enum VoltageRange range)
   STM_RCC->CFGR = configuration;
 
   /* Recalculate flash latency and tick rate */
-  const uint32_t frequency = mainClockFrequency(NULL);
+  const uint32_t frequency = mainClockFrequency(nullptr);
 
   flashLatencyUpdate(frequency, range);
   ticksPerSecond = TICK_RATE(frequency);
@@ -234,7 +234,7 @@ static void extOscDisable(const void *)
 static enum Result extOscEnable(const void *, const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert((!config->bypass
           && config->frequency >= 4000000 && config->frequency <= 26000000)
       || (config->bypass
@@ -312,7 +312,7 @@ static void audioPllDisable(const void *)
 static enum Result audioPllEnable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->divisor);
 
   if (!(STM_RCC->CR & CR_PLLON))
@@ -376,7 +376,7 @@ static void mainPllDisable(const void *)
 static enum Result mainPllEnable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   uint32_t cfgr = STM_RCC->PLLCFGR;
   uint32_t srcFrequency;
@@ -436,7 +436,7 @@ static bool mainPllReady(const void *)
 static enum Result systemClockEnable(const void *, const void *configBase)
 {
   const struct SystemClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->source == CLOCK_INTERNAL
       || config->source == CLOCK_EXTERNAL
       || config->source == CLOCK_PLL);
@@ -505,7 +505,7 @@ static uint32_t usbClockFrequency(const void *)
 static enum Result apb1ClockEnable(const void *, const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->divisor);
 
   const unsigned int prescaler = 31 - countLeadingZeros32(config->divisor);
@@ -520,14 +520,14 @@ static enum Result apb1ClockEnable(const void *, const void *configBase)
 static uint32_t apb1ClockFrequency(const void *)
 {
   const uint32_t divisor = apbPrescalerToValue(CFGR_PPRE1_VALUE(STM_RCC->CFGR));
-  return mainClockFrequency(NULL) / divisor;
+  return mainClockFrequency(nullptr) / divisor;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result apb2ClockEnable(const void *,
     const void *configBase)
 {
   const struct BusClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->divisor);
 
   const unsigned int prescaler = 31 - countLeadingZeros32(config->divisor);
@@ -542,13 +542,13 @@ static enum Result apb2ClockEnable(const void *,
 static uint32_t apb2ClockFrequency(const void *)
 {
   const uint32_t divisor = apbPrescalerToValue(CFGR_PPRE2_VALUE(STM_RCC->CFGR));
-  return mainClockFrequency(NULL) / divisor;
+  return mainClockFrequency(nullptr) / divisor;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result mainClockEnable(const void *, const void *configBase)
 {
   const struct MainClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->divisor);
   assert(config->range <= VR_2V7_3V6);
 
@@ -572,5 +572,5 @@ static enum Result mainClockEnable(const void *, const void *configBase)
 static uint32_t mainClockFrequency(const void *)
 {
   const uint32_t divisor = ahbPrescalerToValue(CFGR_HPRE_VALUE(STM_RCC->CFGR));
-  return systemClockFrequency(NULL) / divisor;
+  return systemClockFrequency(nullptr) / divisor;
 }

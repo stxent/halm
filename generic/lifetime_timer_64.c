@@ -30,12 +30,12 @@ const struct Timer64Class * const LifetimeTimer64 =
 
         .enable = tmrEnable,
         .disable = tmrDisable,
-        .setAutostop = NULL,
-        .setCallback = NULL,
+        .setAutostop = nullptr,
+        .setCallback = nullptr,
         .getFrequency = tmrGetFrequency,
         .setFrequency = tmrSetFrequency,
-        .getOverflow = NULL,
-        .setOverflow = NULL,
+        .getOverflow = nullptr,
+        .setOverflow = nullptr,
         .getValue = tmrGetValue,
         .setValue = tmrSetValue
     },
@@ -70,7 +70,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *object)
 {
   struct LifetimeTimer64 * const timer = object;
-  timerSetCallback(timer->timer, NULL, NULL);
+  timerSetCallback(timer->timer, nullptr, nullptr);
 }
 /*----------------------------------------------------------------------------*/
 static void tmrEnable(void *object)

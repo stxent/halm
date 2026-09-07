@@ -247,7 +247,7 @@ const struct PinEntry uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UartBase *instances[5] = {NULL};
+static struct UartBase *instances[5] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static const struct UartBlockDescriptor *findDescriptor(uint8_t channel)
 {
@@ -257,12 +257,12 @@ static const struct UartBlockDescriptor *findDescriptor(uint8_t channel)
       return &uartBlockEntries[index];
   }
 
-  return NULL;
+  return nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct UartBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -346,7 +346,7 @@ static enum Result uartInit(void *object, const void *configBase)
   const struct UartBlockDescriptor * const entry =
       findDescriptor(config->channel);
 
-  assert(entry != NULL);
+  assert(entry != nullptr);
   if (!setInstance(config->channel, interface))
     return E_BUSY;
 
@@ -357,7 +357,7 @@ static enum Result uartInit(void *object, const void *configBase)
   sysResetPulse(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -372,6 +372,6 @@ static void uartDeinit(void *object)
       findDescriptor(interface->channel);
 
   sysClockDisable(entry->clock);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

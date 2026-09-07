@@ -109,12 +109,12 @@ static void *allocBufferMemory(size_t requestCount, size_t bufferCount,
   headerMemorySize += MEM_ALIGNMENT - 1;
   headerMemorySize -= headerMemorySize % MEM_ALIGNMENT;
 
-  if (padding != NULL)
+  if (padding != nullptr)
     *padding = headerMemorySize;
 
   return memalign(MEM_ALIGNMENT, headerMemorySize + dataMemorySize);
 #else
-  if (padding != NULL)
+  if (padding != nullptr)
     *padding = headerMemorySize;
 
   return malloc(headerMemorySize + dataMemorySize);
@@ -147,7 +147,7 @@ static void cdcDataReceived(void *argument, struct UsbRequest *request,
 
   pointerQueuePushBack(&interface->rxRequestQueue, request);
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -198,7 +198,7 @@ static void cdcDataSent(void *argument, struct UsbRequest *request,
   else if (pointerArrayFull(&interface->txRequestPool))
   {
     /* Notify when all data has been sent */
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -362,8 +362,8 @@ static inline void updateTxWatermark(struct CdcAcm *interface, size_t level)
 static enum Result interfaceInit(void *object, const void *configBase)
 {
   const struct CdcAcmConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->device != NULL);
+  assert(config != nullptr);
+  assert(config->device != nullptr);
 
   struct CdcAcm * const interface = object;
   const struct CdcAcmBaseConfig driverConfig = {
@@ -381,8 +381,8 @@ static enum Result interfaceInit(void *object, const void *configBase)
   if (!pointerArrayInit(&interface->txRequestPool, config->txBuffers))
     return E_MEMORY;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->queuedRxBytes = 0;
   interface->queuedTxBytes = 0;
   interface->suspended = true;
@@ -395,15 +395,15 @@ static enum Result interfaceInit(void *object, const void *configBase)
 
   interface->notificationEp = usbDevCreateEndpoint(config->device,
       config->endpoints.interrupt);
-  if (interface->notificationEp == NULL)
+  if (interface->notificationEp == nullptr)
     return E_ERROR;
   interface->rxDataEp = usbDevCreateEndpoint(config->device,
       config->endpoints.rx);
-  if (interface->rxDataEp == NULL)
+  if (interface->rxDataEp == nullptr)
     return E_ERROR;
   interface->txDataEp = usbDevCreateEndpoint(config->device,
       config->endpoints.tx);
-  if (interface->txDataEp == NULL)
+  if (interface->txDataEp == nullptr)
     return E_ERROR;
 
   const size_t count = config->rxBuffers + config->txBuffers;
@@ -412,10 +412,10 @@ static enum Result interfaceInit(void *object, const void *configBase)
   uint8_t *arena;
 
   /* Allocate requests */
-  if (config->arena != NULL)
+  if (config->arena != nullptr)
   {
-    interface->requests = allocBufferMemory(count, 0, NULL);
-    if (interface->requests == NULL)
+    interface->requests = allocBufferMemory(count, 0, nullptr);
+    if (interface->requests == nullptr)
       return E_MEMORY;
 
     arena = config->arena;
@@ -425,7 +425,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
     size_t padding;
 
     interface->requests = allocBufferMemory(count, count, &padding);
-    if (interface->requests == NULL)
+    if (interface->requests == nullptr)
       return E_MEMORY;
 
     arena = (uint8_t *)interface->requests + padding;
@@ -455,7 +455,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
 
   /* Lower half of the driver should be initialized after all other parts */
   interface->driver = init(CdcAcmBase, &driverConfig);
-  return interface->driver != NULL ? E_OK : E_ERROR;
+  return interface->driver != nullptr ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static void interfaceDeinit(void *object)
@@ -735,7 +735,7 @@ void cdcAcmOnParametersChanged(struct CdcAcm *interface)
 {
   interface->updated = true;
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -767,6 +767,6 @@ void cdcAcmOnEvent(struct CdcAcm *interface, unsigned int event)
       break;
   }
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }

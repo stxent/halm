@@ -54,7 +54,7 @@ static void interruptHandler(void *object)
   /* Clear pending interrupts */
   reg->ILR = ILR_RTCCIF | ILR_RTCALF;
 
-  if (event && clock->callback != NULL)
+  if (event && clock->callback != nullptr)
     clock->callback(clock->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -92,18 +92,18 @@ static void setTime(struct Rtc *clock, time64_t timestamp)
 static enum Result clkInit(void *object, const void *configBase)
 {
   const struct RtcConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   struct Rtc * const clock = object;
   enum Result res;
 
   /* Call base class constructor */
-  if ((res = RtcBase->init(clock, NULL)) != E_OK)
+  if ((res = RtcBase->init(clock, nullptr)) != E_OK)
     return res;
 
   clock->base.handler = interruptHandler;
-  clock->callback = NULL;
-  clock->callbackArgument = NULL;
+  clock->callback = nullptr;
+  clock->callbackArgument = nullptr;
 
   LPC_RTC_Type * const reg = clock->base.reg;
 

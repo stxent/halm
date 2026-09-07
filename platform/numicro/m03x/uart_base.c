@@ -833,7 +833,7 @@ const struct PinEntry uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UartBase *instances[8] = {NULL};
+static struct UartBase *instances[8] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static uint8_t channelToIndex(uint8_t channel)
 {
@@ -916,7 +916,7 @@ static bool setInstance(uint8_t channel, struct UartBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -928,12 +928,12 @@ static bool setInstance(uint8_t channel, struct UartBase *object)
 void UART02_ISR(void)
 {
 #ifdef CONFIG_PLATFORM_NUMICRO_UART0
-  if (instances[0] != NULL)
+  if (instances[0] != nullptr)
     instances[0]->handler(instances[0]);
 #endif
 
 #ifdef CONFIG_PLATFORM_NUMICRO_UART2
-  if (instances[2] != NULL)
+  if (instances[2] != nullptr)
     instances[2]->handler(instances[2]);
 #endif
 }
@@ -941,12 +941,12 @@ void UART02_ISR(void)
 void UART13_ISR(void)
 {
 #ifdef CONFIG_PLATFORM_NUMICRO_UART1
-  if (instances[1] != NULL)
+  if (instances[1] != nullptr)
     instances[1]->handler(instances[1]);
 #endif
 
 #ifdef CONFIG_PLATFORM_NUMICRO_UART3
-  if (instances[3] != NULL)
+  if (instances[3] != nullptr)
     instances[3]->handler(instances[3]);
 #endif
 }
@@ -954,12 +954,12 @@ void UART13_ISR(void)
 void UART46_ISR(void)
 {
 #ifdef CONFIG_PLATFORM_NUMICRO_UART4
-  if (instances[4] != NULL)
+  if (instances[4] != nullptr)
     instances[4]->handler(instances[4]);
 #endif
 
 #ifdef CONFIG_PLATFORM_NUMICRO_UART6
-  if (instances[6] != NULL)
+  if (instances[6] != nullptr)
     instances[6]->handler(instances[6]);
 #endif
 }
@@ -967,19 +967,19 @@ void UART46_ISR(void)
 void UART57_ISR(void)
 {
 #ifdef CONFIG_PLATFORM_NUMICRO_UART5
-  if (instances[5] != NULL)
+  if (instances[5] != nullptr)
     instances[5]->handler(instances[5]);
 #endif
 
 #ifdef CONFIG_PLATFORM_NUMICRO_UART7
-  if (instances[7] != NULL)
+  if (instances[7] != nullptr)
     instances[7]->handler(instances[7]);
 #endif
 }
 /*----------------------------------------------------------------------------*/
 uint32_t uartGetClock(const struct UartBase *interface)
 {
-  const void *clock = NULL;
+  const void *clock = nullptr;
 
   switch (interface->channel)
   {
@@ -1057,7 +1057,7 @@ static enum Result uartInit(void *object, const void *configBase)
 
   interface->channel = config->channel;
   interface->depth = entry->depth;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -1079,6 +1079,6 @@ static void uartDeinit(void *object)
 
   disableInterrupts(interface->irq);
   sysClockDisable(entry->branch);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

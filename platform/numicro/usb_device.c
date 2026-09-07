@@ -236,10 +236,10 @@ static void resetDevice(struct UsbDevice *device)
   {
     struct UsbEndpoint **ep = &device->endpoints[index];
 
-    if (*ep != NULL)
+    if (*ep != nullptr)
     {
       (*ep)->index = 0;
-      *ep = NULL;
+      *ep = nullptr;
     }
   }
 }
@@ -247,7 +247,7 @@ static void resetDevice(struct UsbDevice *device)
 static enum Result devInit(void *object, const void *configBase)
 {
   const struct UsbDeviceConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct UsbBaseConfig baseConfig = {
       .dm = config->dm,
@@ -273,11 +273,11 @@ static enum Result devInit(void *object, const void *configBase)
   device->enabled = false;
 
   for (size_t index = 0; index < CONFIG_PLATFORM_USB_DEVICE_EP_COUNT; ++index)
-    device->endpoints[index] = NULL;
+    device->endpoints[index] = nullptr;
 
   /* Initialize control message handler after endpoint initialization */
   device->control = init(UsbControl, &controlConfig);
-  if (device->control == NULL)
+  if (device->control == nullptr)
     return E_ERROR;
 
   /* Reset system variables and configure interrupts */
@@ -331,7 +331,7 @@ static void *devCreateEndpoint(void *object, uint8_t address)
   if (USB_EP_LOGICAL_ADDRESS(address) == 0)
   {
     /* Set Control Endpoints immediately after creation */
-    assert(device->endpoints[ep->index] == NULL);
+    assert(device->endpoints[ep->index] == nullptr);
     device->endpoints[ep->index] = ep;
   }
 
@@ -647,7 +647,7 @@ static void epDeinit(void *object)
     struct UsbDevice * const device = ep->device;
 
     assert(device->endpoints[ep->index] == ep);
-    device->endpoints[ep->index] = NULL;
+    device->endpoints[ep->index] = nullptr;
   }
 
   assert(pointerQueueEmpty(&ep->requests));
@@ -681,7 +681,7 @@ static void epDisable(void *object)
     struct UsbDevice * const device = ep->device;
 
     assert(device->endpoints[ep->index] == ep);
-    device->endpoints[ep->index] = NULL;
+    device->endpoints[ep->index] = nullptr;
 
     ep->index = 0;
   }
@@ -704,7 +704,7 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
     {
       struct UsbEndpoint * const current = device->endpoints[ep->index];
 
-      if (current == NULL)
+      if (current == nullptr)
         break;
 
       ++ep->index;
@@ -740,8 +740,8 @@ static void epEnable(void *object, uint8_t type, uint16_t size)
 /*----------------------------------------------------------------------------*/
 static enum Result epEnqueue(void *object, struct UsbRequest *request)
 {
-  assert(request != NULL);
-  assert(request->callback != NULL);
+  assert(request != nullptr);
+  assert(request->callback != nullptr);
 
   struct UsbEndpoint * const ep = object;
   const IrqState state = irqSave();

@@ -97,7 +97,7 @@ static const struct PinEntry canPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct CanBase *instances[2] = {NULL};
+static struct CanBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct CanBaseConfig *config)
 {
@@ -108,7 +108,7 @@ static void configPins(const struct CanBaseConfig *config)
   if (config->rx)
   {
     pinEntry = pinFind(canPins, config->rx, config->channel);
-    assert(pinEntry != NULL);
+    assert(pinEntry != nullptr);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -117,7 +117,7 @@ static void configPins(const struct CanBaseConfig *config)
   if (config->tx)
   {
     pinEntry = pinFind(canPins, config->tx, config->channel);
-    assert(pinEntry != NULL);
+    assert(pinEntry != nullptr);
     pinInput((pin = pinInit(config->tx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -127,7 +127,7 @@ static bool setInstance(uint8_t channel, struct CanBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -144,7 +144,7 @@ void CAN0_ISR(void)
 void CAN1_ISR(void)
 {
   /* In M0 cores CAN1 IRQ is combined with USART2 IRQ */
-  if (instances[1]->handler != NULL)
+  if (instances[1]->handler != nullptr)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
@@ -173,7 +173,7 @@ static enum Result canInit(void *object, const void *configBase)
   sysResetEnable(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -188,6 +188,6 @@ static void canDeinit(void *object)
       &canBlockEntries[interface->channel];
 
   sysClockDisable(entry->clock);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

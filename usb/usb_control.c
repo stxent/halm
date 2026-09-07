@@ -420,11 +420,11 @@ static enum Result handleStringRequest(struct UsbControl *control,
   const struct UsbString * const entry = findStringByIndex(control,
       descriptorIndex);
 
-  if (entry != NULL)
+  if (entry != nullptr)
   {
     struct UsbDescriptor * const header = response;
 
-    assert((entry->functor(entry->argument, langid, header, NULL),
+    assert((entry->functor(entry->argument, langid, header, nullptr),
         header->length <= maxResponseLength));
     (void)maxResponseLength;
 
@@ -454,7 +454,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
   if (status == USB_REQUEST_CANCELLED)
     return;
 
-  assert(control->driver != NULL);
+  assert(control->driver != nullptr);
 
   if (status == USB_REQUEST_SETUP)
   {
@@ -493,7 +493,7 @@ static void controlOutHandler(void *argument, struct UsbRequest *request,
         control,
         packet,
         control->context.payload,
-        (out ? NULL : &length),
+        (out ? nullptr : &length),
         (out ? 0 : sizeof(control->context.payload))
     );
 
@@ -530,7 +530,7 @@ static const struct UsbString *findStringByIndex(struct UsbControl *control,
 {
   StringListNode *current = stringListFront(&control->strings);
 
-  while (current != NULL)
+  while (current != nullptr)
   {
     const struct UsbString * const entry = stringListData(current);
 
@@ -540,7 +540,7 @@ static const struct UsbString *findStringByIndex(struct UsbControl *control,
     current = stringListNext(current);
   }
 
-  return NULL;
+  return nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -602,8 +602,8 @@ static bool usbStringComparator(const void *a, void *b)
 /*----------------------------------------------------------------------------*/
 enum Result usbControlBindDriver(struct UsbControl *control, void *driver)
 {
-  assert(driver != NULL);
-  assert(control->driver == NULL);
+  assert(driver != nullptr);
+  assert(control->driver == nullptr);
 
   control->driver = driver;
   return E_OK;
@@ -611,14 +611,14 @@ enum Result usbControlBindDriver(struct UsbControl *control, void *driver)
 /*----------------------------------------------------------------------------*/
 void usbControlUnbindDriver(struct UsbControl *control)
 {
-  control->driver = NULL;
+  control->driver = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 void usbControlNotify(struct UsbControl *control, unsigned int event)
 {
   if (event == USB_DEVICE_EVENT_RESET)
     resetDevice(control);
-  else if (control->driver != NULL)
+  else if (control->driver != nullptr)
     usbDriverNotify(control->driver, event);
 }
 /*----------------------------------------------------------------------------*/
@@ -637,19 +637,19 @@ UsbStringIndex usbControlStringAppend(struct UsbControl *control,
 
   /* String must be unique */
   assert(stringListFindIf(&control->strings, &string,
-      usbStringComparator) == NULL);
+      usbStringComparator) == nullptr);
 
   if (string.index == 0)
   {
     UsbStringIndex index = 0;
 
     /* Find free index */
-    while (findStringByIndex(control, index) != NULL)
+    while (findStringByIndex(control, index) != nullptr)
       ++index;
 
     string.index = index;
   }
-  else if (findStringByIndex(control, string.index) != NULL)
+  else if (findStringByIndex(control, string.index) != nullptr)
   {
     /* Index already exists */
     return -1;
@@ -672,7 +672,7 @@ UsbStringIndex usbControlStringFind(struct UsbControl *control,
 #ifdef CONFIG_USB_DEVICE_STRINGS
   StringListNode *current = stringListFront(&control->strings);
 
-  while (current != NULL)
+  while (current != nullptr)
   {
     const struct UsbString * const entry = stringListData(current);
 
@@ -703,12 +703,12 @@ void usbControlStringErase(struct UsbControl *control, struct UsbString string)
 static enum Result controlInit(void *object, const void *configBase)
 {
   const struct UsbControlConfig * const config = configBase;
-  assert(config->parent != NULL);
+  assert(config->parent != nullptr);
 
   struct UsbControl * const control = object;
 
   control->owner = config->parent;
-  control->driver = NULL;
+  control->driver = nullptr;
   control->current = 0;
   control->vid = config->vid;
   control->pid = config->pid;
@@ -721,10 +721,10 @@ static enum Result controlInit(void *object, const void *configBase)
 
   control->ep0in = usbDevCreateEndpoint(control->owner,
       USB_EP_DIRECTION_IN | USB_EP_ADDRESS(0));
-  if (control->ep0in == NULL)
+  if (control->ep0in == nullptr)
     return E_MEMORY;
   control->ep0out = usbDevCreateEndpoint(control->owner, USB_EP_ADDRESS(0));
-  if (control->ep0out == NULL)
+  if (control->ep0out == nullptr)
     return E_MEMORY;
 
   /* Initialize list of device strings */
@@ -738,7 +738,7 @@ static enum Result controlInit(void *object, const void *configBase)
 #ifdef CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT
   control->requestArena = memalign(CONFIG_PLATFORM_USB_DEVICE_BUFFER_ALIGNMENT,
       REQUEST_POOL_SIZE * EP0_BUFFER_SIZE);
-  if (control->requestArena == NULL)
+  if (control->requestArena == nullptr)
     return E_MEMORY;
 #endif
 

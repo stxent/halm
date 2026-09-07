@@ -262,7 +262,7 @@ const PinNumber emcDataPinMap[] = {
     PIN(PORT_E, 9),  PIN(PORT_E, 10), PIN(PORT_E, 11), PIN(PORT_E, 12)
 };
 /*----------------------------------------------------------------------------*/
-static struct EmcHandler *emcHandler = NULL;
+static struct EmcHandler *emcHandler = nullptr;
 /*----------------------------------------------------------------------------*/
 uint32_t emcGetClock(void)
 {
@@ -294,7 +294,7 @@ void *emcGetDynamicMemoryAddress(uint8_t channel)
       return (void *)LPC_EMC_DYCS3_BASE;
 
     default:
-      return NULL;
+      return nullptr;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -317,7 +317,7 @@ void *emcGetStaticMemoryAddress(uint8_t channel)
       return (void *)LPC_EMC_CS3_BASE;
 
     default:
-      return NULL;
+      return nullptr;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -340,7 +340,7 @@ bool emcSetDynamicMemoryDescriptor(uint8_t channel,
   {
     if (compareExchangePointer(&emcHandler->dm[channel], &current, memory))
     {
-      emcSwitchEnabled(memory != NULL);
+      emcSwitchEnabled(memory != nullptr);
       return true;
     }
   }
@@ -357,7 +357,7 @@ bool emcSetStaticMemoryDescriptor(uint8_t channel,
   {
     if (compareExchangePointer(&emcHandler->sm[channel], &current, memory))
     {
-      emcSwitchEnabled(memory != NULL);
+      emcSwitchEnabled(memory != nullptr);
       return true;
     }
   }
@@ -367,10 +367,10 @@ bool emcSetStaticMemoryDescriptor(uint8_t channel,
 /*----------------------------------------------------------------------------*/
 static bool emcHandlerInstantiate(void)
 {
-  if (emcHandler == NULL)
-    emcHandler = init(EmcHandler, NULL);
+  if (emcHandler == nullptr)
+    emcHandler = init(EmcHandler, nullptr);
 
-  return emcHandler != NULL;
+  return emcHandler != nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static void emcSwitchEnabled(bool state)
@@ -403,7 +403,7 @@ static void emcSwitchEnabled(bool state)
 
     for (size_t channel = 0; channel < ARRAY_SIZE(emcHandler->dm); ++channel)
     {
-      if (emcHandler->dm[channel] != NULL)
+      if (emcHandler->dm[channel] != nullptr)
       {
         allChannelsDisabled = false;
         break;
@@ -412,7 +412,7 @@ static void emcSwitchEnabled(bool state)
 
     for (size_t channel = 0; channel < ARRAY_SIZE(emcHandler->sm); ++channel)
     {
-      if (emcHandler->sm[channel] != NULL)
+      if (emcHandler->sm[channel] != nullptr)
       {
         allChannelsDisabled = false;
         break;
@@ -436,9 +436,9 @@ static enum Result emcHandlerInit(void *object, const void *)
   struct EmcHandler * const handler = object;
 
   for (size_t channel = 0; channel < ARRAY_SIZE(handler->dm); ++channel)
-    handler->dm[channel] = NULL;
+    handler->dm[channel] = nullptr;
   for (size_t channel = 0; channel < ARRAY_SIZE(handler->sm); ++channel)
-    handler->sm[channel] = NULL;
+    handler->sm[channel] = nullptr;
 
   LPC_EMC->CONTROL = 0;
   return E_OK;

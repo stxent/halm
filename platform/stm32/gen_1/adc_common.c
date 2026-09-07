@@ -14,7 +14,7 @@ struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
 {
   const struct PinGroupEntry * const group = pinGroupFind(adcPinGroups, key,
       interface->channel);
-  assert(group != NULL);
+  assert(group != nullptr);
 
   const uint8_t currentPinNumber = PIN_TO_OFFSET(key);
   const uint8_t firstPinNumber = PIN_TO_OFFSET(group->begin);

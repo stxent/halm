@@ -59,7 +59,7 @@ const struct InterruptClass * const PinInt = &(const struct InterruptClass){
     .setCallback = pinIntSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct PinIntHandler *handlers[2] = {NULL};
+static struct PinIntHandler *handlers[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void disableInterrupt(const struct PinInt *interrupt)
 {
@@ -89,7 +89,7 @@ static void enableInterrupt(const struct PinInt *interrupt)
 /*----------------------------------------------------------------------------*/
 static void processInterrupt(uint8_t channel)
 {
-  assert(handlers[channel] != NULL);
+  assert(handlers[channel] != nullptr);
 
   struct PinInt ** const interruptArray = handlers[channel]->interrupts;
   uint32_t state =
@@ -121,13 +121,13 @@ void EINT3_ISR(void)
 static enum Result pinIntHandlerAttach(uint8_t channel,
     uint8_t number, struct PinInt *interrupt)
 {
-  if (handlers[channel] == NULL)
-    handlers[channel] = init(PinIntHandler, NULL);
+  if (handlers[channel] == nullptr)
+    handlers[channel] = init(PinIntHandler, nullptr);
 
   struct PinIntHandler * const handler = handlers[channel];
-  assert(handler != NULL);
+  assert(handler != nullptr);
 
-  if (handler->interrupts[number] == NULL)
+  if (handler->interrupts[number] == nullptr)
   {
     handler->interrupts[number] = interrupt;
     return E_OK;
@@ -140,7 +140,7 @@ static enum Result pinIntHandlerAttach(uint8_t channel,
 static void pinIntHandlerDetach(const struct PinInt *interrupt)
 {
   const unsigned int index = countLeadingZeros32(interrupt->mask);
-  handlers[interrupt->channel]->interrupts[31 - index] = NULL;
+  handlers[interrupt->channel]->interrupts[31 - index] = nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -149,7 +149,7 @@ static enum Result pinIntHandlerInit(void *object, const void *)
   struct PinIntHandler * const handler = object;
 
   for (size_t index = 0; index < ARRAY_SIZE(handler->interrupts); ++index)
-    handler->interrupts[index] = NULL;
+    handler->interrupts[index] = nullptr;
 
   sysClockControl(CLK_GPIOINT, DEFAULT_DIV);
   irqEnable(EINT3_IRQ);
@@ -160,7 +160,7 @@ static enum Result pinIntHandlerInit(void *object, const void *)
 static enum Result pinIntInit(void *object, const void *configBase)
 {
   const struct PinIntConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->event != INPUT_LOW && config->event != INPUT_HIGH);
 
   const struct Pin input = pinInit(config->pin);
@@ -184,8 +184,8 @@ static enum Result pinIntInit(void *object, const void *configBase)
   pinInput(input);
   pinSetPull(input, config->pull);
 
-  interrupt->callback = NULL;
-  interrupt->callbackArgument = NULL;
+  interrupt->callback = nullptr;
+  interrupt->callbackArgument = nullptr;
   interrupt->enabled = false;
   interrupt->event = config->event;
   interrupt->mask = 1UL << input.number;
@@ -209,7 +209,7 @@ static void pinIntEnable(void *object)
 
   interrupt->enabled = true;
 
-  if (interrupt->callback != NULL)
+  if (interrupt->callback != nullptr)
     enableInterrupt(interrupt);
 }
 /*----------------------------------------------------------------------------*/
@@ -229,7 +229,7 @@ static void pinIntSetCallback(void *object, void (*callback)(void *),
   interrupt->callbackArgument = argument;
   interrupt->callback = callback;
 
-  if (interrupt->enabled && interrupt->callback != NULL)
+  if (interrupt->enabled && interrupt->callback != nullptr)
     enableInterrupt(interrupt);
   else
     disableInterrupt(interrupt);

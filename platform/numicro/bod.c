@@ -33,11 +33,11 @@ const struct InterruptClass * const Bod = &(const struct InterruptClass){
     .setCallback = bodSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct Bod *instance = NULL;
+static struct Bod *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Bod *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -48,7 +48,7 @@ static bool setInstance(struct Bod *object)
 /*----------------------------------------------------------------------------*/
 void BOD_ISR(void)
 {
-  if (instance->callback != NULL)
+  if (instance->callback != nullptr)
   {
     const bool high = (NM_SYS->BODCTL & BODCTL_BODOUT) == 0;
     const enum InputEvent event = instance->event;
@@ -68,7 +68,7 @@ void BOD_ISR(void)
 static enum Result bodInit(void *object, const void *configBase)
 {
   const struct BodConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->event != INPUT_HIGH && config->event != INPUT_LOW);
   assert(config->level < BOD_LEVEL_END);
   assert(config->timeout < BOD_TIMEOUT_END);
@@ -81,8 +81,8 @@ static enum Result bodInit(void *object, const void *configBase)
   uint32_t bodctl = NM_SYS->BODCTL
       & ~(BODCTL_BODRSTEN | BODCTL_BODDGSEL_MASK | BODCTL_BODVL_MASK);
 
-  bod->callback = NULL;
-  bod->callbackArgument = NULL;
+  bod->callback = nullptr;
+  bod->callbackArgument = nullptr;
   bod->event = config->event;
 
   bodctl |= BODCTL_BODEN;
@@ -109,7 +109,7 @@ static void bodDeinit(void *)
   NM_SYS->BODCTL &= ~(BODCTL_BODEN | BODCTL_BODRSTEN);
   sysLockReg();
 
-  instance = NULL;
+  instance = nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/

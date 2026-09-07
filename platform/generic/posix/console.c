@@ -92,7 +92,7 @@ static void onInterfaceCallback(uv_poll_t *handle, int, int)
     byteQueuePushArray(&interface->rxQueue, buffer, (size_t)length);
   pthread_mutex_unlock(&interface->rxQueueLock);
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -101,14 +101,14 @@ static enum Result streamInit(void *object, const void *)
   struct Console * const interface = object;
   enum Result res;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
 
   if (pthread_mutex_init(&interface->rxQueueLock, 0))
     return E_ERROR;
 
   interface->listener = malloc(sizeof(uv_poll_t));
-  if (interface->listener == NULL)
+  if (interface->listener == nullptr)
   {
     res = E_MEMORY;
     goto free_mutex;
@@ -139,7 +139,7 @@ static void streamDeinit(void *object)
 {
   struct Console * const interface = object;
 
-  uv_handle_set_data((uv_handle_t *)interface->listener, NULL);
+  uv_handle_set_data((uv_handle_t *)interface->listener, nullptr);
   uv_close((uv_handle_t *)interface->listener, onCloseCallback);
 
   /* Restore terminal settings */

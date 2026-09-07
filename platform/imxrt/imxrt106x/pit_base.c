@@ -36,13 +36,13 @@ const struct PinEntry pitPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct PitBase *instances[4] = {NULL};
+static struct PitBase *instances[4] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct PitBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -53,16 +53,16 @@ static bool setInstance(uint8_t channel, struct PitBase *object)
 /*----------------------------------------------------------------------------*/
 void PIT_ISR(void)
 {
-  if (instances[0] != NULL)
+  if (instances[0] != nullptr)
     instances[0]->handler(instances[0]);
 
-  if (instances[1] != NULL)
+  if (instances[1] != nullptr)
     instances[1]->handler(instances[1]);
 
-  if (instances[2] != NULL)
+  if (instances[2] != nullptr)
     instances[2]->handler(instances[2]);
 
-  if (instances[3] != NULL)
+  if (instances[3] != nullptr)
     instances[3]->handler(instances[3]);
 }
 /*----------------------------------------------------------------------------*/
@@ -82,14 +82,14 @@ static enum Result tmrInit(void *object, const void *configBase)
     return E_BUSY;
   if (config->chain && !setInstance(config->channel + 1, interface))
   {
-    instances[config->channel] = NULL;
+    instances[config->channel] = nullptr;
     return E_BUSY;
   }
 
   interface->chain = config->chain;
   interface->channel = config->channel;
   interface->counter = config->chain ? config->channel + 1 : config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = PIT_IRQ;
   interface->reg = IMX_PIT;
 
@@ -114,13 +114,13 @@ static void tmrDeinit(void *object)
   const struct PitBase * const interface = object;
   bool active = false;
 
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
   if (interface->chain)
-    instances[interface->channel + 1] = NULL;
+    instances[interface->channel + 1] = nullptr;
 
   for (size_t index = 0; index < ARRAY_SIZE(instances); ++index)
   {
-    if (instances[index] != NULL)
+    if (instances[index] != nullptr)
     {
       active = true;
       break;

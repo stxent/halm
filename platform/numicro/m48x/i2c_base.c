@@ -388,7 +388,7 @@ const struct PinEntry i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2CBase *instances[3] = {NULL};
+static struct I2CBase *instances[3] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static uint8_t channelToIndex(uint8_t channel)
 {
@@ -417,7 +417,7 @@ static bool setInstance(uint8_t channel, struct I2CBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -470,7 +470,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   sysResetBlock(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -490,6 +490,6 @@ static void i2cDeinit(void *object)
       &i2cBlockEntries[channelToIndex(interface->channel)];
 
   sysClockDisable(entry->branch);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

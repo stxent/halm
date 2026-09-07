@@ -187,13 +187,13 @@ const struct PinEntry qspiPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct QspiBase *instances[2] = {NULL};
+static struct QspiBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct QspiBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -266,7 +266,7 @@ static enum Result qspiInit(void *object, const void *configBase)
   sysResetBlock(reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
 
   return E_OK;
 }
@@ -277,6 +277,6 @@ static void qspiDeinit(void *object)
   const struct QspiBase * const interface = object;
 
   sysClockDisable(interface->channel ? CLK_QSPI1 : CLK_QSPI0);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

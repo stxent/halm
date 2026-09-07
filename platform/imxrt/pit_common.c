@@ -12,7 +12,7 @@ extern const struct PinEntry pitPins[];
 void pitConfigTriggerPin(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(pitPins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
 

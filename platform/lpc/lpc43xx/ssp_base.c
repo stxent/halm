@@ -188,7 +188,7 @@ const struct PinEntry sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SspBase *instances[2] = {NULL};
+static struct SspBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct SspBaseConfig *config)
 {
@@ -202,7 +202,7 @@ static void configPins(const struct SspBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(sspPins, pinArray[index],
           CHANNEL_INDEX(config->channel, index));
-      assert(pinEntry != NULL);
+      assert(pinEntry != nullptr);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -216,7 +216,7 @@ static bool setInstance(uint8_t channel, struct SspBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -228,14 +228,14 @@ static bool setInstance(uint8_t channel, struct SspBase *object)
 void SSP0_ISR(void)
 {
   /* In M0 cores SSP0 IRQ is combined with SSP1 IRQ */
-  if (instances[0]->handler != NULL)
+  if (instances[0]->handler != nullptr)
     instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void SSP1_ISR(void)
 {
   /* In M0 cores SSP1 IRQ is combined with SSP0 IRQ */
-  if (instances[1]->handler != NULL)
+  if (instances[1]->handler != nullptr)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
@@ -269,7 +269,7 @@ static enum Result sspInit(void *object, const void *configBase)
   sysResetEnable(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -286,6 +286,6 @@ static void sspDeinit(void *object)
   sysClockDisable(entry->registerBranch);
   sysClockDisable(entry->peripheralBranch);
 
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

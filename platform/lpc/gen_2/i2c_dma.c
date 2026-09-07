@@ -95,13 +95,13 @@ static bool dmaSetup(struct I2CDma *interface, uint8_t priority)
   };
 
   interface->rxDma = init(SdmaOneShot, &rxDmaConfig);
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
   dmaConfigure(interface->rxDma, &dmaSettings[0]);
   dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
 
   interface->txDma = init(SdmaOneShot, &txDmaConfig);
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
   dmaConfigure(interface->txDma, &dmaSettings[1]);
   dmaSetCallback(interface->txDma, txDmaHandler, interface);
@@ -171,7 +171,7 @@ static void interruptHandler(void *object)
     irqDisable(interface->base.irq);
   }
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -209,7 +209,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result i2cInit(void *object, const void *configBase)
 {
   const struct I2CDmaConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct I2CBaseConfig baseConfig = {
       .channel = config->channel,
@@ -229,8 +229,8 @@ static enum Result i2cInit(void *object, const void *configBase)
   interface->base.handler = interruptHandler;
 
   interface->address = 0;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->blocking = true;
   interface->rate = config->rate;
   interface->sendRepeatedStart = false;

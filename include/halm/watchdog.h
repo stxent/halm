@@ -68,10 +68,10 @@ static inline void watchdogReload(void *timer)
  * implementations support interrupt mode.
  *
  * @param timer Pointer to a Watchdog object.
- * @param callback Function pointer to the callback routine. Can be @b NULL
+ * @param callback Function pointer to the callback routine. Can be @b nullptr
  * to disable the callback.
  * @param argument Pointer to user-defined data that will be passed
- * to the callback function when it is invoked. Can be @b NULL if no context
+ * to the callback function when it is invoked. Can be @b nullptr if no context
  * is needed.
  */
 static inline void watchdogSetCallback(void *timer, void (*callback)(void *),

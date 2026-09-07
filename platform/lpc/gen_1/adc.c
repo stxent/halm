@@ -35,7 +35,7 @@ const struct InterfaceClass * const Adc = &(const struct InterfaceClass){
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = NULL
+    .write = nullptr
 };
 /*----------------------------------------------------------------------------*/
 static void interruptHandler(void *object)
@@ -48,7 +48,7 @@ static void interruptHandler(void *object)
   for (size_t index = 0; index < interface->count; ++index)
     interface->buffer[index] = (uint16_t)reg->DR[pins[index].channel];
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -85,8 +85,8 @@ static void stopConversion(struct Adc *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->pins != NULL && *config->pins);
+  assert(config != nullptr);
+  assert(config->pins != nullptr && *config->pins);
   assert(config->event < ADC_EVENT_END && config->event != ADC_SOFTWARE);
 
   const struct AdcBaseConfig baseConfig = {
@@ -108,13 +108,13 @@ static enum Result adcInit(void *object, const void *configBase)
 
   interface->buffer =
       malloc((sizeof(uint16_t) + sizeof(struct AdcPin)) * count);
-  if (interface->buffer == NULL)
+  if (interface->buffer == nullptr)
     return E_MEMORY;
   interface->pins = (struct AdcPin *)(interface->buffer + count);
 
   interface->base.handler = interruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->count = (uint8_t)count;
   interface->priority = config->priority;
 
@@ -198,11 +198,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL,
+      return adcSetInstance(interface->base.channel, nullptr,
           &interface->base) ? E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, &interface->base, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, nullptr);
       return E_OK;
 #endif
 

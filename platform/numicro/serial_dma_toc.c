@@ -266,7 +266,7 @@ static void rxDmaHandler(void *object)
 
   updateRxWatermark(interface, byteQueueSize(&interface->rxQueue));
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -284,7 +284,7 @@ static void txDmaHandler(void *object)
   else
     event = true;
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -326,7 +326,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaTOCConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->dma[0] != config->dma[1]);
   assert(config->rxChunk > 0 && config->rxChunk % 2 == 0);
   assert(config->rxChunk / 2 <= PDMA_MAX_TRANSFER_SIZE);
@@ -362,8 +362,8 @@ static enum Result serialInit(void *object, const void *configBase)
   if (!dmaSetup(interface, config->dma[0], config->dma[1], timeout))
     return E_ERROR;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rxBufferSize = config->rxChunk;
   interface->txBufferSize = 0;
 

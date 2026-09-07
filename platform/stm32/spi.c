@@ -52,7 +52,7 @@ static void dmaHandler(void *object)
   struct Spi * const interface = object;
   STM_SPI_Type * const reg = interface->base.reg;
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
   {
     if (interface->invoked)
     {
@@ -75,7 +75,7 @@ static bool dmaSetup(struct Spi *interface, enum DmaPriority priority,
       priority,
       DMA_TYPE_P2M
   );
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
 
   interface->txDma = spiMakeOneShotDma(
@@ -84,7 +84,7 @@ static bool dmaSetup(struct Spi *interface, enum DmaPriority priority,
       priority,
       DMA_TYPE_M2P
   );
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
 
   return true;
@@ -216,7 +216,7 @@ static size_t transferData(struct Spi *interface, const void *txSource,
   STM_SPI_Type * const reg = interface->base.reg;
 
   interface->invoked = false;
-  interface->sink = NULL;
+  interface->sink = nullptr;
   dmaAppend(interface->rxDma, rxSink, (const void *)&reg->DR, length);
   dmaAppend(interface->txDma, (void *)&reg->DR, txSource, length);
 
@@ -244,7 +244,7 @@ static size_t transferData(struct Spi *interface, const void *txSource,
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct SpiBaseConfig baseConfig = {
       .cs = 0,
@@ -265,10 +265,10 @@ static enum Result spiInit(void *object, const void *configBase)
   if (!dmaSetup(interface, config->priority, config->rxDma, config->txDma))
     return E_ERROR;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rate = config->rate;
-  interface->sink = NULL;
+  interface->sink = nullptr;
   interface->blocking = true;
   interface->unidir = true;
 
@@ -391,8 +391,8 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_BLOCKING:
-      dmaSetCallback(interface->rxDma, NULL, NULL);
-      dmaSetCallback(interface->txDma, NULL, NULL);
+      dmaSetCallback(interface->rxDma, nullptr, nullptr);
+      dmaSetCallback(interface->txDma, nullptr, nullptr);
       interface->blocking = true;
       return E_OK;
 
@@ -449,7 +449,7 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
 
   struct Spi * const interface = object;
 
-  if (interface->sink == NULL)
+  if (interface->sink == nullptr)
   {
     dmaSetupTx(interface->rxDma, interface->txDma);
     return transferData(interface, buffer, &interface->dummy, length);

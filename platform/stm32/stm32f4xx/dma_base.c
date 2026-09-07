@@ -25,7 +25,7 @@ static enum Result streamInit(void *, const void *);
 const struct EntityClass * const DmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = streamInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static const enum DmaEvent eventMap1[EVENT_COUNT][EVENT_SOURCES] = {
@@ -116,20 +116,20 @@ static const enum DmaEvent eventMap2[EVENT_COUNT][EVENT_SOURCES] = {
     }
 };
 
-static struct DmaBase *instances[STREAM_COUNT * 2] = {NULL};
+static struct DmaBase *instances[STREAM_COUNT * 2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 void dmaResetInstance(uint8_t number)
 {
   assert(number < ARRAY_SIZE(instances));
-  instances[number] = NULL;
+  instances[number] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 bool dmaSetInstance(uint8_t number, struct DmaBase *stream)
 {
-  assert(stream != NULL);
+  assert(stream != nullptr);
   assert(number < ARRAY_SIZE(instances));
 
-  void *expected = NULL;
+  void *expected = nullptr;
 
   if (compareExchangePointer(&instances[number], &expected, stream))
   {
@@ -317,7 +317,7 @@ static enum Result streamInit(void *object, const void *configBase)
   if (config->event == DMA_SDIO)
     stream->config |= SCR_PFCTRL;
 
-  stream->handler = NULL;
+  stream->handler = nullptr;
   stream->number = config->stream;
 
   if (!irqStatus(stream->irq))

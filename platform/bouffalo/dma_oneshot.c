@@ -61,14 +61,14 @@ static void interruptHandler(void *object, enum Result res)
   dmaResetInstance(channel->base.number);
   channel->state = res == E_OK ? STATE_DONE : STATE_ERROR;
 
-  if (channel->callback != NULL)
+  if (channel->callback != nullptr)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct DmaOneShotConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct DmaBaseConfig baseConfig = {
       .event = config->event,
@@ -84,8 +84,8 @@ static enum Result channelInit(void *object, const void *configBase)
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = NULL;
-  channel->callbackArgument = NULL;
+  channel->callback = nullptr;
+  channel->callbackArgument = nullptr;
   channel->control = 0;
   channel->state = STATE_IDLE;
 
@@ -94,7 +94,7 @@ static enum Result channelInit(void *object, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static void channelDeinit(void *object)
 {
-  if (DmaBase->deinit != NULL)
+  if (DmaBase->deinit != nullptr)
     DmaBase->deinit(object);
 }
 /*----------------------------------------------------------------------------*/
@@ -207,7 +207,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   const uint32_t control = channel->control;
   const uint32_t transfers = size >> CONTROL_DTW_VALUE(control);
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!((uintptr_t)destination % (1 << CONTROL_DTW_VALUE(control))));
   assert(!(size % (1 << CONTROL_DTW_VALUE(control))));
   assert(!((uintptr_t)source % (1 << CONTROL_STW_VALUE(control))));

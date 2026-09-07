@@ -43,17 +43,17 @@ const struct InterfaceClass * const Ethernet = &(const struct InterfaceClass){
     .init = ethInit,
     .deinit = ethDeinit,
 
-    .setCallback = NULL,
+    .setCallback = nullptr,
     .getParam = ethGetParam,
     .setParam = ethSetParam,
-    .read = NULL,
-    .write = NULL
+    .read = nullptr,
+    .write = nullptr
 };
 
 const struct StreamClass * const EthernetRxStream = &(const struct StreamClass){
     .size = sizeof(struct EthernetStream),
     .init = ethStreamInit,
-    .deinit = NULL, /* Default destructor */
+    .deinit = nullptr, /* Default destructor */
 
     .clear = ethRxStreamClear,
     .enqueue = ethRxStreamEnqueue
@@ -62,7 +62,7 @@ const struct StreamClass * const EthernetRxStream = &(const struct StreamClass){
 const struct StreamClass * const EthernetTxStream = &(const struct StreamClass){
     .size = sizeof(struct EthernetStream),
     .init = ethStreamInit,
-    .deinit = NULL, /* Default destructor */
+    .deinit = nullptr, /* Default destructor */
 
     .clear = ethTxStreamClear,
     .enqueue = ethTxStreamEnqueue
@@ -196,7 +196,7 @@ static void initTxQueue(struct Ethernet *interface)
 static enum Result ethInit(void *object, const void *configBase)
 {
   const struct EthernetConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->rate == 10000000 || config->rate == 100000000);
 
   const struct EthernetBaseConfig baseConfig = {
@@ -236,7 +236,7 @@ static enum Result ethInit(void *object, const void *configBase)
 
   interface->rxList =
       malloc(sizeof(struct ReceiveDescriptor) * config->rxSize);
-  if (interface->rxList == NULL)
+  if (interface->rxList == nullptr)
     return E_MEMORY;
 
   interface->rxSize = config->rxSize;
@@ -246,7 +246,7 @@ static enum Result ethInit(void *object, const void *configBase)
 
   interface->txList =
       malloc(sizeof(struct TransmitDescriptor) * config->txSize);
-  if (interface->txList == NULL)
+  if (interface->txList == nullptr)
     return E_MEMORY;
 
   interface->txSize = config->txSize;
@@ -255,11 +255,11 @@ static enum Result ethInit(void *object, const void *configBase)
   initTxQueue(interface);
 
   interface->rxStream = init(EthernetRxStream, &streamConfig);
-  if (interface->rxStream == NULL)
+  if (interface->rxStream == nullptr)
     return E_ERROR;
 
   interface->txStream = init(EthernetTxStream, &streamConfig);
-  if (interface->txStream == NULL)
+  if (interface->txStream == nullptr)
     return E_ERROR;
 
   interface->base.handler = interruptHandler;

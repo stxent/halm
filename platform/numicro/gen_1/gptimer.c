@@ -76,7 +76,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
@@ -89,8 +89,8 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
 
   /* Initialize peripheral block */
   NM_TIMER_Type * const reg = timer->base.reg;
@@ -188,7 +188,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  if (timer->callback != NULL)
+  if (timer->callback != nullptr)
   {
     reg->INTSTS = INTSTS_TIF | INTSTS_TWKF;
     reg->CTL |= CTL_INTEN;

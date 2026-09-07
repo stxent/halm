@@ -57,7 +57,7 @@ static const struct PinEntry bxCanPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct BxCanBase *instance = NULL;
+static struct BxCanBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct BxCanBaseConfig *config)
 {
@@ -67,7 +67,7 @@ static void configPins(const struct BxCanBaseConfig *config)
   if (config->rx)
   {
     pinEntry = pinFind(bxCanPins, config->rx, config->channel);
-    assert(pinEntry != NULL);
+    assert(pinEntry != nullptr);
     pinInput((pin = pinInit(config->rx)));
     pinSetFunction(pin, pinEntry->value);
   }
@@ -75,7 +75,7 @@ static void configPins(const struct BxCanBaseConfig *config)
   if (config->tx)
   {
     pinEntry = pinFind(bxCanPins, config->tx, config->channel);
-    assert(pinEntry != NULL);
+    assert(pinEntry != nullptr);
     pinOutput((pin = pinInit(config->tx)), true);
     pinSetFunction(pin, pinEntry->value);
   }
@@ -83,7 +83,7 @@ static void configPins(const struct BxCanBaseConfig *config)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct BxCanBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -95,7 +95,7 @@ static bool setInstance(struct BxCanBase *object)
 void CAN_ISR(void)
 {
   /* Joint interrupt */
-  if (instance != NULL)
+  if (instance != nullptr)
     instance->handler(instance);
 }
 /*----------------------------------------------------------------------------*/
@@ -120,7 +120,7 @@ static enum Result canInit(void *object, const void *configBase)
   sysResetPulse(RST_CAN);
 
   interface->channel = 0;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq.rx0 = CEC_CAN_IRQ;
   interface->irq.rx1 = CEC_CAN_IRQ;
   interface->irq.sce = CEC_CAN_IRQ;
@@ -134,6 +134,6 @@ static enum Result canInit(void *object, const void *configBase)
 static void canDeinit(void *)
 {
   sysClockDisable(CLK_CAN);
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

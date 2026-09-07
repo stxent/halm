@@ -29,9 +29,9 @@ static size_t flashWrite(void *, const void *, size_t);
 const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .size = sizeof(struct Flash),
     .init = flashInit,
-    .deinit = NULL, /* Default destructor */
+    .deinit = nullptr, /* Default destructor */
 
-    .setCallback = NULL,
+    .setCallback = nullptr,
     .getParam = flashGetParam,
     .setParam = flashSetParam,
     .read = flashRead,
@@ -178,7 +178,7 @@ static bool writeFlash32(uint32_t address, uint32_t value)
 static enum Result flashInit(void *object, const void *configBase)
 {
   const struct FlashConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->bank < FLASH_BANK_END);
 
   const size_t capacity = sysGetSizeAPROM();

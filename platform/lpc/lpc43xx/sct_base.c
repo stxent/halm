@@ -382,13 +382,13 @@ const struct PinEntry sctOutputPins[] = {
 };
 
 static struct TimerHandler instance = {
-    .parts = {NULL, NULL},
+    .parts = {nullptr, nullptr},
     .events = MASK(SCT_EVENT_COUNT)
 };
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerActive(void)
 {
-  return instance.parts[0] != NULL || instance.parts[1] != NULL;
+  return instance.parts[0] != nullptr || instance.parts[1] != nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
@@ -397,7 +397,7 @@ static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
 
   if (timerPart == SCT_UNIFIED)
   {
-    if (instance.parts[0] == NULL && instance.parts[1] == NULL)
+    if (instance.parts[0] == nullptr && instance.parts[1] == nullptr)
     {
       instance.parts[0] = timer;
       attached = true;
@@ -407,7 +407,7 @@ static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
   {
     const unsigned int part = timerPart == SCT_HIGH;
 
-    if (instance.parts[part] == NULL)
+    if (instance.parts[part] == nullptr)
     {
       instance.parts[part] = timer;
       attached = true;
@@ -421,7 +421,7 @@ static bool timerHandlerAttach(enum SctPart timerPart, struct SctBase *timer)
 static void timerHandlerDetach(enum SctPart timerPart)
 {
   const unsigned int part = timerPart == SCT_HIGH;
-  instance.parts[part] = NULL;
+  instance.parts[part] = nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -429,10 +429,10 @@ void SCT_ISR(void)
 {
   const uint16_t state = LPC_SCT->EVFLAG;
 
-  if (instance.parts[0] != NULL && (instance.parts[0]->mask & state))
+  if (instance.parts[0] != nullptr && (instance.parts[0]->mask & state))
     instance.parts[0]->handler(instance.parts[0]);
 
-  if (instance.parts[1] != NULL && (instance.parts[1]->mask & state))
+  if (instance.parts[1] != nullptr && (instance.parts[1]->mask & state))
     instance.parts[1]->handler(instance.parts[1]);
 
   /* Clear interrupt flags */
@@ -455,7 +455,7 @@ enum SctInput sctAllocateInputChannel(struct SctBase *, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(sctInputPins, key, 0);
 
-  if (pinEntry != NULL)
+  if (pinEntry != nullptr)
     return (enum SctInput)(UNPACK_CHANNEL(pinEntry->value) + 1);
   else
     return SCT_INPUT_NONE;
@@ -465,7 +465,7 @@ enum SctOutput sctAllocateOutputChannel(struct SctBase *, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, 0);
 
-  if (pinEntry != NULL)
+  if (pinEntry != nullptr)
     return (enum SctOutput)(UNPACK_CHANNEL(pinEntry->value) + 1);
   else
     return SCT_OUTPUT_NONE;
@@ -475,7 +475,7 @@ void sctConfigInputPin(struct SctBase *, enum SctInput, PinNumber key,
     enum PinPull pull)
 {
   const struct PinEntry * const pinEntry = pinFind(sctInputPins, key, 0);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
   pinInput(pin);
@@ -487,7 +487,7 @@ void sctConfigOutputPin(struct SctBase *, enum SctOutput, PinNumber key,
     bool value)
 {
   const struct PinEntry * const pinEntry = pinFind(sctOutputPins, key, 0);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
   pinOutput(pin, value);
@@ -548,7 +548,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   if (timerHandlerAttach(config->part, timer))
   {
     timer->channel = config->channel;
-    timer->handler = NULL;
+    timer->handler = nullptr;
     timer->irq = SCT_IRQ;
     timer->mask = 0;
     timer->part = config->part;

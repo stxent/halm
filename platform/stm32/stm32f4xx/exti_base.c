@@ -35,7 +35,7 @@ const struct EntityClass * const ExtiBase = &(const struct EntityClass){
     .deinit = extiDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct ExtiBase *instances[23] = {NULL};
+static struct ExtiBase *instances[23] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void enableInterrupt(enum ExtiEvent event, IrqPriority priority)
 {
@@ -92,7 +92,7 @@ static IrqNumber eventToIrq(enum ExtiEvent event)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct ExtiBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -119,7 +119,7 @@ static bool isEventGroupUsed(enum ExtiEvent event)
   else if (event >= EXTI_PIN10 && event <= EXTI_PIN15)
     return isGroupUsed(EXTI_PIN10, EXTI_PIN15);
   else
-    return instances[event] != NULL;
+    return instances[event] != nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -128,7 +128,7 @@ static bool isGroupUsed(size_t begin, size_t end)
 {
   for (size_t index = begin; index <= end; ++index)
   {
-    if (instances[index] != NULL)
+    if (instances[index] != nullptr)
       return true;
   }
 
@@ -209,7 +209,7 @@ static enum Result extiInit(void *object, const void *configBase)
     return E_BUSY;
 
   interrupt->channel = config->channel;
-  interrupt->handler = NULL;
+  interrupt->handler = nullptr;
 
   /* Configure event multiplexer */
   if (interrupt->channel <= EXTI_PIN15)
@@ -239,7 +239,7 @@ static void extiDeinit(void *object)
 {
   const struct ExtiBase * const interrupt = object;
 
-  instances[interrupt->channel] = NULL;
+  instances[interrupt->channel] = nullptr;
   disableInterrupt(interrupt->channel);
 }
 #endif

@@ -16,9 +16,9 @@
 #define GENERIC_DMA_HANDLER(a, b) \
   do \
   { \
-    if (instances[a] != NULL) \
+    if (instances[a] != nullptr) \
       instances[a]->handler(instances[a], E_OK); \
-    if (instances[b] != NULL) \
+    if (instances[b] != nullptr) \
       instances[b]->handler(instances[b], E_OK); \
   } while (0)
 
@@ -31,10 +31,10 @@ static enum Result channelInit(void *, const void *);
 const struct EntityClass * const EdmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = channelInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static struct EdmaBase *instances[CHANNEL_COUNT] = {NULL};
+static struct EdmaBase *instances[CHANNEL_COUNT] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static IrqNumber calcIrqNumber(uint8_t number)
 {
@@ -46,9 +46,9 @@ static IrqNumber calcIrqNumber(uint8_t number)
 /*----------------------------------------------------------------------------*/
 bool edmaBindInstance(struct EdmaBase *channel)
 {
-  assert(channel != NULL);
+  assert(channel != nullptr);
 
-  void *expected = NULL;
+  void *expected = nullptr;
 
   return compareExchangePointer(&instances[channel->number],
       &expected, channel);
@@ -56,14 +56,14 @@ bool edmaBindInstance(struct EdmaBase *channel)
 /*----------------------------------------------------------------------------*/
 void edmaUnbindInstance(struct EdmaBase *channel)
 {
-  assert(channel != NULL);
+  assert(channel != nullptr);
 
   const uint8_t number = channel->number;
 
   ((IMX_DMAMUX_Type *)channel->mux)->CHCFG[number] = 0;
   ((IMX_EDMA_Type *)channel->reg)->CEEI = CEEI_CEEI(number);
 
-  instances[number] = NULL;
+  instances[number] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 void DMA0_DMA16_ISR(void)
@@ -176,7 +176,7 @@ static enum Result channelInit(void *object, const void *configBase)
       config->channel : (config->channel + CHANNEL_COUNT / 2);
   const IrqNumber irq = calcIrqNumber(number);
 
-  channel->handler = NULL;
+  channel->handler = nullptr;
   channel->controller = 0;
   channel->event = config->event;
   channel->number = number;

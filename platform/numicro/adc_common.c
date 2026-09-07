@@ -14,7 +14,7 @@ struct AdcPin adcConfigPin(const struct AdcBase *interface, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(adcPins, key,
       interface->channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
 
@@ -83,7 +83,7 @@ uint32_t adcSetupPins(struct AdcBase *interface, const PinNumber *pins,
 struct Pin adcSetupTriggerPin(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(adcPins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
 

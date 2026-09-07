@@ -41,7 +41,7 @@ static void interruptHandler(void *object)
 static enum Result extiInit(void *object, const void *configBase)
 {
   const struct ExtiConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->event != INPUT_LOW && config->event != INPUT_HIGH);
 
   enum ExtiEvent channel = EXTI_EVENT_END;
@@ -75,8 +75,8 @@ static enum Result extiInit(void *object, const void *configBase)
     return res;
 
   interrupt->base.handler = interruptHandler;
-  interrupt->callback = NULL;
-  interrupt->callbackArgument = NULL;
+  interrupt->callback = nullptr;
+  interrupt->callbackArgument = nullptr;
 
   interrupt->mask = 1UL << interrupt->base.channel;
   interrupt->enabled = false;
@@ -111,7 +111,7 @@ static void extiEnable(void *object)
 
   interrupt->enabled = true;
 
-  if (interrupt->callback != NULL)
+  if (interrupt->callback != nullptr)
   {
     STM_EXTI->EMR |= mask;
     STM_EXTI->IMR |= mask;

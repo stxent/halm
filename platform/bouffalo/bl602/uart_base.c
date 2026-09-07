@@ -25,11 +25,11 @@ const struct EntityClass * const UartBase = &(const struct EntityClass){
     .deinit = uartDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct UartBase *instances[2] = {NULL};
+static struct UartBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct UartBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -98,7 +98,7 @@ static enum Result uartInit(void *object, const void *configBase)
   uartConfigPins(config);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = UART0_IRQ + config->channel;
   interface->reg = !config->channel ? BL_UART0 : BL_UART1;
 
@@ -109,6 +109,6 @@ static enum Result uartInit(void *object, const void *configBase)
 static void uartDeinit(void *object)
 {
   const struct UartBase * const interface = object;
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

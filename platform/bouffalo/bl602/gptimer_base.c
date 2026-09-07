@@ -25,11 +25,11 @@ const struct EntityClass * const GpTimerBase = &(const struct EntityClass){
     .deinit = tmrDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct GpTimerBase *instances[3] = {NULL};
+static struct GpTimerBase *instances[3] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -77,7 +77,7 @@ static enum Result tmrInit(void *object, const void *configBase)
     return E_BUSY;
 
   timer->channel = config->channel;
-  timer->handler = NULL;
+  timer->handler = nullptr;
   timer->irq = TIMER_CH0_IRQ + config->channel;
 
   /* Configure timer clock input */
@@ -91,6 +91,6 @@ static enum Result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *object)
 {
   const struct GpTimerBase * const timer = object;
-  instances[timer->channel] = NULL;
+  instances[timer->channel] = nullptr;
 }
 #endif

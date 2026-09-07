@@ -78,13 +78,13 @@ static enum Result workQueueStart(void *);
 #if defined(CONFIG_GENERIC_WQ_PROFILE) || defined(CONFIG_GENERIC_WQ_LOAD)
   static void workQueueStatistics(void *, struct WqInfo *);
 #else
-#  define workQueueStatistics NULL
+#  define workQueueStatistics nullptr
 #endif
 
 #ifdef CONFIG_GENERIC_WQ_PROFILE
   static void workQueueProfile(void *, WqProfileCallback, void *);
 #else
-#  define workQueueProfile NULL
+#  define workQueueProfile nullptr
 #endif
 
 #ifndef CONFIG_GENERIC_WQ_NONSTOP
@@ -93,7 +93,7 @@ static enum Result workQueueStart(void *);
 #  define WQ_RUNNING(object) ((object)->stop == false)
 #else
 #  define workQueueDeinit deletedDestructorTrap
-#  define workQueueStop NULL
+#  define workQueueStop nullptr
 #  define WQ_RUNNING(object) (true)
 #endif
 /*----------------------------------------------------------------------------*/
@@ -123,14 +123,14 @@ static struct WqTaskDescriptor *findTaskInfo(struct WorkQueueDefault *wq,
       return current;
   }
 
-  return NULL;
+  return nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result workQueueInit(void *object, const void *configBase)
 {
   const struct WorkQueueConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->size);
 
   struct WorkQueueDefault * const wq = object;
@@ -163,7 +163,7 @@ static void workQueueDeinit(void *object)
 static enum Result workQueueAdd(void *object, void (*callback)(void *),
     void *argument)
 {
-  assert(callback != NULL);
+  assert(callback != nullptr);
 
   struct WorkQueueDefault * const wq = object;
   const IrqState state = irqSave();
@@ -175,7 +175,7 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
     const size_t watermark = wqTaskQueueSize(&wq->tasks) + 1;
     struct WqTaskDescriptor *entry = findTaskInfo(wq, callback);
 
-    if (entry == NULL)
+    if (entry == nullptr)
     {
       const struct WqTaskDescriptor info = {
           .task = callback,

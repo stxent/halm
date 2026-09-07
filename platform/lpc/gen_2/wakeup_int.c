@@ -51,7 +51,7 @@ const struct InterruptClass * const WakeupInt =
     .setCallback = wakeupIntSetCallback
 };
 /*----------------------------------------------------------------------------*/
-static struct StartLogicHandler *handler = NULL;
+static struct StartLogicHandler *handler = nullptr;
 /*----------------------------------------------------------------------------*/
 static inline IrqNumber calcVector(uint8_t channel)
 {
@@ -71,13 +71,13 @@ void WAKEUP_ISR(void)
     LPC_SYSCON->START[index].RSRPCLR = state[index];
   }
 
-  while (current != NULL)
+  while (current != nullptr)
   {
     struct WakeupInt * const interrupt = *pointerListData(current);
 
     if (state[interrupt->index] & interrupt->mask)
     {
-      if (interrupt->callback != NULL)
+      if (interrupt->callback != nullptr)
         interrupt->callback(interrupt->callbackArgument);
     }
 
@@ -88,15 +88,15 @@ void WAKEUP_ISR(void)
 static enum Result startLogicHandlerAttach(uint8_t channel,
     struct WakeupInt *interrupt)
 {
-  if (handler == NULL)
-    handler = init(StartLogicHandler, NULL);
-  assert(handler != NULL);
+  if (handler == nullptr)
+    handler = init(StartLogicHandler, nullptr);
+  assert(handler != nullptr);
 
   PointerList * const list = &handler->list;
   PointerListNode *current = pointerListFront(list);
 
   /* Check for duplicates */
-  while (current != NULL)
+  while (current != nullptr)
   {
     struct WakeupInt * const entry = *pointerListData(current);
 
@@ -113,7 +113,7 @@ static enum Result startLogicHandlerAttach(uint8_t channel,
 #ifndef CONFIG_PLATFORM_LPC_WAKEUPINT_NO_DEINIT
 static void startLogicHandlerDetach(struct WakeupInt *interrupt)
 {
-  assert(pointerListFind(&handler->list, interrupt) != NULL);
+  assert(pointerListFind(&handler->list, interrupt) != nullptr);
   pointerListErase(&handler->list, interrupt);
 }
 #endif
@@ -129,7 +129,7 @@ static enum Result startLogicHandlerInit(void *object, const void *)
 static enum Result wakeupIntInit(void *object, const void *configBase)
 {
   const struct WakeupIntConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->event == INPUT_RISING || config->event == INPUT_FALLING);
 
   const struct Pin input = pinInit(config->pin);
@@ -147,8 +147,8 @@ static enum Result wakeupIntInit(void *object, const void *configBase)
   pinInput(input);
   pinSetPull(input, config->pull);
 
-  interrupt->callback = NULL;
-  interrupt->callbackArgument = NULL;
+  interrupt->callback = nullptr;
+  interrupt->callbackArgument = nullptr;
   interrupt->channel = channel;
   interrupt->index = channel >> 5;
   interrupt->mask = 1UL << (channel & 0x1F);

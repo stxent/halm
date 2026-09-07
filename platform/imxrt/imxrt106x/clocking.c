@@ -286,7 +286,7 @@ static enum Result extOscEnable(const void *, const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
 
-  if (config != NULL && (config->current > OSC_CURRENT_MINUS_37P5
+  if (config != nullptr && (config->current > OSC_CURRENT_MINUS_37P5
       || config->delay > OSC_DELAY_2MS))
   {
     return E_VALUE;
@@ -295,7 +295,7 @@ static enum Result extOscEnable(const void *, const void *configBase)
   uint32_t misc = IMX_XTALOSC24M->MISC0 & ~MISC0_XTAL_24M_PWD;
   uint32_t pwr = IMX_XTALOSC24M->LOWPWR_CTRL;
 
-  if (config != NULL)
+  if (config != nullptr)
   {
     misc = (misc & ~MISC0_OSC_I_MASK) | MISC0_OSC_I(config->current);
     pwr &= ~LOWPWR_CTRL_XTALOSC_PWRUP_DELAY_MASK;
@@ -313,7 +313,7 @@ static enum Result extOscEnable(const void *, const void *configBase)
 /*----------------------------------------------------------------------------*/
 static uint32_t extOscFrequency(const void *)
 {
-  return extOscReady(NULL) ? OSC_FREQUENCY : 0;
+  return extOscReady(nullptr) ? OSC_FREQUENCY : 0;
 }
 /*----------------------------------------------------------------------------*/
 static bool extOscReady(const void *)
@@ -354,7 +354,7 @@ static bool intOscReady(const void *)
 static enum Result ipgClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > 4)
     return E_VALUE;
@@ -371,19 +371,19 @@ static enum Result ipgClockEnable(const void *, const void *configBase)
 static uint32_t ipgClockFrequency(const void *)
 {
   const uint32_t divisor = CBCDR_IPG_PODF_VALUE(IMX_CCM->CBCDR) + 1;
-  return mainClockFrequency(NULL) / divisor;
+  return mainClockFrequency(nullptr) / divisor;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result mainClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > 8)
     return E_VALUE;
 
   const uint32_t divisor = config->divisor ? config->divisor : 1;
-  const uint32_t frequency = periphClockFrequency(NULL);
+  const uint32_t frequency = periphClockFrequency(nullptr);
   uint32_t cbcdr = IMX_CCM->CBCDR;
 
   cbcdr = (cbcdr & ~CBCDR_AHB_PODF_MASK) | CBCDR_AHB_PODF(divisor - 1);
@@ -396,7 +396,7 @@ static enum Result mainClockEnable(const void *, const void *configBase)
 static uint32_t mainClockFrequency(const void *)
 {
   const uint32_t divisor = CBCDR_AHB_PODF_VALUE(IMX_CCM->CBCDR) + 1;
-  return periphClockFrequency(NULL) / divisor;
+  return periphClockFrequency(nullptr) / divisor;
 }
 /*----------------------------------------------------------------------------*/
 static bool mainClockReady(const void *)
@@ -407,7 +407,7 @@ static bool mainClockReady(const void *)
 static enum Result periphClockEnable(const void *, const void *configBase)
 {
   const struct ExtendedClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->source == CLOCK_OSC || config->source == CLOCK_USB1_PLL)
   {
@@ -512,7 +512,7 @@ static uint32_t periphClockFrequency(const void *)
 
       case PRE_PERIPH_CLK_SEL_PLL1_DIV:
       {
-        const uint32_t frequency = pll1Frequency(NULL);
+        const uint32_t frequency = pll1Frequency(nullptr);
         const uint32_t divisor = CACRR_ARM_PODF_VALUE(IMX_CCM->CACRR) + 1;
 
         return frequency / divisor;
@@ -548,7 +548,7 @@ static void pll1Disable(const void *)
 static enum Result pll1Enable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor < 54 || config->divisor > 108)
     return E_VALUE;
@@ -588,7 +588,7 @@ static void pll2Disable(const void *clockBase)
 static enum Result pll2Enable(const void *clockBase, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct PfdClockClass * const clock = clockBase;
 
@@ -678,7 +678,7 @@ static void pll3Disable(const void *clockBase)
 static enum Result pll3Enable(const void *clockBase, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct PfdClockClass * const clock = clockBase;
 
@@ -766,7 +766,7 @@ static void pll7Disable(const void *)
 static enum Result pll7Enable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   uint32_t value = PLL_USB_EN_USB_CLKS | PLL_USB_POWER | PLL_ENABLE
       | PLL_BYPASS_CLK_SRC(BYPASS_CLK_SRC_REF_CLK_24M);
@@ -803,7 +803,7 @@ static bool pll7Ready(const void *)
 static enum Result flexSpi1ClockEnable(const void *, const void *configBase)
 {
   const struct ExtendedClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > 8)
     return E_VALUE;
@@ -874,7 +874,7 @@ static uint32_t flexSpi1ClockFrequency(const void *)
 static enum Result flexSpi2ClockEnable(const void *, const void *configBase)
 {
   const struct ExtendedClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > 8)
     return E_VALUE;
@@ -945,7 +945,7 @@ static uint32_t flexSpi2ClockFrequency(const void *)
 static enum Result timerClockEnable(const void *, const void *configBase)
 {
   const struct ExtendedClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > 64)
     return E_VALUE;
@@ -975,7 +975,7 @@ static uint32_t timerClockFrequency(const void *)
   if (cscmr1 & CSCMR1_PERCLK_CLK_SEL)
     frequency = OSC_FREQUENCY;
   else
-    frequency = ipgClockFrequency(NULL);
+    frequency = ipgClockFrequency(nullptr);
 
   return frequency / divisor;
 }
@@ -983,7 +983,7 @@ static uint32_t timerClockFrequency(const void *)
 static enum Result uartClockEnable(const void *, const void *configBase)
 {
   const struct ExtendedClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > 64)
     return E_VALUE;

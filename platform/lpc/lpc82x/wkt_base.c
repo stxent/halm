@@ -27,11 +27,11 @@ const struct EntityClass * const WktBase = &(const struct EntityClass){
     .deinit = tmrDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct WktBase *instance = NULL;
+static struct WktBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct WktBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -67,7 +67,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   sysClockEnable(CLK_WKT);
   sysResetPulse(RST_WKT);
 
-  timer->handler = NULL;
+  timer->handler = nullptr;
   timer->reg = LPC_WKT;
   timer->irq = WKT_IRQ;
 
@@ -106,6 +106,6 @@ static void tmrDeinit(void *)
   if (LPC_WKT->CTRL & CTRL_SEL_EXTCLK)
     LPC_PMU->DPDCTRL &= ~(DPDCTRL_WAKEUPCLKHYS | DPDCTRL_WAKECLKPAD_ENABLE);
 
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

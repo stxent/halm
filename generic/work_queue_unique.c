@@ -79,13 +79,13 @@ static enum Result workQueueStart(void *);
     || defined(CONFIG_GENERIC_WQ_UNIQUE_LOAD)
   static void workQueueStatistics(void *, struct WqInfo *);
 #else
-#  define workQueueStatistics NULL
+#  define workQueueStatistics nullptr
 #endif
 
 #ifdef CONFIG_GENERIC_WQ_UNIQUE_PROFILE
   static void workQueueProfile(void *, WqProfileCallback, void *);
 #else
-#  define workQueueProfile NULL
+#  define workQueueProfile nullptr
 #endif
 
 #ifndef CONFIG_GENERIC_WQ_UNIQUE_NONSTOP
@@ -94,7 +94,7 @@ static enum Result workQueueStart(void *);
 #  define WQ_RUNNING(object) ((object)->stop == false)
 #else
 #  define workQueueDeinit deletedDestructorTrap
-#  define workQueueStop NULL
+#  define workQueueStop nullptr
 #  define WQ_RUNNING(object) (true)
 #endif
 /*----------------------------------------------------------------------------*/
@@ -159,13 +159,13 @@ static int taskComparator(const struct WqTask *a, const struct WqTask *b)
 static enum Result workQueueInit(void *object, const void *configBase)
 {
   const struct WorkQueueConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->size);
 
   struct WorkQueueUnique * const wq = object;
 
   wq->pool = malloc(sizeof(struct WqTaskBucket) * config->size);
-  if (wq->pool == NULL)
+  if (wq->pool == nullptr)
     return E_MEMORY;
 
   if (!wqTaskArrayInit(&wq->buckets, config->size))
@@ -192,7 +192,7 @@ static void workQueueDeinit(void *object)
 static enum Result workQueueAdd(void *object, void (*callback)(void *),
     void *argument)
 {
-  assert(callback != NULL);
+  assert(callback != nullptr);
 
   struct WorkQueueUnique * const wq = object;
   struct WqTaskBucket *bucket;
@@ -225,7 +225,7 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
     }
     else
     {
-      bucket = NULL;
+      bucket = nullptr;
     }
   }
   else
@@ -235,7 +235,7 @@ static enum Result workQueueAdd(void *object, void (*callback)(void *),
 
   enum Result res;
 
-  if (bucket != NULL)
+  if (bucket != nullptr)
   {
     if (!bucket->pending)
     {

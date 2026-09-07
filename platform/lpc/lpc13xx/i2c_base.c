@@ -40,11 +40,11 @@ const struct PinEntry i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2CBase *instance = NULL;
+static struct I2CBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct I2CBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -76,7 +76,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   LPC_SYSCON->PRESETCTRL |= PRESETCTRL_I2C;
 
   interface->channel = 0;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = I2C_IRQ;
   interface->reg = LPC_I2C;
 
@@ -95,6 +95,6 @@ static void i2cDeinit(void *)
   LPC_SYSCON->PRESETCTRL &= ~PRESETCTRL_I2C;
   sysClockDisable(CLK_I2C);
 
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

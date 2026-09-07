@@ -14,7 +14,7 @@ static void interruptHandler(void *object)
 {
   struct DmaMemCopyHandler * const handler = object;
 
-  if (handler->callback != NULL)
+  if (handler->callback != nullptr)
     handler->callback(handler->callbackArgument, dmaStatus(handler->dma));
 }
 /*----------------------------------------------------------------------------*/
@@ -39,12 +39,12 @@ enum Result dmaMemCopyInit(struct DmaMemCopyHandler *handler, uint8_t channel)
   };
 
   handler->dma = init(DmaOneShot, &config);
-  if (handler->dma == NULL)
+  if (handler->dma == nullptr)
     return E_ERROR;
 
   dmaConfigure(handler->dma, &settings);
-  handler->callback = NULL;
-  handler->callbackArgument = NULL;
+  handler->callback = nullptr;
+  handler->callbackArgument = nullptr;
 
   return E_OK;
 }

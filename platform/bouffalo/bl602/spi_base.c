@@ -26,11 +26,11 @@ const struct EntityClass * const SpiBase = &(const struct EntityClass){
     .deinit = spiDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct SpiBase *instance = NULL;
+static struct SpiBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SpiBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -95,7 +95,7 @@ static enum Result spiInit(void *object, const void *configBase)
   spiConfigPins(config);
 
   interface->channel = 0;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = SPI_IRQ;
   interface->reg = BL_SPI;
 
@@ -105,6 +105,6 @@ static enum Result spiInit(void *object, const void *configBase)
 #ifndef CONFIG_PLATFORM_BOUFFALO_SPI_NO_DEINIT
 static void spiDeinit(void *)
 {
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

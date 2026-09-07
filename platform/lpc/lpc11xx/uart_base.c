@@ -54,11 +54,11 @@ const struct PinEntry uartPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UartBase *instance = NULL;
+static struct UartBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct UartBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -121,7 +121,7 @@ static enum Result uartInit(void *object, const void *configBase)
   }
 
   interface->channel = 0;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = UART_IRQ;
   interface->reg = LPC_UART;
 
@@ -135,6 +135,6 @@ static void uartDeinit(void *)
   LPC_SYSCON->UARTCLKDIV = 0;
   sysClockDisable(CLK_UART);
 
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

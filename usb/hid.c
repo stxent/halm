@@ -16,17 +16,17 @@ const struct HidClass * const Hid = &(const struct HidClass){
     .init = deviceInit,
     .deinit = deviceDeinit,
 
-    .event = NULL,
-    .getReport = NULL,
-    .setReport = NULL
+    .event = nullptr,
+    .getReport = nullptr,
+    .setReport = nullptr
 };
 /*----------------------------------------------------------------------------*/
 static enum Result deviceInit(void *object, const void *configBase)
 {
   const struct HidConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->device != NULL);
-  assert(config->descriptor != NULL);
+  assert(config != nullptr);
+  assert(config->device != nullptr);
+  assert(config->descriptor != nullptr);
   assert(config->descriptorSize);
   assert(config->reportSize);
 
@@ -41,7 +41,7 @@ static enum Result deviceInit(void *object, const void *configBase)
   };
 
   device->driver = init(HidBase, &driverConfig);
-  return device->driver != NULL ? E_OK : E_ERROR;
+  return device->driver != nullptr ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static void deviceDeinit(void *object)

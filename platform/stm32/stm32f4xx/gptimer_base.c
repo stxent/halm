@@ -615,7 +615,7 @@ const struct PinEntry gpTimerPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct GpTimerBase *instances[14] = {NULL};
+static struct GpTimerBase *instances[14] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static const struct TimerBlockDescriptor *findDescriptor(uint8_t channel)
 {
@@ -625,12 +625,12 @@ static const struct TimerBlockDescriptor *findDescriptor(uint8_t channel)
       return &timerBlockEntries[index];
   }
 
-  return NULL;
+  return nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -643,7 +643,7 @@ static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 /* Virtual handler */
 void TIM1_UP_ISR(void)
 {
-  if (instances[0] != NULL)
+  if (instances[0] != nullptr)
     instances[0]->handler(instances[0]);
 }
 #endif
@@ -680,7 +680,7 @@ void TIM5_ISR(void)
 /* Virtual handler */
 void TIM6_ISR(void)
 {
-  if (instances[5] != NULL)
+  if (instances[5] != nullptr)
     instances[5]->handler(instances[5]);
 }
 #endif
@@ -696,7 +696,7 @@ void TIM7_ISR(void)
 /* Virtual handler */
 void TIM8_UP_ISR(void)
 {
-  if (instances[7] != NULL)
+  if (instances[7] != nullptr)
     instances[7]->handler(instances[7]);
 }
 #endif
@@ -705,7 +705,7 @@ void TIM8_UP_ISR(void)
 /* Virtual handler */
 void TIM9_ISR(void)
 {
-  if (instances[8] != NULL)
+  if (instances[8] != nullptr)
     instances[8]->handler(instances[8]);
 }
 #endif
@@ -714,7 +714,7 @@ void TIM9_ISR(void)
 /* Virtual handler */
 void TIM10_ISR(void)
 {
-  if (instances[9] != NULL)
+  if (instances[9] != nullptr)
     instances[9]->handler(instances[9]);
 }
 #endif
@@ -723,7 +723,7 @@ void TIM10_ISR(void)
 /* Virtual handler */
 void TIM11_ISR(void)
 {
-  if (instances[10] != NULL)
+  if (instances[10] != nullptr)
     instances[10]->handler(instances[10]);
 }
 #endif
@@ -732,7 +732,7 @@ void TIM11_ISR(void)
 /* Virtual handler */
 void TIM12_ISR(void)
 {
-  if (instances[11] != NULL)
+  if (instances[11] != nullptr)
     instances[11]->handler(instances[11]);
 }
 #endif
@@ -741,7 +741,7 @@ void TIM12_ISR(void)
 /* Virtual handler */
 void TIM13_ISR(void)
 {
-  if (instances[12] != NULL)
+  if (instances[12] != nullptr)
     instances[12]->handler(instances[12]);
 }
 #endif
@@ -750,7 +750,7 @@ void TIM13_ISR(void)
 #ifdef CONFIG_PLATFORM_STM32_TIM14
 void TIM14_ISR(void)
 {
-  if (instances[13] != NULL)
+  if (instances[13] != nullptr)
     instances[13]->handler(instances[13]);
 }
 #endif
@@ -779,7 +779,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   const struct TimerBlockDescriptor * const entry =
       findDescriptor(config->channel);
 
-  assert(entry != NULL);
+  assert(entry != nullptr);
   if (!setInstance(config->channel, timer))
     return E_BUSY;
 
@@ -788,7 +788,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->channel = config->channel;
   timer->flags = entry->flags;
-  timer->handler = NULL;
+  timer->handler = nullptr;
   timer->irq = entry->irq;
   timer->reg = entry->reg;
 
@@ -803,6 +803,6 @@ static void tmrDeinit(void *object)
       findDescriptor(timer->channel);
 
   sysClockDisable(entry->clock);
-  instances[timer->channel] = NULL;
+  instances[timer->channel] = nullptr;
 }
 #endif

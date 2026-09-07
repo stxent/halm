@@ -171,7 +171,7 @@ const struct PinEntry spiPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SpiBase *instances[2] = {NULL};
+static struct SpiBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static const struct SpiBlockDescriptor *findDescriptor(uint8_t channel)
 {
@@ -181,14 +181,14 @@ static const struct SpiBlockDescriptor *findDescriptor(uint8_t channel)
       return &spiBlockEntries[index];
   }
 
-  return NULL;
+  return nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct SpiBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -223,7 +223,7 @@ uint32_t spiGetClock(const struct SpiBase *)
 /*----------------------------------------------------------------------------*/
 void *i2sMakeCircularDma(uint8_t, uint8_t, enum DmaPriority, enum DmaType)
 {
-  return NULL;
+  return nullptr;
 }
 /*----------------------------------------------------------------------------*/
 void *spiMakeCircularDma(uint8_t, uint8_t stream, enum DmaPriority priority,
@@ -261,7 +261,7 @@ static enum Result spiInit(void *object, const void *configBase)
   const struct SpiBlockDescriptor * const entry =
       findDescriptor(config->channel);
 
-  assert(entry != NULL);
+  assert(entry != nullptr);
   if (!setInstance(config->channel, interface))
     return E_BUSY;
 
@@ -274,7 +274,7 @@ static enum Result spiInit(void *object, const void *configBase)
   sysResetPulse(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -289,6 +289,6 @@ static void spiDeinit(void *object)
       findDescriptor(interface->channel);
 
   sysClockDisable(entry->clock);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

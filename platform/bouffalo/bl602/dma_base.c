@@ -22,7 +22,7 @@ static enum Result channelInit(void *, const void *);
 const struct EntityClass * const DmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = channelInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static const uint8_t dmaEventMap[] = {
@@ -38,7 +38,7 @@ static const uint8_t dmaEventMap[] = {
     [DMA_DAC]       = 23
 };
 /*----------------------------------------------------------------------------*/
-static struct DmaBase *instances[CHANNEL_COUNT] = {NULL};
+static struct DmaBase *instances[CHANNEL_COUNT] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void dmaControllerInit(void)
 {
@@ -90,7 +90,7 @@ uint32_t dmaBaseCalcControl(const struct DmaBase *,
 /*----------------------------------------------------------------------------*/
 void dmaResetInstance(uint8_t channel)
 {
-  instances[channel] = NULL;
+  instances[channel] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 bool dmaSetInstance(uint8_t channel, struct DmaBase *object)
@@ -100,7 +100,7 @@ bool dmaSetInstance(uint8_t channel, struct DmaBase *object)
   bool completed = false;
   const IrqState state = irqSave();
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     completed = true;
@@ -154,7 +154,7 @@ static enum Result channelInit(void *object, const void *configBase)
   struct DmaBase * const channel = object;
 
   channel->config = CONFIG_FLOWCTRL(config->type);
-  channel->handler = NULL;
+  channel->handler = nullptr;
   channel->number = config->channel;
   channel->reg = &BL_DMA->CHANNELS[channel->number];
 

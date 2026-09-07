@@ -144,14 +144,14 @@ static void pinInterruptHandler(void *object)
   /* Disable further DATA0 interrupts */
   interruptDisable(interface->finalizer);
   /* Disable data timeout timer */
-  if (interface->timer != NULL)
+  if (interface->timer != nullptr)
     timerDisable(interface->timer);
 
   if (interface->status == E_BUSY)
   {
     interface->status = E_OK;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -200,7 +200,7 @@ static void sdioInterruptHandler(void *object)
     {
       if (!pinRead(interface->data0))
       {
-        if (interface->timer != NULL)
+        if (interface->timer != nullptr)
         {
           timerSetValue(interface->timer, 0);
           timerEnable(interface->timer);
@@ -212,7 +212,7 @@ static void sdioInterruptHandler(void *object)
           interface->status = E_OK;
 
           interruptDisable(interface->finalizer);
-          if (interface->timer != NULL)
+          if (interface->timer != nullptr)
             timerDisable(interface->timer);
         }
         else
@@ -231,7 +231,7 @@ static void sdioInterruptHandler(void *object)
     /* Disable SDMMC interrupts */
     irqDisable(interface->base.irq);
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -247,7 +247,7 @@ static void timerInterruptHandler(void *argument)
   {
     interface->status = E_TIMEOUT;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -305,7 +305,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdmmcConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->rate);
 
   const struct DmaSdmmcConfig dmaConfig = {
@@ -335,7 +335,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   assert(pinValid(interface->data0));
 
   interface->finalizer = init(PinInt, &finalizerConfig);
-  if (interface->finalizer == NULL)
+  if (interface->finalizer == nullptr)
     return E_ERROR;
   interruptSetCallback(interface->finalizer, pinInterruptHandler, interface);
 
@@ -346,8 +346,8 @@ static enum Result sdioInit(void *object, const void *configBase)
   interface->base.handler = sdioInterruptHandler;
   interface->timer = config->timer;
   interface->argument = 0;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->command = 0;
   interface->status = E_OK;
 
@@ -379,10 +379,10 @@ static enum Result sdioInit(void *object, const void *configBase)
 
   /* Internal DMA controller should be initialized after interface setup */
   interface->dma = init(DmaSdmmc, &dmaConfig);
-  if (interface->dma == NULL)
+  if (interface->dma == nullptr)
     return E_ERROR;
 
-  if (interface->timer != NULL)
+  if (interface->timer != nullptr)
   {
     static const uint64_t timeout = BUSY_WRITE_DELAY * (1ULL << 32) / 1000;
     const uint32_t frequency = timerGetFrequency(interface->timer);
@@ -531,7 +531,7 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
   reg->BYTCNT = length;
-  dmaAppend(interface->dma, buffer, NULL, length);
+  dmaAppend(interface->dma, buffer, nullptr, length);
 
   const enum Result res = dmaEnable(interface->dma);
 
@@ -553,7 +553,7 @@ static size_t sdioWrite(void *object, const void *buffer, size_t length)
   LPC_SDMMC_Type * const reg = interface->base.reg;
 
   reg->BYTCNT = length;
-  dmaAppend(interface->dma, NULL, buffer, length);
+  dmaAppend(interface->dma, nullptr, buffer, length);
 
   const enum Result res = dmaEnable(interface->dma);
 

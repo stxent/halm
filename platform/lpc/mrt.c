@@ -38,7 +38,7 @@ const struct TimerClass * const Mrt = &(const struct TimerClass){
     .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
-    .setFrequency = NULL,
+    .setFrequency = nullptr,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
@@ -54,7 +54,7 @@ static void interruptHandler(void *object)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct MrtConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct MrtBaseConfig baseConfig = {
       .channel = config->channel
@@ -67,8 +67,8 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
   timer->interval = TIMER_RESOLUTION;
 
   LPC_MRT_Type * const reg = timer->base.reg;
@@ -131,7 +131,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callback = callback;
   timer->callbackArgument = argument;
 
-  if (timer->callback != NULL)
+  if (timer->callback != nullptr)
     reg->CHANNEL[timer->base.channel].CTRL |= CTRL_INTEN;
   else
     reg->CHANNEL[timer->base.channel].CTRL &= ~CTRL_INTEN;

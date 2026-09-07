@@ -35,8 +35,8 @@ const struct TimerClass * const GpTimerCounter = &(const struct TimerClass){
     .disable = tmrDisable,
     .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
-    .getFrequency = NULL,
-    .setFrequency = NULL,
+    .getFrequency = nullptr,
+    .setFrequency = nullptr,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
@@ -57,7 +57,7 @@ static void interruptHandler(void *object)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct GpTimerCounterConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->edge != INPUT_HIGH && config->edge != INPUT_LOW);
 
   const struct GpTimerBaseConfig baseConfig = {
@@ -91,8 +91,8 @@ static enum Result tmrInit(void *object, const void *configBase)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
   timer->event = (config->event ? config->event : GPTIMER_MATCH0) - 1;
 
   /* Initialize peripheral block */
@@ -185,7 +185,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  if (timer->callback != NULL)
+  if (timer->callback != nullptr)
   {
     reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
     reg->MCR |= mask;

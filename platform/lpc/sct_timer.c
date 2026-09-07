@@ -165,8 +165,8 @@ static enum Result genericTimerInit(void *object, uint8_t channel,
 
   timer->base.handler = interruptHandler;
   timer->base.mask = 1 << timer->event;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
 
   /* Disable the timer before any configuration is done */
   reg->CTRL_PART[part] = CTRL_HALT;
@@ -239,7 +239,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result tmrInit(void *object, const void *configBase)
 {
   const struct SctTimerConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->part != SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, config->part,
@@ -249,7 +249,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 static enum Result tmrInitCounter(void *object, const void *configBase)
 {
   const struct SctCounterConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->part != SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, config->part,
@@ -259,7 +259,7 @@ static enum Result tmrInitCounter(void *object, const void *configBase)
 static enum Result tmrInitUnified(void *object, const void *configBase)
 {
   const struct SctTimerConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->part == SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, SCT_UNIFIED,
@@ -269,7 +269,7 @@ static enum Result tmrInitUnified(void *object, const void *configBase)
 static enum Result tmrInitUnifiedCounter(void *object, const void *configBase)
 {
   const struct SctCounterConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->part == SCT_UNIFIED);
 
   return genericTimerInit(object, config->channel, SCT_UNIFIED,
@@ -355,7 +355,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callbackArgument = argument;
   timer->callback = callback;
 
-  if (timer->callback != NULL)
+  if (timer->callback != nullptr)
   {
     /* Clear pending requests */
     reg->EVFLAG = timer->base.mask;

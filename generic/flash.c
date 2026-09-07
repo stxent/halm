@@ -22,5 +22,5 @@ const struct FlashGeometry *flashFindRegion(const struct FlashGeometry *layout,
     ++layout;
   }
 
-  return NULL;
+  return nullptr;
 }

@@ -159,13 +159,13 @@ const struct PinEntry gpTimerMatchPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct GpTimerBase *instances[4] = {NULL};
+static struct GpTimerBase *instances[4] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -216,7 +216,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->channel = config->channel;
   timer->flags = GPTIMER_FLAG_32_BIT;
-  timer->handler = NULL;
+  timer->handler = nullptr;
   timer->irq = TIMER0_IRQ + config->channel;
   timer->reg = entry->reg;
 
@@ -229,6 +229,6 @@ static void tmrDeinit(void *object)
   const struct GpTimerBase * const timer = object;
 
   sysPowerDisable(timerBlockEntries[timer->channel].power);
-  instances[timer->channel] = NULL;
+  instances[timer->channel] = nullptr;
 }
 #endif

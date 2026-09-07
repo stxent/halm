@@ -284,7 +284,7 @@ static void executeDirectCommand(struct Spim *interface, uintptr_t buffer,
     }
   }
 
-  const bool invoke = !interface->blocking && interface->callback != NULL;
+  const bool invoke = !interface->blocking && interface->callback != nullptr;
 
   if (!interface->poll)
   {
@@ -575,7 +575,7 @@ static void spimInterruptHandler(void *object)
   else
 	  event = true;
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -584,7 +584,7 @@ static void timerInterruptHandler(void *object)
   struct Spim * const interface = object;
   const bool event = readPollResponse(interface);
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -637,8 +637,8 @@ static void writeDataDirect(struct Spim *interface, const void *buffer,
 static enum Result spimInit(void *object, const void *configBase)
 {
   const struct SpimConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->timer != NULL);
+  assert(config != nullptr);
+  assert(config->timer != nullptr);
   assert(config->delay <= CTL1_IDLETIME_MAX + 1);
   // TODO Additional requirements for cache mode and cipher mode
   assert(config->timeout <= DMMCTL_DESELTIM_MAX + 1);
@@ -660,8 +660,8 @@ static enum Result spimInit(void *object, const void *configBase)
     return res;
 
   interface->base.handler = spimInterruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->timer = config->timer;
   interface->status = STATUS_OK;
   interface->blocking = true;
@@ -717,7 +717,7 @@ static void spimDeinit(void *object)
   struct Spim * const interface = object;
 
   timerDisable(interface->timer);
-  timerSetCallback(interface->timer, NULL, NULL);
+  timerSetCallback(interface->timer, nullptr, nullptr);
 
   /* Disable interrupts */
   irqDisable(interface->base.irq);

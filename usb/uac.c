@@ -120,7 +120,7 @@ static void audioDataReceived(void *argument, struct UsbRequest *request,
     usbTrace("uac: suspended in read callback");
   }
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -173,12 +173,12 @@ static void *allocBufferMemory(size_t requestCount, size_t audioBufferCount,
   headerMemorySize += MEM_ALIGNMENT - 1;
   headerMemorySize -= headerMemorySize % MEM_ALIGNMENT;
 
-  if (padding != NULL)
+  if (padding != nullptr)
     *padding = headerMemorySize;
 
   return memalign(MEM_ALIGNMENT, headerMemorySize + dataMemorySize);
 #else
-  if (padding != NULL)
+  if (padding != nullptr)
     *padding = headerMemorySize;
 
   return malloc(headerMemorySize + dataMemorySize);
@@ -238,7 +238,7 @@ static bool parseSampleRates(struct Uac *interface, const uint32_t *rates)
     return false;
 
   interface->sampleRateArray = malloc(sizeof(uint32_t) * sampleRateCount);
-  if (interface->sampleRateArray == NULL)
+  if (interface->sampleRateArray == nullptr)
     return false;
   assert(sampleRateCount <= USHRT_MAX);
 
@@ -259,19 +259,19 @@ static bool resetEndpoints(struct Uac *interface)
   interface->suspended = true;
 
   /* Enable endpoints */
-  if (interface->fbDataEp != NULL)
+  if (interface->fbDataEp != nullptr)
   {
     usbEpClear(interface->fbDataEp);
     usbEpEnable(interface->fbDataEp, ENDPOINT_TYPE_ISOCHRONOUS,
         UAC_FEEDBACK_EP_SIZE);
   }
-  if (interface->txDataEp != NULL)
+  if (interface->txDataEp != nullptr)
   {
     usbEpClear(interface->txDataEp);
     usbEpEnable(interface->txDataEp, ENDPOINT_TYPE_ISOCHRONOUS, maxPacketSize);
   }
 
-  if (interface->rxDataEp != NULL)
+  if (interface->rxDataEp != nullptr)
   {
     usbEpClear(interface->rxDataEp);
     usbEpEnable(interface->rxDataEp, ENDPOINT_TYPE_ISOCHRONOUS, maxPacketSize);
@@ -355,9 +355,9 @@ static bool sendRateFeedback(struct Uac *interface)
 static enum Result interfaceInit(void *object, const void *configBase)
 {
   const struct UacConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->device != NULL);
-  assert(config->rates != NULL);
+  assert(config != nullptr);
+  assert(config->device != nullptr);
+  assert(config->rates != nullptr);
 
   struct Uac * const interface = object;
 
@@ -375,7 +375,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
       return E_MEMORY;
   }
   else
-    interface->fbDataEp = NULL;
+    interface->fbDataEp = nullptr;
 
   if (config->endpoints.rx)
   {
@@ -388,7 +388,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
       return E_MEMORY;
   }
   else
-    interface->rxDataEp = NULL;
+    interface->rxDataEp = nullptr;
 
   if (config->endpoints.tx)
   {
@@ -401,10 +401,10 @@ static enum Result interfaceInit(void *object, const void *configBase)
       return E_MEMORY;
   }
   else
-    interface->txDataEp = NULL;
+    interface->txDataEp = nullptr;
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->queuedRxBytes = 0;
   interface->queuedTxBytes = 0;
   interface->feedback = 1 << 16;
@@ -415,18 +415,18 @@ static enum Result interfaceInit(void *object, const void *configBase)
   const uint32_t maxSampleRate = getMaxSampleRate(interface);
   const size_t audioBufferSize = getMaxBufferSize(maxSampleRate);
   const size_t audioPacketSize = getBufferSize(maxSampleRate);
-  const size_t fbBuffers = interface->fbDataEp != NULL ? 1 : 0;
-  const size_t rxBuffers = interface->rxDataEp != NULL ?
+  const size_t fbBuffers = interface->fbDataEp != nullptr ? 1 : 0;
+  const size_t rxBuffers = interface->rxDataEp != nullptr ?
       config->rxBuffers : 0;
-  const size_t txBuffers = interface->txDataEp != NULL ?
+  const size_t txBuffers = interface->txDataEp != nullptr ?
       config->txBuffers : 0;
   uint8_t *arena;
 
   /* Allocate requests */
-  if (config->arena != NULL)
+  if (config->arena != nullptr)
   {
     interface->requests = allocBufferMemory(fbBuffers + rxBuffers + txBuffers,
-        0, 0, 0, NULL);
+        0, 0, 0, nullptr);
     if (!interface->requests)
       return E_MEMORY;
 
@@ -491,7 +491,7 @@ static enum Result interfaceInit(void *object, const void *configBase)
   };
 
   interface->driver = init(UacBase, &driverConfig);
-  return interface->driver != NULL ? E_OK : E_ERROR;
+  return interface->driver != nullptr ? E_OK : E_ERROR;
 }
 /*----------------------------------------------------------------------------*/
 static void interfaceDeinit(void *object)
@@ -502,11 +502,11 @@ static void interfaceDeinit(void *object)
   deinit(interface->driver);
 
   /* Return requests from endpoint queues to local pools */
-  if (interface->txDataEp != NULL)
+  if (interface->txDataEp != nullptr)
     usbEpClear(interface->txDataEp);
-  if (interface->rxDataEp != NULL)
+  if (interface->rxDataEp != nullptr)
     usbEpClear(interface->rxDataEp);
-  if (interface->fbDataEp != NULL)
+  if (interface->fbDataEp != nullptr)
     usbEpClear(interface->fbDataEp);
 
   assert(pointerArrayFull(&interface->fbRequestPool));
@@ -517,17 +517,17 @@ static void interfaceDeinit(void *object)
   free(interface->requests);
 
   /* Delete endpoints and request pools */
-  if (interface->txDataEp != NULL)
+  if (interface->txDataEp != nullptr)
   {
     deinit(interface->txDataEp);
     pointerArrayDeinit(&interface->txRequestPool);
   }
-  if (interface->rxDataEp != NULL)
+  if (interface->rxDataEp != nullptr)
   {
     deinit(interface->rxDataEp);
     pointerQueueDeinit(&interface->rxRequestQueue);
   }
-  if (interface->fbDataEp != NULL)
+  if (interface->fbDataEp != nullptr)
   {
     deinit(interface->fbDataEp);
     pointerArrayDeinit(&interface->fbRequestPool);
@@ -654,7 +654,7 @@ size_t interfaceRead(void *object, void *buffer, size_t length)
   assert(length >= getBufferSize(
       interface->sampleRateArray[interface->sampleRateIndex]));
 
-  if (interface->suspended || interface->rxDataEp == NULL)
+  if (interface->suspended || interface->rxDataEp == nullptr)
     return 0;
   if (!uacBaseIsRxActive(interface->driver))
     return 0;
@@ -694,7 +694,7 @@ size_t interfaceRead(void *object, void *buffer, size_t length)
   }
 
   /* Send rate feedback */
-  if (interface->fbDataEp != NULL)
+  if (interface->fbDataEp != nullptr)
     sendRateFeedback(interface);
 
   return bufferPosition - (uint8_t *)buffer;
@@ -706,7 +706,7 @@ size_t interfaceWrite(void *object, const void *buffer, size_t length)
   const uint8_t *bufferPosition = buffer;
   const size_t maxPacketSize = uacBaseGetPacketSize(interface->driver);
 
-  if (interface->suspended || interface->txDataEp == NULL)
+  if (interface->suspended || interface->txDataEp == nullptr)
     return 0;
   if (!uacBaseIsTxActive(interface->driver))
     return 0;
@@ -782,7 +782,7 @@ void uacOnEvent(struct Uac *interface, unsigned int event)
       break;
   }
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -806,7 +806,7 @@ bool uacOnSampleRateSet(struct Uac *interface, uint32_t rate)
       interface->events.rate = true;
       interface->sampleRateIndex = index;
 
-      if (interface->callback != NULL)
+      if (interface->callback != nullptr)
         interface->callback(interface->callbackArgument);
       return true;
     }

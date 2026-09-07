@@ -25,7 +25,7 @@ typedef void (*func_t)(void);
 /*----------------------------------------------------------------------------*/
 void coreShutdown(void)
 {
-  if (&__fini_array_start != NULL)
+  if (&__fini_array_start != nullptr)
   {
     func_t *func;
 
@@ -56,7 +56,7 @@ void coreStartup(void)
   for (dst = &_sbss; dst < &_ebss;)
     *dst++ = 0;
 
-  if (&__init_array_start != NULL)
+  if (&__init_array_start != nullptr)
   {
     func_t *func;
 

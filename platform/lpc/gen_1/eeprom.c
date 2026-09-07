@@ -17,9 +17,9 @@ static size_t eepromWrite(void *, const void *, size_t);
 const struct InterfaceClass * const Eeprom = &(const struct InterfaceClass){
     .size = sizeof(struct Eeprom),
     .init = eepromInit,
-    .deinit = NULL, /* Default destructor */
+    .deinit = nullptr, /* Default destructor */
 
-    .setCallback = NULL,
+    .setCallback = nullptr,
     .getParam = eepromGetParam,
     .setParam = eepromSetParam,
     .read = eepromRead,
@@ -29,7 +29,7 @@ const struct InterfaceClass * const Eeprom = &(const struct InterfaceClass){
 static enum Result eepromInit(void *object, const void *)
 {
   struct Eeprom * const interface = object;
-  const enum Result res = EepromBase->init(interface, NULL);
+  const enum Result res = EepromBase->init(interface, nullptr);
 
   if (res == E_OK)
     interface->position = 0;

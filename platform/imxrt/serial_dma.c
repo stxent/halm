@@ -138,13 +138,13 @@ static bool dmaSetup(struct SerialDma *interface, uint8_t rxChannel,
   };
 
   interface->rxDma = init(EdmaCircular, &rxDmaConfig);
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
   dmaConfigure(interface->rxDma, &dmaSettings[0]);
   dmaSetCallback(interface->rxDma, rxDmaHandler, interface);
 
   interface->txDma = init(EdmaOneShot, &txDmaConfig);
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
   dmaConfigure(interface->txDma, &dmaSettings[1]);
   dmaSetCallback(interface->txDma, txDmaHandler, interface);
@@ -253,7 +253,7 @@ static void rxDmaHandler(void *object)
 
   interface->rxPosition = index == 1 ? (interface->rxBufferSize >> 1) : 0;
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -268,7 +268,7 @@ static void serialInterruptHandler(void *object)
   /* Handle reception timeout */
   const bool event = readResidue(interface);
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -286,7 +286,7 @@ static void txDmaHandler(void *object)
   else
     event = true;
 
-  if (event && interface->callback != NULL)
+  if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -326,7 +326,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result serialInit(void *object, const void *configBase)
 {
   const struct SerialDmaConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->dma[0] != config->dma[1]);
   assert(config->rxChunk > 0 && config->rxLength > 0 && config->txLength > 0);
   assert(config->rxChunk % MEM_ALIGNMENT == 0);
@@ -345,7 +345,7 @@ static enum Result serialInit(void *object, const void *configBase)
   if ((res = LpUartBase->init(interface, &baseConfig)) != E_OK)
     return res;
 
-  if (config->arena != NULL)
+  if (config->arena != nullptr)
   {
     uint8_t * const arena = config->arena;
 
@@ -372,12 +372,12 @@ static enum Result serialInit(void *object, const void *configBase)
 
   /* Allocate aligned memory chunk for a circular input buffer */
   interface->rxBuffer = memalign(MEM_ALIGNMENT, config->rxChunk);
-  if (interface->rxBuffer == NULL)
+  if (interface->rxBuffer == nullptr)
     return E_MEMORY;
 
   interface->base.handler = serialInterruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rxBufferSize = config->rxChunk;
   interface->txBufferSize = 0;
 

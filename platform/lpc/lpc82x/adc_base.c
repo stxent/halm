@@ -89,7 +89,7 @@ const struct PinEntry adcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct AdcBase *instances[2] = {NULL};
+static struct AdcBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 void ADC_SEQA_ISR(void)
 {
@@ -123,24 +123,24 @@ void adcBaseHandler0B(void)
 /*----------------------------------------------------------------------------*/
 void adcBaseOverrunHandler0(void)
 {
-  if (instances[0] != NULL && instances[0]->handler != NULL)
+  if (instances[0] != nullptr && instances[0]->handler != nullptr)
     instances[0]->handler(instances[0]);
-  if (instances[1] != NULL && instances[1]->handler != NULL)
+  if (instances[1] != nullptr && instances[1]->handler != nullptr)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 void adcBaseThresholdHandler0(void)
 {
-  if (instances[0] != NULL && instances[0]->handler != NULL)
+  if (instances[0] != nullptr && instances[0]->handler != nullptr)
     instances[0]->handler(instances[0]);
-  if (instances[1] != NULL && instances[1]->handler != NULL)
+  if (instances[1] != nullptr && instances[1]->handler != nullptr)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
 struct AdcPin adcConfigPin(const struct AdcBase *, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(adcPins, key, 0);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   /* Enable fixed pin function */
   const struct Pin pin = pinInit(key);
@@ -176,13 +176,13 @@ bool adcSetInstance(enum AdcSequence sequence, struct AdcBase *expected,
   if (compareExchangePointer(&instances[sequence], &expected, interface))
   {
     /* All sequence instances should have the same global configuration */
-    assert(interface == NULL
-        || instances[!(sequence & 1)] == NULL
+    assert(interface == nullptr
+        || instances[!(sequence & 1)] == nullptr
         || instances[!(sequence & 1)]->control == interface->control);
 
-    if (interface != NULL)
+    if (interface != nullptr)
       LPC_ADC->CTRL = interface->control;
-    else if (instances[!(sequence & 1)] == NULL)
+    else if (instances[!(sequence & 1)] == nullptr)
       LPC_ADC->CTRL = CTRL_CLKDIV(CTRL_CLKDIV_MAX) | CTRL_LPWRMODE;
     return true;
   }
@@ -220,11 +220,11 @@ static enum Result adcInit(void *object, const void *configBase)
     LPC_ADC->CTRL = CTRL_CLKDIV(CTRL_CLKDIV_MAX) | CTRL_LPWRMODE;
   }
 
-  if (!config->shared && !adcSetInstance(config->sequence, NULL, interface))
+  if (!config->shared && !adcSetInstance(config->sequence, nullptr, interface))
     return E_BUSY;
 
   interface->sequence = config->sequence;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq.ovr = ADC_OVR_IRQ;
   interface->irq.seq = config->sequence == ADC0_SEQA ?
       ADC_SEQA_IRQ : ADC_SEQB_IRQ;
@@ -238,6 +238,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct AdcBase * const interface = object;
-  adcSetInstance(interface->sequence, interface, NULL);
+  adcSetInstance(interface->sequence, interface, nullptr);
 }
 #endif

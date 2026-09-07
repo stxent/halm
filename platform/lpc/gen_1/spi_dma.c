@@ -29,7 +29,7 @@ static void powerStateHandler(void *, enum PmState);
 static void interruptHandler(void *);
 static size_t transferData(struct SpiDma *, const uint8_t *, size_t);
 #else
-#define interruptHandler NULL
+#define interruptHandler nullptr
 #endif
 /*----------------------------------------------------------------------------*/
 static enum Result spiInit(void *, const void *);
@@ -61,7 +61,7 @@ static void dmaHandler(void *object)
 {
   struct SpiDma * const interface = object;
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
   {
     if (interface->invoked)
       interface->callback(interface->callbackArgument);
@@ -108,11 +108,11 @@ static bool dmaSetup(struct SpiDma *interface, uint8_t rxChannel,
 #endif
 
   interface->rxDma = init(dmaClassDescriptor, &dmaConfigs[0]);
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
 
   interface->txDma = init(dmaClassDescriptor, &dmaConfigs[1]);
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
 
   return true;
@@ -236,7 +236,7 @@ static void interruptHandler(void *object)
   /* Handle reception */
   size_t received = 0;
 
-  if (interface->sink != NULL)
+  if (interface->sink != nullptr)
   {
     while (reg->SR & SR_RNE)
     {
@@ -270,9 +270,9 @@ static void interruptHandler(void *object)
     irqClearPending(interface->base.irq);
 
     /* Reset the pointer to an input buffer */
-    interface->sink = NULL;
+    interface->sink = nullptr;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -302,7 +302,7 @@ static size_t transferData(struct SpiDma *interface, const uint8_t *source,
   /* Clear interrupt flags */
   reg->ICR = ICR_RORIC | ICR_RTIC;
 
-  if (source != NULL)
+  if (source != nullptr)
   {
     while (length--)
       reg->DR = *source++;
@@ -337,7 +337,7 @@ static size_t transferDataDma(struct SpiDma *interface, const void *source,
   reg->DMACR = DMACR_RXDMAE | DMACR_TXDMAE;
 
   interface->invoked = false;
-  interface->sink = NULL;
+  interface->sink = nullptr;
 
 #if CONFIG_PLATFORM_LPC_SPI_DMA_CHAIN > 1
   size_t pending = length;
@@ -384,7 +384,7 @@ static size_t transferDataDma(struct SpiDma *interface, const void *source,
 static enum Result spiInit(void *object, const void *configBase)
 {
   const struct SpiDmaConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->dma[0] != config->dma[1]);
 
   const struct SspBaseConfig baseConfig = {
@@ -410,10 +410,10 @@ static enum Result spiInit(void *object, const void *configBase)
     return E_ERROR;
 
   interface->base.handler = interruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->rate = config->rate;
-  interface->sink = NULL;
+  interface->sink = nullptr;
   interface->blocking = true;
   interface->unidir = true;
 
@@ -544,8 +544,8 @@ static enum Result spiSetParam(void *object, int parameter, const void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_BLOCKING:
-      dmaSetCallback(interface->rxDma, NULL, NULL);
-      dmaSetCallback(interface->txDma, NULL, NULL);
+      dmaSetCallback(interface->rxDma, nullptr, nullptr);
+      dmaSetCallback(interface->txDma, nullptr, nullptr);
       interface->blocking = true;
       return E_OK;
 
@@ -588,7 +588,7 @@ static size_t spiRead(void *object, void *buffer, size_t length)
     if (length <= CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD)
     {
       interface->sink = buffer;
-      return transferData(interface, NULL, length);
+      return transferData(interface, nullptr, length);
     }
 #endif
 
@@ -610,7 +610,7 @@ static size_t spiWrite(void *object, const void *buffer, size_t length)
 
   struct SpiDma * const interface = object;
 
-  if (interface->sink == NULL)
+  if (interface->sink == nullptr)
   {
 #if CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD > 0
     if (length <= CONFIG_PLATFORM_LPC_SPI_DMA_THRESHOLD)

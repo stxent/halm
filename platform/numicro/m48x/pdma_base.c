@@ -20,18 +20,18 @@ static enum Result channelInit(void *, const void *);
 const struct EntityClass * const PdmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = channelInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 extern unsigned long _sbss;
 /*----------------------------------------------------------------------------*/
-static struct PdmaBase *instances[CHANNEL_COUNT] = {NULL};
+static struct PdmaBase *instances[CHANNEL_COUNT] = {nullptr};
 /*----------------------------------------------------------------------------*/
 bool pdmaBindInstance(struct PdmaBase *channel)
 {
-  assert(channel != NULL);
+  assert(channel != nullptr);
 
-  void *expected = NULL;
+  void *expected = nullptr;
 
   return compareExchangePointer(&instances[channel->number],
       &expected, channel);
@@ -39,8 +39,8 @@ bool pdmaBindInstance(struct PdmaBase *channel)
 /*----------------------------------------------------------------------------*/
 void pdmaUnbindInstance(struct PdmaBase *channel)
 {
-  assert(channel != NULL);
-  instances[channel->number] = NULL;
+  assert(channel != nullptr);
+  instances[channel->number] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 void pdmaResetChannel(struct PdmaBase *channel)
@@ -147,7 +147,7 @@ static enum Result channelInit(void *object, const void *configBase)
   const uint32_t offset = config->channel & 0x3;
 
   channel->reg = NM_PDMA;
-  channel->handler = NULL;
+  channel->handler = nullptr;
   channel->control = 0;
   channel->controller = 0;
   channel->number = config->channel;

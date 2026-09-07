@@ -20,7 +20,7 @@ static enum Result flashInit(void *, const void *);
 const struct EntityClass * const FlashBase = &(const struct EntityClass){
     .size = sizeof(struct FlashBase),
     .init = flashInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static inline void lockFlash(unsigned int bank)

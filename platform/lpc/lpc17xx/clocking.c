@@ -171,7 +171,7 @@ static void extOscDisable(const void *)
 static enum Result extOscEnable(const void *, const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->frequency >= 1000000 && config->frequency <= 25000000);
 
   uint32_t buffer = LPC_SC->SCS | SCS_OSCEN;
@@ -220,7 +220,7 @@ static void sysPllDisable(const void *)
 static enum Result sysPllEnable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (!config->multiplier || !config->divisor)
     return E_VALUE;
@@ -324,7 +324,7 @@ static void usbPllDisable(const void *)
 static enum Result usbPllEnable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (!config->multiplier || !config->divisor)
     return E_VALUE;
@@ -381,13 +381,13 @@ static void clockOutputDisable(const void *)
 static enum Result clockOutputEnable(const void *, const void *configBase)
 {
   const struct ClockOutputConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->divisor >= 1 && config->divisor <= 16);
   assert(config->source != CLOCK_PLL);
 
   const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
       config->pin, 0);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(config->pin);
 
@@ -438,11 +438,11 @@ static uint32_t clockOutputFrequency(const void *)
   switch (CLKOUTCFG_SEL_VALUE(LPC_SC->CLKOUTCFG))
   {
     case CLKOUTCFG_CPU:
-      frequency = mainClockFrequency(NULL);
+      frequency = mainClockFrequency(nullptr);
       break;
 
     case CLKOUTCFG_MAIN:
-      frequency = extOscFrequency(NULL);
+      frequency = extOscFrequency(nullptr);
       break;
 
     case CLKOUTCFG_IRC:
@@ -450,7 +450,7 @@ static uint32_t clockOutputFrequency(const void *)
       break;
 
     case CLKOUTCFG_USB:
-      frequency = usbClockFrequency(NULL);
+      frequency = usbClockFrequency(nullptr);
       break;
 
     case CLKOUTCFG_RTC:
@@ -472,7 +472,7 @@ static bool clockOutputReady(const void *)
 static enum Result mainClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   flashLatencyReset();
 
@@ -522,7 +522,7 @@ static enum Result mainClockEnable(const void *, const void *configBase)
     while ((LPC_SC->PLL0STAT & mask) != mask);
   }
 
-  const uint32_t frequency = mainClockFrequency(NULL);
+  const uint32_t frequency = mainClockFrequency(nullptr);
 
   flashLatencyUpdate(frequency);
   ticksPerSecond = TICK_RATE(frequency);
@@ -558,7 +558,7 @@ static uint32_t mainClockFrequency(const void *)
 static enum Result usbClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->source == CLOCK_PLL || config->source == CLOCK_USB_PLL);
 
   switch (config->source)

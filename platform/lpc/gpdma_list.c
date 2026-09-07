@@ -102,7 +102,7 @@ static void interruptHandler(void *object, enum Result res)
     event = true;
   }
 
-  if (event && channel->callback != NULL)
+  if (event && channel->callback != nullptr)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -123,7 +123,7 @@ static void startTransfer(struct GpDmaList *channel,
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpDmaListConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->number > 0);
 
   const struct GpDmaBaseConfig baseConfig = {
@@ -139,13 +139,13 @@ static enum Result channelInit(void *object, const void *configBase)
     return res;
 
   channel->list = memalign(4, sizeof(struct GpDmaEntry) * config->number);
-  if (channel->list == NULL)
+  if (channel->list == nullptr)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = NULL;
-  channel->callbackArgument = NULL;
+  channel->callback = nullptr;
+  channel->callbackArgument = nullptr;
   channel->capacity = config->number;
   channel->index = 0;
   channel->queued = 0;
@@ -161,7 +161,7 @@ static void channelDeinit(void *object)
 
   free(channel->list);
 
-  if (GpDmaBase->deinit != NULL)
+  if (GpDmaBase->deinit != nullptr)
     GpDmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
@@ -278,7 +278,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   const uint32_t control = channel->control;
   const uint32_t transfers = size >> CONTROL_DST_WIDTH_VALUE(control);
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!((uintptr_t)destination % (1 << CONTROL_DST_WIDTH_VALUE(control))));
   assert(!(size % (1 << CONTROL_DST_WIDTH_VALUE(control))));
   assert(!((uintptr_t)source % (1 << CONTROL_SRC_WIDTH_VALUE(control))));
@@ -293,7 +293,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   }
 
   struct GpDmaEntry * const entry = channel->list + channel->index;
-  struct GpDmaEntry *previous = NULL;
+  struct GpDmaEntry *previous = nullptr;
 
   if (channel->queued)
   {
@@ -310,7 +310,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   entry->control = control | CONTROL_SIZE(transfers);
   entry->next = 0;
 
-  if (previous != NULL)
+  if (previous != nullptr)
   {
     /* Link previous element with the new one */
     previous->next = (uintptr_t)entry;

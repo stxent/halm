@@ -146,7 +146,7 @@ const struct PinGroupEntry adcPinGroups[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct AdcBase *instances[3] = {NULL};
+static struct AdcBase *instances[3] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static const struct AdcBlockDescriptor *findDescriptor(uint8_t channel)
 {
@@ -156,7 +156,7 @@ static const struct AdcBlockDescriptor *findDescriptor(uint8_t channel)
       return &adcBlockEntries[index];
   }
 
-  return NULL;
+  return nullptr;
 }
 /*----------------------------------------------------------------------------*/
 #if defined(CONFIG_PLATFORM_STM32_ADC1) || defined(CONFIG_PLATFORM_STM32_ADC2)
@@ -251,8 +251,8 @@ static enum Result adcInit(void *object, const void *configBase)
   const struct AdcBlockDescriptor * const entry =
       findDescriptor(config->channel);
 
-  assert(entry != NULL);
-  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
+  assert(entry != nullptr);
+  if (!config->shared && !adcSetInstance(config->channel, nullptr, interface))
     return E_BUSY;
 
   if (!sysClockStatus(entry->clock))
@@ -262,7 +262,7 @@ static enum Result adcInit(void *object, const void *configBase)
   }
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->reg = entry->reg;
 
   if (!irqStatus(entry->irq))
@@ -279,6 +279,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct AdcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, NULL);
+  adcSetInstance(interface->channel, interface, nullptr);
 }
 #endif

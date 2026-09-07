@@ -85,7 +85,7 @@ static bool dmaSetup(struct Sdio *interface, enum DmaPriority priority,
       priority,
       DMA_TYPE_P2M
   );
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
   dmaConfigure(interface->rxDma, &rxDmaSettings);
   dmaSetCallback(interface->rxDma, dmaInterruptHandler, interface);
@@ -95,7 +95,7 @@ static bool dmaSetup(struct Sdio *interface, enum DmaPriority priority,
       priority,
       DMA_TYPE_M2P
   );
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
   dmaConfigure(interface->txDma, &txDmaSettings);
   dmaSetCallback(interface->txDma, dmaInterruptHandler, interface);
@@ -196,7 +196,7 @@ static void dmaInterruptHandler(void *object)
     /* Wait for high level on DATA0 */
     if (!pinRead(interface->data0))
     {
-      if (interface->timer != NULL)
+      if (interface->timer != nullptr)
       {
         timerSetValue(interface->timer, 0);
         timerEnable(interface->timer);
@@ -208,7 +208,7 @@ static void dmaInterruptHandler(void *object)
         interface->cmdStatus = interface->dmaStatus;
 
         interruptDisable(interface->finalizer);
-        if (interface->timer != NULL)
+        if (interface->timer != nullptr)
           timerDisable(interface->timer);
       }
     }
@@ -216,7 +216,7 @@ static void dmaInterruptHandler(void *object)
       interface->cmdStatus = interface->dmaStatus;
   }
 
-  if (interface->cmdStatus != E_BUSY && interface->callback != NULL)
+  if (interface->cmdStatus != E_BUSY && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -227,14 +227,14 @@ static void pinInterruptHandler(void *object)
   /* Disable further DATA0 interrupts */
   interruptDisable(interface->finalizer);
   /* Disable data timeout timer */
-  if (interface->timer != NULL)
+  if (interface->timer != nullptr)
     timerDisable(interface->timer);
 
   if (interface->cmdStatus == E_BUSY)
   {
     interface->cmdStatus = interface->dmaStatus;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -334,7 +334,7 @@ static void sdioInterruptHandler(void *object)
       /* Wait for high level on DAT0 after a completed command */
       if (!pinRead(interface->data0))
       {
-        if (interface->timer != NULL)
+        if (interface->timer != nullptr)
         {
           timerSetValue(interface->timer, 0);
           timerEnable(interface->timer);
@@ -346,7 +346,7 @@ static void sdioInterruptHandler(void *object)
           interface->cmdStatus = interface->dmaStatus;
 
           interruptDisable(interface->finalizer);
-          if (interface->timer != NULL)
+          if (interface->timer != nullptr)
             timerDisable(interface->timer);
         }
       }
@@ -360,7 +360,7 @@ static void sdioInterruptHandler(void *object)
     /* Disable SDIO interrupts */
     reg->MASK = 0;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -376,7 +376,7 @@ static void timerInterruptHandler(void *argument)
   {
     interface->cmdStatus = E_TIMEOUT;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
 }
@@ -422,7 +422,7 @@ static void powerStateHandler(void *object, enum PmState state)
 static enum Result sdioInit(void *object, const void *configBase)
 {
   const struct SdioConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->rate);
 
   const struct ExtiConfig finalizerConfig = {
@@ -447,7 +447,7 @@ static enum Result sdioInit(void *object, const void *configBase)
   assert(pinValid(interface->data0));
 
   interface->finalizer = init(Exti, &finalizerConfig);
-  if (interface->finalizer == NULL)
+  if (interface->finalizer == nullptr)
     return E_ERROR;
   interruptSetCallback(interface->finalizer, pinInterruptHandler, interface);
 
@@ -461,8 +461,8 @@ static enum Result sdioInit(void *object, const void *configBase)
   interface->base.handler = sdioInterruptHandler;
   interface->timer = config->timer;
   interface->argument = 0;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->command = 0;
   interface->count = 0;
   interface->cmdStatus = E_OK;
@@ -506,7 +506,7 @@ static enum Result sdioInit(void *object, const void *configBase)
     return res;
 #endif
 
-  if (interface->timer != NULL)
+  if (interface->timer != nullptr)
   {
     static const uint64_t timeout = BUSY_WRITE_DELAY * (1ULL << 32) / 1000;
     const uint32_t frequency = timerGetFrequency(interface->timer);

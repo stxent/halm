@@ -22,7 +22,7 @@ void i2cConfigPins(struct I2CBase *interface)
 
   /* Configure I2C serial clock pin */
   pinEntry = pinFind(i2cPins, interface->scl, interface->channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   pin = pinInit(interface->scl);
   pinOutput(pin, true);
@@ -31,7 +31,7 @@ void i2cConfigPins(struct I2CBase *interface)
 
   /* Configure I2C serial data pin */
   pinEntry = pinFind(i2cPins, interface->sda, interface->channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   pin = pinInit(interface->sda);
   pinOutput(pin, true);

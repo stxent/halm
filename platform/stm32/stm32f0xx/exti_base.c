@@ -35,7 +35,7 @@ const struct EntityClass * const ExtiBase = &(const struct EntityClass){
     .deinit = extiDeinit
 };
 /*----------------------------------------------------------------------------*/
-static struct ExtiBase *instances[32] = {NULL};
+static struct ExtiBase *instances[32] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void enableInterrupt(enum ExtiEvent event, IrqPriority priority)
 {
@@ -96,7 +96,7 @@ static IrqNumber eventToIrq(enum ExtiEvent event)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct ExtiBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -130,7 +130,7 @@ static bool isEventGroupUsed(enum ExtiEvent event)
   else if (event >= EXTI_PIN4 && event <= EXTI_PIN15)
     return isGroupUsed(EXTI_PIN4, EXTI_PIN15);
   else
-    return instances[event] != NULL;
+    return instances[event] != nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -193,7 +193,7 @@ static enum Result extiInit(void *object, const void *configBase)
     return E_BUSY;
 
   interrupt->channel = config->channel;
-  interrupt->handler = NULL;
+  interrupt->handler = nullptr;
 
   if (!sysClockStatus(CLK_SYSCFG))
   {
@@ -226,7 +226,7 @@ static void extiDeinit(void *object)
 {
   const struct ExtiBase * const interrupt = object;
 
-  instances[interrupt->channel] = NULL;
+  instances[interrupt->channel] = nullptr;
   disableInterrupt(interrupt->channel);
 }
 #endif

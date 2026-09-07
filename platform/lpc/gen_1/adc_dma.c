@@ -38,14 +38,14 @@ const struct InterfaceClass * const AdcDma = &(const struct InterfaceClass){
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = NULL
+    .write = nullptr
 };
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {
   struct AdcDma * const interface = object;
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -75,7 +75,7 @@ static bool dmaSetup(struct AdcDma *interface,
 
   interface->dma = init(GpDmaCircular, &dmaConfig);
 
-  if (interface->dma != NULL)
+  if (interface->dma != nullptr)
   {
     dmaConfigure(interface->dma, &dmaSettings);
     dmaSetCallback(interface->dma, dmaHandler, interface);
@@ -136,8 +136,8 @@ static void stopConversion(struct AdcDma *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->pins != NULL && *config->pins);
+  assert(config != nullptr);
+  assert(config->pins != nullptr && *config->pins);
   assert(config->event < ADC_EVENT_END && config->event != ADC_SOFTWARE);
 
   const struct AdcBaseConfig baseConfig = {
@@ -162,12 +162,12 @@ static enum Result adcInit(void *object, const void *configBase)
 
   interface->buffer =
       malloc((sizeof(uint16_t) + sizeof(struct AdcPin)) * count);
-  if (interface->buffer == NULL)
+  if (interface->buffer == nullptr)
     return E_MEMORY;
   interface->pins = (struct AdcPin *)(interface->buffer + count);
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->count = (uint8_t)count;
 
   if (config->event == ADC_BURST)
@@ -244,11 +244,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL,
+      return adcSetInstance(interface->base.channel, nullptr,
           &interface->base) ? E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, &interface->base, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, nullptr);
       return E_OK;
 #endif
 

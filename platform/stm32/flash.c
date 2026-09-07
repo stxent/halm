@@ -20,9 +20,9 @@ static size_t flashWrite(void *, const void *, size_t);
 const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .size = sizeof(struct Flash),
     .init = flashInit,
-    .deinit = NULL, /* Default destructor */
+    .deinit = nullptr, /* Default destructor */
 
-    .setCallback = NULL,
+    .setCallback = nullptr,
     .getParam = flashGetParam,
     .setParam = flashSetParam,
     .read = flashRead,
@@ -51,8 +51,8 @@ static enum Result flashInit(void *object, const void *configBase)
   struct Flash * const interface = object;
 
   const struct FlashBaseConfig baseConfig = {
-      .bank = config != NULL ? config->bank : FLASH_BANK_1,
-      .voltage = config != NULL ? config->voltage : VR_DEFAULT
+      .bank = config != nullptr ? config->bank : FLASH_BANK_1,
+      .voltage = config != nullptr ? config->voltage : VR_DEFAULT
   };
   const enum Result res = FlashBase->init(interface, &baseConfig);
 

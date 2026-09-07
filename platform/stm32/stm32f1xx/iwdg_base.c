@@ -16,14 +16,14 @@ static enum Result wdtInit(void *, const void *);
 const struct EntityClass * const IwdgBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = wdtInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static struct IwdgBase *instance = NULL;
+static struct IwdgBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct IwdgBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;

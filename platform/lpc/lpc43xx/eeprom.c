@@ -39,7 +39,7 @@ const struct InterfaceClass * const Eeprom = &(const struct InterfaceClass){
     .write = eepromWrite
 };
 /*----------------------------------------------------------------------------*/
-static struct Eeprom *instance = NULL;
+static struct Eeprom *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static size_t calcChunkLength(uint32_t address, size_t left)
 {
@@ -74,7 +74,7 @@ static void programNextChunk(struct Eeprom *interface)
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct Eeprom *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -112,7 +112,7 @@ static enum Result eepromInit(void *object, const void *configBase)
   if (!setInstance(interface))
     return E_BUSY;
 
-  const enum Result res = EepromBase->init(interface, NULL);
+  const enum Result res = EepromBase->init(interface, nullptr);
   if (res != E_OK)
     return res;
 
@@ -144,7 +144,7 @@ static enum Result eepromInit(void *object, const void *configBase)
   LPC_EEPROM->INTSTATCLR = INT_PROG_DONE;
   LPC_EEPROM->INTENSET = INT_PROG_DONE;
 
-  if (config != NULL)
+  if (config != nullptr)
     irqSetPriority(EEPROM_IRQ, config->priority);
   irqEnable(EEPROM_IRQ);
 
@@ -154,7 +154,7 @@ static enum Result eepromInit(void *object, const void *configBase)
 static void eepromDeinit(void *object)
 {
   irqDisable(EEPROM_IRQ);
-  instance = NULL;
+  instance = nullptr;
 
   EepromBase->deinit(object);
 }

@@ -123,11 +123,11 @@ const struct PinEntry spiPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SpiBase *instance = NULL;
+static struct SpiBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SpiBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -164,7 +164,7 @@ static enum Result spiInit(void *object, const void *configBase)
   sysResetBlock(RST_SPI0);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = SPI0_IRQ;
   interface->reg = NM_SPI0;
 
@@ -175,6 +175,6 @@ static enum Result spiInit(void *object, const void *configBase)
 static void spiDeinit(void *)
 {
   sysClockDisable(CLK_SPI0);
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

@@ -490,7 +490,7 @@ const struct PinEntry spiPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SpiBase *instances[4] = {NULL};
+static struct SpiBase *instances[4] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static uint8_t channelToIndex(uint8_t channel)
 {
@@ -524,7 +524,7 @@ static bool setInstance(uint8_t channel, struct SpiBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -563,7 +563,7 @@ void SPI3_ISR(void)
 /*----------------------------------------------------------------------------*/
 uint32_t spiGetClock(const struct SpiBase *interface)
 {
-  const void *clock = NULL;
+  const void *clock = nullptr;
 
   switch (interface->channel)
   {
@@ -616,7 +616,7 @@ static enum Result spiInit(void *object, const void *configBase)
   sysResetBlock(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = entry->irq;
   interface->reg = entry->reg;
 
@@ -631,6 +631,6 @@ static void spiDeinit(void *object)
       &spiBlockEntries[channelToIndex(interface->channel)];
 
   sysClockDisable(entry->branch);
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

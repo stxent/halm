@@ -202,7 +202,7 @@ const struct PinEntry eadcPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct EadcBase *instances[2] = {NULL};
+static struct EadcBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_NUMICRO_EADC0
 void EADC0_P0_ISR(void)
@@ -279,10 +279,10 @@ static enum Result adcInit(void *object, const void *configBase)
 
   struct EadcBase * const interface = object;
 
-  if (!config->shared && !adcSetInstance(config->channel, NULL, interface))
+  if (!config->shared && !adcSetInstance(config->channel, nullptr, interface))
     return E_BUSY;
 
-  NM_EADC_Type *reg = NULL;
+  NM_EADC_Type *reg = nullptr;
   uint32_t frequency = 0;
   enum SysClockBranch clock;
   enum SysBlockReset reset;
@@ -364,7 +364,7 @@ static enum Result adcInit(void *object, const void *configBase)
 
   interface->channel = config->channel;
   interface->control = control;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->reg = reg;
 
   return E_OK;
@@ -374,6 +374,6 @@ static enum Result adcInit(void *object, const void *configBase)
 static void adcDeinit(void *object)
 {
   struct EadcBase * const interface = object;
-  adcSetInstance(interface->channel, interface, NULL);
+  adcSetInstance(interface->channel, interface, nullptr);
 }
 #endif

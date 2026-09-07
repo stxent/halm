@@ -58,11 +58,11 @@ const struct InterfaceClass * const AdcDmaStream =
     .init = adcInit,
     .deinit = adcDeinit,
 
-    .setCallback = NULL,
+    .setCallback = nullptr,
     .getParam = adcGetParam,
     .setParam = adcSetParam,
-    .read = NULL,
-    .write = NULL
+    .read = nullptr,
+    .write = nullptr
 };
 
 const struct StreamClass * const AdcDmaStreamHandler =
@@ -158,7 +158,7 @@ static bool setupInnerChannel(struct AdcDmaStream *interface,
 
   interface->inner = init(GpDmaCircular, &dmaConfig);
 
-  if (interface->inner != NULL)
+  if (interface->inner != nullptr)
   {
     dmaConfigure(interface->inner, &dmaSettings);
     return true;
@@ -191,7 +191,7 @@ static bool setupOuterChannel(struct AdcDmaStream *interface,
 
   interface->outer = init(GpDmaList, &dmaConfig);
 
-  if (interface->outer != NULL)
+  if (interface->outer != nullptr)
   {
     dmaConfigure(interface->outer, &dmaSettings);
     dmaSetCallback(interface->outer, dmaHandler, interface);
@@ -204,8 +204,8 @@ static bool setupOuterChannel(struct AdcDmaStream *interface,
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaStreamConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->pins != NULL && *config->pins);
+  assert(config != nullptr);
+  assert(config->pins != nullptr && *config->pins);
   assert(config->converter.event < ADC_EVENT_END
       && config->converter.event != ADC_SOFTWARE);
 
@@ -232,7 +232,7 @@ static enum Result adcInit(void *object, const void *configBase)
     return res;
 
   interface->stream = init(AdcDmaStreamHandler, &streamConfig);
-  if (interface->stream == NULL)
+  if (interface->stream == nullptr)
     return E_ERROR;
 
   if (!setupOuterChannel(interface, config))
@@ -249,7 +249,7 @@ static enum Result adcInit(void *object, const void *configBase)
   }
 
   interface->pins = malloc(sizeof(struct AdcPin) * count);
-  if (interface->pins == NULL)
+  if (interface->pins == nullptr)
     return E_MEMORY;
 
   interface->count = (uint8_t)count;
@@ -301,11 +301,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   switch ((enum IfParameter)parameter)
   {
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL,
+      return adcSetInstance(interface->base.channel, nullptr,
           &interface->base) ? E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, &interface->base, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, nullptr);
       return E_OK;
 
     default:
@@ -353,7 +353,7 @@ static enum Result adcHandlerEnqueue(void *object,
   struct AdcDmaStream * const interface = stream->parent;
 
   assert(adcGetInstance(interface->base.channel) == &interface->base);
-  assert(request != NULL && request->callback != NULL);
+  assert(request != nullptr && request->callback != nullptr);
   /* Ensure the buffer has enough space and is aligned on the sample size */
   assert(request->capacity / (interface->count * sizeof(uint16_t)) >= 2);
   assert(request->capacity % (interface->count * sizeof(uint16_t)) == 0);

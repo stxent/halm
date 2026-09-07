@@ -88,11 +88,11 @@ static bool dmaSetup(struct Spifi *interface, uint8_t channel)
   };
 
   interface->rxDma = init(GpDmaOneShot, &dmaConfigs[0]);
-  if (interface->rxDma == NULL)
+  if (interface->rxDma == nullptr)
     return false;
 
   interface->txDma = init(GpDmaOneShot, &dmaConfigs[1]);
-  if (interface->txDma == NULL)
+  if (interface->txDma == nullptr)
     return false;
 
   dmaConfigure(interface->rxDma, &dmaSettings[0]);
@@ -319,7 +319,7 @@ static void dmaInterruptHandler(void *object)
     if (interface->status != STATUS_ERROR)
       interface->status = res == E_OK ? STATUS_OK : STATUS_ERROR;
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
   else
@@ -357,7 +357,7 @@ static void spifiInterruptHandler(void *object)
       interface->poll = false;
     }
 
-    if (interface->callback != NULL)
+    if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
   }
   else
@@ -369,7 +369,7 @@ static void spifiInterruptHandler(void *object)
 static enum Result spifiInit(void *object, const void *configBase)
 {
   const struct SpifiConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->delay <= CTRL_CSHIGH_MAX + 1);
   assert(config->timeout <= CTRL_TIMEOUT_MAX + 1);
   assert(config->mode == 0 || config->mode == 3);
@@ -395,8 +395,8 @@ static enum Result spifiInit(void *object, const void *configBase)
     return E_ERROR;
 
   interface->base.handler = spifiInterruptHandler;
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->status = STATUS_OK;
   interface->blocking = true;
   interface->large = config->large;

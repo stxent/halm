@@ -37,22 +37,22 @@ static void interruptHandler(void *object)
 {
   struct Bod * const bod = object;
 
-  if (bod->enabled && bod->callback != NULL)
+  if (bod->enabled && bod->callback != nullptr)
     bod->callback(bod->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result bodInit(void *object, const void *configBase)
 {
   const struct BodConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->eventLevel <= BOD_EVENT_3V05);
   assert(config->resetLevel <= BOD_RESET_2V2);
 
   struct Bod * const bod = object;
   uint32_t creg = LPC_CREG->CREG0 & ~(CREG0_BODLVL1_MASK | CREG0_BODLVL2_MASK);
 
-  bod->callback = NULL;
-  bod->callbackArgument = NULL;
+  bod->callback = nullptr;
+  bod->callbackArgument = nullptr;
   bod->enabled = false;
   bod->fired = false;
 

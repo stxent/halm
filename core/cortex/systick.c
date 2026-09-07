@@ -34,10 +34,10 @@ const struct TimerClass * const SysTick = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
-    .setAutostop = NULL,
+    .setAutostop = nullptr,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
-    .setFrequency = NULL,
+    .setFrequency = nullptr,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
@@ -45,11 +45,11 @@ const struct TimerClass * const SysTick = &(const struct TimerClass){
 };
 /*----------------------------------------------------------------------------*/
 extern const struct ClockClass * const MainClock;
-static struct SysTick *instance = NULL;
+static struct SysTick *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SysTick *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -72,15 +72,15 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   if (setInstance(timer))
   {
-    timer->callback = NULL;
-    timer->callbackArgument = NULL;
+    timer->callback = nullptr;
+    timer->callbackArgument = nullptr;
 
     /* Configure the timer but leave it in the disabled state */
     SYSTICK->CTRL = CTRL_CLKSOURCE;
     SYSTICK->LOAD = TIMER_RESOLUTION;
     SYSTICK->VAL = 0;
 
-    if (config != NULL)
+    if (config != nullptr)
       irqSetPriority(SYSTICK_IRQ, config->priority);
 
     return E_OK;
@@ -93,7 +93,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 static void tmrDeinit(void *)
 {
   SYSTICK->CTRL = 0;
-  instance = NULL;
+  instance = nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -115,7 +115,7 @@ static void tmrSetCallback(void *object, void (*callback)(void *),
   timer->callback = callback;
   timer->callbackArgument = argument;
 
-  if (timer->callback != NULL)
+  if (timer->callback != nullptr)
     SYSTICK->CTRL |= CTRL_TICKINT;
   else
     SYSTICK->CTRL &= ~CTRL_TICKINT;

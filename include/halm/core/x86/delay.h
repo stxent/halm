@@ -32,7 +32,7 @@ static inline void mdelay(uint32_t period)
     requested.tv_nsec = period * 1000000;
   }
 
-  nanosleep(&requested, NULL);
+  nanosleep(&requested, nullptr);
 }
 
 static inline void udelay(uint32_t period)
@@ -50,7 +50,7 @@ static inline void udelay(uint32_t period)
     requested.tv_nsec = period * 1000;
   }
 
-  nanosleep(&requested, NULL);
+  nanosleep(&requested, nullptr);
 }
 
 END_DECLS

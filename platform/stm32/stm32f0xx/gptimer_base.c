@@ -458,7 +458,7 @@ const struct PinEntry gpTimerPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct GpTimerBase *instances[17] = {NULL};
+static struct GpTimerBase *instances[17] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static const struct TimerBlockDescriptor *findDescriptor(uint8_t channel)
 {
@@ -468,12 +468,12 @@ static const struct TimerBlockDescriptor *findDescriptor(uint8_t channel)
       return &timerBlockEntries[index];
   }
 
-  return NULL;
+  return nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct GpTimerBase *object)
 {
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -514,7 +514,7 @@ void TIM3_ISR(void)
 /* Virtual handler */
 void TIM6_ISR(void)
 {
-  if (instances[5] != NULL)
+  if (instances[5] != nullptr)
     instances[5]->handler(instances[5]);
 }
 #endif
@@ -570,7 +570,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   const struct TimerBlockDescriptor * const entry =
       findDescriptor(config->channel);
 
-  assert(entry != NULL);
+  assert(entry != nullptr);
   if (!setInstance(config->channel, timer))
     return E_BUSY;
 
@@ -579,7 +579,7 @@ static enum Result tmrInit(void *object, const void *configBase)
 
   timer->channel = config->channel;
   timer->flags = entry->flags;
-  timer->handler = NULL;
+  timer->handler = nullptr;
   timer->irq = entry->irq;
   timer->reg = entry->reg;
 
@@ -594,6 +594,6 @@ static void tmrDeinit(void *object)
       findDescriptor(timer->channel);
 
   sysClockDisable(entry->clock);
-  instances[timer->channel] = NULL;
+  instances[timer->channel] = nullptr;
 }
 #endif

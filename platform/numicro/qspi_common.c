@@ -27,7 +27,7 @@ void qspiConfigPins(const struct QspiBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(qspiPins,
           pinArray[index], config->channel);
-      assert(pinEntry != NULL);
+      assert(pinEntry != nullptr);
 
       const struct Pin pin = pinInit(pinArray[index]);
 

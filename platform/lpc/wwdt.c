@@ -20,7 +20,7 @@ static void wdtSetCallback(void *, void (*)(void *), void *);
 const struct WatchdogClass * const Wwdt = &(const struct WatchdogClass){
     .size = sizeof(struct Wwdt),
     .init = wdtInit,
-    .deinit = NULL, /* Default destructor */
+    .deinit = nullptr, /* Default destructor */
 
     .fired = wdtFired,
     .reload = wdtReload,
@@ -47,7 +47,7 @@ static void interruptHandler(void *object)
       LPC_WWDT->MOD = mod;
     }
 
-    if (timer->callback != NULL)
+    if (timer->callback != nullptr)
       timer->callback(timer->callbackArgument);
   }
 }
@@ -65,7 +65,7 @@ static void reloadCounter(void)
 static enum Result wdtInit(void *object, const void *configBase)
 {
   const struct WwdtConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(!config->disarmed || !config->window);
   assert(config->period > config->window);
 
@@ -89,8 +89,8 @@ static enum Result wdtInit(void *object, const void *configBase)
     return res;
 
   timer->base.handler = interruptHandler;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
   timer->fired = (LPC_WWDT->MOD & MOD_WDTOF) != 0;
 
   uint32_t mod = MOD_WDEN | MOD_WDINT;

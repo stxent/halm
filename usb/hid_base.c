@@ -53,7 +53,7 @@ static const UsbDescriptorFunctor deviceDescriptorTable[] = {
     interfaceDescriptor,
     hidDescriptor,
     endpointDescriptor,
-    NULL
+    nullptr
 };
 /*----------------------------------------------------------------------------*/
 static void deviceDescriptor(const void *, struct UsbDescriptor *header,
@@ -62,7 +62,7 @@ static void deviceDescriptor(const void *, struct UsbDescriptor *header,
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     static const struct UsbDeviceDescriptor descriptor = {
         .length = sizeof(struct UsbDeviceDescriptor),
@@ -91,7 +91,7 @@ static void configDescriptor(const void *, struct UsbDescriptor *header,
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     static const struct UsbConfigurationDescriptor descriptor = {
         .length = sizeof(struct UsbConfigurationDescriptor),
@@ -120,7 +120,7 @@ static void interfaceDescriptor(const void *object,
   header->length = sizeof(struct UsbInterfaceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_INTERFACE;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     const struct UsbInterfaceDescriptor descriptor = {
         .length = sizeof(struct UsbInterfaceDescriptor),
@@ -146,7 +146,7 @@ static void hidDescriptor(const void *object,
   header->length = sizeof(struct SingleHidDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_HID;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     struct SingleHidDescriptor descriptor = {
         .base = {
@@ -176,7 +176,7 @@ static void endpointDescriptor(const void *object,
   header->length = sizeof(struct UsbEndpointDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_ENDPOINT;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     const struct UsbEndpointDescriptor descriptor = {
         .length = sizeof(struct UsbEndpointDescriptor),
@@ -293,7 +293,7 @@ static enum Result handleDeviceRequest(struct HidBase *driver,
 static enum Result driverInit(void *object, const void *configBase)
 {
   const struct HidBaseConfig * const config = configBase;
-  assert(config->owner != NULL);
+  assert(config->owner != nullptr);
 
   struct HidBase * const driver = object;
 

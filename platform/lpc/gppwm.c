@@ -72,14 +72,14 @@ const struct TimerClass * const GpPwmUnit = &(const struct TimerClass){
 
     .enable = unitEnable,
     .disable = unitDisable,
-    .setAutostop = NULL,
+    .setAutostop = nullptr,
     .setCallback = unitSetCallback,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
     .getOverflow = unitGetOverflow,
     .setOverflow = unitSetOverflow,
-    .getValue = NULL,
-    .setValue = NULL
+    .getValue = nullptr,
+    .setValue = nullptr
 };
 
 const struct PwmClass * const GpPwm = &(const struct PwmClass){
@@ -120,7 +120,7 @@ static inline volatile uint32_t *calcMatchReg(LPC_PWM_Type *device,
 static void configMatchPin(uint8_t channel, PinNumber key, bool value)
 {
   const struct PinEntry * const pinEntry = pinFind(gpPwmPins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   const struct Pin pin = pinInit(key);
 
@@ -131,7 +131,7 @@ static void configMatchPin(uint8_t channel, PinNumber key, bool value)
 static uint8_t getMatchChannel(uint8_t channel, PinNumber key)
 {
   const struct PinEntry * const pinEntry = pinFind(gpPwmPins, key, channel);
-  assert(pinEntry != NULL);
+  assert(pinEntry != nullptr);
 
   return UNPACK_CHANNEL(pinEntry->value);
 }
@@ -198,7 +198,7 @@ static void unitReleaseChannel(struct GpPwmUnit *unit, uint8_t channel)
 static enum Result unitInit(void *object, const void *configBase)
 {
   const struct GpPwmUnitConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->resolution >= 2);
 
   const struct GpPwmUnitBaseConfig baseConfig = {
@@ -212,8 +212,8 @@ static enum Result unitInit(void *object, const void *configBase)
     return res;
 
   unit->base.handler = interruptHandler;
-  unit->callback = NULL;
-  unit->callbackArgument = NULL;
+  unit->callback = nullptr;
+  unit->callbackArgument = nullptr;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
 
@@ -273,7 +273,7 @@ static void unitSetCallback(void *object, void (*callback)(void *),
   unit->callbackArgument = argument;
   unit->callback = callback;
 
-  if (unit->callback != NULL)
+  if (unit->callback != nullptr)
   {
     reg->IR = PWM_IR_MATCH_INTERRUPT(0);
     reg->MCR |= MCR_INTERRUPT(0);
@@ -334,7 +334,7 @@ static void unitSetOverflow(void *object, uint32_t overflow)
 static enum Result singleEdgeInit(void *object, const void *configBase)
 {
   const struct GpPwmConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   struct GpPwm * const pwm = object;
   struct GpPwmUnit * const unit = config->parent;
@@ -415,7 +415,7 @@ static void singleEdgeSetEdges(void *object, [[maybe_unused]] uint32_t leading,
 static enum Result doubleEdgeInit(void *object, const void *configBase)
 {
   const struct GpPwmDoubleEdgeConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   struct GpPwmDoubleEdge * const pwm = object;
   struct GpPwmUnit * const unit = config->parent;

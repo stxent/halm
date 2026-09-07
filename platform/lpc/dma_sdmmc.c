@@ -28,16 +28,16 @@ const struct DmaClass * const DmaSdmmc = &(const struct DmaClass){
     .init = channelInit,
     .deinit = channelDeinit,
 
-    .configure = NULL,
-    .setCallback = NULL,
+    .configure = nullptr,
+    .setCallback = nullptr,
 
     .enable = channelEnable,
-    .disable = NULL,
+    .disable = nullptr,
     .residue = channelResidue,
     .status = channelStatus,
 
     .append = channelAppend,
-    .clear = NULL,
+    .clear = nullptr,
     .queued = channelQueued
 };
 /*----------------------------------------------------------------------------*/
@@ -72,7 +72,7 @@ static enum Result appendItem(void *object, uintptr_t address, size_t size)
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct DmaSdmmcConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->number);
   assert(config->burst <= DMA_BURST_256);
 
@@ -80,7 +80,7 @@ static enum Result channelInit(void *object, const void *configBase)
 
   /* Memory chunks should be aligned on a 4-byte boundary */
   channel->list = memalign(4, sizeof(struct DmaSdmmcEntry) * config->number);
-  if (channel->list == NULL)
+  if (channel->list == nullptr)
     return E_MEMORY;
 
   channel->capacity = config->number;
@@ -142,7 +142,7 @@ static enum Result channelResidue(const void *object, size_t *count)
   const struct DmaSdmmcEntry * const current =
       (const struct DmaSdmmcEntry *)reg->DSCADDR;
 
-  if (current != NULL)
+  if (current != nullptr)
   {
     *count = channel->length - (current - channel->list);
     return E_OK;
@@ -171,14 +171,14 @@ static void channelAppend(void *object, void *destination, const void *source,
   struct DmaSdmmc * const channel = object;
   LPC_SDMMC_Type * const reg = channel->reg;
 
-  assert(destination != NULL || source != NULL);
-  assert(destination == NULL || source == NULL);
+  assert(destination != nullptr || source != nullptr);
+  assert(destination == nullptr || source == nullptr);
   assert(!((uintptr_t)destination % sizeof(uint32_t)));
   assert(!((uintptr_t)source % sizeof(uint32_t)));
   assert(!(size % sizeof(uint32_t)));
   assert(size > 0 && size <= channel->capacity * DESC_SIZE_MAX);
 
-  const uintptr_t address = destination != NULL ?
+  const uintptr_t address = destination != nullptr ?
       (uintptr_t)destination : (uintptr_t)source;
 
   /* Reset DMA */

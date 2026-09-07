@@ -39,14 +39,14 @@ const struct InterfaceClass * const AdcDma = &(const struct InterfaceClass){
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = NULL
+    .write = nullptr
 };
 /*----------------------------------------------------------------------------*/
 static void dmaHandler(void *object)
 {
   struct AdcDma * const interface = object;
 
-  if (interface->callback != NULL)
+  if (interface->callback != nullptr)
     interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -78,7 +78,7 @@ static bool dmaSetup(struct AdcDma *interface, uint8_t channel,
 
   interface->dma = init(SdmaCircular, &dmaConfig);
 
-  if (interface->dma != NULL)
+  if (interface->dma != nullptr)
   {
     dmaConfigure(interface->dma, &dmaSettings);
     dmaSetCallback(interface->dma, dmaHandler, interface);
@@ -148,8 +148,8 @@ static void stopConversion(struct AdcDma *interface)
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcDmaConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->pins != NULL && *config->pins);
+  assert(config != nullptr);
+  assert(config->pins != nullptr && *config->pins);
   assert(config->event < ADC_EVENT_END);
   assert(!config->preemption || (config->sequence & 1) == 0);
   assert(config->sensitivity <= INPUT_FALLING);
@@ -176,12 +176,12 @@ static enum Result adcInit(void *object, const void *configBase)
 
   interface->buffer =
       malloc((sizeof(uint16_t) + sizeof(struct AdcPin)) * count);
-  if (interface->buffer == NULL)
+  if (interface->buffer == nullptr)
     return E_MEMORY;
   interface->pins = (struct AdcPin *)(interface->buffer + count);
 
-  interface->callback = NULL;
-  interface->callbackArgument = NULL;
+  interface->callback = nullptr;
+  interface->callbackArgument = nullptr;
   interface->count = (uint8_t)count;
 
   interface->control = 0;
@@ -273,11 +273,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_LPC_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.sequence, NULL,
+      return adcSetInstance(interface->base.sequence, nullptr,
           &interface->base) ? E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.sequence, &interface->base, NULL);
+      adcSetInstance(interface->base.sequence, &interface->base, nullptr);
       return E_OK;
 #endif
 

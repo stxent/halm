@@ -121,7 +121,7 @@ const struct PinEntry usbPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct UsbBase *instances[2] = {NULL};
+static struct UsbBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UsbBaseConfig *config)
 {
@@ -135,7 +135,7 @@ static void configPins(const struct UsbBaseConfig *config)
     {
       const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
           config->channel);
-      assert(pinEntry != NULL);
+      assert(pinEntry != nullptr);
 
       const struct Pin pin = pinInit(pinArray[index]);
 
@@ -149,7 +149,7 @@ static bool setInstance(uint8_t channel, struct UsbBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -209,14 +209,14 @@ static enum Result devInit(void *object, const void *configBase)
   }
 
   device->channel = config->channel;
-  device->handler = NULL;
+  device->handler = nullptr;
 
   const size_t memoryPoolSize =
       sizeof(struct QueueHead) * device->td.numberOfEndpoints
       + sizeof(struct TransferDescriptor) * ENDPOINT_REQUESTS;
   uint8_t * const memoryPoolPointer = memalign(4096, memoryPoolSize);
 
-  if (memoryPoolPointer == NULL)
+  if (memoryPoolPointer == nullptr)
     return E_MEMORY;
 
   device->td.heads = (struct QueueHead *)memoryPoolPointer;
@@ -254,10 +254,10 @@ static void devDeinit(void *object)
   pointerArrayDeinit(&device->td.descriptors);
   free(device->td.heads);
 
-  instances[device->channel] = NULL;
+  instances[device->channel] = nullptr;
 
   /* Disable clock when the second module is not used */
-  if (instances[device->channel ^ 1] == NULL)
+  if (instances[device->channel ^ 1] == nullptr)
     sysClockDisable(CLK_USBOH3);
 }
 #endif

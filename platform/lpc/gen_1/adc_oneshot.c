@@ -27,11 +27,11 @@ const struct InterfaceClass * const AdcOneShot = &(const struct InterfaceClass){
     .init = adcInit,
     .deinit = adcDeinit,
 
-    .setCallback = NULL,
+    .setCallback = nullptr,
     .getParam = adcGetParam,
     .setParam = adcSetParam,
     .read = adcRead,
-    .write = NULL
+    .write = nullptr
 };
 /*----------------------------------------------------------------------------*/
 static void makeChannelConversion(struct AdcOneShot *interface,
@@ -65,8 +65,8 @@ static void makeChannelConversion(struct AdcOneShot *interface,
 static enum Result adcInit(void *object, const void *configBase)
 {
   const struct AdcOneShotConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->pins != NULL && *config->pins);
+  assert(config != nullptr);
+  assert(config->pins != nullptr && *config->pins);
 
   const struct AdcBaseConfig baseConfig = {
       .frequency = config->frequency,
@@ -86,7 +86,7 @@ static enum Result adcInit(void *object, const void *configBase)
     return res;
 
   interface->pins = malloc(sizeof(struct AdcPin) * count);
-  if (interface->pins == NULL)
+  if (interface->pins == nullptr)
     return E_MEMORY;
 
   interface->count = (uint8_t)count;
@@ -124,11 +124,11 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
   switch ((enum IfParameter)parameter)
   {
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL,
+      return adcSetInstance(interface->base.channel, nullptr,
           &interface->base) ? E_OK : E_BUSY;
 
     case IF_RELEASE:
-      adcSetInstance(interface->base.channel, &interface->base, NULL);
+      adcSetInstance(interface->base.channel, &interface->base, nullptr);
       return E_OK;
 
     default:

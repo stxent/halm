@@ -76,13 +76,13 @@ const struct PinEntry i2cPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct I2CBase *instances[2] = {NULL};
+static struct I2CBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct I2CBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -94,14 +94,14 @@ static bool setInstance(uint8_t channel, struct I2CBase *object)
 void I2C0_ISR(void)
 {
   /* In M0APP core I2C0 IRQ is combined with I2C1 IRQ */
-  if (instances[0]->handler != NULL)
+  if (instances[0]->handler != nullptr)
     instances[0]->handler(instances[0]);
 }
 /*----------------------------------------------------------------------------*/
 void I2C1_ISR(void)
 {
   /* In M0APP core I2C1 IRQ is combined with I2C0 IRQ */
-  if (instances[1]->handler != NULL)
+  if (instances[1]->handler != nullptr)
     instances[1]->handler(instances[1]);
 }
 /*----------------------------------------------------------------------------*/
@@ -127,7 +127,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   sysResetEnable(entry->reset);
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = I2C0_IRQ + config->channel;
   interface->reg = entry->reg;
 
@@ -147,6 +147,6 @@ static void i2cDeinit(void *object)
   /* Main peripheral bus clock is left enabled */
   sysClockDisable(i2cBlockEntries[interface->channel].clock);
 
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

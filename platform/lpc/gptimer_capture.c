@@ -57,7 +57,7 @@ const struct TimerClass * const GpTimerCaptureUnit =
 
     .enable = unitEnable,
     .disable = unitDisable,
-    .setAutostop = NULL,
+    .setAutostop = nullptr,
     .setCallback = unitSetCallback,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
@@ -122,7 +122,7 @@ static bool unitSetInstance(struct GpTimerCaptureUnit *unit,
 {
   assert(channel < ARRAY_SIZE(unit->instances));
 
-  if (unit->instances[channel] == NULL)
+  if (unit->instances[channel] == nullptr)
   {
     unit->instances[channel] = capture;
     return true;
@@ -145,11 +145,11 @@ static enum Result unitInit(void *object, const void *configBase)
     return res;
 
   unit->base.handler = interruptHandler;
-  unit->callback = NULL;
-  unit->callbackArgument = NULL;
+  unit->callback = nullptr;
+  unit->callbackArgument = nullptr;
 
   for (size_t index = 0; index < ARRAY_SIZE(unit->instances); ++index)
-    unit->instances[index] = NULL;
+    unit->instances[index] = nullptr;
 
   LPC_TIMER_Type * const reg = unit->base.reg;
 
@@ -228,7 +228,7 @@ static void unitSetCallback(void *object, void (*callback)(void *),
   unit->callbackArgument = argument;
   unit->callback = callback;
 
-  if (unit->callback != NULL)
+  if (unit->callback != nullptr)
   {
     reg->IR = IR_MATCH_MASK;
     reg->MCR |= MCR_INTERRUPT(MATCH_CHANNEL_OVERFLOW);
@@ -295,7 +295,7 @@ static void unitSetValue(void *object, uint32_t value)
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerCaptureConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->event != INPUT_LOW && config->event != INPUT_HIGH);
 
   struct GpTimerCapture * const capture = object;
@@ -308,8 +308,8 @@ static enum Result channelInit(void *object, const void *configBase)
   /* Register object */
   if (unitSetInstance(unit, capture->channel, capture))
   {
-    capture->callback = NULL;
-    capture->callbackArgument = NULL;
+    capture->callback = nullptr;
+    capture->callbackArgument = nullptr;
     capture->event = config->event;
     capture->unit = unit;
 
@@ -336,7 +336,7 @@ static void channelDeinit(void *object)
   struct GpTimerCapture * const capture = object;
 
   channelDisable(object);
-  capture->unit->instances[capture->channel] = NULL;
+  capture->unit->instances[capture->channel] = nullptr;
 }
 #endif
 /*----------------------------------------------------------------------------*/
@@ -345,7 +345,7 @@ static void channelEnable(void *object)
   struct GpTimerCapture * const capture = object;
   LPC_TIMER_Type * const reg = capture->unit->base.reg;
 
-  if (capture->callback != NULL)
+  if (capture->callback != nullptr)
     reg->CCR |= CCR_INTERRUPT(capture->channel);
 }
 /*----------------------------------------------------------------------------*/
@@ -366,7 +366,7 @@ static void channelSetCallback(void *object, void (*callback)(void *),
   capture->callbackArgument = argument;
   capture->callback = callback;
 
-  if (capture->callback != NULL)
+  if (capture->callback != nullptr)
   {
     reg->IR = IR_CAPTURE_INTERRUPT(capture->channel);
     reg->CCR |= CCR_INTERRUPT(capture->channel);

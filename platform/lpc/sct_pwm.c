@@ -61,14 +61,14 @@ const struct TimerClass * const SctPwmUnit = &(const struct TimerClass){
 
     .enable = unitEnable,
     .disable = unitDisable,
-    .setAutostop = NULL,
+    .setAutostop = nullptr,
     .setCallback = unitSetCallback,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
     .getOverflow = unitGetOverflow,
     .setOverflow = unitSetOverflow,
-    .getValue = NULL,
-    .setValue = NULL
+    .getValue = nullptr,
+    .setValue = nullptr
 };
 
 const struct PwmClass * const SctPwm = &(const struct PwmClass){
@@ -156,7 +156,7 @@ static void setUnitResolution(struct SctPwmUnit *unit, uint8_t channel,
 static enum Result unitInit(void *object, const void *configBase)
 {
   const struct SctPwmUnitConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->resolution >= 2);
 
   const struct SctBaseConfig baseConfig = {
@@ -176,8 +176,8 @@ static enum Result unitInit(void *object, const void *configBase)
   unit->base.handler = interruptHandler;
   unit->base.mask = 1 << unit->event;
 
-  unit->callback = NULL;
-  unit->callbackArgument = NULL;
+  unit->callback = nullptr;
+  unit->callbackArgument = nullptr;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
   unit->input = config->clock;
@@ -260,7 +260,7 @@ static void unitSetCallback(void *object, void (*callback)(void *),
   unit->callbackArgument = argument;
   unit->callback = callback;
 
-  if (unit->callback != NULL)
+  if (unit->callback != nullptr)
   {
     /* Clear pending requests */
     reg->EVFLAG = unit->base.mask;
@@ -321,7 +321,7 @@ static void unitSetOverflow(void *object, uint32_t overflow)
 static enum Result singleEdgeInit(void *object, const void *configBase)
 {
   const struct SctPwmConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   struct SctPwm * const pwm = object;
   struct SctPwmUnit * const unit = config->parent;
@@ -519,7 +519,7 @@ static void singleEdgeSetEdgesUnified(void *object,
 static enum Result doubleEdgeInit(void *object, const void *configBase)
 {
   const struct SctPwmDoubleEdgeConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   struct SctPwmDoubleEdge * const pwm = object;
   struct SctPwmUnit * const unit = config->parent;

@@ -99,14 +99,14 @@ static void interruptHandler(void *object, enum Result res)
     dmaResetInstance(stream->base.number);
   }
 
-  if (stream->callback != NULL)
+  if (stream->callback != nullptr)
     stream->callback(stream->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamInit(void *object, const void *configBase)
 {
   const struct DmaListConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct DmaBaseConfig baseConfig = {
       .event = config->event,
@@ -122,7 +122,7 @@ static enum Result streamInit(void *object, const void *configBase)
     return res;
 
   stream->list = malloc(sizeof(struct DmaListEntry) * config->number);
-  if (stream->list == NULL)
+  if (stream->list == nullptr)
     res = E_MEMORY;
 
   if (res == E_OK)
@@ -130,8 +130,8 @@ static enum Result streamInit(void *object, const void *configBase)
     stream->base.config |= SCR_TCIE | SCR_TEIE;
     stream->base.handler = interruptHandler;
   
-    stream->callback = NULL;
-    stream->callbackArgument = NULL;
+    stream->callback = nullptr;
+    stream->callbackArgument = nullptr;
     stream->capacity = config->number;
     stream->index = 0;
     stream->queued = 0;
@@ -347,7 +347,7 @@ static void streamAppend(void *object, void *destination, const void *source,
   struct DmaList * const stream = object;
   const uint32_t config = stream->base.config;
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!(size % (1 << SCR_PSIZE_VALUE(config))));
   assert(!(size % (1 << SCR_MSIZE_VALUE(config))));
   assert(stream->queued < stream->capacity);

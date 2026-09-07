@@ -54,14 +54,14 @@ const struct TimerClass * const GpTimerPwmUnit = &(const struct TimerClass){
 
     .enable = unitEnable,
     .disable = unitDisable,
-    .setAutostop = NULL,
+    .setAutostop = nullptr,
     .setCallback = unitSetCallback,
     .getFrequency = unitGetFrequency,
     .setFrequency = unitSetFrequency,
     .getOverflow = unitGetOverflow,
     .setOverflow = unitSetOverflow,
-    .getValue = NULL,
-    .setValue = NULL
+    .getValue = nullptr,
+    .setValue = nullptr
 };
 
 const struct PwmClass * const GpTimerPwm = &(const struct PwmClass){
@@ -141,7 +141,7 @@ static void unitUpdateResolution(struct GpTimerPwmUnit *unit, uint8_t channel)
 static enum Result unitInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmUnitConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   const struct GpTimerBaseConfig baseConfig = {
       .channel = config->channel
@@ -157,8 +157,8 @@ static enum Result unitInit(void *object, const void *configBase)
       && config->resolution <= gpTimerGetMaxValue(&unit->base));
 
   unit->base.handler = interruptHandler;
-  unit->callback = NULL;
-  unit->callbackArgument = NULL;
+  unit->callback = nullptr;
+  unit->callbackArgument = nullptr;
   unit->frequency = config->frequency;
   unit->resolution = config->resolution;
 
@@ -218,7 +218,7 @@ static void unitSetCallback(void *object, void (*callback)(void *),
   unit->callbackArgument = argument;
   unit->callback = callback;
 
-  if (unit->callback != NULL)
+  if (unit->callback != nullptr)
   {
     reg->IR = IR_MATCH_MASK | IR_CAPTURE_MASK;
     reg->MCR |= mask;
@@ -280,7 +280,7 @@ static void unitSetOverflow(void *object, uint32_t overflow)
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct GpTimerPwmConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   struct GpTimerPwm * const pwm = object;
   struct GpTimerPwmUnit * const unit = config->parent;

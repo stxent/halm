@@ -52,7 +52,7 @@ void usbStringHeader(struct UsbDescriptor *header, void *payload,
 
   memcpy(header, &descriptor, sizeof(descriptor));
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     const uint16_t value = toLittleEndian16(langid);
     uint8_t *buffer = payload;
@@ -75,7 +75,7 @@ void usbStringMultiHeader(struct UsbDescriptor *header, void *payload,
 
   memcpy(header, &descriptor, sizeof(descriptor));
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     uint8_t *buffer = payload;
 
@@ -105,7 +105,7 @@ void usbStringWrap(struct UsbDescriptor *header, void *payload,
 
   memcpy(header, &descriptor, sizeof(descriptor));
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     char16_t converted[MAX_STRING_LENGTH];
     uint8_t *buffer = payload;

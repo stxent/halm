@@ -26,10 +26,10 @@ static enum Result streamInit(void *, const void *);
 const struct EntityClass * const BdmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = streamInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
-static struct BdmaBase *instances[STREAM_COUNT] = {NULL};
+static struct BdmaBase *instances[STREAM_COUNT] = {nullptr};
 /*----------------------------------------------------------------------------*/
 void bdmaResetInstance(uint8_t number)
 {
@@ -37,16 +37,16 @@ void bdmaResetInstance(uint8_t number)
   const unsigned int index = controller ? number - DMA2_STREAM1 : number;
 
   assert(STREAM_ENCODE(controller, index) < ARRAY_SIZE(instances));
-  instances[STREAM_ENCODE(controller, index)] = NULL;
+  instances[STREAM_ENCODE(controller, index)] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 bool bdmaSetInstance(uint8_t number, struct BdmaBase *stream)
 {
   const unsigned int controller = number >= DMA2_STREAM1;
   const unsigned int index = controller ? number - DMA2_STREAM1 : number;
-  void *expected = NULL;
+  void *expected = nullptr;
 
-  assert(stream != NULL);
+  assert(stream != nullptr);
   assert(STREAM_ENCODE(controller, index) < ARRAY_SIZE(instances));
 
   if (compareExchangePointer(&instances[STREAM_ENCODE(controller, index)],
@@ -193,7 +193,7 @@ static enum Result streamInit(void *object, const void *configBase)
   }
 
   stream->config = CCR_PL(config->priority);
-  stream->handler = NULL;
+  stream->handler = nullptr;
   stream->number = config->stream;
 
   if (!irqStatus(stream->irq))

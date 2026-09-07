@@ -25,9 +25,9 @@ static size_t flashWrite(void *, const void *, size_t);
 const struct InterfaceClass * const Flash = &(const struct InterfaceClass){
     .size = sizeof(struct Flash),
     .init = flashInit,
-    .deinit = NULL, /* Default destructor */
+    .deinit = nullptr, /* Default destructor */
 
-    .setCallback = NULL,
+    .setCallback = nullptr,
     .getParam = flashGetParam,
     .setParam = flashSetParam,
     .read = flashRead,
@@ -83,19 +83,19 @@ static uint32_t positionToAddress(const struct Flash *interface,
 static enum Result flashInit(void *object, const void *configBase)
 {
   const struct FlashConfig * const config = configBase;
-  assert(config == NULL || config->bank < FLASH_BANK_END);
+  assert(config == nullptr || config->bank < FLASH_BANK_END);
 
   struct Flash * const interface = object;
   enum FlashBank bank;
 
-  if (config == NULL || config->bank > FLASH_BANK_B)
+  if (config == nullptr || config->bank > FLASH_BANK_B)
   {
     /* Detect current bank */
     bank = getBankByAddress((uintptr_t)Flash);
     if (bank == FLASH_BANK_END)
       return E_ERROR;
 
-    if (config != NULL && config->bank == FLASH_BANK_SPARE)
+    if (config != nullptr && config->bank == FLASH_BANK_SPARE)
       bank = (bank == FLASH_BANK_A) ? FLASH_BANK_B : FLASH_BANK_A;
   }
   else

@@ -107,7 +107,7 @@ static void interruptHandler(void *object, enum Result res)
     event = true;
   }
 
-  if (event && channel->callback != NULL)
+  if (event && channel->callback != nullptr)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
@@ -131,7 +131,7 @@ static void startTransfer(struct SdmaList *channel,
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct SdmaListConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->number > 0);
 
   const struct SdmaBaseConfig baseConfig = {
@@ -150,13 +150,13 @@ static enum Result channelInit(void *object, const void *configBase)
 
   channel->list = memalign(sizeof(struct SdmaEntry),
       sizeof(struct SdmaEntry) * config->number);
-  if (channel->list == NULL)
+  if (channel->list == nullptr)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
 
-  channel->callback = NULL;
-  channel->callbackArgument = NULL;
+  channel->callback = nullptr;
+  channel->callbackArgument = nullptr;
   channel->capacity = config->number;
   channel->index = 0;
   channel->queued = 0;
@@ -172,7 +172,7 @@ static void channelDeinit(void *object)
 
   free(channel->list);
 
-  if (SdmaBase->deinit != NULL)
+  if (SdmaBase->deinit != nullptr)
     SdmaBase->deinit(channel);
 }
 /*----------------------------------------------------------------------------*/
@@ -313,7 +313,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   const unsigned int width = XFERCFG_WIDTH_VALUE(transferConfig);
   const uint32_t count = (size >> width) - 1;
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!((uintptr_t)destination % (1 << width)));
   assert(!((uintptr_t)source % (1 << width)));
   assert(count <= SDMA_MAX_TRANSFER_SIZE && ((count + 1) << width) == size);
@@ -326,7 +326,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   }
 
   struct SdmaEntry * const entry = channel->list + channel->index;
-  struct SdmaEntry *previous = NULL;
+  struct SdmaEntry *previous = nullptr;
 
   if (channel->queued)
   {
@@ -343,7 +343,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   entry->config = transferConfig | XFERCFG_XFERCOUNT(count);
   entry->next = 0;
 
-  if (previous != NULL)
+  if (previous != nullptr)
   {
     /* Link previous descriptor with the new one */
     previous->next = (uintptr_t)entry;

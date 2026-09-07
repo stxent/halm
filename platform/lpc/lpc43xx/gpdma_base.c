@@ -59,7 +59,7 @@ static const enum GpDmaEvent dmaEventMap[EVENT_COUNT][EVENT_SOURCES] = {
 };
 /*----------------------------------------------------------------------------*/
 static struct DmaController controller = {
-    .instances = {NULL},
+    .instances = {nullptr},
     .connections = {0}
 };
 /*----------------------------------------------------------------------------*/
@@ -132,14 +132,14 @@ uint32_t gpDmaBaseCalcMasterAffinity(const struct GpDmaBase *channel,
 /*----------------------------------------------------------------------------*/
 void gpDmaResetInstance(uint8_t channel)
 {
-  controller.instances[channel] = NULL;
+  controller.instances[channel] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 bool gpDmaSetInstance(uint8_t channel, struct GpDmaBase *object)
 {
   assert(channel < CHANNEL_COUNT);
 
-  void *expected = NULL;
+  void *expected = nullptr;
 
   return compareExchangePointer(&controller.instances[channel],
       &expected, object);
@@ -268,7 +268,7 @@ static enum Result channelInit(void *object, const void *configBase)
   struct GpDmaBase * const channel = object;
 
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
-  channel->handler = NULL;
+  channel->handler = nullptr;
   channel->number = config->channel;
   channel->reg = &LPC_GPDMA->CHANNELS[channel->number];
 

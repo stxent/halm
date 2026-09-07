@@ -175,7 +175,7 @@ static void extOscDisable(const void *)
 static enum Result extOscEnable(const void *, const void *configBase)
 {
   const struct ExternalOscConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->frequency != 24000000
       && config->frequency != 26000000
@@ -210,7 +210,7 @@ static void flashClockDisable(const void *)
 static enum Result flashClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > CLK_CFG2_SF_CLK_DIV_MAX)
     return E_VALUE;
@@ -241,7 +241,7 @@ static enum Result flashClockEnable(const void *, const void *configBase)
 
     case CLOCK_SYSTEM:
       clkCfg2 |= CLK_CFG2_SF_CLK_SEL(SF_CLK_SEL_HCLK);
-      frequency = mainClockFrequency(NULL);
+      frequency = mainClockFrequency(nullptr);
       break;
 
     default:
@@ -282,7 +282,7 @@ static uint32_t flashClockFrequency(const void *)
       break;
 
     default:
-      frequency = mainClockFrequency(NULL);
+      frequency = mainClockFrequency(nullptr);
       break;
   }
 
@@ -302,7 +302,7 @@ static void i2cClockDisable(const void *)
 static enum Result i2cClockEnable(const void *, const void *configBase)
 {
   const struct DividedClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > CLK_CFG3_I2CDIV_MAX)
     return E_VALUE;
@@ -324,7 +324,7 @@ static uint32_t i2cClockFrequency(const void *)
   if (clkCfg3 & CLK_CFG3_I2CEN)
   {
     const uint32_t divisor = CLK_CFG3_I2CDIV_VALUE(clkCfg3) + 1;
-    const uint32_t frequency = socClockFrequency(NULL);
+    const uint32_t frequency = socClockFrequency(nullptr);
 
     return frequency / divisor;
   }
@@ -340,7 +340,7 @@ static bool i2cClockReady(const void *)
 static enum Result mainClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > CLK_CFG0_HCLK_DIV_MAX)
     return E_VALUE;
@@ -374,7 +374,7 @@ static enum Result mainClockEnable(const void *, const void *configBase)
     case CLOCK_PLL_160MHZ:
     case CLOCK_PLL_192MHZ:
     {
-      if (!sysPllReady(NULL))
+      if (!sysPllReady(nullptr))
         return E_IDLE;
 
       clkCfg0 &= ~CLK_CFG0_PLL_SEL_MASK;
@@ -435,7 +435,7 @@ static uint32_t mainClockFrequency(const void *)
 static enum Result socClockEnable(const void *, const void *configBase)
 {
   const struct DividedClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > CLK_CFG0_BCLK_DIV_MAX)
     return E_VALUE;
@@ -469,7 +469,7 @@ static void spiClockDisable(const void *)
 static enum Result spiClockEnable(const void *, const void *configBase)
 {
   const struct DividedClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > CLK_CFG3_SPIDIV_MAX)
     return E_VALUE;
@@ -491,7 +491,7 @@ static uint32_t spiClockFrequency(const void *)
   if (clkCfg3 & CLK_CFG3_SPIEN)
   {
     const uint32_t divisor = CLK_CFG3_SPIDIV_VALUE(clkCfg3) + 1;
-    const uint32_t frequency = socClockFrequency(NULL);
+    const uint32_t frequency = socClockFrequency(nullptr);
 
     return frequency / divisor;
   }
@@ -512,7 +512,7 @@ static void sysPllDisable(const void *)
 static enum Result sysPllEnable(const void *, const void *configBase)
 {
   const struct PllConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->source == CLOCK_EXTERNAL || config->source == CLOCK_INTERNAL);
 
   if (config->source == CLOCK_INTERNAL)
@@ -669,7 +669,7 @@ static void uartClockDisable(const void *)
 static enum Result uartClockEnable(const void *, const void *configBase)
 {
   const struct GenericClockConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
 
   if (config->divisor > CLK_CFG2_UART_CLK_DIV_MAX)
     return E_VALUE;
@@ -688,7 +688,7 @@ static enum Result uartClockEnable(const void *, const void *configBase)
       break;
 
     case CLOCK_PLL_160MHZ:
-      if (!sysPllReady(NULL))
+      if (!sysPllReady(nullptr))
         return E_IDLE;
 
       hbnGlb |= HBN_GLB_UART_CLK_SEL;
@@ -714,9 +714,9 @@ static uint32_t uartClockFrequency(const void *)
   if (clkCfg2 & CLK_CFG2_UART_CLK_EN)
   {
     if (clkCfg2 & HBN_GLB_UART_CLK_SEL)
-      frequency = sysPllReady(NULL) ? 160000000 : 0;
+      frequency = sysPllReady(nullptr) ? 160000000 : 0;
     else
-      frequency = mainClockFrequency(NULL);
+      frequency = mainClockFrequency(nullptr);
 
     return frequency / divisor;
   }
@@ -731,7 +731,7 @@ static bool uartClockReady(const void *)
   if (clkCfg2 & CLK_CFG2_UART_CLK_EN)
   {
     if (clkCfg2 & HBN_GLB_UART_CLK_SEL)
-      return sysPllReady(NULL);
+      return sysPllReady(nullptr);
     else
       return true;
   }

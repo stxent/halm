@@ -94,7 +94,7 @@ static void deviceDescriptor(const void *, struct UsbDescriptor *header,
   header->length = sizeof(struct UsbDeviceDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_DEVICE;
 
-  if (payload != NULL)
+  if (payload != nullptr)
   {
     const struct UsbDeviceDescriptor descriptor = {
         .length = sizeof(struct UsbDeviceDescriptor),
@@ -126,7 +126,7 @@ static void configDescriptor(const void *object, struct UsbDescriptor *header,
   header->length = sizeof(struct UsbConfigurationDescriptor);
   header->descriptorType = DESCRIPTOR_TYPE_CONFIGURATION;
 
-  if (payload == NULL)
+  if (payload == nullptr)
     return;
 
   const struct UsbConfigurationDescriptor descriptor = {
@@ -146,7 +146,7 @@ static void configDescriptor(const void *object, struct UsbDescriptor *header,
 
   PointerListNode *current = pointerListFront(&driver->owner->entries);
 
-  while (current != NULL)
+  while (current != nullptr)
   {
     struct UsbDriver * const entry = *pointerListData(current);
 
@@ -166,7 +166,7 @@ static void computeDescriptionProperties(const void *driver, uint16_t *length,
   {
     struct UsbDescriptor header;
 
-    (*entry)(driver, &header, NULL);
+    (*entry)(driver, &header, nullptr);
 
     switch (header.descriptorType)
     {
@@ -199,7 +199,7 @@ static uint16_t extendConfigurationDescriptor(const void *driver,
   {
     struct UsbDescriptor header;
 
-    (*entry)(driver, &header, NULL);
+    (*entry)(driver, &header, nullptr);
 
     switch (header.descriptorType)
     {
@@ -273,7 +273,7 @@ static enum Result lookupDescriptor(struct CompositeDeviceProxy *driver,
 {
   PointerListNode *current = pointerListFront(&driver->owner->entries);
 
-  while (current != NULL)
+  while (current != nullptr)
   {
     struct UsbDriver * const entry = *pointerListData(current);
 
@@ -321,7 +321,7 @@ static enum Result driverControl(void *object,
   {
     PointerListNode *current = pointerListFront(&driver->owner->entries);
 
-    while (current != NULL)
+    while (current != nullptr)
     {
       struct UsbDriver * const entry = *pointerListData(current);
 
@@ -341,7 +341,7 @@ static void driverNotify(void *object, unsigned int event)
   struct CompositeDeviceProxy * const driver = object;
   PointerListNode *current = pointerListFront(&driver->owner->entries);
 
-  while (current != NULL)
+  while (current != nullptr)
   {
     struct UsbDriver * const entry = *pointerListData(current);
 
@@ -352,7 +352,7 @@ static void driverNotify(void *object, unsigned int event)
 /*----------------------------------------------------------------------------*/
 static const UsbDescriptorFunctor *driverDescribe(const void *)
 {
-  return NULL;
+  return nullptr;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result devInit(void *object, const void *configBase)
@@ -364,7 +364,7 @@ static enum Result devInit(void *object, const void *configBase)
   };
 
   device->driver = init(CompositeDeviceProxy, &driverConfig);
-  if (device->driver == NULL)
+  if (device->driver == nullptr)
     return E_ERROR;
 
   pointerListInit(&device->entries);
@@ -438,7 +438,7 @@ static void devUnbind(void *object, const void *driver)
 
   assert(device->interfaceCount >= interfaces);
   assert(device->configurationLength >= length);
-  assert(pointerListFind(&device->entries, (void *)driver) != NULL);
+  assert(pointerListFind(&device->entries, (void *)driver) != nullptr);
 
   pointerListErase(&device->entries, (void *)driver);
   device->interfaceCount -= interfaces;

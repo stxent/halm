@@ -32,7 +32,7 @@ END_DECLS
     extern void *name;
 
 #define DECLARE_WQ_IRQ(name, isr) \
-    void *name = NULL; \
+    void *name = nullptr; \
     \
     void isr(void) \
     { \

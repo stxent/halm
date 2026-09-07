@@ -73,14 +73,14 @@ const struct TimerFactoryClass * const TimerFactoryImpl =
 
         .enable = factoryEnable,
         .disable = factoryDisable,
-        .setAutostop = NULL,
-        .setCallback = NULL,
+        .setAutostop = nullptr,
+        .setCallback = nullptr,
         .getFrequency = factoryGetFrequency,
         .setFrequency = factorySetFrequency,
         .getOverflow = factoryGetOverflow,
         .setOverflow = factorySetOverflow,
         .getValue = factoryGetValue,
-        .setValue = NULL
+        .setValue = nullptr
     },
 
     .create = factoryCreate
@@ -98,14 +98,14 @@ const struct TimerFactoryClass * const TicklessFactoryImpl =
 
         .enable = factoryEnableTickless,
         .disable = factoryDisable,
-        .setAutostop = NULL,
-        .setCallback = NULL,
+        .setAutostop = nullptr,
+        .setCallback = nullptr,
         .getFrequency = factoryGetFrequency,
         .setFrequency = factorySetFrequency,
         .getOverflow = factoryGetOverflowTickless,
-        .setOverflow = NULL,
+        .setOverflow = nullptr,
         .getValue = factoryGetValueTickless,
-        .setValue = NULL
+        .setValue = nullptr
     },
 
     .create = factoryCreateTickless
@@ -140,7 +140,7 @@ const struct TimerClass * const TimerFactoryEntry =
     .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
-    .setFrequency = NULL,
+    .setFrequency = nullptr,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
@@ -158,7 +158,7 @@ const struct TimerClass * const TicklessFactoryEntry =
     .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequencyTickless,
-    .setFrequency = NULL,
+    .setFrequency = nullptr,
     .getOverflow = tmrGetOverflow,
     .setOverflow = tmrSetOverflow,
     .getValue = tmrGetValue,
@@ -186,7 +186,7 @@ static void insertTimer(struct TimerFactoryEntry **head,
    * Traverse until we find a node with greater or equal timestamp
    * or reach the end of the list.
    */
-  while (*current != NULL)
+  while (*current != nullptr)
   {
     if (distance((*current)->timestamp, timestamp, overflow) < overflow / 2)
       break;
@@ -199,7 +199,7 @@ static void insertTimer(struct TimerFactoryEntry **head,
   *current = timer;
 
   assert(*current != (*current)->next);
-  assert((*current)->next == NULL || distance((*current)->next->timestamp,
+  assert((*current)->next == nullptr || distance((*current)->next->timestamp,
       (*current)->timestamp, overflow) < overflow / 2);
 }
 /*----------------------------------------------------------------------------*/
@@ -207,11 +207,11 @@ static void interruptHandler(void *object)
 {
   struct TimerFactory * const factory = object;
   struct TimerFactoryEntry *current;
-  struct TimerFactoryEntry *head = NULL;
+  struct TimerFactoryEntry *head = nullptr;
   const uint32_t counter = ++factory->counter;
 
   current = factory->head;
-  while (current != NULL && counter == current->timestamp)
+  while (current != nullptr && counter == current->timestamp)
   {
     struct TimerFactoryEntry * const timer = current;
     current = current->next;
@@ -224,12 +224,12 @@ static void interruptHandler(void *object)
   factory->head = current;
 
   current = head;
-  while (current != NULL)
+  while (current != nullptr)
   {
     struct TimerFactoryEntry * const timer = current;
     current = current->next;
 
-    timer->next = NULL;
+    timer->next = nullptr;
     timer->callback(timer->callbackArgument);
 
     if (timer->scheduled)
@@ -245,7 +245,7 @@ static void interruptHandler(void *object)
     }
   }
 
-  assert(factory->head == NULL || (factory->head != factory->head->next));
+  assert(factory->head == nullptr || (factory->head != factory->head->next));
 }
 /*----------------------------------------------------------------------------*/
 static void interruptHandlerTickless(void *object)
@@ -258,9 +258,9 @@ static void interruptHandlerTickless(void *object)
   do
   {
     struct TimerFactoryEntry *current = factory->head;
-    struct TimerFactoryEntry *head = NULL;
+    struct TimerFactoryEntry *head = nullptr;
 
-    while (current != NULL)
+    while (current != nullptr)
     {
       if (distance(counter, current->timestamp, overflow) >= overflow / 2)
         break;
@@ -277,12 +277,12 @@ static void interruptHandlerTickless(void *object)
     factory->head = current;
     current = head;
 
-    while (current != NULL)
+    while (current != nullptr)
     {
       struct TimerFactoryEntry * const timer = current;
       current = current->next;
 
-      timer->next = NULL;
+      timer->next = nullptr;
       timer->callback(timer->callbackArgument);
 
       if (timer->scheduled)
@@ -303,13 +303,13 @@ static void interruptHandlerTickless(void *object)
       }
     }
 
-    assert(factory->head == NULL || (factory->head != factory->head->next));
+    assert(factory->head == nullptr || (factory->head != factory->head->next));
 
     /*
      * Configure time of the next timer interrupt. Overflowed wake time
      * will be normalized during event scheduling.
      */
-    uint32_t waketime = factory->head != NULL ?
+    uint32_t waketime = factory->head != nullptr ?
         (factory->head->timestamp + 1) : (counter + overflow / 2);
 
     if (waketime > factory->overflow)
@@ -327,25 +327,25 @@ static void removeTimer(struct TimerFactory *factory,
 {
   struct TimerFactoryEntry **current = &factory->head;
 
-  while (*current != NULL && *current != timer)
+  while (*current != nullptr && *current != timer)
     current = &(*current)->next;
 
-  if (*current != NULL)
+  if (*current != nullptr)
     *current = timer->next;
-  timer->next = NULL;
+  timer->next = nullptr;
 
-  assert(*current == NULL || (*current != (*current)->next));
+  assert(*current == nullptr || (*current != (*current)->next));
 }
 /*----------------------------------------------------------------------------*/
 static enum Result factoryInit(void *object, const void *configBase)
 {
   const struct TimerFactoryConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->timer != NULL);
+  assert(config != nullptr);
+  assert(config->timer != nullptr);
 
   struct TimerFactory * const factory = object;
 
-  factory->head = NULL;
+  factory->head = nullptr;
   factory->timer = config->timer;
   factory->counter = 0;
   factory->overflow = BASE_OVERFLOW;
@@ -358,9 +358,9 @@ static void factoryDeinit(void *object)
 {
   struct TimerFactory * const factory = object;
 
-  assert(factory->head == NULL);
+  assert(factory->head == nullptr);
   timerDisable(factory->timer);
-  timerSetCallback(factory->timer, NULL, NULL);
+  timerSetCallback(factory->timer, nullptr, nullptr);
 }
 /*----------------------------------------------------------------------------*/
 static void factoryEnable(void *object)
@@ -415,12 +415,12 @@ static struct Timer *factoryCreate(struct TimerFactory *factory)
 static enum Result factoryInitTickless(void *object, const void *configBase)
 {
   const struct TimerFactoryConfig * const config = configBase;
-  assert(config != NULL);
-  assert(config->timer != NULL);
+  assert(config != nullptr);
+  assert(config->timer != nullptr);
 
   struct TimerFactory * const factory = object;
 
-  factory->head = NULL;
+  factory->head = nullptr;
   factory->timer = config->timer;
   factory->counter = 0;
   factory->overflow = timerGetOverflow(factory->timer) - 1;
@@ -459,9 +459,9 @@ static enum Result tmrInit(void *object, const void *configBase)
   struct TimerFactoryEntry * const timer = object;
 
   timer->factory = config->parent;
-  timer->next = NULL;
-  timer->callback = NULL;
-  timer->callbackArgument = NULL;
+  timer->next = nullptr;
+  timer->callback = nullptr;
+  timer->callbackArgument = nullptr;
   timer->overflow = 0;
   timer->timestamp = timerGetValue(timer->factory);
   timer->continuous = true;
@@ -481,8 +481,8 @@ static void tmrEnable(void *object)
   struct TimerFactoryEntry * const timer = object;
   struct TimerFactory * const factory = timer->factory;
 
-  assert(timer->callback != NULL);
-  assert(!timer->enabled && timer->next == NULL);
+  assert(timer->callback != nullptr);
+  assert(!timer->enabled && timer->next == nullptr);
 
   const IrqState state = irqSave();
 
@@ -589,8 +589,8 @@ static void tmrEnableTickless(void *object)
   struct TimerFactoryEntry * const timer = object;
   struct TimerFactory * const factory = timer->factory;
 
-  assert(timer->callback != NULL);
-  assert(!timer->enabled && timer->next == NULL);
+  assert(timer->callback != nullptr);
+  assert(!timer->enabled && timer->next == nullptr);
 
   const IrqState state = irqSave();
   const uint32_t counter = timerGetValue(timer->factory);

@@ -129,7 +129,7 @@ static const struct PinEntry spimPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SpimBase *instance = NULL;
+static struct SpimBase *instance = nullptr;
 /*----------------------------------------------------------------------------*/
 static void configPins(struct SpimBase *interface,
     const struct SpimBaseConfig *config)
@@ -171,7 +171,7 @@ static void configPins(struct SpimBase *interface,
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct SpimBase *object)
 {
-  if (instance == NULL)
+  if (instance == nullptr)
   {
     instance = object;
     return true;
@@ -211,7 +211,7 @@ static enum Result spimInit(void *object, const void *configBase)
   /* Reset registers to default values */
   sysResetBlock(RST_SPIM);
 
-  interface->handler = NULL;
+  interface->handler = nullptr;
   interface->irq = SPIM_IRQ;
   interface->reg = NM_SPIM;
 
@@ -222,6 +222,6 @@ static enum Result spimInit(void *object, const void *configBase)
 static void spimDeinit(void *)
 {
   sysClockDisable(CLK_SPIM);
-  instance = NULL;
+  instance = nullptr;
 }
 #endif

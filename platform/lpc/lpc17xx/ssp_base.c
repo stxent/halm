@@ -85,13 +85,13 @@ const struct PinEntry sspPins[] = {
     }
 };
 /*----------------------------------------------------------------------------*/
-static struct SspBase *instances[2] = {NULL};
+static struct SspBase *instances[2] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static bool setInstance(uint8_t channel, struct SspBase *object)
 {
   assert(channel < ARRAY_SIZE(instances));
 
-  if (instances[channel] == NULL)
+  if (instances[channel] == nullptr)
   {
     instances[channel] = object;
     return true;
@@ -144,7 +144,7 @@ static enum Result sspInit(void *object, const void *configBase)
   }
 
   interface->channel = config->channel;
-  interface->handler = NULL;
+  interface->handler = nullptr;
 
   return E_OK;
 }
@@ -165,6 +165,6 @@ static void sspDeinit(void *object)
       break;
   }
 
-  instances[interface->channel] = NULL;
+  instances[interface->channel] = nullptr;
 }
 #endif

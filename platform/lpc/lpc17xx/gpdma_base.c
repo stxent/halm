@@ -24,7 +24,7 @@ static enum Result channelInit(void *, const void *);
 const struct EntityClass * const GpDmaBase = &(const struct EntityClass){
     .size = 0, /* Abstract class */
     .init = channelInit,
-    .deinit = NULL /* Default destructor */
+    .deinit = nullptr /* Default destructor */
 };
 /*----------------------------------------------------------------------------*/
 static const uint8_t dmaEventMap[] = {
@@ -54,7 +54,7 @@ static const uint8_t dmaEventMap[] = {
     [GPDMA_DAC]       = 7
 };
 /*----------------------------------------------------------------------------*/
-static struct GpDmaBase *instances[CHANNEL_COUNT] = {NULL};
+static struct GpDmaBase *instances[CHANNEL_COUNT] = {nullptr};
 /*----------------------------------------------------------------------------*/
 static struct GpDmaMuxConfig calcEventMux(enum GpDmaType type,
     enum GpDmaEvent event)
@@ -146,14 +146,14 @@ uint32_t gpDmaBaseCalcMasterAffinity(const struct GpDmaBase *, enum GpDmaMaster,
 /*----------------------------------------------------------------------------*/
 void gpDmaResetInstance(uint8_t channel)
 {
-  instances[channel] = NULL;
+  instances[channel] = nullptr;
 }
 /*----------------------------------------------------------------------------*/
 bool gpDmaSetInstance(uint8_t channel, struct GpDmaBase *object)
 {
   assert(channel < CHANNEL_COUNT);
 
-  void *expected = NULL;
+  void *expected = nullptr;
   return compareExchangePointer(&instances[channel], &expected, object);
 }
 /*----------------------------------------------------------------------------*/
@@ -206,7 +206,7 @@ static enum Result channelInit(void *object, const void *configBase)
   struct GpDmaBase * const channel = object;
 
   channel->config = CONFIG_TYPE(config->type) | CONFIG_IE | CONFIG_ITC;
-  channel->handler = NULL;
+  channel->handler = nullptr;
   channel->number = config->channel;
   channel->reg = &LPC_GPDMA->CHANNELS[channel->number];
 

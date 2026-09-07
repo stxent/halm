@@ -99,14 +99,14 @@ static void interruptHandler(void *object, enum Result res)
     channel->state = (res == E_OK) ? STATE_DONE : STATE_ERROR;
   }
 
-  if (channel->callback != NULL)
+  if (channel->callback != nullptr)
     channel->callback(channel->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelInit(void *object, const void *configBase)
 {
   const struct PdmaCircularConfig * const config = configBase;
-  assert(config != NULL);
+  assert(config != nullptr);
   assert(config->number > 0);
 
   const struct PdmaBaseConfig baseConfig = {
@@ -121,12 +121,12 @@ static enum Result channelInit(void *object, const void *configBase)
     return res;
 
   channel->list = memalign(4, sizeof(struct PdmaEntry) * config->number);
-  if (channel->list == NULL)
+  if (channel->list == nullptr)
     return E_MEMORY;
 
   channel->base.handler = interruptHandler;
-  channel->callback = NULL;
-  channel->callbackArgument = NULL;
+  channel->callback = nullptr;
+  channel->callbackArgument = nullptr;
   channel->capacity = config->number;
   channel->queued = 0;
   channel->state = STATE_IDLE;
@@ -298,7 +298,7 @@ static void channelAppend(void *object, void *destination, const void *source,
   const uint32_t control = channel->base.control;
   const uint32_t transfers = size >> DSCT_CTL_TXWIDTH_VALUE(control);
 
-  assert(destination != NULL && source != NULL);
+  assert(destination != nullptr && source != nullptr);
   assert(!((uintptr_t)destination % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
   assert(!((uintptr_t)source % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
   assert(!(size % (1 << DSCT_CTL_TXWIDTH_VALUE(control))));
@@ -310,7 +310,7 @@ static void channelAppend(void *object, void *destination, const void *source,
     channel->queued = 0;
 
   struct PdmaEntry * const current = channel->list + channel->queued;
-  struct PdmaEntry *previous = NULL;
+  struct PdmaEntry *previous = nullptr;
 
   if (channel->queued)
     previous = channel->list + (channel->queued - 1);
@@ -333,7 +333,7 @@ static void channelAppend(void *object, void *destination, const void *source,
     current->next = DSCT_NEXT_NEXT((uintptr_t)channel->list);
   }
 
-  if (previous != NULL)
+  if (previous != nullptr)
   {
     if (channel->silent)
       previous->control |= DSCT_CTL_TBINTDIS;
