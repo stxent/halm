@@ -80,7 +80,8 @@ static void serialDeinit(void *);
 #  define serialDeinit deletedDestructorTrap
 #endif
 /*----------------------------------------------------------------------------*/
-const struct InterfaceClass * const SerialDmaTOC = &(const struct InterfaceClass){
+const struct InterfaceClass * const SerialDmaTOC =
+    &(const struct InterfaceClass){
     .size = sizeof(struct SerialDmaTOC),
     .init = serialInit,
     .deinit = serialDeinit,

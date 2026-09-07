@@ -416,12 +416,14 @@ static enum Result interfaceInit(void *object, const void *configBase)
   const size_t audioBufferSize = getMaxBufferSize(maxSampleRate);
   const size_t audioPacketSize = getBufferSize(maxSampleRate);
   const size_t fbBuffers = interface->fbDataEp != NULL ? 1 : 0;
-  const size_t rxBuffers = interface->rxDataEp != NULL ? config->rxBuffers : 0;
-  const size_t txBuffers = interface->txDataEp != NULL ? config->txBuffers : 0;
+  const size_t rxBuffers = interface->rxDataEp != NULL ?
+      config->rxBuffers : 0;
+  const size_t txBuffers = interface->txDataEp != NULL ?
+      config->txBuffers : 0;
   uint8_t *arena;
 
   /* Allocate requests */
-  if (config->arena)
+  if (config->arena != NULL)
   {
     interface->requests = allocBufferMemory(fbBuffers + rxBuffers + txBuffers,
         0, 0, 0, NULL);

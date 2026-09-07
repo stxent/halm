@@ -276,8 +276,8 @@ static enum Result adcSetParam(void *object, int parameter, const void *)
 
 #ifdef CONFIG_PLATFORM_NUMICRO_ADC_SHARED
     case IF_ACQUIRE:
-      return adcSetInstance(interface->base.channel, NULL, &interface->base) ?
-          E_OK : E_BUSY;
+      return adcSetInstance(interface->base.channel, NULL,
+          &interface->base) ? E_OK : E_BUSY;
 
     case IF_RELEASE:
       adcSetInstance(interface->base.channel, &interface->base, NULL);

@@ -258,7 +258,7 @@ typedef struct
   __rw__ uint32_t SEED; /* Seed register */
   __ro__ uint32_t CHECKSUM; /* Checksum register */
 } NM_CRC_Type;
-/*------------------Cryptographic Accelerator-----------------------------------*/
+/*------------------Cryptographic Accelerator---------------------------------*/
 typedef struct
 {
   /* Offset 0x000 */
@@ -1020,12 +1020,12 @@ typedef struct
   __ne__ uint32_t RESERVED3[8];
 
   /* Offset 0x0C0 */
-  __rw__ uint32_t SRAM_INTCTL; /* System SRAM Interrupt Enable Control register */
-  __rw__ uint32_t SRAM_STATUS; /* System SRAM Parity Error Status register */
-  __ro__ uint32_t SRAM_ERRADDR; /* System SRAM Parity Check Error Address register */
+  __rw__ uint32_t SRAM_INTCTL; /* SRAM Interrupt Enable Control register */
+  __rw__ uint32_t SRAM_STATUS; /* SRAM Parity Error Status register */
+  __ro__ uint32_t SRAM_ERRADDR; /* SRAM Parity Check Error Address register */
   __ne__ uint32_t RESERVED4[1];
-  __rw__ uint32_t SRAM_BISTCTL; /* System SRAM BIST Test Control register */
-  __ro__ uint32_t SRAM_BISTSTS; /* System SRAM BIST Test Status register */
+  __rw__ uint32_t SRAM_BISTCTL; /* SRAM BIST Test Control register */
+  __ro__ uint32_t SRAM_BISTSTS; /* SRAM BIST Test Status register */
   __ne__ uint32_t RESERVED5[3];
   __rw__ uint32_t HIRCTCTL; /* HIRC48M Trim Control register */
   __rw__ uint32_t HIRCTIEN; /* HIRC48M Trim Interrupt Enable register */

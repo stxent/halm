@@ -355,7 +355,8 @@ static void interruptHandler(void *object)
         case PKTSTS_SETUP_PACKET_RECEIVED:
         {
           sieEpReadData(device, (uint8_t *)&device->setup.packet,
-              sizeof(device->setup.packet), sizeof(device->setup.packet), NULL);
+              sizeof(device->setup.packet), sizeof(device->setup.packet),
+              NULL);
 
           const uint8_t dir =
               REQUEST_DIRECTION_VALUE(device->setup.packet.requestType);

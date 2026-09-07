@@ -47,27 +47,8 @@ static struct UsbBase *instance = NULL;
 /*----------------------------------------------------------------------------*/
 static void configPins(const struct UsbBaseConfig *config)
 {
-  // TODO
+  /* TODO Nuvoton M03x pin configuration */
   (void)config;
-
-  // const PinNumber pinArray[] = {
-  //     config->dm, config->dp, config->connect, config->vbus
-  // };
-
-  // for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
-  // {
-  //   if (pinArray[index])
-  //   {
-  //     const struct PinEntry * const pinEntry = pinFind(usbPins, pinArray[index],
-  //         device->channel);
-  //     assert(pinEntry != NULL);
-
-  //     const struct Pin pin = pinInit(pinArray[index]);
-
-  //     pinInput(pin);
-  //     pinSetFunction(pin, pinEntry->value);
-  //   }
-  // }
 }
 /*----------------------------------------------------------------------------*/
 static bool setInstance(struct UsbBase *object)

@@ -460,12 +460,12 @@ typedef struct
   __ne__ uint32_t RESERVED4[17];
   __rw__ uint32_t MODCTL; /* Modulation Control register */
   __ne__ uint32_t RESERVED5[3];
-  __rw__ uint32_t SRAM_BISTCTL; /* System SRAM BIST Test Control register */
-  __ro__ uint32_t SRAM_BISTSTS; /* System SRAM BIST Test Status register */
-  __rw__ uint32_t SRAM_PARITY; /* System SRAM Parity Test Control register */
-  __rw__ uint32_t SRAM_INTCTL; /* System SRAM Interrupt Enable Control register */ // TODO
-  __rw__ uint32_t SRAM_STATUS; /* System SRAM Parity Error Status register */
-  __ro__ uint32_t SRAM_ERRADDR; /* System SRAM Parity Check Error Address register */ // TODO
+  __rw__ uint32_t SRAM_BISTCTL; /* SRAM BIST Test Control register */
+  __ro__ uint32_t SRAM_BISTSTS; /* SRAM BIST Test Status register */
+  __rw__ uint32_t SRAM_PARITY; /* SRAM Parity Test Control register */
+  __rw__ uint32_t SRAM_INTCTL; /* SRAM Interrupt Enable Control register */
+  __rw__ uint32_t SRAM_STATUS; /* SRAM Parity Error Status register */
+  __ro__ uint32_t SRAM_ERRADDR; /* SRAM Parity Check Error Address register */
   __ne__ uint32_t RESERVED6[2];
   __rw__ uint32_t HIRCTRIMCTL; /* HIRC Trim Control register */
   __rw__ uint32_t HIRCTRIMIEN; /* HIRC Trim Interrupt Enable register */

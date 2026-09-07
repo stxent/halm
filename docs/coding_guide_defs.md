@@ -2,8 +2,6 @@
 
 Use this guide to generate header files and peripheral definitions. Adhere strictly to the following formatting, layout, and naming rules.
 
----
-
 ## 1. File Structure & Layout
 
 ### 1.1 File Header & License
@@ -51,16 +49,12 @@ Use this guide to generate header files and peripheral definitions. Adhere stric
   #include <xcore/bits.h>
   ```
 
----
-
 ## 2. Indentation & Spacing
 
 * **Indentation Unit:** Spaces only. 1 unit = 2 spaces.
 * **Line Width Limit:** Strictly 80 characters maximum.
 * **Block Indentation:** 2 spaces inside functions, structures, and enumerations.
 * **Expression Indentation:** 4 spaces by default for multi-line expressions.
-
----
 
 ## 3. Macro Formatting & Alignment
 
@@ -74,8 +68,6 @@ Use this guide to generate header files and peripheral definitions. Adhere stric
   ```
 * **Value Exceeds 80 Characters:** If the definition starts at column 40 but overflows the 80-character line limit, add a space and a backslash (`\`) at the end of the macro name, and place the definition on the next line starting at **4 spaces**.
 * **Macro Name Exceeds 40 Characters:** If the `#define` keyword combined with the macro name stretches to or beyond column 40, add a space and a backslash (`\`) at the actual end of the name, and place the value on the next line starting at **4 spaces**.
-
----
 
 ## 4. Naming Conventions & Enumerations
 
@@ -98,8 +90,6 @@ For every register field consisting of **more than 1 bit**, you must strictly de
 
 **Separation & Layout Rule:** The macro definition group for a multi-bit field must be separated from neighboring macro groups or single-bit field definitions by a single empty line.
 
----
-
 ## 5. Standard Bitfield Manipulation Macros
 
 Use these exact functional macro patterns for all bit-level operations (provided by `<xcore/bits.h>`):
@@ -112,13 +102,9 @@ Use these exact functional macro patterns for all bit-level operations (provided
 | **Shifted Mask** | `BIT_FIELD(MASK(width), shift)` |
 | **Value Extraction** | `FIELD_VALUE(source, mask, shift)` |
 
----
-
 ## 6. Prohibited Structures
 
 * All registers, offsets, and masks must be declared explicitly using independent preprocessor macros (`#define`). Do not group them into structural composite layouts.
-
----
 
 ## 7. Comprehensive Example Header
 

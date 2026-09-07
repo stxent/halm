@@ -152,8 +152,8 @@ struct PllConfig
   /**
    * Mandatory: clock source selection.
    *
-   * Specifies the source of the input reference clock for the PLL. The supported
-   * input frequency ranges depend on the PLL instance:
+   * Specifies the source of the input reference clock for the PLL.
+   * The supported input frequency ranges depend on the PLL instance:
    * - For **Audio PLL** (PLL0AUDIO) and **USB PLL** (PLL0USB):
    *   - Supported input frequency range: 14 kHz to 150 MHz.
    *   - When using an external crystal oscillator, the input frequency

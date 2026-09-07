@@ -990,7 +990,7 @@ static size_t spimRead(void *object, void *buffer, size_t length)
     /* Poll mode requires zero length read */
     assert(!length && !interface->data.length);
 
-    executeDirectCommand(interface, (uintptr_t)NULL, false);
+    executeDirectCommand(interface, 0, false);
 
     if (interface->blocking)
     {
