@@ -11,6 +11,14 @@
 #include <assert.h>
 #include <limits.h>
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_STM32_I2C_DMA_PRIORITY
+#  define IRQ_PRIORITY CONFIG_PLATFORM_STM32_I2C_DMA_PRIORITY
+#elifdef CONFIG_PLATFORM_STM32_BDMA_PRIORITY
+#  define IRQ_PRIORITY CONFIG_PLATFORM_STM32_BDMA_PRIORITY
+#else
+#  define IRQ_PRIORITY CONFIG_PLATFORM_STM32_DMA_PRIORITY
+#endif
+
 #define ADDRESS_TYPE_MASK       MASK(15)
 #define ADDRESS_TYPE_7BIT_MASK  MASK(7)
 #define ADDRESS_TYPE_7BIT       0
@@ -253,11 +261,11 @@ static enum Result i2cInit(void *object, const void *configBase)
 
   if (interface->base.irq.er != IRQ_RESERVED)
   {
-    irqSetPriority(interface->base.irq.er, config->priority);
+    irqSetPriority(interface->base.irq.er, IRQ_PRIORITY);
     irqClearPending(interface->base.irq.er);
     irqEnable(interface->base.irq.er);
   }
-  irqSetPriority(interface->base.irq.ev, config->priority);
+  irqSetPriority(interface->base.irq.ev, IRQ_PRIORITY);
   irqClearPending(interface->base.irq.ev);
   irqEnable(interface->base.irq.ev);
 
@@ -462,19 +470,20 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   struct I2C * const interface = object;
   STM_I2C_Type * const reg = interface->base.reg;
 
-  if (!length)
-    return 0;
   if (length > DMA_MAX_TRANSFER_SIZE)
     length = DMA_MAX_TRANSFER_SIZE;
 
   dmaDisable(interface->rxDma);
   dmaDisable(interface->txDma);
 
-  dmaAppend(interface->txDma, (void *)&reg->TXDR, buffer, length);
-  if (dmaEnable(interface->txDma) != E_OK)
+  if (length)
   {
-    interface->status = STATUS_ERROR;
-    return 0;
+    dmaAppend(interface->txDma, (void *)&reg->TXDR, buffer, length);
+    if (dmaEnable(interface->txDma) != E_OK)
+    {
+      interface->status = STATUS_ERROR;
+      return 0;
+    }
   }
 
   interface->left = length;
@@ -488,10 +497,11 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   cr2 |= CR2_NBYTES(MIN(length, CR2_NBYTES_MAX));
   if (length > CR2_NBYTES_MAX)
     cr2 |= CR2_RELOAD;
-  if (!interface->sendRepeatedStart)
+  if (!interface->sendRepeatedStart || !length)
     cr2 |= CR2_AUTOEND;
 
-  reg->CR1 |= CR1_TXDMAEN;
+  if (length)
+    reg->CR1 |= CR1_TXDMAEN;
   reg->CR2 = cr2 | CR2_START;
 
   if (interface->blocking)

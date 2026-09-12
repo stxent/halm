@@ -23,8 +23,6 @@ struct I2CConfig
   PinNumber scl;
   /** Mandatory: serial data pin. */
   PinNumber sda;
-  /** Optional: interrupt priority. */
-  IrqPriority priority;
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
   /** Mandatory: number of the RX DMA stream. */

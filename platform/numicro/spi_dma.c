@@ -284,17 +284,14 @@ static enum Result spiInit(void *object, const void *configBase)
   reg->FIFOCTL = FIFOCTL_RXRST | FIFOCTL_TXRST;
   /* Clear pending interrupt flags */
   reg->STATUS = STATUS_UNITIF | STATUS_RXOVIF | STATUS_RXTOIF;
+  /* Reset DMA configuration */
+  reg->PDMACTL = 0;
 
   /* Set the desired data rate */
   if (!spiSetRate(&interface->base, interface->rate))
     return E_VALUE;
   /* Set SPI mode */
   spiSetMode(&interface->base, config->mode);
-
-  /* Reset other control registers */
-  reg->PDMACTL = 0;
-  reg->I2SCTL = 0;
-  reg->I2SCLK = 0;
 
 #ifdef CONFIG_PLATFORM_NUMICRO_SPI_PM
   if ((res = pmRegister(powerStateHandler, interface)) != E_OK)

@@ -13,9 +13,9 @@
 #include <string.h>
 /*----------------------------------------------------------------------------*/
 #ifdef CONFIG_PLATFORM_STM32_BDMA_PRIORITY
-#  define UART_PRIORITY CONFIG_PLATFORM_STM32_BDMA_PRIORITY
+#  define IRQ_PRIORITY CONFIG_PLATFORM_STM32_BDMA_PRIORITY
 #else
-#  define UART_PRIORITY CONFIG_PLATFORM_STM32_DMA_PRIORITY
+#  define IRQ_PRIORITY CONFIG_PLATFORM_STM32_DMA_PRIORITY
 #endif
 /*----------------------------------------------------------------------------*/
 struct SerialDma
@@ -393,7 +393,7 @@ static enum Result serialInit(void *object, const void *configBase)
     return res;
 #endif
 
-  irqSetPriority(interface->base.irq, UART_PRIORITY);
+  irqSetPriority(interface->base.irq, IRQ_PRIORITY);
   irqEnable(interface->base.irq);
 
   return enqueueRxBuffer(interface);

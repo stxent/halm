@@ -75,7 +75,7 @@ static void interruptHandler(void *object)
     case STATUS_RESTART_TRANSMITTED:
       if (interface->state == STATE_ADDRESS)
       {
-        reg->DAT = (interface->txLeft ? DATA_WRITE : DATA_READ)
+        reg->DAT = (interface->rxLeft ? DATA_READ : DATA_WRITE)
             | (interface->address << 1);
       }
       reg->CTL0 &= ~CTL0_STA;
@@ -83,11 +83,21 @@ static void interruptHandler(void *object)
 
     /* Slave address and write bit have been transmitted, ACK received */
     case STATUS_SLAVE_WRITE_ACK:
-      reg->DAT = *(const uint8_t *)interface->buffer;
-      ++interface->buffer;
-      --interface->txLeft;
+      if (interface->txLeft > 0)
+      {
+        reg->DAT = *(const uint8_t *)interface->buffer;
+        ++interface->buffer;
+        --interface->txLeft;
 
-      interface->state = STATE_TRANSMIT;
+        interface->state = STATE_TRANSMIT;
+      }
+      else
+      {
+        /* Acknowledge polling completed */
+        reg->CTL0 |= CTL0_STO;
+        interface->state = STATE_IDLE;
+        event = true;
+      }
       break;
 
     /* Slave address and read bit have been transmitted, ACK received */
@@ -403,9 +413,6 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
 {
   struct I2C * const interface = object;
   NM_I2C_Type * const reg = interface->base.reg;
-
-  if (!length)
-    return 0;
 
   interface->buffer = (uintptr_t)buffer;
   interface->rxLeft = 0;

@@ -11,6 +11,12 @@
 #include <assert.h>
 #include <limits.h>
 /*----------------------------------------------------------------------------*/
+#ifdef CONFIG_PLATFORM_STM32_BDMA_PRIORITY
+#  define IRQ_PRIORITY CONFIG_PLATFORM_STM32_BDMA_PRIORITY
+#else
+#  define IRQ_PRIORITY CONFIG_PLATFORM_STM32_DMA_PRIORITY
+#endif
+
 enum Status
 {
   STATUS_OK,
@@ -123,51 +129,71 @@ static void interruptHandler(void *object)
   {
     if (status & SR1_SB)
     {
-      if (interface->txLeft)
-      {
-        reg->CR1 &= ~CR1_ACK;
-        reg->CR2 |= CR2_LAST;
-        reg->DR = (interface->address << 1) | DR_WRITE;
-
-        dmaAppend(interface->txDma, (void *)&reg->DR,
-            (const void *)interface->buffer, interface->txLeft);
-
-        if (dmaEnable(interface->txDma) != E_OK)
-        {
-          interface->status = STATUS_ERROR;
-          error = true;
-        }
-        else
-          interface->status = STATUS_TRANSMIT;
-      }
-      else
+      if (interface->rxLeft)
       {
         if (interface->rxLeft == 1)
           reg->CR1 &= ~CR1_ACK;
         else
           reg->CR1 |= CR1_ACK;
         reg->CR2 |= CR2_LAST;
-        reg->DR = (interface->address << 1) | DR_READ;
 
         dmaAppend(interface->rxDma, (void *)interface->buffer,
             (const void *)&reg->DR, interface->rxLeft);
 
-        if (dmaEnable(interface->rxDma) != E_OK)
+        if (dmaEnable(interface->rxDma) == E_OK)
+        {
+          reg->CR2 |= CR2_DMAEN;
+          reg->DR = (interface->address << 1) | DR_READ;
+          interface->status = STATUS_RECEIVE;
+        }
+        else
         {
           interface->status = STATUS_ERROR;
           error = true;
         }
-        else
-          interface->status = STATUS_RECEIVE;
       }
+      else
+      {
+        reg->CR1 &= ~CR1_ACK;
 
-      if (!error)
-        reg->CR2 |= CR2_DMAEN;
+        if (interface->txLeft)
+        {
+          dmaAppend(interface->txDma, (void *)&reg->DR,
+              (const void *)interface->buffer, interface->txLeft);
+
+          if (dmaEnable(interface->txDma) == E_OK)
+          {
+            reg->CR2 |= CR2_DMAEN;
+            interface->status = STATUS_TRANSMIT;
+          }
+          else
+          {
+            interface->status = STATUS_ERROR;
+            error = true;
+          }
+        }
+        else
+          interface->status = STATUS_TRANSMIT;
+
+        if (!error)
+          reg->DR = (interface->address << 1) | DR_WRITE;
+      }
     }
     else if (status & SR1_ADDR)
     {
       /* Read SR2 to clear ADDR flag */
-      if (!(reg->SR2 & SR2_MSL))
+      if (reg->SR2 & SR2_MSL)
+      {
+        if (!interface->buffer)
+        {
+          /* Acknowledge polling completed */
+          reg->CR1 |= CR1_STOP;
+
+          interface->status = STATUS_OK;
+          event = true;
+        }
+      }
+      else
         error = true;
     }
     else if (status & SR1_BTF)
@@ -192,16 +218,12 @@ static void interruptHandler(void *object)
 
   if (error)
   {
+    reg->CR2 &= ~(CR2_DMAEN | CR2_LAST);
+
     if (interface->status == STATUS_RECEIVE)
-    {
-      reg->CR2 &= ~CR2_DMAEN;
       dmaDisable(interface->rxDma);
-    }
     if (interface->status == STATUS_TRANSMIT)
-    {
-      reg->CR2 &= ~CR2_DMAEN;
       dmaDisable(interface->txDma);
-    }
 
     reg->CR1 |= CR1_STOP;
 
@@ -239,7 +261,7 @@ static void rxDmaHandler(void *object)
   struct I2C * const interface = object;
   STM_I2C_Type * const reg = interface->base.reg;
 
-  reg->CR2 &= ~CR2_DMAEN;
+  reg->CR2 &= ~(CR2_DMAEN | CR2_LAST);
   reg->CR1 |= CR1_STOP;
 
   interface->status = dmaStatus(interface->rxDma) == E_OK ?
@@ -323,11 +345,11 @@ static enum Result i2cInit(void *object, const void *configBase)
 
   if (interface->base.irq.er != IRQ_RESERVED)
   {
-    irqSetPriority(interface->base.irq.er, config->priority);
+    irqSetPriority(interface->base.irq.er, IRQ_PRIORITY);
     irqClearPending(interface->base.irq.er);
     irqEnable(interface->base.irq.er);
   }
-  irqSetPriority(interface->base.irq.ev, config->priority);
+  irqSetPriority(interface->base.irq.ev, IRQ_PRIORITY);
   irqClearPending(interface->base.irq.ev);
   irqEnable(interface->base.irq.ev);
 
@@ -342,12 +364,12 @@ static void i2cDeinit(void *object)
 
   /* Disable the interface */
   reg->CR1 = 0;
+  reg->CR2 = 0;
 
   /* Disable interrupts */
   irqDisable(interface->base.irq.ev);
   if (interface->base.irq.er != IRQ_RESERVED)
     irqDisable(interface->base.irq.er);
-  reg->CR2 = 0;
 
 #ifdef CONFIG_PLATFORM_STM32_I2C_PM
   pmUnregister(interface);
@@ -413,16 +435,12 @@ static enum Result i2cSetParam(void *object, int parameter, const void *data)
     {
       STM_I2C_Type * const reg = interface->base.reg;
 
+      reg->CR2 &= ~(CR2_DMAEN | CR2_LAST);
+
       if (interface->status == STATUS_RECEIVE)
-      {
-        reg->CR2 &= ~CR2_DMAEN;
         dmaDisable(interface->rxDma);
-      }
       if (interface->status == STATUS_TRANSMIT)
-      {
-        reg->CR2 &= ~CR2_DMAEN;
         dmaDisable(interface->txDma);
-      }
 
       /* Modified sequence from the Errata Sheet ES096 */
 
@@ -511,15 +529,13 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   struct I2C * const interface = object;
   STM_I2C_Type * const reg = interface->base.reg;
 
-  if (!length)
-    return 0;
   if (length > DMA_MAX_TRANSFER_SIZE)
     length = DMA_MAX_TRANSFER_SIZE;
 
   dmaDisable(interface->rxDma);
   dmaDisable(interface->txDma);
 
-  interface->buffer = (uintptr_t)buffer;
+  interface->buffer = length ? (uintptr_t)buffer : 0;
   interface->rxLeft = 0;
   interface->txLeft = length;
   interface->status = STATUS_START;

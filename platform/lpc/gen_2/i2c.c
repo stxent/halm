@@ -95,10 +95,11 @@ static void interruptHandler(void *object)
         }
         else
         {
-          if (!interface->sendRepeatedStart)
+          if (!interface->sendRepeatedStart || !interface->buffer)
             reg->MSTCTL = MSTCTL_MSTSTOP;
+          else if (interface->sendRepeatedStart)
+            interface->sendRepeatedStart = false;
 
-          interface->sendRepeatedStart = false;
           interface->state = STATE_IDLE;
           event = true;
         }
@@ -310,7 +311,7 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   if (!length)
     return 0;
 
-  interface->buffer = (uintptr_t)buffer;
+  interface->buffer = length ? (uintptr_t)buffer : 0;
   interface->left = length;
   interface->state = STATE_RECEIVE;
 
@@ -339,9 +340,6 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
 {
   struct I2C * const interface = object;
   LPC_I2C_Type * const reg = interface->base.reg;
-
-  if (!length)
-    return 0;
 
   interface->buffer = (uintptr_t)buffer;
   interface->left = length;

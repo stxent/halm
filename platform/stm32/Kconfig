@@ -230,6 +230,11 @@ config PLATFORM_STM32_I2C
 	default y
 	depends on PLATFORM_STM32_I2C_BASE && (PLATFORM_STM32_BDMA || PLATFORM_STM32_DMA)
 
+config PLATFORM_STM32_I2C_DMA_PRIORITY
+	int "I2C interrupt priority"
+	default 0
+	depends on PLATFORM_STM32_I2C && PLATFORM_STM32_BDMA && PLATFORM_STM32_DMA
+
 config PLATFORM_STM32_IWDG
 	bool "IWDG"
 	default y
