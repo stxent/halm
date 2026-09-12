@@ -112,6 +112,7 @@ static enum Result tmrInit(void *object, const void *configBase)
       const unsigned int number = config->event - TIM_EVENT_CC1;
       const unsigned int part = config->event > TIM_EVENT_CC2;
 
+      reg->CCR[number] = getMaxValue(timer->base.flags);
       reg->CCMR[part] = CCMR_OCM(number, OCM_TOGGLE);
       reg->CCER = CCER_CCE(number);
       reg->DIER = DIER_CCDE(number);
@@ -252,9 +253,9 @@ static void tmrSetOverflow(void *object, uint32_t overflow)
   overflow = overflow ? overflow - 1 : getMaxValue(timer->base.flags);
 
   if (timer->event > TIM_EVENT_UPDATE)
-    reg->CCR[timer->event - TIM_EVENT_CC1] = overflow - 1;
+    reg->CCR[timer->event - TIM_EVENT_CC1] = overflow;
   if (!timer->freerun)
-    reg->ARR = overflow - 1;
+    reg->ARR = overflow;
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetValue(const void *object)
