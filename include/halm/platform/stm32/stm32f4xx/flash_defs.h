@@ -70,7 +70,7 @@ enum
 #define CR_STRT                         BIT(16)
 /* End-of-operation interrupt enable */
 #define CR_EOPIE                        BIT(24)
-/* Error interrupt enable bit */ 
+/* Error interrupt enable bit */
 #define CR_ERRIE                        BIT(25)
 /* Lock bit */
 #define CR_LOCK                         BIT(31)

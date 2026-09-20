@@ -163,7 +163,7 @@ enum
 #define PCR_ECCPS_VALUE(reg)            FIELD_VALUE(reg, PCR_ECCPS_MASK, 17)
 
 /* ECC Page Size configurations */
-enum 
+enum
 {
   PCR_ECCPS_256  = 0,
   PCR_ECCPS_512  = 1,

@@ -135,7 +135,7 @@ enum Result flashBaseWrite(struct FlashBase *interface, uint32_t position,
   {
     uint16_t word;
 
-    memcpy(&word, input, sizeof(word));      
+    memcpy(&word, input, sizeof(word));
     *(uint16_t *)output = word;
     res = waitForCompletion();
 

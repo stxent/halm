@@ -93,7 +93,7 @@ static void enableMemoryMappingMode(struct Spim *interface)
     (void)cmd;
 
     assert((interface->data.serial
-    				&& (cmd == 0x03 || cmd == 0x0B))
+            && (cmd == 0x03 || cmd == 0x0B))
         || (!interface->data.serial && interface->quad
             && (cmd == 0xE7 || cmd == 0xEB))
         || (!interface->data.serial && !interface->quad
@@ -348,7 +348,7 @@ static void executeDmaCommand(struct Spim *interface, uintptr_t buffer,
     /* Check read commands */
     assert(out
         || (interface->data.serial
-    				&& (cmd == 0x03 || cmd == 0x0B))
+            && (cmd == 0x03 || cmd == 0x0B))
         || (!interface->data.serial && interface->quad
             && (cmd == 0xE7 || cmd == 0xEB))
         || (!interface->data.serial && !interface->quad
@@ -573,7 +573,7 @@ static void spimInterruptHandler(void *object)
   if (interface->poll)
     event = readPollResponse(interface);
   else
-	  event = true;
+    event = true;
 
   if (event && interface->callback != nullptr)
     interface->callback(interface->callbackArgument);

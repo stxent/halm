@@ -61,7 +61,7 @@ enum
 #define CR_LOCK                         BIT(7)
 /* Option bytes write enable */
 #define CR_OPTWRE                       BIT(9)
-/* Error interrupt enable bit */ 
+/* Error interrupt enable bit */
 #define CR_ERRIE                        BIT(10)
 /* End-of-operation interrupt enable */
 #define CR_EOPIE                        BIT(12)

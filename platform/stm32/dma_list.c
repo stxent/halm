@@ -129,7 +129,7 @@ static enum Result streamInit(void *object, const void *configBase)
   {
     stream->base.config |= SCR_TCIE | SCR_TEIE;
     stream->base.handler = interruptHandler;
-  
+
     stream->callback = nullptr;
     stream->callbackArgument = nullptr;
     stream->capacity = config->number;

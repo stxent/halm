@@ -1102,7 +1102,7 @@ static enum Result handleCommonInterfaceRequest(struct UacBase *driver,
           break;
       }
     }
-  
+
     if (res != E_OK)
     {
       usbTrace("uac: unknown SET request with index %04X, value %04X",

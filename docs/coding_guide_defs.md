@@ -24,8 +24,12 @@ Use this guide to generate peripheral definition header files. Adhere strictly t
   ```
 * For groups of register definitions, place the register name inside the visual divider comment block. The register name must start exactly at column 20 (the 21st character index). Do **not** place empty lines before or after this divider:
   ```c
-  /*------------------USB Control register--------------------------------------*/
+  /*------------------Interrupt Status Register---------------------------------*/
   ```
+* **Register Name Formatting Rules:** The register name string used in divider comments and description metadata must follow these conventions:
+  1. **No Peripheral Abbreviation:** The name must not contain the abbreviated peripheral name.
+  2. **Title Case:** Every word in a multi-word register name must begin with a capital letter.
+  3. **Suffix Rule:** If the word `Register` is absent from the full name, it must be appended at the end.
 
 ### 1.3 Include Guards
 * **Naming:** Use `UPPER_CASE` and reflect the full repository path, replacing folder slashes and file extensions with underscores.
@@ -95,6 +99,9 @@ A compact description must accompany every single-bit and multi-bit field block.
 
 * **Placement:** The description must be a single-line or multi-line C-style comment (/* ... */) placed immediately above the field definition block (above the first single-bit flag or the `_MASK` macro of a multi-bit field).
 * **Content:** Keep descriptions technical and concise.
+
+### 3.7 Reserved Fields
+* **Skip Reserved Registers/Fields:** Reserved (RSVD) register entries have no defined hardware function and must **not** be emitted as macros. Omit them entirely from the generated header — no `#define` statements and no description comments — so that production code only ever references functional fields.
 
 ## 4. Enumerations
 * **Naming Style:** Use `CamelCase` for the enum type name (e.g., `CtrlMode`).

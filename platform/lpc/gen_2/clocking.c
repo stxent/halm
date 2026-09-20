@@ -288,7 +288,7 @@ static uint32_t calcPllFrequency(uint16_t multiplier, uint8_t divisor,
   }
 
   const uint32_t cco = frequency * multiplier;
-  
+
   if (cco >= 156000000 && cco <= 320000000)
     return cco / divisor;
   else
@@ -521,7 +521,7 @@ static enum Result usbPllEnable(const void *, const void *configBase)
   const uint32_t control = calcPllValues(config->multiplier, config->divisor);
   const uint32_t frequency = calcPllFrequency(config->multiplier,
       config->divisor, CLOCK_EXTERNAL);
-  
+
   if (frequency != USB_PLL_FREQUENCY)
     return E_VALUE;
 

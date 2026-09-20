@@ -29,8 +29,8 @@ static inline void lockFlash(void)
 /*----------------------------------------------------------------------------*/
 static inline void unlockFlash(void)
 {
-	STM_FLASH->KEYR = KEYR_KEY1;
-	STM_FLASH->KEYR = KEYR_KEY2;
+  STM_FLASH->KEYR = KEYR_KEY1;
+  STM_FLASH->KEYR = KEYR_KEY2;
 }
 /*----------------------------------------------------------------------------*/
 static inline enum Result waitForCompletion(void)
@@ -57,7 +57,7 @@ static enum Result flashInit(void *object, const void *configBase)
   if (config->bank != FLASH_BANK_1)
     return E_VALUE;
 
-  /* 
+  /*
    * Parallelism configuration depends on IC voltage:
    *   2.7 - 3.6 with external VPP: x64
    *   2.7 - 3.6: x32
@@ -156,7 +156,7 @@ enum Result flashBaseWrite(struct FlashBase *interface, uint32_t position,
     {
       uint32_t word;
 
-      memcpy(&word, input, sizeof(word));      
+      memcpy(&word, input, sizeof(word));
       *(uint32_t *)output = word;
       res = waitForCompletion();
 
@@ -170,7 +170,7 @@ enum Result flashBaseWrite(struct FlashBase *interface, uint32_t position,
     {
       uint16_t word;
 
-      memcpy(&word, input, sizeof(word));      
+      memcpy(&word, input, sizeof(word));
       *(uint16_t *)output = word;
       res = waitForCompletion();
 

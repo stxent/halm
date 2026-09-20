@@ -410,10 +410,10 @@ static void txDmaHandler(void *object)
   struct I2SDma * const interface = object;
   struct I2SDmaStream * const stream = interface->txStream;
   const size_t streamIndex = dmaQueued(interface->txDma);
-  
+
   assert(streamIndex >= 1 && streamIndex <= 2);
   assert(dmaStatus(interface->txDma) == E_BUSY);
-  
+
   if (!stream->stop)
   {
     const size_t count = interface->bufferSize >> 1;
@@ -449,7 +449,7 @@ static void txDmaHandler(void *object)
           break;
       }
     }
-    else 
+    else
     {
       /* Mute and then disable on the next chunk completion */
       memset(stream->buffer + position, 0, count);
@@ -475,7 +475,7 @@ static void txDmaHandler(void *object)
 
     /* Sample queue drained, stop the transfer */
     reg->CR2 &= ~CR2_TXDMAEN;
-    
+
     dmaDisable(interface->txDma);
     dmaClear(interface->txDma);
 
@@ -491,7 +491,7 @@ static bool updateRate(struct I2SDma *interface, uint32_t sampleRate)
   const uint32_t enabled = pri->I2SCFGR & I2SCFGR_I2SE;
   uint32_t pr = pri->I2SPR & ~(I2SPR_I2SDIV_MASK | I2SPR_ODD);
   uint32_t bitrate = (8 << interface->sampleSize) * sampleRate;
-  
+
   if (pr & I2SPR_MCKOE)
     bitrate *= 32 >> interface->sampleSize;
 
@@ -500,7 +500,7 @@ static bool updateRate(struct I2SDma *interface, uint32_t sampleRate)
 
   if (divisor < I2SPR_I2SDIV_MIN || divisor > I2SPR_I2SDIV_MAX)
     return false;
-  
+
   pr |= I2SPR_I2SDIV(divisor / 2);
   if (divisor & 1)
     pr |= I2SPR_ODD;
@@ -731,7 +731,7 @@ static enum Result i2sRxStreamEnqueue(void *object,
   else
     res = E_FULL;
   irqRestore(state);
-  
+
   if (res == E_OK)
     enqueueRxBuffer(interface);
   return res;
@@ -779,7 +779,7 @@ static enum Result i2sTxStreamEnqueue(void *object,
 
   const IrqState state = irqSave();
   enum Result res;
-  
+
   if (!pointerQueueFull(&stream->requests))
   {
     pointerQueuePushBack(&stream->requests, request);
