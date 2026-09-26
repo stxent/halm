@@ -30,6 +30,7 @@ Use this guide to generate peripheral definition header files. Adhere strictly t
   1. **No Peripheral Abbreviation:** The name must not contain the abbreviated peripheral name.
   2. **Title Case:** Every word in a multi-word register name must begin with a capital letter.
   3. **Suffix Rule:** If the word `Register` is absent from the full name, it must be appended at the end.
+  4. **Full Name:** Use the descriptive full name of the register, not an abbreviated one (`Interrupt Status Register` instead of `Int Sts Register`).
 
 ### 1.3 Include Guards
 * **Naming:** Use `UPPER_CASE` and reflect the full repository path, replacing folder slashes and file extensions with underscores.
@@ -67,6 +68,7 @@ Use this guide to generate peripheral definition header files. Adhere strictly t
 ### 3.1 Naming Conventions
 * **Constants & Macros:** Written in `UPPER_CASE`. Macro names should not be prepended with the name of the peripheral.
 * **Register Fields:** Constant names must be prefixed with the register name (e.g., `REG_FIELD_NAME`).
+* **Duplicate Instances:** When the documentation defines the same register for multiple instances of the same peripheral (e.g., `PWM0` and `PWM1`), emit a single generic block without the instance prefix — do not repeat the block per instance (`CONFIG_ENABLE` instead of `PWM0_CONFIG_ENABLE`/`PWM1_CONFIG_ENABLE`).
 
 ### 3.2 Default Alignment
 The macro value expression must begin exactly at column index **40** (the 41st character of the line). This means the text of `#define`, the macro name, and its parameters must be padded out with spaces so that the value starts exactly at the same vertical column.
