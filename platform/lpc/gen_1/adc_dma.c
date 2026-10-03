@@ -109,7 +109,7 @@ static bool startConversion(struct AdcDma *interface)
   /* Rebuild DMA descriptor chain */
   resetDmaBuffers(interface);
 
-  if (dmaEnable(interface->dma) != E_OK)
+  if (!dmaEnable(interface->dma))
     return false;
 
   /* Enable DMA requests */

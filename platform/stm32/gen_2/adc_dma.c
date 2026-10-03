@@ -115,7 +115,7 @@ static bool startConversion(struct AdcDma *interface)
 
   dmaAppend(interface->dma, interface->buffer, (const void *)&reg->DR,
       interface->count * sizeof(uint16_t));
-  if (dmaEnable(interface->dma) != E_OK)
+  if (!dmaEnable(interface->dma))
     return false;
 
   uint32_t enabled = 0;

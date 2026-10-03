@@ -386,7 +386,7 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   dmaDisable(interface->txDma);
 
   dmaAppend(interface->rxDma, buffer, (const void *)&reg->MSTDAT, length);
-  if (dmaEnable(interface->rxDma) != E_OK)
+  if (!dmaEnable(interface->rxDma))
   {
     interface->state = STATE_ERROR;
     return 0;
@@ -429,7 +429,7 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   dmaDisable(interface->txDma);
 
   dmaAppend(interface->txDma, (void *)&reg->MSTDAT, buffer, length);
-  if (dmaEnable(interface->txDma) != E_OK)
+  if (!dmaEnable(interface->txDma))
   {
     interface->state = STATE_ERROR;
     return 0;

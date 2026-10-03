@@ -177,14 +177,13 @@ static enum Result enqueueRxBuffer(struct SerialDmaTOC *interface)
   interface->rxPosition = 0;
 
   /* Start reception */
-  return dmaEnable(interface->rxDma);
+  return dmaEnable(interface->rxDma) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result enqueueTxBuffers(struct SerialDmaTOC *interface)
 {
   NM_UART_Type * const reg = interface->base.reg;
   const uint8_t *address;
-  enum Result res;
 
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
@@ -194,10 +193,13 @@ static enum Result enqueueTxBuffers(struct SerialDmaTOC *interface)
   dmaAppend(interface->txDma, (void *)&reg->DAT, address,
       interface->txBufferSize);
 
-  if ((res = dmaEnable(interface->txDma)) != E_OK)
+  if (!dmaEnable(interface->txDma))
+  {
     interface->txBufferSize = 0;
-
-  return res;
+    return E_BUSY;
+  }
+  else
+    return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static bool readResidue(struct SerialDmaTOC *interface)
@@ -205,7 +207,7 @@ static bool readResidue(struct SerialDmaTOC *interface)
   const size_t chunk = interface->rxBufferSize >> 1;
   size_t residue;
 
-  if (dmaResidue(interface->rxDma, &residue) != E_OK)
+  if (!dmaResidue(interface->rxDma, &residue))
     return false;
   if (interface->rxPosition < chunk)
     residue += chunk;

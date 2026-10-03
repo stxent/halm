@@ -342,7 +342,7 @@ static enum Result adcHandlerEnqueue(void *object,
       /* Clear pending request */
       reg->FLAGS = FLAGS_SEQ_INT(number);
 
-      if (dmaEnable(interface->dma) == E_OK)
+      if (dmaEnable(interface->dma))
       {
         /* Enable DMA request after each conversion */
         reg->INTEN |= INTEN_SEQ_INTEN(number);

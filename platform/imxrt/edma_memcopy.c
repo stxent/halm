@@ -60,10 +60,8 @@ enum Result dmaMemCopyStart(struct DmaMemCopyHandler *handler,
     return E_MEMORY;
   }
 
-  enum Result res;
-
-  if ((res = dmaStatus(handler->dma)) != E_OK)
-    return res;
+  if (dmaStatus(handler->dma) == E_BUSY)
+    return E_BUSY;
 
   handler->callbackArgument = argument;
   handler->callback = callback;
@@ -73,10 +71,12 @@ enum Result dmaMemCopyStart(struct DmaMemCopyHandler *handler,
 
   dCacheClean((uintptr_t)source, length);
   dCacheInvalidate((uintptr_t)destination, length);
-  res = dmaEnable(handler->dma);
 
-  if (res != E_OK)
+  if (!dmaEnable(handler->dma))
+  {
     dmaClear(handler->dma);
-
-  return res;
+    return E_BUSY;
+  }
+  else
+    return E_OK;
 }

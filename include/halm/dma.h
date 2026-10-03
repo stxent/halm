@@ -24,9 +24,9 @@ struct DmaClass
 
   /* Transfer management */
 
-  enum Result (*enable)(void *);
+  bool (*enable)(void *);
   void (*disable)(void *);
-  enum Result (*residue)(const void *, size_t *);
+  bool (*residue)(const void *, size_t *);
   enum Result (*status)(const void *);
 
   /* List management */
@@ -70,9 +70,9 @@ static inline void dmaSetCallback(void *channel, void (*callback)(void *),
  * Enable the channel.
  * Channel goes into the error state when the operation fails.
  * @param channel Pointer to a Dma object.
- * @return @b E_OK on success.
+ * @return @b true on success or @b false otherwise.
  */
-static inline enum Result dmaEnable(void *channel)
+static inline bool dmaEnable(void *channel)
 {
   return ((const struct DmaClass *)CLASS(channel))->enable(channel);
 }
@@ -91,10 +91,10 @@ static inline void dmaDisable(void *channel)
  * @param channel Pointer to a Dma object.
  * @param count Pointer to an output variable where a number of
  * pending bytes will be written.
- * @return @b E_OK when a number of pending bytes is available and
- * other error types when the channel or the buffer aren't in correct state.
+ * @return @b true when a number of pending bytes is available and
+ * @b false when the channel or the buffer aren't in correct state.
  */
-static inline enum Result dmaResidue(const void *channel, size_t *count)
+static inline bool dmaResidue(const void *channel, size_t *count)
 {
   return ((const struct DmaClass *)CLASS(channel))->residue(channel, count);
 }

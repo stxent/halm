@@ -378,13 +378,13 @@ static enum Result adcHandlerEnqueue(void *object,
 
     if (dmaStatus(interface->outer) != E_BUSY)
     {
-      if (dmaEnable(interface->outer) == E_OK)
+      if (dmaEnable(interface->outer))
       {
         /* Clear pending requests */
         for (size_t index = 0; index < interface->count; ++index)
           (void)reg->DR[interface->pins[index].channel];
 
-        if (dmaEnable(interface->inner) == E_OK)
+        if (dmaEnable(interface->inner))
         {
           /* Enable DMA requests */
           reg->INTEN = interface->mask;

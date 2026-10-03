@@ -160,24 +160,26 @@ static enum Result enqueueRxBuffer(struct SerialDma *interface)
   interface->rxPosition = 0;
 
   /* Start reception */
-  return dmaEnable(interface->rxDma);
+  return dmaEnable(interface->rxDma) ? E_OK : E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result enqueueTxBuffers(struct SerialDma *interface)
 {
   BL_UART_Type * const reg = interface->base.reg;
   const uint8_t *address;
-  enum Result res;
 
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
   dmaAppend(interface->txDma, (void *)&reg->FIFO_WDATA, address,
       interface->txBufferSize);
 
-  if ((res = dmaEnable(interface->txDma)) != E_OK)
+  if (!dmaEnable(interface->txDma))
+  {
     interface->txBufferSize = 0;
-
-  return res;
+    return E_BUSY;
+  }
+  else
+    return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void rxDmaHandler(void *object)
@@ -224,7 +226,7 @@ static void serialInterruptHandler(void *object)
   const size_t chunk = interface->rxBufferSize >> 1;
   size_t residue;
 
-  if (dmaResidue(interface->rxDma, &residue) == E_OK)
+  if (dmaResidue(interface->rxDma, &residue))
   {
     if (interface->rxPosition < chunk)
       residue += chunk;

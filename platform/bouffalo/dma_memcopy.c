@@ -68,10 +68,11 @@ enum Result dmaMemCopyStart(struct DmaMemCopyHandler *handler,
   dmaSetCallback(handler->dma, interruptHandler, handler);
   dmaAppend(handler->dma, destination, source, length);
 
-  const enum Result res = dmaEnable(handler->dma);
-
-  if (res != E_OK)
+  if (!dmaEnable(handler->dma))
+  {
     dmaClear(handler->dma);
-
-  return res;
+    return E_BUSY;
+  }
+  else
+    return E_OK;
 }

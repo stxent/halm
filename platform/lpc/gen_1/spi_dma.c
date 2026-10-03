@@ -363,11 +363,11 @@ static size_t transferDataDma(struct SpiDma *interface, const void *source,
   dmaAppend(interface->txDma, (void *)&reg->DR, source, length);
 #endif
 
-  if (dmaEnable(interface->rxDma) != E_OK)
+  if (!dmaEnable(interface->rxDma))
   {
     return 0;
   }
-  if (dmaEnable(interface->txDma) != E_OK)
+  if (!dmaEnable(interface->txDma))
   {
     dmaDisable(interface->rxDma);
     return 0;

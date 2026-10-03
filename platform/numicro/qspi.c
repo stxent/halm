@@ -228,11 +228,11 @@ static size_t transferData(struct Qspi *interface, const void *txSource,
   dmaAppend(interface->rxDma, rxSink, (const void *)&reg->RX, length);
   dmaAppend(interface->txDma, (void *)&reg->TX, txSource, length);
 
-  if (dmaEnable(interface->rxDma) != E_OK)
+  if (!dmaEnable(interface->rxDma))
   {
     return 0;
   }
-  if (dmaEnable(interface->txDma) != E_OK)
+  if (!dmaEnable(interface->txDma))
   {
     dmaDisable(interface->rxDma);
     return 0;

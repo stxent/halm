@@ -190,7 +190,7 @@ static void enqueueRxBuffer(void *object)
     stream->position = 0;
 
     dmaAppend(interface->rxDma, stream->buffer, src, interface->bufferSize);
-    if (dmaEnable(interface->rxDma) == E_OK)
+    if (dmaEnable(interface->rxDma))
     {
       stream->stop = false;
       reg->CR2 |= CR2_RXDMAEN;
@@ -239,7 +239,7 @@ static void enqueueTxBuffer(void *object)
         uint32_t * const dst = (uint32_t *)&reg->DR;
 
         dmaAppend(interface->txDma, dst, stream->buffer, interface->bufferSize);
-        if (dmaEnable(interface->txDma) == E_OK)
+        if (dmaEnable(interface->txDma))
         {
           stream->stop = false;
           reg->CR2 |= CR2_TXDMAEN;

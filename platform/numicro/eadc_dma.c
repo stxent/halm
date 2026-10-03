@@ -128,7 +128,7 @@ static bool startConversion(struct EadcDma *interface)
   /* Enable PDMA transfers for configured channels */
   reg->PDMACTL = MASK(interface->count);
 
-  if (dmaEnable(interface->dma) != E_OK)
+  if (!dmaEnable(interface->dma))
     return false;
 
   /* Reconfigure peripheral and start the conversion */

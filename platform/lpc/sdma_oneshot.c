@@ -27,9 +27,9 @@ static void channelDeinit(void *);
 static void channelConfigure(void *, const void *);
 static void channelSetCallback(void *, void (*)(void *), void *);
 
-static enum Result channelEnable(void *);
+static bool channelEnable(void *);
 static void channelDisable(void *);
-static enum Result channelResidue(const void *, size_t *);
+static bool channelResidue(const void *, size_t *);
 static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
@@ -133,7 +133,7 @@ static void channelSetCallback(void *object, void (*callback)(void *),
   channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result channelEnable(void *object)
+static bool channelEnable(void *object)
 {
   struct SdmaOneShot * const channel = object;
   LPC_SDMA_CHANNEL_Type * const reg = channel->base.reg;
@@ -145,7 +145,7 @@ static enum Result channelEnable(void *object)
   if (!sdmaSetInstance(number, object))
   {
     channel->state = STATE_ERROR;
-    return E_BUSY;
+    return false;
   }
 
   sdmaSetMux(&channel->base);
@@ -168,7 +168,7 @@ static enum Result channelEnable(void *object)
   __dmb();
   LPC_SDMA->ENABLESET = mask;
 
-  return E_OK;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
 static void channelDisable(void *object)
@@ -190,7 +190,7 @@ static void channelDisable(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result channelResidue(const void *object, size_t *count)
+static bool channelResidue(const void *object, size_t *count)
 {
   const struct SdmaOneShot * const channel = object;
 
@@ -202,10 +202,10 @@ static enum Result channelResidue(const void *object, size_t *count)
     const unsigned int width = XFERCFG_WIDTH_VALUE(transferConfig);
 
     *count = (size_t)(left << width);
-    return E_OK;
+    return true;
   }
 
-  return E_ERROR;
+  return false;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelStatus(const void *object)

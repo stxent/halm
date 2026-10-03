@@ -624,7 +624,7 @@ static enum Result i2sRxStreamEnqueue(void *object,
       /* Clear internal FIFO */
       reg->DAI |= DAI_RESET;
 
-      if (dmaEnable(interface->rxDma) == E_OK)
+      if (dmaEnable(interface->rxDma))
       {
         reg->DMA1 |= DMA_RX_ENABLE;
         reg->DAI &= ~(DAI_STOP | DAI_RESET);
@@ -704,7 +704,7 @@ static enum Result i2sTxStreamEnqueue(void *object,
 
     if (dmaStatus(interface->txDma) != E_BUSY)
     {
-      if (dmaEnable(interface->txDma) == E_OK)
+      if (dmaEnable(interface->txDma))
       {
         reg->DMA2 |= DMA_TX_ENABLE;
         reg->DAO &= ~DAO_STOP;

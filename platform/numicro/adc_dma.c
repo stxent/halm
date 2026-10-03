@@ -146,7 +146,7 @@ static bool startConversion(struct AdcDma *interface)
   /* Reset DMA descriptor */
   resetDmaBuffer(interface);
 
-  if (dmaEnable(interface->dma) != E_OK)
+  if (!dmaEnable(interface->dma))
     return false;
 
   /* Enable selected channels */

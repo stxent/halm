@@ -286,12 +286,12 @@ static size_t transferDataDma(struct SpiDma *interface, const void *source,
   enum Result res = E_OK;
 
   if (sink != nullptr)
-    res = dmaEnable(interface->rxDma);
+    res = dmaEnable(interface->rxDma) ? E_OK : E_BUSY;
   else
     interface->invoked = true;
 
   if (res == E_OK)
-    res = dmaEnable(interface->txDma);
+    res = dmaEnable(interface->txDma) ? E_OK : E_BUSY;
 
   if (res == E_OK)
   {

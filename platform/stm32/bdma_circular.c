@@ -27,9 +27,9 @@ static void streamDeinit(void *);
 static void streamConfigure(void *, const void *);
 static void streamSetCallback(void *, void (*)(void *), void *);
 
-static enum Result streamEnable(void *);
+static bool streamEnable(void *);
 static void streamDisable(void *);
-static enum Result streamResidue(const void *, size_t *);
+static bool streamResidue(const void *, size_t *);
 static enum Result streamStatus(const void *);
 
 static void streamAppend(void *, void *, const void *, size_t);
@@ -156,7 +156,7 @@ static void streamSetCallback(void *object, void (*callback)(void *),
   stream->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result streamEnable(void *object)
+static bool streamEnable(void *object)
 {
   struct BdmaCircular * const stream = object;
 
@@ -175,12 +175,12 @@ static enum Result streamEnable(void *object)
     __dmb();
     reg->CCR = stream->base.config | CCR_EN;
 
-    return E_OK;
+    return true;
   }
   else
   {
     stream->state = STATE_ERROR;
-    return E_BUSY;
+    return false;
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -198,7 +198,7 @@ static void streamDisable(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result streamResidue(const void *object, size_t *count)
+static bool streamResidue(const void *object, size_t *count)
 {
   const struct BdmaCircular * const stream = object;
 
@@ -210,10 +210,10 @@ static enum Result streamResidue(const void *object, size_t *count)
         (1 << CCR_PSIZE_VALUE(config)) : (1 << CCR_MSIZE_VALUE(config));
 
     *count = (size_t)(reg->CNDTR * width);
-    return E_OK;
+    return true;
   }
   else
-    return E_ERROR;
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result streamStatus(const void *object)

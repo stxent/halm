@@ -172,7 +172,7 @@ static enum Result enqueueRxBuffers(struct SerialDma *interface)
     while (count >= interface->rxBufferSize);
 
     if (dmaStatus(interface->rxDma) != E_BUSY)
-      return dmaEnable(interface->rxDma);
+      return dmaEnable(interface->rxDma) ? E_OK : E_BUSY;
   }
 
   return E_OK;
@@ -182,7 +182,6 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
 {
   LPC_UART_Type * const reg = interface->base.reg;
   const uint8_t *address;
-  enum Result res;
 
   byteQueueDeferredPop(&interface->txQueue, &address,
       &interface->txBufferSize, 0);
@@ -192,10 +191,13 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
   dmaAppend(interface->txDma, (void *)&reg->THR, address,
       interface->txBufferSize);
 
-  if ((res = dmaEnable(interface->txDma)) != E_OK)
+  if (!dmaEnable(interface->txDma))
+  {
     interface->txBufferSize = 0;
-
-  return res;
+    return E_BUSY;
+  }
+  else
+    return E_OK;
 }
 /*----------------------------------------------------------------------------*/
 static void readResidue(struct SerialDma *interface)
@@ -203,7 +205,7 @@ static void readResidue(struct SerialDma *interface)
   const IrqState state = irqSave();
   size_t residue;
 
-  if (dmaResidue(interface->rxDma, &residue) == E_OK)
+  if (dmaResidue(interface->rxDma, &residue))
   {
     const size_t pending =
         interface->rxBufferSize - interface->rxPosition - residue;

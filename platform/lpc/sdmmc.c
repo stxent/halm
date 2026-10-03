@@ -533,16 +533,14 @@ static size_t sdioRead(void *object, void *buffer, size_t length)
   reg->BYTCNT = length;
   dmaAppend(interface->dma, buffer, nullptr, length);
 
-  const enum Result res = dmaEnable(interface->dma);
-
-  if (res == E_OK)
+  if (dmaEnable(interface->dma))
   {
     execute(interface);
     return length;
   }
   else
   {
-    interface->status = res;
+    interface->status = E_BUSY;
     return 0;
   }
 }
@@ -555,16 +553,14 @@ static size_t sdioWrite(void *object, const void *buffer, size_t length)
   reg->BYTCNT = length;
   dmaAppend(interface->dma, nullptr, buffer, length);
 
-  const enum Result res = dmaEnable(interface->dma);
-
-  if (res == E_OK)
+  if (dmaEnable(interface->dma))
   {
     execute(interface);
     return length;
   }
   else
   {
-    interface->status = res;
+    interface->status = E_BUSY;
     return 0;
   }
 }

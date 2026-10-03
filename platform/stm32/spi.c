@@ -220,11 +220,11 @@ static size_t transferData(struct Spi *interface, const void *txSource,
   dmaAppend(interface->rxDma, rxSink, (const void *)&reg->DR, length);
   dmaAppend(interface->txDma, (void *)&reg->DR, txSource, length);
 
-  if (dmaEnable(interface->rxDma) != E_OK)
+  if (!dmaEnable(interface->rxDma))
   {
     return 0;
   }
-  if (dmaEnable(interface->txDma) != E_OK)
+  if (!dmaEnable(interface->txDma))
   {
     dmaDisable(interface->rxDma);
     return 0;

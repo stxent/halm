@@ -291,7 +291,7 @@ static enum Result dacStreamEnqueue(void *object,
 
     if (dmaStatus(interface->dma) != E_BUSY)
     {
-      if (dmaEnable(interface->dma) == E_OK)
+      if (dmaEnable(interface->dma))
       {
         /* Enable counter to generate memory access requests */
         reg->CTRL |= CTRL_CNT_ENA;

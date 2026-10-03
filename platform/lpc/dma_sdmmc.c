@@ -16,8 +16,8 @@ static enum Result appendItem(void *object, uintptr_t address, size_t size);
 static enum Result channelInit(void *, const void *);
 static void channelDeinit(void *);
 
-static enum Result channelEnable(void *);
-static enum Result channelResidue(const void *, size_t *);
+static bool channelEnable(void *);
+static bool channelResidue(const void *, size_t *);
 static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
@@ -122,7 +122,7 @@ static void channelDeinit(void *object)
   free(channel->list);
 }
 /*----------------------------------------------------------------------------*/
-static enum Result channelEnable(void *object)
+static bool channelEnable(void *object)
 {
   struct DmaSdmmc * const channel = object;
   LPC_SDMMC_Type * const reg = channel->reg;
@@ -132,10 +132,10 @@ static enum Result channelEnable(void *object)
   /* Set DMA descriptor base address */
   reg->DBADDR = (uint32_t)channel->list;
 
-  return E_OK;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result channelResidue(const void *object, size_t *count)
+static bool channelResidue(const void *object, size_t *count)
 {
   const struct DmaSdmmc * const channel = object;
   const LPC_SDMMC_Type * const reg = channel->reg;
@@ -145,10 +145,10 @@ static enum Result channelResidue(const void *object, size_t *count)
   if (current != nullptr)
   {
     *count = channel->length - (current - channel->list);
-    return E_OK;
+    return true;
   }
   else
-    return E_ERROR;
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelStatus(const void *object)

@@ -164,15 +164,14 @@ static enum Result enqueueRxBuffer(struct SerialDma *interface)
   interface->rxPosition = 0;
 
   /* Start reception */
-  const enum Result res = dmaEnable(interface->rxDma);
-
-  if (res == E_OK)
+  if (dmaEnable(interface->rxDma))
   {
     /* Enable DMA RX requests */
     reg->CR3 |= CR3_DMAR;
+    return E_OK;
   }
-
-  return res;
+  else
+    return E_BUSY;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result enqueueTxBuffers(struct SerialDma *interface)
@@ -189,17 +188,17 @@ static enum Result enqueueTxBuffers(struct SerialDma *interface)
       interface->txBufferSize);
 
   /* Start transmission */
-  const enum Result res = dmaEnable(interface->txDma);
-
-  if (res == E_OK)
+  if (dmaEnable(interface->txDma))
   {
     /* Enable DMA TX requests */
     reg->CR3 |= CR3_DMAT;
+    return E_OK;
   }
   else
+  {
     interface->txBufferSize = 0;
-
-  return res;
+    return E_BUSY;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void rxDmaHandler(void *object)
@@ -245,7 +244,7 @@ static void serialInterruptHandler(void *object)
 
   size_t residue;
 
-  if (dmaResidue(interface->rxDma, &residue) == E_OK)
+  if (dmaResidue(interface->rxDma, &residue))
   {
     const size_t pending = interface->rxBufferSize - interface->rxPosition;
 

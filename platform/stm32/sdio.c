@@ -315,9 +315,9 @@ static void sdioInterruptHandler(void *object)
         reg->DCTRL = dataControl;
 
         if (flags & SDIO_WRITE_MODE)
-          res = dmaEnable(interface->txDma);
+          res = dmaEnable(interface->txDma) ? E_OK : E_BUSY;
         else
-          res = dmaEnable(interface->rxDma);
+          res = dmaEnable(interface->rxDma) ? E_OK : E_BUSY;
 
         if (res != E_OK)
         {

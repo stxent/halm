@@ -224,11 +224,11 @@ static size_t transferData(struct SpiDma *interface, const void *txSource,
   dmaAppend(interface->rxDma, rxSink, (const void *)&reg->FIFO_RDATA, length);
   dmaAppend(interface->txDma, (void *)&reg->FIFO_WDATA, txSource, length);
 
-  if (dmaEnable(interface->rxDma) != E_OK)
+  if (!dmaEnable(interface->rxDma))
   {
     return 0;
   }
-  if (dmaEnable(interface->txDma) != E_OK)
+  if (!dmaEnable(interface->txDma))
   {
     dmaDisable(interface->rxDma);
     return 0;

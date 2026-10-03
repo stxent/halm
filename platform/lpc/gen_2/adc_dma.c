@@ -114,7 +114,7 @@ static bool startConversion(struct AdcDma *interface)
   /* Clear pending DMA request */
   reg->FLAGS = FLAGS_SEQ_INT(number);
 
-  if (dmaEnable(interface->dma) != E_OK)
+  if (!dmaEnable(interface->dma))
     return false;
 
   /* Enable DMA request after each conversion */

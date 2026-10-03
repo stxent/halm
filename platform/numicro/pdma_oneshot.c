@@ -27,9 +27,9 @@ static void channelDeinit(void *);
 static void channelConfigure(void *, const void *);
 static void channelSetCallback(void *, void (*)(void *), void *);
 
-static enum Result channelEnable(void *);
+static bool channelEnable(void *);
 static void channelDisable(void *);
-static enum Result channelResidue(const void *, size_t *);
+static bool channelResidue(const void *, size_t *);
 static enum Result channelStatus(const void *);
 
 static void channelAppend(void *, void *, const void *, size_t);
@@ -141,7 +141,7 @@ static void channelSetCallback(void *object, void (*callback)(void *),
   channel->callbackArgument = argument;
 }
 /*----------------------------------------------------------------------------*/
-static enum Result channelEnable(void *object)
+static bool channelEnable(void *object)
 {
   struct PdmaOneShot * const channel = object;
   const uint8_t number = channel->base.number;
@@ -154,7 +154,7 @@ static enum Result channelEnable(void *object)
   if (!pdmaBindInstance(&channel->base))
   {
     channel->state = STATE_ERROR;
-    return E_BUSY;
+    return false;
   }
 
   pdmaSetMux(&channel->base);
@@ -170,7 +170,7 @@ static enum Result channelEnable(void *object)
       channel->base.control | DSCT_CTL_TXCNT(channel->transfers - 1),
       channel->source, channel->destination, 0);
 
-  return E_OK;
+  return true;
 }
 /*----------------------------------------------------------------------------*/
 static void channelDisable(void *object)
@@ -186,7 +186,7 @@ static void channelDisable(void *object)
   }
 }
 /*----------------------------------------------------------------------------*/
-static enum Result channelResidue(const void *object, size_t *count)
+static bool channelResidue(const void *object, size_t *count)
 {
   const struct PdmaOneShot * const channel = object;
 
@@ -201,10 +201,10 @@ static enum Result channelResidue(const void *object, size_t *count)
     const uint32_t width = DSCT_CTL_TXWIDTH_VALUE(control);
 
     *count = (size_t)(transfers * width);
-    return E_OK;
+    return true;
   }
   else
-    return E_ERROR;
+    return false;
 }
 /*----------------------------------------------------------------------------*/
 static enum Result channelStatus(const void *object)
