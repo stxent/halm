@@ -40,6 +40,8 @@ static void commonPinInit(struct Pin pin)
 {
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
+  pinSetSlewRate(pin, PIN_SLEW_FAST);
+  pinSetType(pin, PIN_PUSHPULL);
   pinSchmittTriggerEnabled(pin, true);
   disableVbatControl(pin.port, pin.number);
 }

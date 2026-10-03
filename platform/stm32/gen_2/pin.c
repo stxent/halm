@@ -10,7 +10,7 @@
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
 static inline STM_GPIO_Type *calcPort(uint8_t);
-static void commonPinInit(uint8_t);
+static void commonPinInit(struct Pin);
 static inline enum SysBlockReset portToBlockReset(uint8_t);
 static inline enum SysClockBranch portToClockBranch(uint8_t);
 /*----------------------------------------------------------------------------*/
@@ -20,17 +20,21 @@ static inline STM_GPIO_Type *calcPort(uint8_t port)
       + port * ((uint32_t)STM_GPIOB - (uint32_t)STM_GPIOA));
 }
 /*----------------------------------------------------------------------------*/
-static void commonPinInit(uint8_t port)
+static void commonPinInit(struct Pin pin)
 {
-  const enum SysClockBranch branch = portToClockBranch(port);
+  const enum SysClockBranch branch = portToClockBranch(pin.port);
 
   if (!sysClockStatus(branch))
   {
-    const enum SysBlockReset reset = portToBlockReset(port);
+    const enum SysBlockReset reset = portToBlockReset(pin.port);
 
     sysClockEnable(branch);
     sysResetPulse(reset);
   }
+
+  pinSetPull(pin, PIN_NOPULL);
+  pinSetSlewRate(pin, PIN_SLEW_FAST);
+  pinSetType(pin, PIN_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
 static inline enum SysBlockReset portToBlockReset(uint8_t port)
@@ -58,7 +62,7 @@ struct Pin pinInit(PinNumber id)
 void pinInput(struct Pin pin)
 {
   assert(pin.reg != nullptr);
-  commonPinInit(pin.port);
+  commonPinInit(pin);
 
   STM_GPIO_Type * const reg = pin.reg;
   uint32_t moder = reg->MODER;
@@ -72,11 +76,7 @@ void pinInput(struct Pin pin)
 void pinOutput(struct Pin pin, bool value)
 {
   assert(pin.reg != nullptr);
-  commonPinInit(pin.port);
-
-  pinSetType(pin, PIN_PUSHPULL);
-  pinSetPull(pin, PIN_NOPULL);
-  pinSetSlewRate(pin, PIN_SLEW_FAST);
+  commonPinInit(pin);
 
   /* Set an initial output value */
   pinWrite(pin, value);

@@ -31,6 +31,20 @@ enum [[gnu::packed]] ClockSource
   CLOCK_SYSTEM
 };
 /*----------------------------------------------------------------------------*/
+struct ClockOutputConfig
+{
+  /** Optional: input clock divisor in the range from 1 to 5. */
+  uint16_t divisor;
+  /** Mandatory: output pin. */
+  PinNumber pin;
+  /** Mandatory: clock source selection. */
+  enum ClockSource source;
+};
+
+/* Requires a ClockOutputConfig structure */
+extern const struct ClockClass * const ClockOutput1;
+extern const struct ClockClass * const ClockOutput2;
+/*----------------------------------------------------------------------------*/
 struct ExternalOscConfig
 {
   /**

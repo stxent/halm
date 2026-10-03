@@ -26,7 +26,7 @@ static inline NM_GPIO_Type *calcPort(uint8_t port)
 static void commonPinInit(struct Pin pin)
 {
   pinSetFunction(pin, PIN_DEFAULT);
-  pinSetPull(pin, PIN_NOPULL);
+  pinSetType(pin, PIN_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
 struct Pin pinInit(PinNumber id)

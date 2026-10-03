@@ -27,6 +27,16 @@ static void clockDisableStub(const void *);
 static enum Result clockEnableStub(const void *, const void *);
 static bool clockReadyStub(const void *);
 /*----------------------------------------------------------------------------*/
+static void clockOutput1Disable(const void *);
+static enum Result clockOutput1Enable(const void *, const void *);
+static uint32_t clockOutput1Frequency(const void *);
+static bool clockOutput1Ready(const void *);
+
+static void clockOutput2Disable(const void *);
+static enum Result clockOutput2Enable(const void *, const void *);
+static uint32_t clockOutput2Frequency(const void *);
+static bool clockOutput2Ready(const void *);
+
 static void extOscDisable(const void *);
 static enum Result extOscEnable(const void *, const void *);
 static uint32_t extOscFrequency(const void *);
@@ -64,6 +74,20 @@ static uint32_t apb2ClockFrequency(const void *);
 static enum Result mainClockEnable(const void *, const void *);
 static uint32_t mainClockFrequency(const void *);
 /*----------------------------------------------------------------------------*/
+const struct ClockClass * const ClockOutput1 = &(const struct ClockClass){
+    .disable = clockOutput1Disable,
+    .enable = clockOutput1Enable,
+    .frequency = clockOutput1Frequency,
+    .ready = clockOutput1Ready
+};
+
+const struct ClockClass * const ClockOutput2 = &(const struct ClockClass){
+    .disable = clockOutput2Disable,
+    .enable = clockOutput2Enable,
+    .frequency = clockOutput2Frequency,
+    .ready = clockOutput2Ready
+};
+
 const struct ClockClass * const ExternalOsc = &(const struct ClockClass){
     .disable = extOscDisable,
     .enable = extOscEnable,
@@ -135,9 +159,26 @@ const struct ClockClass * const MainClock = &(const struct ClockClass){
     .ready = clockReadyStub
 };
 /*----------------------------------------------------------------------------*/
+static const struct PinEntry clockOutputPins[] = {
+    {
+        .key = PIN(PORT_A, 8), /* MCO1 */
+        .channel = 0,
+        .value = 0
+    }, {
+        .key = PIN(PORT_C, 9), /* MCO2 */
+        .channel = 1,
+        .value = 0
+    }, {
+        .key = 0 /* End of pin function association list */
+    }
+};
+/*----------------------------------------------------------------------------*/
 static uint32_t extFrequency = 0;
 static uint32_t i2sPllFrequency = 0;
 static uint32_t sysPllFrequency = 0;
+static PinNumber mco1EnabledOutput = 0;
+static PinNumber mco2EnabledOutput = 0;
+
 enum VoltageRange volRange = VR_DEFAULT;
 uint32_t ticksPerSecond = TICK_RATE(HSI_OSC_FREQUENCY);
 /*----------------------------------------------------------------------------*/
@@ -224,6 +265,228 @@ static enum Result clockEnableStub(const void *, const void *)
 static bool clockReadyStub(const void *)
 {
   return true;
+}
+/*----------------------------------------------------------------------------*/
+static void clockOutput1Disable(const void *)
+{
+  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
+      mco1EnabledOutput, 0);
+  assert(pinEntry != nullptr);
+
+  const struct Pin pin = pinInit(mco1EnabledOutput);
+  pinInput(pin);
+
+  mco1EnabledOutput = 0;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result clockOutput1Enable(const void *, const void *configBase)
+{
+  const struct ClockOutputConfig * const config = configBase;
+  assert(config != nullptr);
+  assert(config->divisor >= 1 && config->divisor <= 5);
+
+  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
+      config->pin, 0);
+  assert(pinEntry != nullptr);
+
+  const struct Pin pin = pinInit(config->pin);
+  uint32_t cfgr = STM_RCC->CFGR & ~(CFGR_MCO1_MASK | CFGR_MCO1PRE_MASK);
+
+  switch (config->source)
+  {
+    case CLOCK_INTERNAL:
+      cfgr |= CFGR_MCO1(CFGR_MCO1_HSI);
+      break;
+
+    case CLOCK_INTERNAL_LS:
+      cfgr |= CFGR_MCO1(CFGR_MCO1_LSE);
+      break;
+
+    case CLOCK_EXTERNAL:
+      cfgr |= CFGR_MCO1(CFGR_MCO1_HSE);
+      break;
+
+    case CLOCK_PLL:
+      cfgr |= CFGR_MCO1(CFGR_MCO1_PLL);
+      break;
+
+    default:
+      return E_VALUE;
+  }
+
+  if (config->divisor > 1)
+    cfgr |= CFGR_MCO1PRE(config->divisor + 2);
+
+  pinOutput(pin, false);
+  pinSetFunction(pin, pinEntry->value);
+
+  STM_RCC->CFGR = cfgr;
+  mco1EnabledOutput = config->pin;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t clockOutput1Frequency(const void *)
+{
+  const uint32_t cfgr = STM_RCC->CFGR;
+  const uint32_t prescaler = CFGR_MCO1PRE_VALUE(cfgr);
+  const uint32_t divisor = prescaler >= 4 ? prescaler - 2 : 1;
+  uint32_t frequency = 0;
+
+  switch (CFGR_MCO1_VALUE(cfgr))
+  {
+    case CFGR_MCO1_LSE:
+      frequency = 0; /* TODO RTC */
+      break;
+
+    case CFGR_MCO1_HSE:
+      frequency = extOscFrequency(nullptr);
+      break;
+
+    case CFGR_MCO1_PLL:
+      frequency = mainPllFrequency(nullptr);
+      break;
+
+    default:
+      /* CFGR_MCO1_HSI */
+      frequency = HSI_OSC_FREQUENCY;
+      break;
+  }
+
+  return frequency / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static bool clockOutput1Ready(const void *)
+{
+  if (!mco1EnabledOutput)
+    return false;
+
+  switch (CFGR_MCO1_VALUE(STM_RCC->CFGR))
+  {
+    case CFGR_MCO1_LSE:
+      return false; /* TODO RTC */
+
+    case CFGR_MCO1_HSE:
+      return extOscReady(nullptr);
+
+    case CFGR_MCO1_PLL:
+      return mainPllReady(nullptr);
+
+    default:
+      /* CFGR_MCO1_HSI */
+      return intOscReady(nullptr);
+  }
+}
+/*----------------------------------------------------------------------------*/
+static void clockOutput2Disable(const void *)
+{
+  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
+      mco2EnabledOutput, 1);
+  assert(pinEntry != nullptr);
+
+  const struct Pin pin = pinInit(mco2EnabledOutput);
+  pinInput(pin);
+
+  mco2EnabledOutput = 0;
+}
+/*----------------------------------------------------------------------------*/
+static enum Result clockOutput2Enable(const void *, const void *configBase)
+{
+  const struct ClockOutputConfig * const config = configBase;
+  assert(config != nullptr);
+  assert(config->divisor >= 1 && config->divisor <= 5);
+
+  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
+      config->pin, 1);
+  assert(pinEntry != nullptr);
+
+  const struct Pin pin = pinInit(config->pin);
+  uint32_t cfgr = STM_RCC->CFGR & ~(CFGR_MCO2_MASK | CFGR_MCO2PRE_MASK);
+
+  switch (config->source)
+  {
+    case CLOCK_SYSTEM:
+      cfgr |= CFGR_MCO2(CFGR_MCO2_SYSCLK);
+      break;
+
+    case CLOCK_I2S_PLL:
+      cfgr |= CFGR_MCO2(CFGR_MCO2_PLLI2S);
+      break;
+
+    case CLOCK_EXTERNAL:
+      cfgr |= CFGR_MCO2(CFGR_MCO2_HSE);
+      break;
+
+    case CLOCK_PLL:
+      cfgr |= CFGR_MCO2(CFGR_MCO2_PLL);
+      break;
+
+    default:
+      return E_VALUE;
+  }
+
+  if (config->divisor > 1)
+    cfgr |= CFGR_MCO2PRE(config->divisor + 2);
+
+  pinOutput(pin, false);
+  pinSetFunction(pin, pinEntry->value);
+
+  STM_RCC->CFGR = cfgr;
+  mco2EnabledOutput = config->pin;
+
+  return E_OK;
+}
+/*----------------------------------------------------------------------------*/
+static uint32_t clockOutput2Frequency(const void *)
+{
+  const uint32_t cfgr = STM_RCC->CFGR;
+  const uint32_t prescaler = CFGR_MCO2PRE_VALUE(cfgr);
+  const uint32_t divisor = prescaler >= 4 ? prescaler - 2 : 1;
+  uint32_t frequency = 0;
+
+  switch (CFGR_MCO2_VALUE(cfgr))
+  {
+    case CFGR_MCO2_PLLI2S:
+      frequency = audioPllFrequency(nullptr);
+      break;
+
+    case CFGR_MCO2_HSE:
+      frequency = extOscFrequency(nullptr);
+      break;
+
+    case CFGR_MCO2_PLL:
+      frequency = mainPllFrequency(nullptr);
+      break;
+
+    default:
+      /* CFGR_MCO2_SYSCLK */
+      frequency = systemClockFrequency(nullptr);
+      break;
+  }
+
+  return frequency / divisor;
+}
+/*----------------------------------------------------------------------------*/
+static bool clockOutput2Ready(const void *)
+{
+  if (!mco2EnabledOutput)
+    return false;
+
+  switch (CFGR_MCO2_VALUE(STM_RCC->CFGR))
+  {
+    case CFGR_MCO2_PLLI2S:
+      return audioPllReady(nullptr);
+
+    case CFGR_MCO2_HSE:
+      return extOscReady(nullptr);
+
+    case CFGR_MCO2_PLL:
+      return mainPllReady(nullptr);
+
+    default:
+      /* CFGR_MCO2_SYSCLK */
+      return true;
+  }
 }
 /*----------------------------------------------------------------------------*/
 static void extOscDisable(const void *)

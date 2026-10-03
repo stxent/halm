@@ -166,8 +166,8 @@ static void commonPinInit(struct Pin pin)
   enablePortClock(pin);
   pinSetFunction(pin, PIN_DEFAULT);
   pinSetPull(pin, PIN_NOPULL);
-  pinSetType(pin, PIN_PUSHPULL);
   pinSetSlewRate(pin, PIN_SLEW_FAST);
+  pinSetType(pin, PIN_PUSHPULL);
 }
 /*----------------------------------------------------------------------------*/
 static void enablePortClock(struct Pin pin)
