@@ -109,6 +109,16 @@ const struct PinEntry i2cPins[] = {
 #endif
 #ifdef CONFIG_PLATFORM_STM32_I2C2
     {
+        /* Available on STM32F411 series */
+        .key = PIN(PORT_B, 3), /* I2C2_SDA */
+        .channel = 1,
+        .value = 9
+    }, {
+        /* Available on STM32F411 series */
+        .key = PIN(PORT_B, 9), /* I2C2_SDA */
+        .channel = 1,
+        .value = 9
+    }, {
         .key = PIN(PORT_B, 10), /* I2C2_SCL */
         .channel = 1,
         .value = 4
@@ -121,26 +131,32 @@ const struct PinEntry i2cPins[] = {
         .channel = 1,
         .value = 4
     }, {
+        /* Available on STM32F407 series */
         .key = PIN(PORT_F, 0), /* I2C2_SDA */
         .channel = 1,
         .value = 4
     }, {
+        /* Available on STM32F407 series */
         .key = PIN(PORT_F, 1), /* I2C2_SCL */
         .channel = 1,
         .value = 4
     }, {
+        /* Available on STM32F407 series */
         .key = PIN(PORT_F, 2), /* I2C2_SMBA */
         .channel = 1,
         .value = 4
     }, {
+        /* Available on STM32F407 series */
         .key = PIN(PORT_H, 4), /* I2C2_SCL */
         .channel = 1,
         .value = 4
     }, {
+        /* Available on STM32F407 series */
         .key = PIN(PORT_H, 5), /* I2C2_SDA */
         .channel = 1,
         .value = 4
     }, {
+        /* Available on STM32F407 series */
         .key = PIN(PORT_H, 6), /* I2C2_SMBA */
         .channel = 1,
         .value = 4
@@ -152,18 +168,35 @@ const struct PinEntry i2cPins[] = {
         .channel = 2,
         .value = 4
     }, {
+        .key = PIN(PORT_A, 9), /* I2C3_SMBA */
+        .channel = 2,
+        .value = 4
+    }, {
+        /* Available on STM32F411 series */
+        .key = PIN(PORT_B, 4), /* I2C3_SDA */
+        .channel = 2,
+        .value = 9
+    }, {
+        /* Available on STM32F411 series */
+        .key = PIN(PORT_B, 8), /* I2C3_SDA */
+        .channel = 2,
+        .value = 9
+    }, {
         .key = PIN(PORT_C, 9), /* I2C3_SDA */
         .channel = 2,
         .value = 4
     }, {
+        /* Available on STM32F407 series */
         .key = PIN(PORT_H, 7), /* I2C3_SCL */
         .channel = 2,
         .value = 4
     }, {
+        /* Available on STM32F407 series */
         .key = PIN(PORT_H, 8), /* I2C3_SDA */
         .channel = 2,
         .value = 4
     }, {
+        /* Available on STM32F407 series */
         .key = PIN(PORT_H, 9), /* I2C3_SMBA */
         .channel = 2,
         .value = 4

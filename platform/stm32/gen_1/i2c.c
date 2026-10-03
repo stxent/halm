@@ -123,65 +123,60 @@ static void interruptHandler(void *object)
   bool error = (status & errorMask) != 0;
   bool event = false;
 
-  reg->SR1 = 0;
-
   if (!error)
   {
     if (status & SR1_SB)
     {
       if (interface->rxLeft)
       {
-        if (interface->rxLeft == 1)
-          reg->CR1 &= ~CR1_ACK;
-        else
-          reg->CR1 |= CR1_ACK;
-        reg->CR2 |= CR2_LAST;
-
         dmaAppend(interface->rxDma, (void *)interface->buffer,
             (const void *)&reg->DR, interface->rxLeft);
 
-        if (dmaEnable(interface->rxDma) == E_OK)
-        {
-          reg->CR2 |= CR2_DMAEN;
-          reg->DR = (interface->address << 1) | DR_READ;
-          interface->status = STATUS_RECEIVE;
-        }
-        else
+        reg->DR = (interface->address << 1) | DR_READ;
+
+        if (!dmaEnable(interface->rxDma))
         {
           interface->status = STATUS_ERROR;
           error = true;
         }
+        else
+          interface->status = STATUS_RECEIVE;
       }
       else
       {
-        reg->CR1 &= ~CR1_ACK;
+        reg->DR = (interface->address << 1) | DR_WRITE;
 
         if (interface->txLeft)
         {
           dmaAppend(interface->txDma, (void *)&reg->DR,
               (const void *)interface->buffer, interface->txLeft);
 
-          if (dmaEnable(interface->txDma) == E_OK)
-          {
-            reg->CR2 |= CR2_DMAEN;
-            interface->status = STATUS_TRANSMIT;
-          }
-          else
+          if (!dmaEnable(interface->txDma))
           {
             interface->status = STATUS_ERROR;
             error = true;
           }
+          else
+            interface->status = STATUS_TRANSMIT;
         }
         else
           interface->status = STATUS_TRANSMIT;
-
-        if (!error)
-          reg->DR = (interface->address << 1) | DR_WRITE;
       }
     }
     else if (status & SR1_ADDR)
     {
-      /* Read SR2 to clear ADDR flag */
+      if (interface->rxLeft > 1)
+      {
+        reg->CR1 |= CR1_ACK;
+        reg->CR2 |= CR2_DMAEN | CR2_LAST;
+      }
+      else
+        reg->CR2 |= CR2_DMAEN;
+
+      /* Clear sequence for ADDR flag: first step */
+      (void)reg->SR1;
+
+      /* Second step: read SR2 */
       if (reg->SR2 & SR2_MSL)
       {
         if (!interface->buffer)
@@ -218,13 +213,12 @@ static void interruptHandler(void *object)
 
   if (error)
   {
-    reg->CR2 &= ~(CR2_DMAEN | CR2_LAST);
-
     if (interface->status == STATUS_RECEIVE)
       dmaDisable(interface->rxDma);
     if (interface->status == STATUS_TRANSMIT)
       dmaDisable(interface->txDma);
 
+    reg->SR1 = 0;
     reg->CR1 |= CR1_STOP;
 
     interface->sendRepeatedStart = false;
@@ -261,7 +255,6 @@ static void rxDmaHandler(void *object)
   struct I2C * const interface = object;
   STM_I2C_Type * const reg = interface->base.reg;
 
-  reg->CR2 &= ~(CR2_DMAEN | CR2_LAST);
   reg->CR1 |= CR1_STOP;
 
   interface->status = dmaStatus(interface->rxDma) == E_OK ?
@@ -497,6 +490,7 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
 
   if (!length)
     return 0;
+
   if (length > DMA_MAX_TRANSFER_SIZE)
     length = DMA_MAX_TRANSFER_SIZE;
 
@@ -510,7 +504,8 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   interface->dataTransmitted = false;
 
   reg->SR1 = 0;
-  reg->CR1 |= CR1_START;
+  reg->CR2 &= ~(CR2_DMAEN | CR2_LAST);
+  reg->CR1 = (reg->CR1 & ~CR1_ACK) | CR1_START;
 
   if (interface->blocking)
   {
@@ -542,7 +537,8 @@ static size_t i2cWrite(void *object, const void *buffer, size_t length)
   interface->dataTransmitted = false;
 
   reg->SR1 = 0;
-  reg->CR1 |= CR1_START;
+  reg->CR2 &= ~(CR2_DMAEN | CR2_LAST);
+  reg->CR1 = (reg->CR1 & ~CR1_ACK) | CR1_START;
 
   if (interface->blocking)
   {
