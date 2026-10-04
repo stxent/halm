@@ -61,7 +61,7 @@ struct SctPwmConfig
   struct SctPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
-  /** Optional: enable output inversion */
+  /** Optional: enable output inversion. */
   bool inversion;
 };
 
@@ -90,7 +90,7 @@ struct SctPwmDoubleEdgeConfig
   struct SctPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
-  /** Optional: enable output inversion */
+  /** Optional: enable output inversion. */
   bool inversion;
 };
 

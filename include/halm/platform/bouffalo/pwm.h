@@ -1,18 +1,18 @@
 /*
- * halm/platform/stm32/gptimer_pwm.h
+ * halm/platform/bouffalo/pwm.h
  * Copyright (C) 2026 xent
  * Project is distributed under the terms of the MIT License
  */
 
-#ifndef HALM_PLATFORM_STM32_GPTIMER_PWM_H_
-#define HALM_PLATFORM_STM32_GPTIMER_PWM_H_
+#ifndef HALM_PLATFORM_BOUFFALO_PWM_H_
+#define HALM_PLATFORM_BOUFFALO_PWM_H_
 /*----------------------------------------------------------------------------*/
-#include <halm/platform/stm32/gptimer_base.h>
+#include <halm/platform/bouffalo/pwm_base.h>
 #include <halm/pwm.h>
 /*----------------------------------------------------------------------------*/
-extern const struct TimerClass * const GpTimerPwmUnit;
+extern const struct TimerClass * const PwmUnit;
 
-struct GpTimerPwmUnitConfig
+struct PwmUnitConfig
 {
   /** Mandatory: timer frequency. */
   uint32_t frequency;
@@ -24,9 +24,9 @@ struct GpTimerPwmUnitConfig
   uint8_t channel;
 };
 
-struct GpTimerPwmUnit
+struct PwmUnit
 {
-  struct GpTimerBase base;
+  struct PwmBase base;
 
   void (*callback)(void *);
   void *callbackArgument;
@@ -35,40 +35,57 @@ struct GpTimerPwmUnit
   uint32_t frequency;
   /* Cycle width measured in timer ticks */
   uint32_t resolution;
-  /* Match blocks currently in use */
-  uint8_t matches;
 };
 /*----------------------------------------------------------------------------*/
-extern const struct PwmClass * const GpTimerPwm;
+extern const struct PwmClass * const PwmSingleEdge;
 
-struct GpTimerPwmConfig
+struct PwmSingleEdgeConfig
 {
   /** Mandatory: peripheral unit. */
-  struct GpTimerPwmUnit *parent;
-  /** Mandatory: pin used as an output for modulated signal. */
+  struct PwmUnit *parent;
+  /** Mandatory: pin used as an output for the modulated signal. */
   PinNumber pin;
   /** Optional: enable output inversion. */
   bool inversion;
 };
 
-struct GpTimerPwm
+struct PwmSingleEdge
 {
   struct Pwm base;
 
-  /* Pointer to a parent unit */
-  struct GpTimerPwmUnit *unit;
-  /* Pointer to a match register */
-  volatile uint32_t *value;
-  /* Match channel number */
-  uint8_t channel;
+  /* Pointer to the parent unit */
+  struct PwmUnit *unit;
+  /* Enable output inversion */
+  bool inversion;
+};
+/*----------------------------------------------------------------------------*/
+extern const struct PwmClass * const PwmDoubleEdge;
+
+struct PwmDoubleEdgeConfig
+{
+  /** Mandatory: peripheral unit. */
+  struct PwmUnit *parent;
+  /** Mandatory: pin used as an output for the modulated signal. */
+  PinNumber pin;
+  /** Optional: enable output inversion. */
+  bool inversion;
+};
+
+struct PwmDoubleEdge
+{
+  struct Pwm base;
+
+  /* Pointer to the parent unit */
+  struct PwmUnit *unit;
   /* Enable output inversion */
   bool inversion;
 };
 /*----------------------------------------------------------------------------*/
 BEGIN_DECLS
 
-void *gpTimerPwmCreate(void *, PinNumber, bool);
+void *pwmCreate(void *, PinNumber, bool);
+void *pwmCreateDoubleEdge(void *, PinNumber, bool);
 
 END_DECLS
 /*----------------------------------------------------------------------------*/
-#endif /* HALM_PLATFORM_STM32_GPTIMER_PWM_H_ */
+#endif /* HALM_PLATFORM_BOUFFALO_PWM_H_ */

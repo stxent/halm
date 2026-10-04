@@ -49,7 +49,7 @@ struct GpTimerPwmConfig
   struct GpTimerPwmUnit *parent;
   /** Mandatory: pin used as an output for modulated signal. */
   PinNumber pin;
-  /** Optional: enable output inversion */
+  /** Optional: enable output inversion. */
   bool inversion;
 };
 

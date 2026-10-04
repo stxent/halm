@@ -269,10 +269,6 @@ static bool clockReadyStub(const void *)
 /*----------------------------------------------------------------------------*/
 static void clockOutput1Disable(const void *)
 {
-  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
-      mco1EnabledOutput, 0);
-  assert(pinEntry != nullptr);
-
   const struct Pin pin = pinInit(mco1EnabledOutput);
   pinInput(pin);
 
@@ -380,10 +376,6 @@ static bool clockOutput1Ready(const void *)
 /*----------------------------------------------------------------------------*/
 static void clockOutput2Disable(const void *)
 {
-  const struct PinEntry * const pinEntry = pinFind(clockOutputPins,
-      mco2EnabledOutput, 1);
-  assert(pinEntry != nullptr);
-
   const struct Pin pin = pinInit(mco2EnabledOutput);
   pinInput(pin);
 

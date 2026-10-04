@@ -355,6 +355,38 @@ typedef struct
   __rw__ uint32_t CLKPLL_SDM;
   __rw__ uint32_t CLKPLL_OUTPUT_EN;
 } BL_PDS_Type;
+/*------------------PWM peripheral--------------------------------------------*/
+typedef struct
+{
+  __rw__ uint32_t CLKDIV;
+  __rw__ uint32_t THRE1;
+  __rw__ uint32_t THRE2;
+  __rw__ uint32_t PERIOD;
+  __rw__ uint32_t CONFIG;
+  __rw__ uint32_t INTERRUPT;
+  __ne__ uint32_t RESERVED0[2];
+} BL_PWM_CHANNEL_Type;
+
+typedef struct
+{
+  __rw__ uint32_t INT_CONFIG;
+  __ne__ uint32_t RESERVED0[7];
+
+  /* Offset 0x20 */
+  union
+  {
+    BL_PWM_CHANNEL_Type CHANNEL[5];
+
+    struct
+    {
+      BL_PWM_CHANNEL_Type PWM0;
+      BL_PWM_CHANNEL_Type PWM1;
+      BL_PWM_CHANNEL_Type PWM2;
+      BL_PWM_CHANNEL_Type PWM3;
+      BL_PWM_CHANNEL_Type PWM4;
+    };
+  };
+} BL_PWM_Type;
 /*------------------SPI peripherals-------------------------------------------*/
 typedef struct {
   /* Offset 0x00 */
@@ -572,7 +604,6 @@ typedef struct BL_TODO_Type BL_GPIP_Type;
 typedef struct BL_TODO_Type BL_SEC_Type;
 typedef struct BL_TODO_Type BL_TZ_Type;
 typedef struct BL_TODO_Type BL_EFUSE_Type;
-typedef struct BL_TODO_Type BL_PWM_Type;
 typedef struct BL_TODO_Type BL_IRR_Type;
 typedef struct BL_TODO_Type BL_QSPI_Type;
 typedef struct BL_TODO_Type BL_SDU_Type;
@@ -637,6 +668,7 @@ extern PB_DOMAIN_Type PB_DOMAIN;
 #define BL_UART0        (&PB_DOMAIN.UART0)
 #define BL_UART1        (&PB_DOMAIN.UART1)
 #define BL_I2C          (&PB_DOMAIN.I2C)
+#define BL_PWM          (&PB_DOMAIN.PWM)
 #define BL_SPI          (&PB_DOMAIN.SPI)
 #define BL_TIMER        (&PB_DOMAIN.TIMER)
 #define BL_DMA          (&PB_DOMAIN.DMA)
