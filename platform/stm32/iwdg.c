@@ -48,13 +48,11 @@ static enum Result wdtInit(void *object, const void *configBase)
   const uint32_t prescaler = resolution >= RLR_RL_MAX_POW ?
       resolution - (RLR_RL_MAX_POW - 1) : 2;
 
-  STM_IWDG->KR = KR_UNLOCK;
-  STM_IWDG->RLR = (uint32_t)period >> prescaler;
-  STM_IWDG->KR = KR_UNLOCK;
-  STM_IWDG->PR = prescaler - 2;
-
-  /* Enable counter */
   STM_IWDG->KR = KR_START;
+  STM_IWDG->KR = KR_UNLOCK;
+  while ((STM_IWDG->SR & (SR_PVU | SR_RVU)));
+  STM_IWDG->PR = prescaler - 2;
+  STM_IWDG->RLR = (uint32_t)period >> prescaler;
   STM_IWDG->KR = KR_RELOAD;
 
   return E_OK;

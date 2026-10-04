@@ -8,13 +8,16 @@
 #define HALM_PLATFORM_STM32_IWDG_DEFS_H_
 /*----------------------------------------------------------------------------*/
 #include <xcore/bits.h>
-/*------------------Key register----------------------------------------------*/
+/*------------------Key Register----------------------------------------------*/
 #define KR_RELOAD                       0xAAAA
 #define KR_START                        0xCCCC
 #define KR_UNLOCK                       0x5555
-/*------------------Reload register-------------------------------------------*/
+/*------------------Reload Register-------------------------------------------*/
 #define RLR_RL_MAX                      MASK(12)
 #define RLR_RL_MAX_DIV                  MASK(12 + 8)
 #define RLR_RL_MAX_POW                  12
+/*------------------Status Register-------------------------------------------*/
+#define SR_PVU                          BIT(0)
+#define SR_RVU                          BIT(1)
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_STM32_IWDG_DEFS_H_ */
