@@ -16,7 +16,7 @@
 #define SIG_RXD(channel)                ((channel) * SIG_COUNT + 3)
 #define SIG_TOTAL                       (SIG_COUNT * 2)
 
-#define UART_FUNCTION                   7
+#define PIN_UART_FUNCTION               7
 /*------------------TX Configuration register---------------------------------*/
 enum
 {

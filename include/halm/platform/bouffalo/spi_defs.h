@@ -16,7 +16,7 @@
 #define SIG_SCLK(channel)               ((channel) * SIG_COUNT + 3)
 #define SIG_TOTAL                       (SIG_COUNT * 1)
 
-#define SPI_FUNCTION                    4
+#define PIN_SPI_FUNCTION                4
 /*------------------Configuration register------------------------------------*/
 enum
 {

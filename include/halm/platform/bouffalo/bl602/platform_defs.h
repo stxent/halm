@@ -289,6 +289,27 @@ typedef struct
   __rw__ uint32_t RC32K_CTRL0;
   __rw__ uint32_t XTAL32K;
 } BL_HBN_Type;
+/*------------------I2C peripheral--------------------------------------------*/
+typedef struct
+{
+  /* Offset 0x000 */
+  __rw__ uint32_t I2C_CONFIG;
+  __rw__ uint32_t I2C_INT_STS;
+  __rw__ uint32_t I2C_SUB_ADDR;
+  __rw__ uint32_t I2C_BUS_BUSY;
+
+  /* Offset 0x010 */
+  __rw__ uint32_t I2C_PRD_START;
+  __rw__ uint32_t I2C_PRD_STOP;
+  __rw__ uint32_t I2C_PRD_DATA;
+  __ne__ uint32_t RESERVED0[25];
+
+  /* Offset 0x080 */
+  __rw__ uint32_t I2C_FIFO_CONFIG_0;
+  __rw__ uint32_t I2C_FIFO_CONFIG_1;
+  __wo__ uint32_t I2C_FIFO_WDATA;
+  __ro__ uint32_t I2C_FIFO_RDATA;
+} BL_I2C_Type;
 /*------------------L1 Cache controller---------------------------------------*/
 typedef struct
 {
@@ -551,7 +572,6 @@ typedef struct BL_TODO_Type BL_GPIP_Type;
 typedef struct BL_TODO_Type BL_SEC_Type;
 typedef struct BL_TODO_Type BL_TZ_Type;
 typedef struct BL_TODO_Type BL_EFUSE_Type;
-typedef struct BL_TODO_Type BL_I2C_Type;
 typedef struct BL_TODO_Type BL_PWM_Type;
 typedef struct BL_TODO_Type BL_IRR_Type;
 typedef struct BL_TODO_Type BL_QSPI_Type;
@@ -616,6 +636,7 @@ extern PB_DOMAIN_Type PB_DOMAIN;
 #define BL_L1C          (&PB_DOMAIN.L1C)
 #define BL_UART0        (&PB_DOMAIN.UART0)
 #define BL_UART1        (&PB_DOMAIN.UART1)
+#define BL_I2C          (&PB_DOMAIN.I2C)
 #define BL_SPI          (&PB_DOMAIN.SPI)
 #define BL_TIMER        (&PB_DOMAIN.TIMER)
 #define BL_DMA          (&PB_DOMAIN.DMA)

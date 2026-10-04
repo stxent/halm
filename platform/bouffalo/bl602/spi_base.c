@@ -72,7 +72,7 @@ void spiConfigPins(const struct SpiBaseConfig *config)
       if ((config->master && !index) || (!config->master && index))
         pinInput(pin);
 
-      pinSetFunction(pin, SPI_FUNCTION);
+      pinSetFunction(pin, PIN_SPI_FUNCTION);
     }
   }
 }

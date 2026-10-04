@@ -62,7 +62,7 @@ void uartConfigPins(const struct UartBaseConfig *config)
     uartSigSel |= UART_SIG_SEL_SIG(sig, SIG_RXD(config->channel));
 
     pinInput(pin);
-    pinSetFunction(pin, UART_FUNCTION);
+    pinSetFunction(pin, PIN_UART_FUNCTION);
   }
 
   if (config->tx)
@@ -75,7 +75,7 @@ void uartConfigPins(const struct UartBaseConfig *config)
     uartSigSel |= UART_SIG_SEL_SIG(sig, SIG_TXD(config->channel));
 
     pinOutput(pin, true);
-    pinSetFunction(pin, UART_FUNCTION);
+    pinSetFunction(pin, PIN_UART_FUNCTION);
   }
 
   BL_GLB->UART_SIG_SEL_0 = uartSigSel;
