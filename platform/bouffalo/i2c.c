@@ -10,9 +10,6 @@
 #include <halm/pm.h>
 #include <assert.h>
 /*----------------------------------------------------------------------------*/
-/* Maximum length of an I2C packet (in bytes) */
-#define I2C_PACKET_LENGTH_MAX 255
-/*----------------------------------------------------------------------------*/
 static void interruptHandler(void *);
 
 #ifdef CONFIG_PLATFORM_BOUFFALO_I2C_PM
@@ -89,7 +86,7 @@ static void interruptHandler(void *object)
     while (pending--)
     {
       uint32_t word = 0;
-     
+
       for (size_t byte = 0; byte < 4; ++byte)
       {
         if (interface->txLeft)
@@ -338,8 +335,10 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
   struct I2C * const interface = object;
   BL_I2C_Type * const reg = interface->base.reg;
 
-  if (!length || length > I2C_PACKET_LENGTH_MAX)
+  if (!length)
     return 0;
+  if (length > CONFIG_PKTLEN_MAX)
+    length = CONFIG_PKTLEN_MAX;
 
   interface->buffer = (uintptr_t)buffer;
   interface->rxLeft = length;
@@ -383,11 +382,14 @@ static size_t i2cRead(void *object, void *buffer, size_t length)
 /*----------------------------------------------------------------------------*/
 static size_t i2cWrite(void *object, const void *buffer, size_t length)
 {
+  /* Acknowledge polling using zero-length write is not supported */
+  assert(length != 0);
+
   struct I2C * const interface = object;
   BL_I2C_Type * const reg = interface->base.reg;
 
-  if (!length || length > I2C_PACKET_LENGTH_MAX)
-    return 0;
+  if (length > CONFIG_PKTLEN_MAX)
+    length = CONFIG_PKTLEN_MAX;
 
   interface->buffer = (uintptr_t)buffer;
   interface->rxLeft = 0;

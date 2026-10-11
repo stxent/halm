@@ -42,6 +42,7 @@
 #define CONFIG_PKTLEN_MASK              BIT_FIELD(MASK(8), 16)
 #define CONFIG_PKTLEN(value)            BIT_FIELD(value, 16)
 #define CONFIG_PKTLEN_VALUE(reg)        FIELD_VALUE(reg, CONFIG_PKTLEN_MASK, 16)
+#define CONFIG_PKTLEN_MAX               256
 
 /* De-glitch function cycle count */
 #define CONFIG_DEGCNT_MASK              BIT_FIELD(MASK(4), 28)
