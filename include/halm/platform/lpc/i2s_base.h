@@ -54,6 +54,8 @@ struct I2SBaseConfig
 
   /** Mandatory: peripheral identifier. */
   uint8_t channel;
+  /** Optional: enable slave mode. */
+  bool slave;
 };
 
 struct I2SBase

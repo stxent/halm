@@ -11,6 +11,7 @@ endif()
 
 # Library configuration
 
+option(BUILD_TESTING "Enable testing support." OFF)
 set(HALM_CONFIG_FILE "${PROJECT_SOURCE_DIR}/.config" CACHE FILEPATH "Path to the config file.")
 
 # Default compiler flags
@@ -69,6 +70,11 @@ foreach(ENTRY ${DIRECTORY_LIST})
         target_link_libraries(halm_${ENTRY}
                 PUBLIC xcore
         )
+
+        if(BUILD_TESTING)
+            target_compile_options(halm_${ENTRY} PRIVATE --coverage)
+            target_link_libraries(halm_${ENTRY} PRIVATE gcov)
+        endif()
 
         install(TARGETS halm_${ENTRY} EXPORT halm-targets)
     endif()
