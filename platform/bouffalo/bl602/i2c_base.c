@@ -107,7 +107,7 @@ void i2cSetRate(struct I2CBase *base, uint32_t rate)
   const uint32_t clock = i2cGetClock(base);
   assert(rate != 0 && clock != 0 && rate <= clock / 4);
 
-  /* 
+  /*
    * The phase duration should be shorter than 16 clock cycles
    * for the glitch filter to work correctly.
    */

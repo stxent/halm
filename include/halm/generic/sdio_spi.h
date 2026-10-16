@@ -7,8 +7,8 @@
 #ifndef HALM_GENERIC_SDIO_SPI_H_
 #define HALM_GENERIC_SDIO_SPI_H_
 /*----------------------------------------------------------------------------*/
-#include <xcore/interface.h>
 #include <halm/pin.h>
+#include <xcore/interface.h>
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const SdioSpi;
 

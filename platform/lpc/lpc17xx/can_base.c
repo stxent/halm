@@ -90,7 +90,7 @@ static void configPins(const struct CanBaseConfig *config)
   {
     pinEntry = pinFind(canPins, config->tx, config->channel);
     assert(pinEntry != nullptr);
-    pinInput((pin = pinInit(config->tx)));
+    pinOutput((pin = pinInit(config->tx)), true);
     pinSetFunction(pin, pinEntry->value);
   }
 }

@@ -75,7 +75,11 @@ static void configPins(struct SpifiBase *interface,
 
     const struct Pin pin = pinInit(pinArray[index]);
 
-    pinInput(pin);
+    /* The CS and SCK pins are alternate function outputs */
+    if (index == 0 || index == 5)
+      pinOutput(pin, index == 0);
+    else
+      pinInput(pin);
     pinSetFunction(pin, group->value);
     pinSetSlewRate(pin, config->speed);
   }

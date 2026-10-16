@@ -1015,7 +1015,7 @@ static enum Result clockOutputEnable(const void *clockBase,
 
   const struct Pin pin = pinInit(config->pin);
 
-  pinInput(pin);
+  pinOutput(pin, false);
   pinSetFunction(pin, pinEntry->value);
 
   return genericClockEnable(clock, &baseConfig);

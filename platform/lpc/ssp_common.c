@@ -16,7 +16,7 @@ void sspConfigPins(const struct SspBaseConfig *config)
       config->miso, config->mosi, config->sck, config->cs
   };
 
-  /* Direction configuration is not needed for alternate function pins */
+  /* The MISO pin is an input, all other pins are outputs */
   for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
@@ -27,7 +27,10 @@ void sspConfigPins(const struct SspBaseConfig *config)
 
       const struct Pin pin = pinInit(pinArray[index]);
 
-      pinInput(pin);
+      if (index)
+        pinOutput(pin, false);
+      else
+        pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }

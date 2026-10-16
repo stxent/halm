@@ -345,7 +345,7 @@ static enum Result sdramInit(void *object, const void *configBase)
     group = pinGroupFind(emcControlPins, emcControlPinMap.dqmout[index],
         EMC_PIN_CHANNEL_DEFAULT);
     assert(group);
-    pinInput((pin = pinInit(emcControlPinMap.dqmout[index])));
+    pinOutput((pin = pinInit(emcControlPinMap.dqmout[index])), false);
     pinSetFunction(pin, group->value);
     pinSetSlewRate(pin, config->speed);
   }

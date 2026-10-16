@@ -39,7 +39,11 @@ void sdioConfigPins(struct SdioBase *interface,
 
     const struct Pin pin = pinInit(pinArray[index]);
 
-    pinInput(pin);
+    /* The clock pin is an alternate function output */
+    if (!index)
+      pinOutput(pin, false);
+    else
+      pinInput(pin);
     pinSetFunction(pin, group->value);
     pinSetSlewRate(pin, config->speed);
   }

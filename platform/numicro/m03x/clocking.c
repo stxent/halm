@@ -873,7 +873,8 @@ static enum Result clockOutputEnable(const void *, const void *configBase)
 
   const struct Pin pin = pinInit(config->pin);
 
-  pinInput(pin);
+  /* The M03x GPIO does not support slew rate control */
+  pinOutput(pin, false);
   pinSetFunction(pin, pinEntry->value);
 
   selectClockSource(BRANCH_CLKO, config->source, BRANCH_GROUP_CLKO);

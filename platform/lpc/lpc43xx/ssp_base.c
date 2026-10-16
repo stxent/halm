@@ -206,7 +206,10 @@ static void configPins(const struct SspBaseConfig *config)
 
       const struct Pin pin = pinInit(pinArray[index]);
 
-      pinInput(pin);
+      if (index)
+        pinOutput(pin, false);
+      else
+        pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }

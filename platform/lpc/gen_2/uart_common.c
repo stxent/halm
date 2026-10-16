@@ -33,7 +33,7 @@ void uartConfigPins(const struct UartBaseConfig *config,
 
     const struct Pin pin = pinInit(config->tx);
 
-    pinInput(pin);
+    pinOutput(pin, true);
     pinSetFunction(pin, pinEntry->value);
   }
 }

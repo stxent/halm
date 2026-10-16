@@ -50,6 +50,8 @@ struct EthernetBaseConfig
   PinNumber mdc;
   /** Optional: MIIM Data Input and Output. */
   PinNumber mdio;
+  /** Optional: pin signaling slew rate. */
+  enum PinSlewRate speed;
 };
 
 struct EthernetBase

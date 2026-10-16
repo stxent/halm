@@ -21,6 +21,7 @@ void qspiConfigPins(const struct QspiBaseConfig *config)
       config->sck
   };
 
+  /* The CS and SCK pins are alternate function outputs */
   for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
@@ -31,7 +32,10 @@ void qspiConfigPins(const struct QspiBaseConfig *config)
 
       const struct Pin pin = pinInit(pinArray[index]);
 
-      pinInput(pin);
+      if (index == 0 || index == 5)
+        pinOutput(pin, index == 0);
+      else
+        pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }

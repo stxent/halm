@@ -26,7 +26,10 @@ void uartConfigPins(const struct UartBaseConfig *config)
 
       const struct Pin pin = pinInit(pinArray[index]);
 
-      pinInput(pin);
+      if (index)
+        pinOutput(pin, true);
+      else
+        pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }

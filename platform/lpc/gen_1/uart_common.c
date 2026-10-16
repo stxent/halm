@@ -12,8 +12,6 @@ extern const struct PinEntry uartPins[];
 /*----------------------------------------------------------------------------*/
 void uartConfigPins(const struct UartBaseConfig *config)
 {
-  /* Direction configuration is not needed for alternate function pins */
-
   if (config->rx)
   {
     /* Configure UART RX pin */
@@ -36,7 +34,7 @@ void uartConfigPins(const struct UartBaseConfig *config)
 
     const struct Pin pin = pinInit(config->tx);
 
-    pinInput(pin);
+    pinOutput(pin, true);
     pinSetFunction(pin, pinEntry->value);
   }
 }

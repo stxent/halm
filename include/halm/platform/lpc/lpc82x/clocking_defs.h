@@ -26,7 +26,8 @@ static inline void clockSourceUpdate(struct ClockDescriptor *descriptor)
 static inline void configClockOutput(PinNumber key)
 {
   const struct Pin pin = pinInit(key);
-  pinInput(pin);
+
+  pinOutput(pin, false);
   pinSetMux(pin, PINMUX_CLKOUT);
 }
 

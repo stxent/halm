@@ -221,7 +221,8 @@ static enum Result ethInit(void *object, const void *configBase)
       .rxer = config->rxer,
       .txer = config->txer,
       .mdc = config->mdc,
-      .mdio = config->mdio
+      .mdio = config->mdio,
+      .speed = config->speed
   };
   const struct EthernetStreamConfig streamConfig = {
       .parent = object

@@ -16,6 +16,7 @@ void spiConfigPins(const struct SpiBaseConfig *config)
       config->miso, config->mosi, config->sck, config->cs
   };
 
+  /* The MISO pin is an input, all other pins are outputs */
   for (size_t index = 0; index < ARRAY_SIZE(pinArray); ++index)
   {
     if (pinArray[index])
@@ -26,7 +27,10 @@ void spiConfigPins(const struct SpiBaseConfig *config)
 
       const struct Pin pin = pinInit(pinArray[index]);
 
-      pinInput(pin);
+      if (index)
+        pinOutput(pin, false);
+      else
+        pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }

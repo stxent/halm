@@ -391,7 +391,7 @@ static enum Result clockOutputEnable(const void *, const void *configBase)
 
   const struct Pin pin = pinInit(config->pin);
 
-  pinInput(pin);
+  pinOutput(pin, false);
   pinSetFunction(pin, pinEntry->value);
 
   uint32_t value = CLKOUTCFG_EN | CLKOUTCFG_DIV(config->divisor - 1);

@@ -16,6 +16,6 @@ void pitConfigTriggerPin(uint8_t channel, PinNumber key)
 
   const struct Pin pin = pinInit(key);
 
-  pinInput(pin);
+  pinOutput(pin, false);
   pinSetFunction(pin, pinEntry->value);
 }

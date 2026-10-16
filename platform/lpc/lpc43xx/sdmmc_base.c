@@ -191,7 +191,11 @@ static void configPins(struct SdmmcBase *interface,
 
     const struct Pin pin = pinInit(pinArray[index]);
 
-    pinInput(pin);
+    /* The clock pin is an alternate function output */
+    if (!index)
+      pinOutput(pin, false);
+    else
+      pinInput(pin);
     pinSetFunction(pin, pinEntry->value);
     pinSetSlewRate(pin, config->speed);
   }

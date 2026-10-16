@@ -116,8 +116,18 @@ static void configPins(const struct I2SBaseConfig *config)
       assert(pinEntry != nullptr);
 
       const struct Pin pin = pinInit(pinArray[index]);
+      const bool isOutput =
+          /* Master Data Clock or Master Word Select */
+          (!config->slave && (index % 4) < 2)
+          /* Optional master clock output */
+          || (index % 4) == 3
+          /* Transmit Data */
+          || index == 6;
 
-      pinInput(pin);
+      if (isOutput)
+        pinOutput(pin, false);
+      else
+        pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
     }
   }

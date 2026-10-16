@@ -229,6 +229,16 @@ void ethConfigPins(struct EthernetBase *interface,
       | 1UL << CHANNEL_TXD0
       | 1UL << CHANNEL_TXD1;
 
+  static const uint32_t outputPinMask =
+      1UL << CHANNEL_MDC
+      | 1UL << CHANNEL_TX_CLK
+      | 1UL << CHANNEL_TX_ER
+      | 1UL << CHANNEL_TX_EN
+      | 1UL << CHANNEL_TXD0
+      | 1UL << CHANNEL_TXD1
+      | 1UL << CHANNEL_TXD2
+      | 1UL << CHANNEL_TXD3;
+
   const PinNumber pinArray[] = {
       config->col,
       config->crs,
@@ -261,7 +271,14 @@ void ethConfigPins(struct EthernetBase *interface,
 
       const struct Pin pin = pinInit(pinArray[index]);
 
-      pinInput(pin);
+      /* The TX pins and MDC are alternate function outputs */
+      if (outputPinMask & (1UL << index))
+      {
+        pinOutput(pin, false);
+        pinSetSlewRate(pin, config->speed);
+      }
+      else
+        pinInput(pin);
       pinSetFunction(pin, pinEntry->value);
 
       used |= 1UL << index;

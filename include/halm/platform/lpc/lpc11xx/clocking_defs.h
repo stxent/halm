@@ -29,7 +29,8 @@ static inline void configClockOutput(PinNumber key)
   assert(key == PIN(0, 1));
 
   const struct Pin pin = pinInit(key);
-  pinInput(pin);
+
+  pinOutput(pin, false);
   pinSetFunction(pin, 1);
 }
 
