@@ -8,6 +8,10 @@ if(CONFIG_GENERIC_BUFFERING_PROXY)
     list(APPEND SOURCE_FILES "buffering_proxy.c")
 endif()
 
+if(CONFIG_GENERIC_CACHING_PROXY)
+    list(APPEND SOURCE_FILES "caching_proxy.c")
+endif()
+
 if(CONFIG_GENERIC_GPIO_BUS)
     list(APPEND SOURCE_FILES "gpio_bus.c")
 endif()

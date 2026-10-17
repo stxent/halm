@@ -7,6 +7,15 @@ config GENERIC_BUFFERING_PROXY
 	  This enables building of a synchronous buffered interface that wraps
 	  an asynchronous interface with input and output streams.
 
+config GENERIC_CACHING_PROXY
+	bool "Caching Proxy"
+	default y
+	help
+	  This enables building of an optional caching layer for an
+	  underlying block interface. Only single sector reads and writes
+	  are cached, using a fully associative LRU policy. Dirty sectors
+	  are written back on eviction or on the flush request.
+
 config GENERIC_GPIO_BUS
 	bool "GPIO Bus"
 	default y
