@@ -12,8 +12,15 @@
 /*----------------------------------------------------------------------------*/
 extern const struct InterfaceClass * const Spifi;
 
+struct Timer;
+
 struct SpifiConfig
 {
+  /**
+   * Optional: timer used for polling timeout calculation. When provided,
+   * the status bit polling logic is aborted when the timeout expires.
+   */
+  void *timer;
   /**
    * Optional: minimum chip select high time before the next command,
    * measured in serial clock periods. If set to zero, the maximum possible
@@ -72,6 +79,8 @@ struct Spifi
   struct Dma *rxDma;
   /* DMA descriptor for TX transfers */
   struct Dma *txDma;
+  /* Timer for polling timeout calculation */
+  struct Timer *timer;
 
   struct
   {

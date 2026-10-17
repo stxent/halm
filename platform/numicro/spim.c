@@ -12,13 +12,15 @@
 #include <assert.h>
 #include <string.h>
 /*----------------------------------------------------------------------------*/
-#define DEFAULT_POLL_RATE 100
+#define DEFAULT_POLL_RATE     100
+#define DEFAULT_POLL_TIMEOUT  1000 /* Milliseconds */
 
 enum
 {
   STATUS_OK,
   STATUS_RX_BUSY,
   STATUS_TX_BUSY,
+  STATUS_TIMEOUT,
   STATUS_ERROR
 };
 /*----------------------------------------------------------------------------*/
@@ -30,6 +32,7 @@ static void readDataDirect(struct Spim *, void *, size_t);
 static bool readPollResponse(struct Spim *);
 static void resetContext(struct Spim *);
 static void resetMode(struct Spim *);
+static void updateTimeoutRetries(struct Spim *, uint32_t);
 static uint32_t getSerialRate(const struct Spim *);
 static void setSerialRate(struct Spim *, uint32_t);
 static void spimInterruptHandler(void *);
@@ -488,10 +491,26 @@ static bool readPollResponse(struct Spim *interface)
   }
   else
   {
-    timerSetValue(interface->timer, 0);
-    timerEnable(interface->timer);
+    if (!--interface->retries)
+    {
+      NM_SPIM_Type * const reg = interface->base.reg;
 
-    return false;
+      /* Deactivate Slave Select */
+      reg->CTL1 |= CTL1_SS;
+
+      interface->status = STATUS_TIMEOUT;
+      interface->poll = false;
+
+      /* Report polling timeout to the user callback */
+      return true;
+    }
+    else
+    {
+      timerSetValue(interface->timer, 0);
+      timerEnable(interface->timer);
+
+      return false;
+    }
   }
 }
 /*----------------------------------------------------------------------------*/
@@ -526,6 +545,16 @@ static void resetMode(struct Spim *interface)
 
   reg->CTL0 = (reg->CTL0 & ~CTL0_OPMODE_MASK) | CTL0_OPMODE(OPMODE_NORMAL);
   reg->CTL1 |= CTL1_SS;
+}
+/*----------------------------------------------------------------------------*/
+static void updateTimeoutRetries(struct Spim *interface, uint32_t timeout)
+{
+  /* Set the number of polling attempts before a timeout error */
+  const uint32_t rate = timerGetFrequency(interface->timer)
+      / timerGetOverflow(interface->timer);
+
+  interface->limit = ((uint64_t)timeout * rate + 999) / 1000;
+  assert(interface->limit);
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t getSerialRate(const struct Spim *interface)
@@ -663,6 +692,7 @@ static enum Result spimInit(void *object, const void *configBase)
   interface->callback = nullptr;
   interface->callbackArgument = nullptr;
   interface->timer = config->timer;
+  interface->retries = 0;
   interface->status = STATUS_OK;
   interface->blocking = true;
   interface->ddr = false;
@@ -673,8 +703,8 @@ static enum Result spimInit(void *object, const void *configBase)
   resetContext(interface);
 
   /* Configure polling timer */
-  const uint32_t overflow = timerGetFrequency(interface->timer)
-      / (!config->poll ? DEFAULT_POLL_RATE : config->poll);
+  const uint32_t pollRate = config->poll ? config->poll : DEFAULT_POLL_RATE;
+  const uint32_t overflow = timerGetFrequency(interface->timer) / pollRate;
 
   if (!overflow)
     return E_VALUE;
@@ -682,6 +712,7 @@ static enum Result spimInit(void *object, const void *configBase)
   timerSetAutostop(interface->timer, true);
   timerSetCallback(interface->timer, timerInterruptHandler, interface);
   timerSetOverflow(interface->timer, overflow);
+  updateTimeoutRetries(interface, DEFAULT_POLL_TIMEOUT);
 
   /* Disable interrupts */
   irqDisable(interface->base.irq);
@@ -766,6 +797,9 @@ static enum Result spimGetParam(void *object, int parameter, void *data)
       return E_OK;
 
     case IF_STATUS:
+    {
+      enum Result res = E_BUSY;
+
       if (!interface->memmap)
       {
         if (!interface->blocking)
@@ -773,20 +807,32 @@ static enum Result spimGetParam(void *object, int parameter, void *data)
           switch (interface->status)
           {
             case STATUS_OK:
-              return E_OK;
+              res = E_OK;
+              break;
+
+            case STATUS_TIMEOUT:
+              res = E_TIMEOUT;
+              break;
 
             case STATUS_ERROR:
-              return E_INTERFACE;
+              res = E_INTERFACE;
+              break;
 
             default:
-              return E_BUSY;
+              break;
           }
         }
         else
-          return reg->CTL1 & CTL1_SPIMEN ? E_BUSY : E_OK;
+        {
+          if (interface->status == STATUS_TIMEOUT)
+            res = E_TIMEOUT;
+          else if (!(reg->CTL1 & CTL1_SPIMEN))
+            res = E_OK;
+        }
       }
-      else
-        return E_BUSY;
+
+      return res;
+    }
 
     default:
       return E_INVALID;
@@ -958,6 +1004,14 @@ static enum Result spimSetParam(void *object, int parameter, const void *data)
       interface->data.serial = true;
       return E_OK;
 
+    case IF_SPIM_TIMEOUT:
+    {
+      const uint32_t value = *(const uint32_t *)data;
+
+      updateTimeoutRetries(interface, value);
+      break;
+    }
+
     default:
       break;
   }
@@ -989,6 +1043,9 @@ static size_t spimRead(void *object, void *buffer, size_t length)
   {
     /* Poll mode requires zero length read */
     assert(!length && !interface->data.length);
+
+    interface->status = STATUS_OK;
+    interface->retries = interface->limit;
 
     executeDirectCommand(interface, 0, false);
 
@@ -1052,6 +1109,8 @@ static size_t spimWrite(void *object, const void *buffer, size_t length)
   assert(!interface->poll);
   assert(length % 4 == 0 || !dma);
   assert(length == interface->data.length);
+
+  interface->status = STATUS_OK;
 
   if (dma)
   {

@@ -82,6 +82,10 @@ struct Spim
 
   /* Timer for periodic polling of busy flag during erase and write commands */
   struct Timer *timer;
+  /* Maximum retry count for status bit polling */
+  uint32_t limit;
+  /* Remaining polling attempts before a timeout error */
+  uint32_t retries;
 
   struct
   {

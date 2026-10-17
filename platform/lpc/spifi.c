@@ -8,13 +8,17 @@
 #include <halm/platform/lpc/spifi.h>
 #include <halm/platform/lpc/spifi_defs.h>
 #include <halm/platform/platform_defs.h>
+#include <halm/timer.h>
 #include <assert.h>
+/*----------------------------------------------------------------------------*/
+#define DEFAULT_POLL_TIMEOUT 1000 /* Milliseconds */
 /*----------------------------------------------------------------------------*/
 enum
 {
   STATUS_OK,
   STATUS_RX_BUSY,
   STATUS_TX_BUSY,
+  STATUS_TIMEOUT,
   STATUS_ERROR
 };
 /*----------------------------------------------------------------------------*/
@@ -25,8 +29,10 @@ static void executeCommand(struct Spifi *, bool);
 static uint32_t makeCommand(const struct Spifi *);
 static void resetContext(struct Spifi *);
 static void resetMode(struct Spifi *);
+static void updateTimeout(struct Timer *, uint32_t);
 static void dmaInterruptHandler(void *);
 static void spifiInterruptHandler(void *);
+static void timerInterruptHandler(void *);
 /*----------------------------------------------------------------------------*/
 static enum Result spifiInit(void *, const void *);
 static void spifiDeinit(void *);
@@ -293,6 +299,15 @@ static void resetMode(struct Spifi *interface)
   }
 }
 /*----------------------------------------------------------------------------*/
+static void updateTimeout(struct Timer *timer, uint32_t timeout)
+{
+  const uint32_t frequency = timerGetFrequency(timer);
+  const uint32_t overflow = ((uint64_t)frequency * timeout + 999) / 1000;
+
+  assert(overflow);
+  timerSetOverflow(timer, overflow);
+}
+/*----------------------------------------------------------------------------*/
 static void dmaInterruptHandler(void *object)
 {
   struct Spifi * const interface = object;
@@ -316,8 +331,11 @@ static void dmaInterruptHandler(void *object)
 
   if (interface->sync)
   {
-    if (interface->status != STATUS_ERROR)
-      interface->status = res == E_OK ? STATUS_OK : STATUS_ERROR;
+    if (interface->status != STATUS_TIMEOUT
+        && interface->status != STATUS_ERROR)
+    {
+      interface->status = res != E_OK ? STATUS_ERROR : STATUS_OK;
+    }
 
     if (interface->callback != nullptr)
       interface->callback(interface->callbackArgument);
@@ -348,12 +366,18 @@ static void spifiInterruptHandler(void *object)
 
   if (interface->sync)
   {
-    if (interface->status != STATUS_ERROR)
+    if (interface->status != STATUS_TIMEOUT
+        && interface->status != STATUS_ERROR)
+    {
       interface->status = STATUS_OK;
+    }
 
     if (interface->poll)
     {
-      interface->data.response = (uint32_t)reg->DATA_B;
+      if (interface->timer != nullptr)
+        timerDisable(interface->timer);
+
+      interface->data.response = reg->DATA_B;
       interface->poll = false;
     }
 
@@ -364,6 +388,32 @@ static void spifiInterruptHandler(void *object)
   {
     interface->sync = true;
   }
+}
+/*----------------------------------------------------------------------------*/
+static void timerInterruptHandler(void *argument)
+{
+  struct Spifi * const interface = argument;
+  LPC_SPIFI_Type * const reg = interface->base.reg;
+
+  interface->status = STATUS_TIMEOUT;
+  interface->poll = false;
+  interface->sync = false;
+
+  /* Abort the automatic polling logic */
+  if (reg->STAT & STAT_INTRQ)
+  {
+    /* Polling already completed, read matching byte */
+    interface->data.response = reg->DATA_B;
+  }
+  else
+  {
+    /* Abort the automatic polling logic */
+    reg->STAT = STAT_RESET;
+    while (reg->STAT & STAT_CMD);
+  }
+
+  if (interface->callback != nullptr)
+    interface->callback(interface->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result spifiInit(void *object, const void *configBase)
@@ -395,6 +445,7 @@ static enum Result spifiInit(void *object, const void *configBase)
     return E_ERROR;
 
   interface->base.handler = spifiInterruptHandler;
+  interface->timer = config->timer;
   interface->callback = nullptr;
   interface->callbackArgument = nullptr;
   interface->status = STATUS_OK;
@@ -402,6 +453,7 @@ static enum Result spifiInit(void *object, const void *configBase)
   interface->large = config->large;
   interface->memmap = true;
   interface->poll = false;
+  interface->sync = false;
   resetContext(interface);
 
   LPC_SPIFI_Type * const reg = interface->base.reg;
@@ -431,6 +483,13 @@ static enum Result spifiInit(void *object, const void *configBase)
   /* Enable SPIFI interrupts in NVIC */
   irqSetPriority(interface->base.irq, config->priority);
   irqEnable(interface->base.irq);
+
+  if (interface->timer != nullptr)
+  {
+    updateTimeout(interface->timer, DEFAULT_POLL_TIMEOUT);
+    timerSetAutostop(interface->timer, true);
+    timerSetCallback(interface->timer, timerInterruptHandler, interface);
+  }
 
   return E_OK;
 }
@@ -484,6 +543,9 @@ static enum Result spifiGetParam(void *object, int parameter, void *data)
   switch ((enum IfParameter)parameter)
   {
     case IF_STATUS:
+    {
+      enum Result res = E_BUSY;
+
       if (!interface->memmap)
       {
         if (!interface->blocking)
@@ -491,20 +553,32 @@ static enum Result spifiGetParam(void *object, int parameter, void *data)
           switch (interface->status)
           {
             case STATUS_OK:
-              return E_OK;
+              res = E_OK;
+              break;
+
+            case STATUS_TIMEOUT:
+              res = E_TIMEOUT;
+              break;
 
             case STATUS_ERROR:
-              return E_INTERFACE;
+              res = E_INTERFACE;
+              break;
 
             default:
-              return E_BUSY;
+              break;
           }
         }
         else
-          return reg->STAT & STAT_CMD ? E_BUSY : E_OK;
+        {
+          if (interface->status == STATUS_TIMEOUT)
+            res = E_TIMEOUT;
+          else if (!(reg->STAT & STAT_CMD))
+            res = E_OK;
+        }
       }
-      else
-        return E_BUSY;
+
+      return res;
+    }
 
     default:
       return E_INVALID;
@@ -686,6 +760,17 @@ static enum Result spifiSetParam(void *object, int parameter, const void *data)
       interface->data.serial = true;
       return E_OK;
 
+    case IF_SPIM_TIMEOUT:
+      if (interface->timer != nullptr)
+      {
+        const uint32_t value = *(const uint32_t *)data;
+
+        updateTimeout(interface->timer, value);
+        return E_OK;
+      }
+      else
+        return E_INVALID;
+
     default:
       break;
   }
@@ -718,6 +803,15 @@ static size_t spifiRead(void *object, void *buffer, size_t length)
     assert(length % 4 == 0);
     interface->sync = length == 0;
   }
+  interface->status = STATUS_RX_BUSY;
+
+  if (interface->poll && interface->timer != nullptr)
+  {
+    reg->STAT = STAT_INTRQ;
+
+    timerSetValue(interface->timer, 0);
+    timerEnable(interface->timer);
+  }
 
   executeCommand(interface, false);
 
@@ -738,7 +832,6 @@ static size_t spifiRead(void *object, void *buffer, size_t length)
     {
       dmaAppend(interface->rxDma, buffer, (const void *)&reg->DATA, length);
 
-      interface->status = STATUS_RX_BUSY;
       if (!dmaEnable(interface->rxDma))
       {
         interface->status = STATUS_ERROR;
@@ -749,7 +842,21 @@ static size_t spifiRead(void *object, void *buffer, size_t length)
 
   if (interface->blocking)
   {
-    while (reg->STAT & STAT_CMD);
+    while ((reg->STAT & STAT_CMD) && interface->status == STATUS_RX_BUSY)
+      barrier();
+
+    if (interface->poll)
+    {
+      if (interface->timer != nullptr)
+        timerDisable(interface->timer);
+
+      /* Read matching byte */
+      interface->data.response = reg->DATA_B;
+      interface->poll = false;
+    }
+
+    if (interface->status == STATUS_RX_BUSY)
+      interface->status = STATUS_OK;
   }
 
   return length;
@@ -765,6 +872,7 @@ static size_t spifiWrite(void *object, const void *buffer, size_t length)
     assert(length % 4 == 0);
     interface->sync = length == 0;
   }
+  interface->status = STATUS_TX_BUSY;
 
   executeCommand(interface, true);
 
@@ -782,7 +890,6 @@ static size_t spifiWrite(void *object, const void *buffer, size_t length)
     {
       dmaAppend(interface->txDma, (void *)&reg->DATA, buffer, length);
 
-      interface->status = STATUS_TX_BUSY;
       if (!dmaEnable(interface->txDma))
       {
         interface->status = STATUS_ERROR;
@@ -794,6 +901,7 @@ static size_t spifiWrite(void *object, const void *buffer, size_t length)
   if (interface->blocking)
   {
     while (reg->STAT & STAT_CMD);
+    interface->status = STATUS_OK;
   }
 
   return length;

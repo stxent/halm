@@ -104,6 +104,8 @@ enum SPIMParameter
   IF_SPIM_DATA_SERIAL,
   /** Command response. Parameter type is \p uint32_t. */
   IF_SPIM_RESPONSE,
+  /** Command timeout in milliseconds. Parameter type is \p uint32_t. */
+  IF_SPIM_TIMEOUT,
 
   /** End of the list. */
   IF_SPIM_PARAMETER_END
