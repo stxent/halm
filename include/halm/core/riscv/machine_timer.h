@@ -23,8 +23,12 @@ struct MachineTimer
 {
   struct Timer base;
 
+  /* Pointer to a user interrupt handler */
   void (*callback)(void *);
+  /* Argument passed to a user interrupt handler */
   void *callbackArgument;
+  /* Stop timer after first interrupt */
+  bool stop;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_CORE_RISCV_MACHINE_TIMER_H_ */

@@ -67,9 +67,6 @@ static void interruptHandler(void *object)
         --interface->rxLeft;
       }
     }
-
-    /* Clear the RX FIFO under/overflow flags */
-    reg->I2C_FIFO_CONFIG_0 = FIFO_CONFIG_0_RFICLR;
   }
 
   /* Handle transmission */
@@ -99,6 +96,9 @@ static void interruptHandler(void *object)
 
       reg->I2C_FIFO_WDATA = word;
     }
+
+    if (!interface->txLeft)
+      reg->I2C_INT_STS &= ~INT_STS_TXFEN;
   }
 
   /* Handle errors */
@@ -200,6 +200,7 @@ static enum Result i2cInit(void *object, const void *configBase)
   /* Clear all flags and FIFOs */
   reg->I2C_INT_STS = 0;
   reg->I2C_FIFO_CONFIG_0 = FIFO_CONFIG_0_TFICLR | FIFO_CONFIG_0_RFICLR;
+  reg->I2C_FIFO_CONFIG_1 = 0;
   reg->I2C_CONFIG = CONFIG_SCLSEN;
 
 #ifdef CONFIG_PLATFORM_BOUFFALO_I2C_PM

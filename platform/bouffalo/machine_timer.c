@@ -15,6 +15,7 @@ static void setOverflow(uint64_t);
 static enum Result tmrInit(void *, const void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
 static uint32_t tmrGetOverflow(const void *);
@@ -37,7 +38,7 @@ const struct TimerClass * const MachineTimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
-    .setAutostop = nullptr,
+    .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = nullptr,
@@ -98,7 +99,10 @@ static void setOverflow(uint64_t value)
 /*----------------------------------------------------------------------------*/
 [[gnu::interrupt]] void CLIC_MTIP_ISR(void)
 {
-  setCurrentValue(0);
+  if (instance->stop)
+    irqDisable(CLIC_MTIP_IRQ);
+  else
+    setCurrentValue(0);
 
   if (instance != nullptr && instance->callback != nullptr)
     instance->callback(instance->callbackArgument);
@@ -113,6 +117,7 @@ static enum Result tmrInit(void *object, const void *configBase)
   {
     timer->callback = nullptr;
     timer->callbackArgument = nullptr;
+    timer->stop = false;
 
     setOverflow(UINT64_MAX);
     setCurrentValue(0);
@@ -143,6 +148,12 @@ static void tmrEnable(void *)
 static void tmrDisable(void *)
 {
   irqDisable(CLIC_MTIP_IRQ);
+}
+/*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct MachineTimer * const timer = object;
+  timer->stop = state;
 }
 /*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),

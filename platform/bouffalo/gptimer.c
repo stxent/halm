@@ -22,6 +22,7 @@ static void powerStateHandler(void *, enum PmState);
 static enum Result tmrInit(void *, const void *);
 static void tmrEnable(void *);
 static void tmrDisable(void *);
+static void tmrSetAutostop(void *, bool);
 static void tmrSetCallback(void *, void (*)(void *), void *);
 static uint32_t tmrGetFrequency(const void *);
 static void tmrSetFrequency(void *, uint32_t);
@@ -43,7 +44,7 @@ const struct TimerClass * const GpTimer = &(const struct TimerClass){
 
     .enable = tmrEnable,
     .disable = tmrDisable,
-    .setAutostop = nullptr,
+    .setAutostop = tmrSetAutostop,
     .setCallback = tmrSetCallback,
     .getFrequency = tmrGetFrequency,
     .setFrequency = tmrSetFrequency,
@@ -57,8 +58,12 @@ static void interruptHandler(void *object)
 {
   struct GpTimer * const timer = object;
 
+  if (timer->stop)
+    BL_TIMER->TCER &= ~TCER_ENABLE(timer->base.channel);
   BL_TIMER->TICR[timer->base.channel] = TICR_MASK;
-  timer->callback(timer->callbackArgument);
+
+  if (timer->callback != nullptr)
+    timer->callback(timer->callbackArgument);
 }
 /*----------------------------------------------------------------------------*/
 static void setTimerFrequency(struct GpTimer *timer, uint32_t frequency)
@@ -106,12 +111,13 @@ static enum Result tmrInit(void *object, const void *configBase)
   timer->base.handler = interruptHandler;
   timer->callback = nullptr;
   timer->callbackArgument = nullptr;
+  timer->stop = false;
 
   /* Initialize peripheral block */
   const uint8_t channel = timer->base.channel;
 
   BL_TIMER->TCER &= ~TCER_ENABLE(timer->base.channel);
-  BL_TIMER->TIER[channel] = 0;
+  BL_TIMER->TIER[channel] = TIER_ENABLE(MATCH_EVENT);
   BL_TIMER->TICR[channel] = TICR_MASK;
   BL_TIMER->TPLVR[channel] = 0;
   BL_TIMER->TPLCR[channel] = TPLCR_TPLCR(PLCR_MATCH0);
@@ -161,27 +167,19 @@ static void tmrDisable(void *object)
   BL_TIMER->TCER &= ~TCER_ENABLE(timer->base.channel);
 }
 /*----------------------------------------------------------------------------*/
+static void tmrSetAutostop(void *object, bool state)
+{
+  struct GpTimer * const timer = object;
+  timer->stop = state;
+}
+/*----------------------------------------------------------------------------*/
 static void tmrSetCallback(void *object, void (*callback)(void *),
     void *argument)
 {
   struct GpTimer * const timer = object;
-  const uint8_t channel = timer->base.channel;
 
   timer->callbackArgument = argument;
   timer->callback = callback;
-
-  if (timer->callback != nullptr)
-  {
-    /* Clear pending interrupt flags */
-    BL_TIMER->TICR[channel] = TICR_MASK;
-    /* Enable interrupt request on timer match event */
-    BL_TIMER->TIER[channel] = TIER_ENABLE(MATCH_EVENT);
-  }
-  else
-  {
-    /* Disable further interrupt requests */
-    BL_TIMER->TIER[channel] = 0;
-  }
 }
 /*----------------------------------------------------------------------------*/
 static uint32_t tmrGetFrequency(const void *object)

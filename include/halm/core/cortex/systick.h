@@ -26,9 +26,9 @@ struct SysTick
 {
   struct Timer base;
 
-  /* User interrupt handler */
+  /* Pointer to a user interrupt handler */
   void (*callback)(void *);
-  /* Argument passed to the user interrupt handler */
+  /* Argument passed to a user interrupt handler */
   void *callbackArgument;
 };
 /*----------------------------------------------------------------------------*/

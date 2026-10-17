@@ -33,6 +33,8 @@ struct GpTimer
 
   /* Desired timer frequency */
   uint32_t frequency;
+  /* Stop timer after first interrupt */
+  bool stop;
 };
 /*----------------------------------------------------------------------------*/
 #endif /* HALM_PLATFORM_BOUFFALO_GPTIMER_H_ */
