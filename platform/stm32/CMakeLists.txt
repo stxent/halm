@@ -109,6 +109,11 @@ if(CONFIG_PLATFORM_STM32_I2S_DMA)
     list(APPEND SOURCE_FILES "i2s_dma.c")
 endif()
 
+if(CONFIG_PLATFORM_STM32_DCMI)
+    list(APPEND SOURCE_FILES "${CMAKE_SYSTEM_SOC}/dcmi_base.c")
+    list(APPEND SOURCE_FILES "dcmi.c")
+endif()
+
 if(CONFIG_PLATFORM_STM32_SPI)
     list(APPEND SOURCE_FILES "spi.c")
 endif()

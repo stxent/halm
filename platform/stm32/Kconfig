@@ -276,6 +276,16 @@ config PLATFORM_STM32_SPI
 	default y
 	depends on PLATFORM_STM32_SPI_BASE && (PLATFORM_STM32_BDMA || PLATFORM_STM32_DMA)
 
+config PLATFORM_STM32_DCMI_NO_DEINIT
+	bool
+	default y if PLATFORM_STM32_NO_DEINIT
+	depends on PLATFORM_STM32_DCMI
+
+config PLATFORM_STM32_DCMI
+	bool "DCMI driver with DMA"
+	default y
+	depends on FAMILY_STM32F4XX && PLATFORM_STM32_DMA
+
 config PLATFORM_STM32_UART_BASE
 	bool "UART"
 	default y
