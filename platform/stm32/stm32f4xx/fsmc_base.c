@@ -31,7 +31,13 @@ static const struct EntityClass * const FsmcHandler =
 /*----------------------------------------------------------------------------*/
 const struct PinGroupEntry fsmcAddressPins[] = {
     {
-        /* FSMC_A19 to FSMC_A25 */
+        /* FSMC_A16 to FSMC_A18 */
+        .begin = PIN(PORT_D, 11),
+        .end = PIN(PORT_D, 13),
+        .channel = 0,
+        .value = 12
+    }, {
+        /* FSMC_A19 to FSMC_A22 and FSMC_A23 */
         .begin = PIN(PORT_E, 2),
         .end = PIN(PORT_E, 6),
         .channel = 0,
@@ -55,8 +61,8 @@ const struct PinGroupEntry fsmcAddressPins[] = {
         .channel = 0,
         .value = 12
     }, {
-        /* FSMC_A16 to FSMC_A20 */
-        .begin = PIN(PORT_G, 10),
+        /* FSMC_A24 to FSMC_A25 */
+        .begin = PIN(PORT_G, 13),
         .end = PIN(PORT_G, 14),
         .channel = 0,
         .value = 12
@@ -71,9 +77,9 @@ const PinNumber fsmcAddressPinMap[] = {
     PIN(PORT_F, 4),  PIN(PORT_F, 5),  PIN(PORT_F, 12), PIN(PORT_F, 13),
     PIN(PORT_F, 14), PIN(PORT_F, 15), PIN(PORT_G, 0),  PIN(PORT_G, 1),
     PIN(PORT_G, 2),  PIN(PORT_G, 3),  PIN(PORT_G, 4),  PIN(PORT_G, 5),
-    PIN(PORT_G, 10), PIN(PORT_G, 11), PIN(PORT_G, 12), PIN(PORT_G, 13),
-    PIN(PORT_G, 14), PIN(PORT_E, 5),  PIN(PORT_E, 6),  PIN(PORT_E, 2),
-    PIN(PORT_E, 3),  PIN(PORT_E, 4)
+    PIN(PORT_D, 11), PIN(PORT_D, 12), PIN(PORT_D, 13), PIN(PORT_E, 3),
+    PIN(PORT_E, 4),  PIN(PORT_E, 5),  PIN(PORT_E, 6),  PIN(PORT_E, 2),
+    PIN(PORT_G, 13), PIN(PORT_G, 14)
 };
 
 const struct PinGroupEntry fsmcControlPins[] = {

@@ -68,7 +68,7 @@ static void interruptHandler(void *object, enum Result res)
 
     if ((cr & SCR_EN) && stream->queued >= 1)
     {
-      size_t index = stream->index;
+      size_t index = stream->index + 1;
 
       /* Calculate index of the first chunk */
       if (index >= stream->queued)

@@ -250,6 +250,17 @@ static enum Result dacStreamInit(void *object, const void *configBase)
 static void dacStreamClear(void *object)
 {
   struct DacDmaStream * const stream = object;
+  const IrqState state = irqSave();
+
+  if (dmaStatus(interface->rxDma) == E_BUSY)
+  {
+    LPC_DAC_Type * const reg = interface->base.reg;
+
+    reg->CTRL &= ~CTRL_CNT_ENA;
+    dmaDisable(interface->rxDma);
+  }
+  dmaClear(interface->rxDma);
+  irqRestore(state);
 
   while (!pointerQueueEmpty(&stream->requests))
   {

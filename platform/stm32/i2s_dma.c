@@ -690,10 +690,9 @@ static void i2sRxStreamClear(void *object)
     STM_SPI_Type * const reg = getReceptionReg(interface);
 
     reg->CR2 &= ~CR2_RXDMAEN;
-
     dmaDisable(interface->rxDma);
-    dmaClear(interface->rxDma);
   }
+  dmaClear(interface->rxDma);
   irqRestore(state);
 
   stream->pending = 0;
@@ -748,10 +747,9 @@ static void i2sTxStreamClear(void *object)
     STM_SPI_Type * const reg = interface->base.reg;
 
     reg->CR2 &= ~CR2_TXDMAEN;
-
     dmaDisable(interface->txDma);
-    dmaClear(interface->txDma);
   }
+  dmaClear(interface->txDma);
   irqRestore(state);
 
   stream->pending = 0;

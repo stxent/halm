@@ -574,8 +574,8 @@ static void i2sRxStreamClear(void *object)
     reg->DMA1 &= ~DMA_RX_ENABLE;
 
     dmaDisable(interface->rxDma);
-    dmaClear(interface->rxDma);
   }
+  dmaClear(interface->rxDma);
   irqRestore(state);
 
   while (!pointerQueueEmpty(&stream->requests))
@@ -657,8 +657,8 @@ static void i2sTxStreamClear(void *object)
     reg->DMA2 &= ~DMA_TX_ENABLE;
 
     dmaDisable(interface->txDma);
-    dmaClear(interface->txDma);
   }
+  dmaClear(interface->txDma);
   irqRestore(state);
 
   while (!pointerQueueEmpty(&stream->requests))
