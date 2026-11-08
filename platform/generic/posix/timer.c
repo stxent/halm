@@ -134,6 +134,7 @@ static void tmrDeinit(void *object)
 {
   struct PosixTimer * const timer = object;
 
+  uv_timer_stop(timer->handle);
   uv_handle_set_data((uv_handle_t *)timer->handle, nullptr);
   uv_close((uv_handle_t *)timer->handle, onCloseCallback);
 }

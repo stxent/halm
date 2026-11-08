@@ -594,8 +594,9 @@ static void tmrEnableTickless(void *object)
 
   const IrqState state = irqSave();
   const uint32_t counter = timerGetValue(timer->factory);
+  const uint32_t timestamp = counter + timer->overflow;
 
-  timer->timestamp = counter + timer->overflow;
+  timer->timestamp = timestamp;
   if (timer->timestamp > factory->overflow)
     timer->timestamp -= factory->overflow + 1;
   insertTimer(&factory->head, timer, factory->overflow);
@@ -604,7 +605,7 @@ static void tmrEnableTickless(void *object)
   /* The timer queue was empty, or the new timer has the nearest wake-up time */
   if (factory->head == timer)
   {
-    uint32_t waketime = timer->timestamp + 1;
+    uint32_t waketime = timestamp + 1;
 
     if (waketime > factory->overflow)
       waketime -= factory->overflow + 1;

@@ -109,7 +109,8 @@ static enum Result interfaceSetParam(void *object, int parameter,
     {
       const uint32_t address = *(const uint32_t *)data;
 
-      if (address < interface->capacity && (address % interface->granule) == 0)
+      if (address + interface->granule <= interface->capacity
+          && (address % interface->granule) == 0)
       {
         memset(interface->arena + address, 0, interface->granule);
         return E_OK;

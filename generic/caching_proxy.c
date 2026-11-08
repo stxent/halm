@@ -25,12 +25,14 @@ struct CachedBlock
 #define BLOCK_RESERVED UINT32_MAX
 /*----------------------------------------------------------------------------*/
 static struct CachedBlock *allocateBlock(struct CachingProxy *);
+static void callbackWrapper(void *);
 static struct CachedBlock *findBlock(struct CachingProxy *, uint32_t);
 static struct CachedBlock *findEmptyBlock(struct CachingProxy *);
 static struct CachedBlock *findOldestBlock(struct CachingProxy *);
 static enum Result flushAll(struct CachingProxy *);
 static enum Result flushBlock(struct CachingProxy *, struct CachedBlock *);
 static void invalidateRange(struct CachingProxy *, uint64_t, size_t);
+static enum Result setPipePosition(struct CachingProxy *, uint64_t);
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *, const void *);
 static void interfaceDeinit(void *);
@@ -72,6 +74,14 @@ static struct CachedBlock *allocateBlock(struct CachingProxy *interface)
   return block;
 }
 /*----------------------------------------------------------------------------*/
+static void callbackWrapper(void *argument)
+{
+  struct CachingProxy * const interface = argument;
+
+  if (interface->callback != nullptr)
+    interface->callback(interface->callbackArgument);
+}
+/*----------------------------------------------------------------------------*/
 static struct CachedBlock *findBlock(struct CachingProxy *interface,
     uint32_t address)
 {
@@ -106,9 +116,7 @@ static struct CachedBlock *findOldestBlock(struct CachingProxy *interface)
   for (size_t index = 0; index < pointerArraySize(&interface->pool); ++index)
   {
     struct CachedBlock * const block = *pointerArrayAt(&interface->pool, index);
-
-    if (block->address == BLOCK_RESERVED)
-      continue;
+    assert(block->address != BLOCK_RESERVED);
 
     if (result == nullptr || block->timestamp < result->timestamp)
       result = block;
@@ -138,9 +146,8 @@ static enum Result flushAll(struct CachingProxy *interface)
 static enum Result flushBlock(struct CachingProxy *interface,
     struct CachedBlock *block)
 {
-  const uint64_t position = (uint64_t)block->address * interface->blockSize;
-  const enum Result res = ifSetParam(interface->pipe, IF_POSITION_64,
-      &position);
+  const enum Result res = setPipePosition(interface,
+      (uint64_t)block->address * interface->blockSize);
 
   if (res != E_OK)
     return res;
@@ -176,6 +183,20 @@ static void invalidateRange(struct CachingProxy *interface, uint64_t address,
   }
 }
 /*----------------------------------------------------------------------------*/
+static enum Result setPipePosition(struct CachingProxy *interface,
+    uint64_t position)
+{
+  enum Result res = ifSetParam(interface->pipe, IF_POSITION_64, &position);
+
+  if (res == E_INVALID)
+  {
+    const uint32_t position32 = (uint32_t)position;
+    res = ifSetParam(interface->pipe, IF_POSITION, &position32);
+  }
+
+  return res;
+}
+/*----------------------------------------------------------------------------*/
 static enum Result interfaceInit(void *object, const void *configBase)
 {
   const struct CachingProxyConfig * const config = configBase;
@@ -187,8 +208,8 @@ static enum Result interfaceInit(void *object, const void *configBase)
 
   interface->callback = nullptr;
   interface->callbackArgument = nullptr;
-  interface->pipe = config->pipe;
   interface->arena = config->arena;
+  interface->pipe = config->pipe;
   interface->blockCount = config->cache / config->size;
   interface->blockSize = config->size;
   interface->address = 0;
@@ -237,6 +258,8 @@ static void interfaceDeinit(void *object)
 {
   struct CachingProxy * const interface = object;
 
+  ifSetCallback(interface->pipe, nullptr, nullptr);
+
   if (interface->arena == nullptr)
     free(interface->buffer);
 
@@ -251,7 +274,10 @@ static void interfaceSetCallback(void *object, void (*callback)(void *),
   interface->callbackArgument = argument;
   interface->callback = callback;
 
-  ifSetCallback(interface->pipe, callback, argument);
+  if (interface->callback != nullptr)
+    ifSetCallback(interface->pipe, callbackWrapper, interface);
+  else
+    ifSetCallback(interface->pipe, nullptr, nullptr);
 }
 /*----------------------------------------------------------------------------*/
 static enum Result interfaceGetParam(void *object, int parameter, void *data)
@@ -296,36 +322,50 @@ static enum Result interfaceSetParam(void *object, int parameter,
       const uint64_t block = position / interface->blockSize;
 
       if (block > UINT32_MAX)
-        return E_VALUE;
+        return E_ADDRESS;
 
-      interface->address = (uint32_t)block;
-      break;
+      const enum Result res = ifSetParam(interface->pipe, IF_POSITION_64, data);
+
+      if (res == E_OK || res == E_INVALID)
+      {
+        interface->address = (uint32_t)block;
+        return E_OK;
+      }
+      else
+        return res;
     }
 
     case IF_POSITION:
     {
       const uint32_t position = *(const uint32_t *)data;
+      const enum Result res = ifSetParam(interface->pipe, IF_POSITION, data);
 
-      interface->address = position / (uint32_t)interface->blockSize;
-      break;
+      if (res == E_OK || res == E_INVALID)
+      {
+        interface->address = position / (uint32_t)interface->blockSize;
+        return E_OK;
+      }
+      else
+        return res;
     }
 
     case IF_FLUSH:
     {
-      const enum Result res = flushAll(interface);
+      enum Result res = flushAll(interface);
 
       if (res != E_OK)
         return res;
 
       /* Restore the position after the writeback transfers */
-      const uint64_t position = (uint64_t)interface->address
-          * interface->blockSize;
-
-      if (ifSetParam(interface->pipe, IF_POSITION_64, &position) != E_OK)
-        return E_DEVICE;
+      res = setPipePosition(interface,
+          (uint64_t)interface->address * interface->blockSize);
+      if (res != E_OK)
+        return res;
 
       /* Pass control to the underlying interface */
-      break;
+      res = ifSetParam(interface->pipe, IF_FLUSH, nullptr);
+
+      return (res == E_OK || res == E_INVALID) ? E_OK : res;
     }
 
     default:
@@ -355,10 +395,8 @@ static size_t interfaceRead(void *object, void *buffer, size_t length)
       block->timestamp = ++interface->timestamp;
       block->address = interface->address;
 
-      const uint64_t position = (uint64_t)interface->address
-          * interface->blockSize;
-      const enum Result res =
-          ifSetParam(interface->pipe, IF_POSITION_64, &position);
+      const enum Result res = setPipePosition(interface,
+          (uint64_t)interface->address * interface->blockSize);
 
       if (res != E_OK)
       {
